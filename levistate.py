@@ -1,5 +1,5 @@
 import argparse
-from vsd_writer import VsdWriter, VsdFetcher
+from vsd_writer import VsdWriter, Fetcher
 import vspk.v5_0 as vspk
 
 
@@ -30,7 +30,7 @@ def main():
     print str(vsd_writer.session.root_object.enterprises.get_first())
     ent = vsd_writer.session.root_object.enterprises.get_first()
     print str(ent.to_dict())
-    fetch = VsdFetcher()
+    fetch = Fetcher()
     fetch.parent_object = ent
     print str(fetch._prepare_url())
 

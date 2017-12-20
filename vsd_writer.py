@@ -100,10 +100,10 @@ class VsdWriter(object):
                     self.root_spec_name not in self.specs):
                 raise InvalidSpecification("No root specification loaded")
 
-            self.session = VsdSession(spec=self.specs[self.root_spec_name],
-                                      api_prefix=self.api_prefix,
-                                      version=self.version,
-                                      **self.session_params)
+            self.session = Session(spec=self.specs[self.root_spec_name],
+                                   api_prefix=self.api_prefix,
+                                   version=self.version,
+                                   **self.session_params)
             self.session.set_enterprise_spec(self.specs['enterprise'])
 
         try:
@@ -145,24 +145,24 @@ class VsdWriter(object):
         if name_key not in self.specs:
             raise InvalidSpecification("No specification for " + name)
 
-        return VsdConfigObject(self.specs[name_key])
+        return ConfigObject(self.specs[name_key])
 
 
-class VsdSession(NURESTSession):
+class Session(NURESTSession):
 
     def __init__(self, spec, username, password, enterprise, api_url,
                  api_prefix, version):
         self.spec = spec
-        super(VsdSession, self).__init__(username, password, enterprise,
-                                         api_url, api_prefix, version)
+        super(Session, self).__init__(username, password, enterprise,
+                                      api_url, api_prefix, version)
 
     def create_root_object(self):
         """ Returns a new instance
         """
-        return VsdRoot(self.spec, self.enterprise_spec)
+        return Root(self.spec, self.enterprise_spec)
 
     def get_root_object(self):
-        root_object = VsdConfigObject(self.spec)
+        root_object = ConfigObject(self.spec)
         # root_object.id = self.root_object.id
         # root_object.id = ""
         print str(self.root_object.get_resource_url())
@@ -174,10 +174,10 @@ class VsdSession(NURESTSession):
         self.enterprise_spec = enterprise_spec
 
 
-class VsdConfigObject(NURESTObject):
+class ConfigObject(NURESTObject):
 
     def __init__(self, spec):
-        super(VsdConfigObject, self).__init__()
+        super(ConfigObject, self).__init__()
 
         # self.obj = NURESTObject()
         self.spec = spec
@@ -240,35 +240,8 @@ class VsdConfigObject(NURESTObject):
     def get_resource_url_for_child_name(self, child_name):
         return "%s/%s" % (self.get_resource_url(), child_name)
 
-    # def fetch(self, *args, **kwargs):
-    #     return self.obj.fetch(*args, **kwargs)
 
-    # @property
-    # def id(self):
-    #     """ Get object id """
-
-    #     return self.obj._id
-
-    # @id.setter
-    # def id(self, id):
-    #     """ Set object id """
-
-    #     self.obj._id = id
-
-    # def __get__(self, obj, objtype=None):
-    #     if obj is None:
-    #         return self
-    #     if self.getname is None:
-    #         raise AttributeError('unreadable attribute')
-    #     try:
-    #         fget = getattr(obj, self.getname)
-    #     except AttributeError:
-    #         raise TypeError('%s object does not have a %s method' %
-    #                         (type(obj).__name__, self.getname))
-    #     return fget()
-
-
-class VsdFetcher(NURESTFetcher):
+class Fetcher(NURESTFetcher):
 
     @classmethod
     def managed_object_rest_name(cls):
@@ -277,26 +250,23 @@ class VsdFetcher(NURESTFetcher):
     @classmethod
     def managed_class(cls):
 
-        return VsdConfigObject
+        return ConfigObject
 
     def new(self):
 
         # managed_class = self.managed_class(self.spec)
-        return VsdConfigObject(self.spec)
+        return ConfigObject(self.spec)
 
     def _prepare_url(self):
         """ Prepare url for request """
 
         return self.parent_object.get_resource_url_for_child_name("enterprises")
-        #     self.__class__.managed_class())
-        # return "%s/%s" % (self.parent_object.get_resource_url(),
-        #                   "enterprises")
 
     def set_spec(self, spec):
         self.spec = spec
 
 
-class VsdRoot(NURESTRootObject):
+class Root(NURESTRootObject):
 
     __rest_name__ = "me"
     __resource_name__ = "me"
@@ -313,29 +283,14 @@ class VsdRoot(NURESTRootObject):
                 spec['model']['resource_name'] is None):
             raise InvalidSpecification("'resource_name' missing in spec")
 
-        VsdRoot.__rest_name__ = spec['model']['rest_name']
-        VsdRoot.__resource_name__ = spec['model']['resource_name']
+        Root.__rest_name__ = spec['model']['rest_name']
+        Root.__resource_name__ = spec['model']['resource_name']
 
-        super(VsdRoot, self).__init__()
+        super(Root, self).__init__()
 
-        self.enterprises = VsdFetcher.fetcher_with_object(parent_object=self,
-                                                          relationship="root")
+        self.enterprises = Fetcher.fetcher_with_object(parent_object=self,
+                                                       relationship="root")
         self.enterprises.set_spec(enterprise_spec)
 
     def get_resource_url_for_child_name(self, child_name):
         return "%s/%s" % (self.rest_base_url(), child_name)
-
-    # def _prepare_url(self):
-    #     return self.__class__.rest_base_url()
-
-    # def get_resource_url(self):
-    #     """ Get resource complete url """
-    #     return self.__class__.rest_base_url()
-
-        # name = self.__resource_name__
-        # url = self.__class__.rest_base_url()
-
-        # if self.id is not None and self.id != "":
-        #     return "%s/%s/%s" % (url, name, self.id)
-
-        # return "%s/%s" % (url, name)
