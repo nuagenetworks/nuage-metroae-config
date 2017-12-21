@@ -235,6 +235,16 @@ class VsdWriter(object):
 
         return objects[0]
 
+    def _set_attributes(self, obj, **kwargs):
+        for field, value in kwargs.iteritems():
+            local_name = field.lower()
+            self._get_attribute_name(obj.spec, local_name)
+            if hasattr(obj, local_name):
+                setattr(obj, local_name, value)
+            else:
+                raise SessionError("Missing field %s in %s object" %
+                                   (local_name,
+                                    obj.spec['model']['entity_name']))
 
 class Session(NURESTSession):
 

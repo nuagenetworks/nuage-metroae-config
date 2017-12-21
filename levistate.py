@@ -76,7 +76,9 @@ def main():
 
     ent = vsd_writer._select_object("Enterprise", "id", "7bb7788c-d277-4b36-8268-d5f7ca8d978d")
     dom = vsd_writer._select_object("Domain", "name", "test2", ent)
-    print str(dom)
+    print str(dom.description)
+    # vsd_writer._set_attributes(dom, description='Setting test')
+    # dom.save()
 
 
 def parse_args():
