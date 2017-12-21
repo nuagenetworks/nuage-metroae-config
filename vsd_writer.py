@@ -12,30 +12,44 @@ SPEC_EXTENSION = ".spec"
 # session.start()
 
 
-class MissingSessionParamsError(Exception):
+class TemplateWriterError(Exception):
+    """
+    Exception class for all template writing errors
+    """
+    pass
+
+
+class MissingSessionParamsError(TemplateWriterError):
     """
     Exception class when session is started without parameters specified
     """
     pass
 
 
-class SessionNotStartedError(Exception):
+class SessionNotStartedError(TemplateWriterError):
     """
     Exception class when session is used when not started.
     """
     pass
 
 
-class SessionError(Exception):
+class SessionError(TemplateWriterError):
     """
     Exception class when there is an error in the session
     """
     pass
 
 
-class InvalidSpecification(Exception):
+class InvalidSpecification(TemplateWriterError):
     """
     Exception class when there is an error parsing a VSD API specification
+    """
+    pass
+
+
+class SelectionError(TemplateWriterError):
+    """
+    Exception class when there is an error selecting an object
     """
     pass
 
@@ -86,7 +100,8 @@ class VsdWriter(object):
             spec_json = self._read_specification(path_or_file_name)
             self._register_specification(spec_json)
         else:
-            raise IOError("File or path not found: " + path_or_file_name)
+            raise InvalidSpecification("File or path not found: " +
+                                       path_or_file_name)
 
     # TBD - Implement all required Abstract Base Class prototype functions.
 
@@ -118,8 +133,11 @@ class VsdWriter(object):
             self.session = None
 
     def _read_specification(self, file_name):
-        with open(file_name, 'r') as file:
-            return file.read()
+        try:
+            with open(file_name, 'r') as file:
+                return file.read()
+        except Exception as e:
+            raise InvalidSpecification("Error reading spec: " + str(e))
 
     def _register_specification(self, json_str):
         try:
@@ -127,12 +145,7 @@ class VsdWriter(object):
         except Exception as e:
             raise InvalidSpecification("Error parsing spec: " + str(e))
 
-        if 'model' not in spec:
-            raise InvalidSpecification("'model' missing in spec")
-
-        if ('entity_name' not in spec['model'] or
-                spec['model']['entity_name'] is None):
-            raise InvalidSpecification("'entity_name' missing in spec")
+        self._validate_specification(spec)
 
         name_key = spec['model']['entity_name'].lower()
         self.specs[name_key] = spec
@@ -140,12 +153,87 @@ class VsdWriter(object):
         if 'root' in spec['model'] and spec['model']['root'] is True:
             self.root_spec_name = name_key
 
-    def _get_new_config_object(self, name):
-        name_key = name.lower()
-        if name_key not in self.specs:
-            raise InvalidSpecification("No specification for " + name)
+    def _validate_specification(self, spec):
+        self._validate_specification_field('model', spec)
+        self._validate_specification_field('attributes', spec)
+        self._validate_specification_field('children', spec)
+        self._validate_specification_field('entity_name', spec['model'])
+        self._validate_specification_field('resource_name', spec['model'])
+        self._validate_specification_field('rest_name', spec['model'])
 
-        return ConfigObject(self.specs[name_key])
+    def _validate_specification_field(self, field, section):
+        if field not in section or section[field] is None:
+            raise InvalidSpecification("'%s' missing in specification" % field)
+
+    def _get_specification(self, object_name):
+        name_key = object_name.lower()
+        if name_key not in self.specs:
+            raise InvalidSpecification("No specification for" + object_name)
+
+        return self.specs[name_key]
+
+    def _get_attribute_name(self, spec, local_name):
+        if local_name.lower() == "id":
+            return "ID"
+
+        for attribute in spec['attributes']:
+            remote_name = attribute['name']
+            if remote_name.lower() == local_name.lower():
+                return remote_name
+
+        raise InvalidSpecification("%s spec does not define an attribute %s" %
+                                   (spec['model']['entity_name'],
+                                    local_name))
+
+    def _check_session(self):
+        if self.session is None:
+            raise SessionNotStartedError("Session is not started")
+
+        if self.session.root_object is None:
+            raise SessionNotStartedError("Session is invalid")
+
+    def _get_new_config_object(self, object_name):
+        spec = self._get_specification(object_name)
+        self._check_session()
+
+        return ConfigObject(spec)
+
+    def _get_fetcher(self, object_name, parent_object=None):
+        spec = self._get_specification(object_name)
+        self._check_session()
+
+        if parent_object is None:
+            parent_object = self.session.root_object
+
+        return Fetcher(parent_object, spec)
+
+    def _add_object(self, obj, parent_object=None):
+        self._check_session()
+
+        if parent_object is None:
+            parent_object = self.session.root_object
+
+        parent_object.current_child_name = obj.__resource_name__
+        parent_object.create_child(obj)
+
+    def _select_object(self, object_name, by_field, field_value,
+                       parent_object=None):
+        self._check_session()
+
+        fetcher = self._get_fetcher(object_name, parent_object)
+        spec = self._get_specification(object_name)
+        remote_name = self._get_attribute_name(spec, by_field)
+
+        selector = '%s is "%s"' % (remote_name, field_value)
+        objects = fetcher.get(filter=selector)
+        if len(objects) == 0:
+            raise SelectionError("No %s object exists with %s = %s" %
+                                 (object_name, by_field, field_value))
+        if len(objects) > 1:
+            raise SelectionError("Multiple %s objects exist with %s = %s" %
+                                 (object_name, by_field, field_value))
+
+        return objects[0]
 
 
 class Session(NURESTSession):
@@ -181,28 +269,19 @@ class ConfigObject(NURESTObject):
 
         # self.obj = NURESTObject()
         self.spec = spec
-
-        if 'model' not in self.spec:
-            raise InvalidSpecification("'model' missing in spec")
-
-        if ('entity_name' not in self.spec['model'] or
-                self.spec['model']['entity_name'] is None):
-            raise InvalidSpecification("'entity_name' missing in spec")
-
-        if ('rest_name' not in self.spec['model'] or
-                self.spec['model']['rest_name'] is None):
-            raise InvalidSpecification("'rest_name' missing in spec")
+        self.current_child_name = None
 
         self.__resource_name__ = self.spec['model']['resource_name']
         self.__rest_name__ = self.spec['model']['rest_name']
 
         self._build_attributes()
 
-    def _build_attributes(self):
-        if ('attributes' not in self.spec or
-                self.spec['attributes'] is None):
-            raise InvalidSpecification("'attributes' missing in spec")
+    def __str__(self):
+        """ Prints a ConfigObject """
 
+        return "%s (ID=%s)" % (self.spec['model']['entity_name'], str(self.id))
+
+    def _build_attributes(self):
         for attribute in self.spec['attributes']:
             local_name = attribute['name'].lower()
 
@@ -217,6 +296,9 @@ class ConfigObject(NURESTObject):
                                   is_unique=attribute['unique'],
                                   can_order=attribute['orderable'],
                                   can_search=attribute['filterable'])
+
+            if not hasattr(self, local_name):
+                setattr(self, local_name, None)
 
     @property
     def resource_name(self):
@@ -237,20 +319,39 @@ class ConfigObject(NURESTObject):
 
         return "%s/%s" % (url, name)
 
+    def get_resource_url_for_child_type(self, nurest_object_type):
+
+        # return "%s/%s" % (self.get_resource_url(),
+        #                   nurest_object_type.resource_name)
+        if self.current_child_name is None:
+            raise SessionError("No child name set")
+        return self.get_resource_url_for_child_name(self.current_child_name)
+
     def get_resource_url_for_child_name(self, child_name):
         return "%s/%s" % (self.get_resource_url(), child_name)
+
+    def fetcher_for_rest_name(self, rest_name):
+        return list()
 
 
 class Fetcher(NURESTFetcher):
 
-    @classmethod
-    def managed_object_rest_name(cls):
-        return "enterprise"
+    def __init__(self, parent_object, spec):
+        super(Fetcher, self).__init__()
 
-    @classmethod
-    def managed_class(cls):
+        self.spec = spec
+        self.resource_name = spec['model']['resource_name']
+        self.parent_object = parent_object
 
-        return ConfigObject
+
+    # @classmethod
+    # def managed_object_rest_name(cls):
+    #     return "enterprise"
+
+    # @classmethod
+    # def managed_class(cls):
+
+    #     return ConfigObject
 
     def new(self):
 
@@ -259,11 +360,11 @@ class Fetcher(NURESTFetcher):
 
     def _prepare_url(self):
         """ Prepare url for request """
+        return self.parent_object.get_resource_url_for_child_name(
+            self.resource_name)
 
-        return self.parent_object.get_resource_url_for_child_name("enterprises")
-
-    def set_spec(self, spec):
-        self.spec = spec
+    # def set_spec(self, spec):
+    #     self.spec = spec
 
 
 class Root(NURESTRootObject):
@@ -272,25 +373,27 @@ class Root(NURESTRootObject):
     __resource_name__ = "me"
 
     def __init__(self, spec, enterprise_spec):
-        if 'model' not in spec:
-            raise InvalidSpecification("'model' missing in spec")
-
-        if ('rest_name' not in spec['model'] or
-                spec['model']['rest_name'] is None):
-            raise InvalidSpecification("'rest_name' missing in spec")
-
-        if ('resource_name' not in spec['model'] or
-                spec['model']['resource_name'] is None):
-            raise InvalidSpecification("'resource_name' missing in spec")
-
         Root.__rest_name__ = spec['model']['rest_name']
         Root.__resource_name__ = spec['model']['resource_name']
+        self.__rest_name__ = spec['model']['rest_name']
+        self.__resource_name__ = spec['model']['resource_name']
 
         super(Root, self).__init__()
 
-        self.enterprises = Fetcher.fetcher_with_object(parent_object=self,
-                                                       relationship="root")
-        self.enterprises.set_spec(enterprise_spec)
+        # self.enterprises = Fetcher.fetcher_with_object(parent_object=self,
+        #                                                relationship="root")
+        # self.enterprises.set_spec(enterprise_spec)
+
+    def get_resource_url_for_child_type(self, nurest_object_type):
+
+        # return "%s/%s" % (self.get_resource_url(),
+        #                   nurest_object_type.resource_name)
+        if self.current_child_name is None:
+            raise SessionError("No child name set")
+        return self.get_resource_url_for_child_name(self.current_child_name)
 
     def get_resource_url_for_child_name(self, child_name):
         return "%s/%s" % (self.rest_base_url(), child_name)
+
+    def fetcher_for_rest_name(self, rest_name):
+        return list()
