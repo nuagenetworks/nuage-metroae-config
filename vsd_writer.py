@@ -3,13 +3,8 @@ import os
 
 from bambou import NURESTFetcher, NURESTSession, NURESTObject, NURESTRootObject
 from bambou.exceptions import BambouHTTPError
-# import vspk.v5_0 as vspk
 
 SPEC_EXTENSION = ".spec"
-
-# session = vspk.NUVSDSession(username='csproot',password='csproot',
-# enterprise='csp', api_url='https://localhost:8080')
-# session.start()
 
 
 class TemplateWriterError(Exception):
@@ -47,13 +42,21 @@ class InvalidSpecification(TemplateWriterError):
     pass
 
 
-class SelectionError(TemplateWriterError):
+class MissingSelectionError(TemplateWriterError):
     """
-    Exception class when there is an error selecting an object
+    Exception class when an object was not found during selection
     """
     pass
 
 
+class MultipleSelectionError(TemplateWriterError):
+    """
+    Exception class when multiple objects were found during selection
+    """
+    pass
+
+
+# TODO:
 # class VsdWriter(DeviceWriterBase):
 class VsdWriter(object):
     """
@@ -70,17 +73,18 @@ class VsdWriter(object):
         self.api_prefix = "nuage/api"
         self.specs = dict()
         self.root_spec_name = None
+        self.log_entries = []
 
-    def set_session_params(self, url, user="csproot",
-                           password="csproot", org="csp"):
+    def set_session_params(self, url, username="csproot",
+                           password="csproot", enterprise="csp"):
         """
         Sets the parameters necessary to connect to the VSD.  This must
         be called before writing or an exception will be raised.
         """
         self.session_params = {
-            'username': user,
+            'username': username,
             'password': password,
-            'enterprise': org,
+            'enterprise': enterprise,
             'api_url': url}
 
     def read_api_specifications(self, path_or_file_name):
@@ -103,13 +107,36 @@ class VsdWriter(object):
             raise InvalidSpecification("File or path not found: " +
                                        path_or_file_name)
 
-    # TBD - Implement all required Abstract Base Class prototype functions.
+    #
+    # Implement all required Abstract Base Class prototype functions.
+    #
+
+    def log(self, log_type, message):
+        self.log_entries.append((log_type, message))
+
+    def log_error(self, message):
+        self.log('ERROR', message)
+
+    def log_debug(self, message):
+        self.log('DEBUG', message)
+
+    def get_logs(self):
+        log_output = []
+        for entry in self.log_entries:
+            log_output.append("%s: %s" % entry)
+
+        return '\n'.join(log_output)
 
     def start_session(self):
+        """
+        Starts a session with the VSD
+        """
         if self.session is None:
             if self.session_params is None:
                 raise MissingSessionParamsError(
                     "Cannot start session without parameters")
+
+            self.log_debug("Session start %s" % self.session_params)
 
             if (self.root_spec_name is None or
                     self.root_spec_name not in self.specs):
@@ -128,9 +155,91 @@ class VsdWriter(object):
             raise SessionError(str(e))
 
     def stop_session(self):
+        """
+        Stops the session with the VSD
+        """
+        self.log_debug("Session stopping")
+
         if self.session is not None:
             self.session.reset()
             self.session = None
+
+    def create_object(self, object_name, context=None):
+        """
+        Creates an object in the current context, object is not saved to VSD
+        """
+        self.log_debug("Create object %s [%s]" % (object_name, context))
+        self._check_session()
+
+        new_context = self._get_new_child_context(context)
+
+        new_context.current_object = self._get_new_config_object(object_name)
+        new_context.object_exists = False
+
+        return new_context
+
+    def select_object(self, object_name, by_field, value, context=None):
+        """
+        Selects an object in the current context
+        """
+        self.log_debug("Select object %s %s = %s [%s]" % (object_name,
+                                                          by_field,
+                                                          value,
+                                                          context))
+        self._check_session()
+
+        new_context = self._get_new_child_context(context)
+
+        new_context.current_object = self._get_new_config_object(object_name)
+
+        new_context.current_object = self._select_object(
+            object_name, by_field, value, new_context.parent_object)
+        new_context.object_exists = True
+
+        return new_context
+
+    def delete_object(self, context):
+        """
+        Deletes the object selected in the current context
+        """
+        self.log_debug("Delete object [%s]" % context)
+        self._check_session()
+
+        if context is None or context.current_object is None:
+            raise SessionError("No object for deletion")
+
+        context.current_object.delete()
+        context.current_object = None
+        context.object_exists = False
+
+        return context
+
+    def set_values(self, context, **kwargs):
+        """
+        Sets values in the object selected in the current context and saves it
+        """
+        self.log_debug("Set values [%s] = %s" % (context, kwargs))
+        self._check_session()
+
+        if context is None or context.current_object is None:
+            raise SessionError("No object for setting values")
+
+        self._set_attributes(context.current_object, **kwargs)
+
+        if context.object_exists:
+            self.log_debug("Saving [%s]" % context)
+            context.current_object.save()
+        else:
+            self.log_debug("Creating child [%s]" % context)
+            self._add_object(context.current_object, context.parent_object)
+
+        self.log_debug("Saved [%s]" % context)
+
+        return context
+
+    #
+    # Private functions to do the work
+    #
 
     def _read_specification(self, file_name):
         try:
@@ -192,15 +301,21 @@ class VsdWriter(object):
         if self.session.root_object is None:
             raise SessionNotStartedError("Session is invalid")
 
+    def _get_new_child_context(self, old_context):
+        new_context = Context()
+        if old_context is not None:
+            if old_context.current_object is not None:
+                new_context.parent_object = old_context.current_object
+
+        return new_context
+
     def _get_new_config_object(self, object_name):
         spec = self._get_specification(object_name)
-        self._check_session()
 
         return ConfigObject(spec)
 
     def _get_fetcher(self, object_name, parent_object=None):
         spec = self._get_specification(object_name)
-        self._check_session()
 
         if parent_object is None:
             parent_object = self.session.root_object
@@ -208,8 +323,6 @@ class VsdWriter(object):
         return Fetcher(parent_object, spec)
 
     def _add_object(self, obj, parent_object=None):
-        self._check_session()
-
         if parent_object is None:
             parent_object = self.session.root_object
 
@@ -218,7 +331,6 @@ class VsdWriter(object):
 
     def _select_object(self, object_name, by_field, field_value,
                        parent_object=None):
-        self._check_session()
 
         fetcher = self._get_fetcher(object_name, parent_object)
         spec = self._get_specification(object_name)
@@ -227,11 +339,12 @@ class VsdWriter(object):
         selector = '%s is "%s"' % (remote_name, field_value)
         objects = fetcher.get(filter=selector)
         if len(objects) == 0:
-            raise SelectionError("No %s object exists with %s = %s" %
-                                 (object_name, by_field, field_value))
+            raise MissingSelectionError("No %s object exists with %s = %s" %
+                                        (object_name, by_field, field_value))
         if len(objects) > 1:
-            raise SelectionError("Multiple %s objects exist with %s = %s" %
-                                 (object_name, by_field, field_value))
+            raise MultipleSelectionError(
+                "Multiple %s objects exist with %s = %s" %
+                (object_name, by_field, field_value))
 
         return objects[0]
 
@@ -244,9 +357,42 @@ class VsdWriter(object):
             else:
                 raise SessionError("Missing field %s in %s object" %
                                    (local_name,
-                                    obj.spec['model']['entity_name']))
+                                    obj.get_name()))
+
+
+#
+# Private classes to do the work
+#
+
+class Context(object):
+    """
+    The current object context to track the state of the current and parent
+    objects.  This class is intended to be private and should not be directly
+    modified by external callers of the VSD Writer.
+    """
+    def __init__(self):
+        self.parent_object = None
+        self.current_object = None
+        self.object_exists = False
+
+    def __str__(self):
+        if self.object_exists:
+            marker = ''
+        else:
+            marker = ' **'
+        if self.parent_object is None:
+            parent = "Root"
+        else:
+            parent = str(self.parent_object)
+
+        return "%s / %s%s" % (parent, self.current_object, marker)
+
 
 class Session(NURESTSession):
+    """
+    Wrapper class around Bambou session needed to override with levistate
+    specific methods
+    """
 
     def __init__(self, spec, username, password, enterprise, api_url,
                  api_prefix, version):
@@ -255,29 +401,21 @@ class Session(NURESTSession):
                                       api_url, api_prefix, version)
 
     def create_root_object(self):
-        """ Returns a new instance
-        """
         return Root(self.spec, self.enterprise_spec)
-
-    def get_root_object(self):
-        root_object = ConfigObject(self.spec)
-        # root_object.id = self.root_object.id
-        # root_object.id = ""
-        print str(self.root_object.get_resource_url())
-        print str(root_object.get_resource_url())
-        root_object.fetch()
-        return root_object
 
     def set_enterprise_spec(self, enterprise_spec):
         self.enterprise_spec = enterprise_spec
 
 
 class ConfigObject(NURESTObject):
-
+    """
+    Wrapper class around Bambou object needed to override with levistate
+    specific methods.  This class is effectively a generic config object of any
+    type.
+    """
     def __init__(self, spec):
         super(ConfigObject, self).__init__()
 
-        # self.obj = NURESTObject()
         self.spec = spec
         self.current_child_name = None
 
@@ -287,9 +425,14 @@ class ConfigObject(NURESTObject):
         self._build_attributes()
 
     def __str__(self):
-        """ Prints a ConfigObject """
+        obj_name = ''
+        if hasattr(self, 'name') and getattr(self, 'name') is not None:
+            obj_name = "name=%s, " % getattr(self, 'name')
 
-        return "%s (ID=%s)" % (self.spec['model']['entity_name'], str(self.id))
+        return "%s (%sID=%s)" % (self.get_name(), obj_name, str(self.id))
+
+    def get_name(self):
+        return self.spec['model']['entity_name']
 
     def _build_attributes(self):
         for attribute in self.spec['attributes']:
@@ -319,8 +462,6 @@ class ConfigObject(NURESTObject):
         return self.__rest_name__
 
     def get_resource_url(self):
-        """ Get resource complete url """
-
         name = self.__resource_name__
         url = self.__class__.rest_base_url()
 
@@ -330,11 +471,8 @@ class ConfigObject(NURESTObject):
         return "%s/%s" % (url, name)
 
     def get_resource_url_for_child_type(self, nurest_object_type):
-
-        # return "%s/%s" % (self.get_resource_url(),
-        #                   nurest_object_type.resource_name)
         if self.current_child_name is None:
-            raise SessionError("No child name set")
+            raise SessionError("No child name set for object")
         return self.get_resource_url_for_child_name(self.current_child_name)
 
     def get_resource_url_for_child_name(self, child_name):
@@ -345,7 +483,10 @@ class ConfigObject(NURESTObject):
 
 
 class Fetcher(NURESTFetcher):
-
+    """
+    Wrapper class around Bambou fetcher needed to override with levistate
+    specific methods.  This class is effectively a generic fetcher of any type.
+    """
     def __init__(self, parent_object, spec):
         super(Fetcher, self).__init__()
 
@@ -353,32 +494,19 @@ class Fetcher(NURESTFetcher):
         self.resource_name = spec['model']['resource_name']
         self.parent_object = parent_object
 
-
-    # @classmethod
-    # def managed_object_rest_name(cls):
-    #     return "enterprise"
-
-    # @classmethod
-    # def managed_class(cls):
-
-    #     return ConfigObject
-
     def new(self):
-
-        # managed_class = self.managed_class(self.spec)
         return ConfigObject(self.spec)
 
     def _prepare_url(self):
-        """ Prepare url for request """
         return self.parent_object.get_resource_url_for_child_name(
             self.resource_name)
 
-    # def set_spec(self, spec):
-    #     self.spec = spec
-
 
 class Root(NURESTRootObject):
-
+    """
+    Wrapper class around Bambou root object needed to override with levistate
+    specific methods.
+    """
     __rest_name__ = "me"
     __resource_name__ = "me"
 
@@ -390,14 +518,10 @@ class Root(NURESTRootObject):
 
         super(Root, self).__init__()
 
-        # self.enterprises = Fetcher.fetcher_with_object(parent_object=self,
-        #                                                relationship="root")
-        # self.enterprises.set_spec(enterprise_spec)
+    def get_name(self):
+        return "Root"
 
     def get_resource_url_for_child_type(self, nurest_object_type):
-
-        # return "%s/%s" % (self.get_resource_url(),
-        #                   nurest_object_type.resource_name)
         if self.current_child_name is None:
             raise SessionError("No child name set")
         return self.get_resource_url_for_child_name(self.current_child_name)

@@ -1,91 +1,160 @@
 import argparse
-from vsd_writer import VsdWriter, Fetcher
-import vspk.v5_0 as vspk
+from vsd_writer import TemplateWriterError, VsdWriter
+# import vspk.v5_0 as vspk
+
+DEFAULT_SPEC_PATH = "vsd-api-specifications"
+DEFAULT_TEMPLATE_PATH = "templates"
+DEFAULT_VSD_USERNAME = 'csproot'
+DEFAULT_VSD_PASSWORD = 'csproot'
+DEFAULT_VSD_ENTERPRISE = 'csp'
+DEFAULT_URL = 'https://localhost:8080'
 
 
 def main():
+    # For debugging vspk:
+    #
     # session = vspk.NUVSDSession(username='csproot',
     #                             password='csproot',
     #                             enterprise='csp',
     #                             api_url='https://localhost:8080')
     # session.start()
     # root = session.user
-    # print str(root.get_resource_url())
-    # print str(root.enterprises._prepare_url())
-    # print str(root.enterprises.get_first())
-    # ent = root.enterprises.get_first()
-    # print str(ent.domains._prepare_url())
-    # exit(0)
-    # args = parse_args()
-    vsd_writer = VsdWriter()
-    vsd_writer.read_api_specifications('../vsd-api-specifications')
-    vsd_writer.set_session_params('https://localhost:8080')
-    vsd_writer.start_session()
-    # ent = vsd_writer._get_fetcher("Enterprise").get_first(filter='ID is "7bb7788c-d277-4b36-8268-d5f7ca8d978d"')
-    # print str(ent)
-    # print str(ent.to_dict())
-    # domain = vsd_writer._get_fetcher("Domain", ent).get_first()
-    # print str(domain)
 
-    # domain = vsd_writer._get_new_config_object("Domain")
-    # print str(domain.to_dict())
-    # domain.name = "test3"
-    # domain.templateid = "3b791e3b-93a5-4d22-b38e-2336aad7132d"
-    # ent.current_child_name = "domains"
-    # ent.create_child(domain)
-    # vsd_writer._add_object(domain, ent)
-
-    # domain.description = "It works"
-    # domain.save()
-
-    # new_ent = vsd_writer._get_new_config_object("Enterprise")
-    # new_ent.name = "test_ent"
-    # vsd_writer._add_object(new_ent)
-
-    # print str(ent)
-    # print str(ent.to_dict())
-
-    # ents = vsd_writer._get_fetcher("Enterprise").get()
-    # for ent in ents:
-    #     print str(ent)
-    #     print str(ent.to_dict())
-
-
-    # obj = vsd_writer._get_new_config_object("Me")
-    # print str(obj)
-    # print str(vsd_writer.session.root_object._attributes)
-    # print str(vsd_writer.session.get_root_object())
-    # print str(vsd_writer.session.root_object.get_resource_url())
-    # print str(vsd_writer.session.root_object.enterprises._prepare_url())
-    # print str(vsd_writer.session.root_object.enterprises.get_first())
-    # ent = vsd_writer.session.root_object.enterprises.get(filter='id is 7bb7788c-d277-4b36-8268-d5f7ca8d978d')
-    # print str(ent[0].to_dict())
-    # fetch = Fetcher()
-    # fetch.parent_object = ent
-    # print str(fetch._prepare_url())
-
-    # ent = vsd_writer._get_fetcher("Enterprise").get_first(filter='name is "test_ent"')
-    # print str(ent)
-    # ent.delete()
-
-    # ent = vsd_writer._get_fetcher("Enterprise").get_first()
-    # print str(ent.name)
-    # dom = vsd_writer._get_fetcher("Domain", ent).get_first(filter='name is "test2"')
-    # print str(dom.name)
-    # dom.delete()
-
-    ent = vsd_writer._select_object("Enterprise", "id", "7bb7788c-d277-4b36-8268-d5f7ca8d978d")
-    dom = vsd_writer._select_object("Domain", "name", "test2", ent)
-    print str(dom.description)
-    # vsd_writer._set_attributes(dom, description='Setting test')
-    # dom.save()
+    args = parse_args()
+    levistate = Levistate(args)
+    levistate.run()
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Runs metro-ansible steps')
-    parser.add_argument('-m', '--metro-path', dest='metro_path',
+    parser = argparse.ArgumentParser(
+        description='Command-line tool for running template commands')
+    parser.add_argument('-tp', '--template-path', dest='template_path',
                         action='store', required=False,
-                        help='Path containing the metro deployment')
+                        default=DEFAULT_TEMPLATE_PATH,
+                        help='Path containing template files')
+    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+                        action='store', required=False,
+                        default=DEFAULT_SPEC_PATH,
+                        help='Path containing object specifications')
+    parser.add_argument('-v', '--vsd-url', dest='vsd_url',
+                        action='store', required=False,
+                        default=DEFAULT_URL,
+                        help='URL to VSD REST API')
+    parser.add_argument('-u', '--username', dest='username',
+                        action='store', required=False,
+                        default=DEFAULT_VSD_USERNAME,
+                        help='Username for VSD')
+    parser.add_argument('-p', '--password', dest='password',
+                        action='store', required=False,
+                        default=DEFAULT_VSD_PASSWORD,
+                        help='Password for VSD')
+    parser.add_argument('-e', '--enterprise', dest='enterprise',
+                        action='store', required=False,
+                        default=DEFAULT_VSD_ENTERPRISE,
+                        help='Enterprise for VSD')
+    parser.add_argument('-r', '--revert', dest='revert',
+                        action='store_true', required=False,
+                        help='Revert (delete) templates instead of applying')
+
+    return parser.parse_args()
+
+
+class Levistate(object):
+
+    def __init__(self, args):
+        self.args = args
+        self.vsd_writer = VsdWriter()
+
+    def run(self):
+        try:
+            self.start_vsd_session()
+
+            # self.apply_enterprise_template(enterprise_name='metro-test')
+            if self.args.revert:
+                # self.revert_subnet_template(
+                #     enterprise_name='metro-test',
+                #     domain_name='demo_domain_1',
+                #     subnet_name='demo_subnet_1')
+                self.revert_domain_template(
+                    enterprise_name='metro-test',
+                    domain_name='demo_domain_1')
+            else:
+                self.apply_domain_template(
+                    enterprise_name='metro-test',
+                    domain_name='demo_domain_1',
+                    template_id='3b791e3b-93a5-4d22-b38e-2336aad7132d',
+                    description='This is a demo domain')
+                # self.apply_subnet_template(
+                #     enterprise_name='metro-test',
+                #     domain_name='domaintemplate',
+                #     subnet_name='subnettemplate',
+                #     address='1.1.1.1',
+                #     netmask='255.255.255.0',
+                #     description='This is a demo subnet template')
+
+        except TemplateWriterError as e:
+            self.vsd_writer.log_error(str(e))
+        except Exception as e:
+            self.vsd_writer.log_error(str(e))
+
+        self.stop_vsd_session()
+        print ""
+        print self.vsd_writer.get_logs()
+
+    def start_vsd_session(self):
+        self.vsd_writer.read_api_specifications(self.args.spec_path)
+        self.vsd_writer.set_session_params(self.args.vsd_url)
+        self.vsd_writer.start_session()
+
+    def stop_vsd_session(self):
+        self.vsd_writer.stop_session()
+
+    def apply_enterprise_template(self, **kwargs):
+        print "Applying enterprise template: %s" % kwargs
+        context = self.vsd_writer.create_object("Enterprise")
+        context = self.vsd_writer.set_values(context,
+                                             name=kwargs['enterprise_name'])
+
+    def apply_domain_template(self, **kwargs):
+        print "Applying domain template: %s" % kwargs
+        context = self.vsd_writer.select_object("Enterprise", "name",
+                                                kwargs['enterprise_name'])
+        context = self.vsd_writer.create_object("Domain", context)
+        context = self.vsd_writer.set_values(context,
+                                             name=kwargs['domain_name'],
+                                             templateID=kwargs['template_id'],
+                                             description=kwargs['description'])
+
+    def revert_domain_template(self, **kwargs):
+        print "Reverting domain template: %s" % kwargs
+        context = self.vsd_writer.select_object("Enterprise", "name",
+                                                kwargs['enterprise_name'])
+        context = self.vsd_writer.select_object("Domain", "name",
+                                                kwargs['domain_name'], context)
+        context = self.vsd_writer.delete_object(context)
+
+    def apply_subnet_template(self, **kwargs):
+        print "Applying subnet template: %s" % kwargs
+        context = self.vsd_writer.select_object("Enterprise", "name",
+                                                kwargs['enterprise_name'])
+        context = self.vsd_writer.select_object("DomainTemplate", "name",
+                                                kwargs['domain_name'], context)
+        context = self.vsd_writer.create_object("SubnetTemplate", context)
+        context = self.vsd_writer.set_values(context,
+                                             name=kwargs['subnet_name'],
+                                             description=kwargs['description'],
+                                             address=kwargs['address'],
+                                             netmask=kwargs['netmask'])
+
+    def revert_subnet_template(self, **kwargs):
+        print "Reverting subnet template: %s" % kwargs
+        context = self.vsd_writer.select_object("Enterprise", "name",
+                                                kwargs['enterprise_name'])
+        context = self.vsd_writer.select_object("Domain", "name",
+                                                kwargs['domain_name'], context)
+        context = self.vsd_writer.select_object("SubnetTemplate", "name",
+                                                kwargs['subnet_name'], context)
+        context = self.vsd_writer.delete_object(context)
 
 
 if __name__ == "__main__":
