@@ -218,7 +218,7 @@ class VsdWriter(object):
         """
         Sets values in the object selected in the current context and saves it
         """
-        self.log_debug("Set values [%s] = %s" % (context, kwargs))
+        self.log_debug("Set value [%s] = %s" % (context, kwargs))
         self._check_session()
 
         if context is None or context.current_object is None:
@@ -232,10 +232,28 @@ class VsdWriter(object):
         else:
             self.log_debug("Creating child [%s]" % context)
             self._add_object(context.current_object, context.parent_object)
+            context.object_exists = True
 
         self.log_debug("Saved [%s]" % context)
 
         return context
+
+    def get_value(self, field, context):
+        """
+        Gets a value from the object selected in the current context
+        """
+        self.log_debug("Get value %s [%s]" % (field, context))
+        self._check_session()
+
+        if (context is None or context.current_object is None or
+                not context.object_exists):
+            raise SessionError("No object for getting values")
+
+        value = self._get_attribute(context.current_object, field)
+
+        self.log_debug("Value %s = %s" % (field, str(value)))
+
+        return value
 
     #
     # Private functions to do the work
@@ -358,6 +376,16 @@ class VsdWriter(object):
                 raise SessionError("Missing field %s in %s object" %
                                    (local_name,
                                     obj.get_name()))
+
+    def _get_attribute(self, obj, field):
+        local_name = field.lower()
+        self._get_attribute_name(obj.spec, local_name)
+
+        if hasattr(obj, local_name):
+            return getattr(obj, local_name)
+        else:
+            raise SessionError("Missing field %s in %s object" %
+                               (field, obj.get_name()))
 
 
 #

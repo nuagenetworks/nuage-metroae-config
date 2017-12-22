@@ -69,20 +69,22 @@ class Levistate(object):
         try:
             self.start_vsd_session()
 
-            # self.apply_enterprise_template(enterprise_name='metro-test')
             if self.args.revert:
                 # self.revert_subnet_template(
                 #     enterprise_name='metro-test',
                 #     domain_name='demo_domain_1',
                 #     subnet_name='demo_subnet_1')
                 self.revert_domain_template(
-                    enterprise_name='metro-test',
+                    enterprise_name='demo_ent',
                     domain_name='demo_domain_1')
+                self.revert_enterprise_template(enterprise_name='demo_ent')
             else:
+                self.apply_enterprise_template(enterprise_name='demo_ent',
+                                               description='Demo enterprise')
                 self.apply_domain_template(
-                    enterprise_name='metro-test',
+                    enterprise_name='demo_ent',
                     domain_name='demo_domain_1',
-                    template_id='3b791e3b-93a5-4d22-b38e-2336aad7132d',
+                    # template_id='3b791e3b-93a5-4d22-b38e-2336aad7132d',
                     description='This is a demo domain')
                 # self.apply_subnet_template(
                 #     enterprise_name='metro-test',
@@ -113,24 +115,42 @@ class Levistate(object):
         print "Applying enterprise template: %s" % kwargs
         context = self.vsd_writer.create_object("Enterprise")
         context = self.vsd_writer.set_values(context,
-                                             name=kwargs['enterprise_name'])
+                                             name=kwargs['enterprise_name'],
+                                             description=kwargs['description'])
+
+    def revert_enterprise_template(self, **kwargs):
+        print "Reverting enterprise template: %s" % kwargs
+        context = self.vsd_writer.select_object("Enterprise", "name",
+                                                kwargs['enterprise_name'])
+        context = self.vsd_writer.delete_object(context)
 
     def apply_domain_template(self, **kwargs):
         print "Applying domain template: %s" % kwargs
-        context = self.vsd_writer.select_object("Enterprise", "name",
-                                                kwargs['enterprise_name'])
-        context = self.vsd_writer.create_object("Domain", context)
+        ent_context = self.vsd_writer.select_object("Enterprise", "name",
+                                                    kwargs['enterprise_name'])
+        context = self.vsd_writer.create_object("DomainTemplate", ent_context)
+        template_name = "template-" + kwargs['domain_name']
+        template_descr = "Template for domain " + kwargs['domain_name']
+        context = self.vsd_writer.set_values(context,
+                                             name=template_name,
+                                             description=template_descr)
+        template_id = self.vsd_writer.get_value('id', context)
+        context = self.vsd_writer.create_object("Domain", ent_context)
         context = self.vsd_writer.set_values(context,
                                              name=kwargs['domain_name'],
-                                             templateID=kwargs['template_id'],
+                                             templateID=template_id,
                                              description=kwargs['description'])
 
     def revert_domain_template(self, **kwargs):
         print "Reverting domain template: %s" % kwargs
         context = self.vsd_writer.select_object("Enterprise", "name",
                                                 kwargs['enterprise_name'])
-        context = self.vsd_writer.select_object("Domain", "name",
-                                                kwargs['domain_name'], context)
+        # context = self.vsd_writer.select_object("Domain", "name",
+        #                                         kwargs['domain_name'], context)
+        # context = self.vsd_writer.delete_object(context)
+        template_name = "template-" + kwargs['domain_name']
+        context = self.vsd_writer.select_object("DomainTemplate", "name",
+                                                template_name, context)
         context = self.vsd_writer.delete_object(context)
 
     def apply_subnet_template(self, **kwargs):
