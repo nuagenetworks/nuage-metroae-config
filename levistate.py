@@ -70,10 +70,10 @@ class Levistate(object):
             self.start_vsd_session()
 
             if self.args.revert:
-                # self.revert_subnet_template(
-                #     enterprise_name='metro-test',
-                #     domain_name='demo_domain_1',
-                #     subnet_name='demo_subnet_1')
+                self.revert_acl_template(
+                    enterprise_name='demo_ent',
+                    domain_name='demo_domain_1',
+                    policy_name='demo_policy_1')
                 self.revert_domain_template(
                     enterprise_name='demo_ent',
                     domain_name='demo_domain_1')
@@ -84,15 +84,17 @@ class Levistate(object):
                 self.apply_domain_template(
                     enterprise_name='demo_ent',
                     domain_name='demo_domain_1',
-                    # template_id='3b791e3b-93a5-4d22-b38e-2336aad7132d',
                     description='This is a demo domain')
-                # self.apply_subnet_template(
-                #     enterprise_name='metro-test',
-                #     domain_name='domaintemplate',
-                #     subnet_name='subnettemplate',
-                #     address='1.1.1.1',
-                #     netmask='255.255.255.0',
-                #     description='This is a demo subnet template')
+                self.apply_acl_template(
+                    enterprise_name='demo_ent',
+                    domain_name='demo_domain_1',
+                    policy_name='demo_policy_1',
+                    description='This is a demo policy',
+                    protocol='6',
+                    sourcePort='*',
+                    destinationPort='80',
+                    action='FORWARD',
+                    etherType='*')
 
         except TemplateWriterError as e:
             self.vsd_writer.log_error(str(e))
@@ -154,27 +156,59 @@ class Levistate(object):
                                                 template_name, ent_context)
         context = self.vsd_writer.delete_object(context)
 
-    def apply_subnet_template(self, **kwargs):
-        print "Applying subnet template: %s" % kwargs
+    def apply_acl_template(self, **kwargs):
+        print "Applying acl template: %s" % kwargs
         context = self.vsd_writer.select_object("Enterprise", "name",
-                                                kwargs['enterprise_name'])
-        context = self.vsd_writer.select_object("DomainTemplate", "name",
-                                                kwargs['domain_name'], context)
-        context = self.vsd_writer.create_object("SubnetTemplate", context)
-        context = self.vsd_writer.set_values(context,
-                                             name=kwargs['subnet_name'],
-                                             description=kwargs['description'],
-                                             address=kwargs['address'],
-                                             netmask=kwargs['netmask'])
+                                                    kwargs['enterprise_name'])
+        dom_context = self.vsd_writer.select_object("Domain", "name",
+                                                    kwargs['domain_name'],
+                                                    context)
 
-    def revert_subnet_template(self, **kwargs):
+        context = self.vsd_writer.create_object("IngressACLTemplate",
+                                                dom_context)
+        context = self.vsd_writer.set_values(context,
+                                             name=kwargs['policy_name'],
+                                             description=kwargs['description'])
+        context = self.vsd_writer.create_object("IngressACLEntryTemplate",
+                                                context)
+        context = self.vsd_writer.set_values(context,
+                                             dscp='*',
+                                             # protocol=kwargs['protocol'],
+                                             # sourcePort=kwargs['sourcePort'],
+                                             # destinationPort=kwargs['destinationPort'],
+                                             locationType='ANY',
+                                             action=kwargs['action'],
+                                             etherType=kwargs['etherType'])
+        context = self.vsd_writer.create_object("EgressACLTemplate",
+                                                dom_context)
+        context = self.vsd_writer.set_values(context,
+                                             name=kwargs['policy_name'],
+                                             description=kwargs['description'])
+        context = self.vsd_writer.create_object("EgressACLEntryTemplate",
+                                                context)
+        context = self.vsd_writer.set_values(context,
+                                             dscp='*',
+                                             # protocol=kwargs['protocol'],
+                                             # sourcePort=kwargs['sourcePort'],
+                                             # destinationPort=kwargs['destinationPort'],
+                                             locationType='ANY',
+                                             action=kwargs['action'],
+                                             etherType=kwargs['etherType'])
+
+    def revert_acl_template(self, **kwargs):
         print "Reverting subnet template: %s" % kwargs
         context = self.vsd_writer.select_object("Enterprise", "name",
                                                 kwargs['enterprise_name'])
-        context = self.vsd_writer.select_object("Domain", "name",
-                                                kwargs['domain_name'], context)
-        context = self.vsd_writer.select_object("SubnetTemplate", "name",
-                                                kwargs['subnet_name'], context)
+        dom_context = self.vsd_writer.select_object("Domain", "name",
+                                                    kwargs['domain_name'],
+                                                    context)
+        context = self.vsd_writer.select_object("EgressACLTemplate", "name",
+                                                kwargs['policy_name'],
+                                                dom_context)
+        context = self.vsd_writer.delete_object(context)
+        context = self.vsd_writer.select_object("IngressACLTemplate", "name",
+                                                kwargs['policy_name'],
+                                                dom_context)
         context = self.vsd_writer.delete_object(context)
 
 
