@@ -143,14 +143,15 @@ class Levistate(object):
 
     def revert_domain_template(self, **kwargs):
         print "Reverting domain template: %s" % kwargs
-        context = self.vsd_writer.select_object("Enterprise", "name",
-                                                kwargs['enterprise_name'])
-        # context = self.vsd_writer.select_object("Domain", "name",
-        #                                         kwargs['domain_name'], context)
-        # context = self.vsd_writer.delete_object(context)
+        ent_context = self.vsd_writer.select_object("Enterprise", "name",
+                                                    kwargs['enterprise_name'])
+        context = self.vsd_writer.select_object("Domain", "name",
+                                                kwargs['domain_name'],
+                                                ent_context)
+        context = self.vsd_writer.delete_object(context)
         template_name = "template-" + kwargs['domain_name']
         context = self.vsd_writer.select_object("DomainTemplate", "name",
-                                                template_name, context)
+                                                template_name, ent_context)
         context = self.vsd_writer.delete_object(context)
 
     def apply_subnet_template(self, **kwargs):
