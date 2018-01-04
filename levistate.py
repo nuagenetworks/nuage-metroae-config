@@ -1,5 +1,5 @@
 import argparse
-from vsd_writer import TemplateWriterError, VsdWriter
+from vsd_writer import DeviceWriterError, VsdWriter
 # import vspk.v5_0 as vspk
 
 DEFAULT_SPEC_PATH = "vsd-api-specifications"
@@ -96,7 +96,7 @@ class Levistate(object):
                     action='FORWARD',
                     etherType='*')
 
-        except TemplateWriterError as e:
+        except DeviceWriterError as e:
             self.vsd_writer.log_error(str(e))
         except Exception as e:
             self.vsd_writer.log_error(str(e))

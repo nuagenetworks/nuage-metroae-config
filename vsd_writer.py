@@ -3,62 +3,31 @@ import os
 
 from bambou.exceptions import BambouHTTPError
 from bambou_adapter import ConfigObject, Fetcher, Session
+from device_writer_base import (DeviceWriterBase,
+                                DeviceWriterError,
+                                MissingSelectionError,
+                                MultipleSelectionError,
+                                SessionError,
+                                SessionNotStartedError)
 
 SPEC_EXTENSION = ".spec"
 
 
-class TemplateWriterError(Exception):
-    """
-    Exception class for all template writing errors
-    """
-    pass
-
-
-class MissingSessionParamsError(TemplateWriterError):
+class MissingSessionParamsError(DeviceWriterError):
     """
     Exception class when session is started without parameters specified
     """
     pass
 
 
-class SessionNotStartedError(TemplateWriterError):
-    """
-    Exception class when session is used when not started.
-    """
-    pass
-
-
-class SessionError(TemplateWriterError):
-    """
-    Exception class when there is an error in the session
-    """
-    pass
-
-
-class InvalidSpecification(TemplateWriterError):
+class InvalidSpecification(DeviceWriterError):
     """
     Exception class when there is an error parsing a VSD API specification
     """
     pass
 
 
-class MissingSelectionError(TemplateWriterError):
-    """
-    Exception class when an object was not found during selection
-    """
-    pass
-
-
-class MultipleSelectionError(TemplateWriterError):
-    """
-    Exception class when multiple objects were found during selection
-    """
-    pass
-
-
-# TODO:
-# class VsdWriter(DeviceWriterBase):
-class VsdWriter(object):
+class VsdWriter(DeviceWriterBase):
     """
     Writes configuration to a VSD.  This class is a derived class from
     the DeviceWriterBase Abstract Base Class.
@@ -110,23 +79,6 @@ class VsdWriter(object):
     #
     # Implement all required Abstract Base Class prototype functions.
     #
-
-    def log(self, log_type, message):
-        self.log_entries.append((log_type, message))
-
-    def log_error(self, message):
-        self.log('ERROR', message)
-
-    def log_debug(self, message):
-        self.log('DEBUG', message)
-
-    def get_logs(self):
-        log_output = []
-        for entry in self.log_entries:
-            log_output.append("%s: %s" % entry)
-
-        return '\n'.join(log_output)
-
     def start_session(self):
         """
         Starts a session with the VSD
