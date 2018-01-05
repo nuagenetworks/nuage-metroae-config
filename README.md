@@ -47,14 +47,14 @@ Levistate command-line tool usage:
 
 
 ## File Descriptions
-* levistate.py: Command-line tool for issuing template commands. (work in
+* *levistate.py*: Command-line tool for issuing template commands. (work in
 progress)
-* device_writer_base.py: Base class for all template writers.  Not to be used
+* *device_writer_base.py*: Base class for all template writers.  Not to be used
 on its own, use a derived class writer.
-* vsd_writer.py: Writes templates to a VSD using common APIs from base class.
-* bambou_adapter.py: A set of wrapper classes around the Bambou library to make
+* *vsd_writer.py*: Writes templates to a VSD using common APIs from base class.
+* *bambou_adapter.py*: A set of wrapper classes around the Bambou library to make
 it work generically for any configuration object based on specifications.
-* tests/test_bambou_adapter.py: Unit-tests for the Bambou adpater classes.
+* *tests/test_bambou_adapter.py*: Unit-tests for the Bambou adpater classes.
 
 ## Levistate Example
 
