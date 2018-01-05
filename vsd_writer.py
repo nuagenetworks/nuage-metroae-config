@@ -94,6 +94,10 @@ class VsdWriter(DeviceWriterBase):
                     self.root_spec_name not in self.specs):
                 raise InvalidSpecification("No root specification loaded")
 
+            if ("enterprise" not in self.specs):
+                raise InvalidSpecification(
+                    "No enterprise specification loaded")
+
             self.session = Session(spec=self.specs[self.root_spec_name],
                                    api_prefix=self.api_prefix,
                                    version=self.version,
@@ -321,7 +325,7 @@ class VsdWriter(DeviceWriterBase):
     def _set_attributes(self, obj, **kwargs):
         for field, value in kwargs.iteritems():
             local_name = field.lower()
-            self._get_attribute_name(obj.spec, local_name)
+            self._get_attribute_name(obj.spec, field)
             if hasattr(obj, local_name):
                 setattr(obj, local_name, value)
             else:
