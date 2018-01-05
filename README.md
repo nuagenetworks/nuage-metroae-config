@@ -22,6 +22,8 @@ Additional packages for unit-test
 
 ## Usage
 
+Levistate command-line tool usage:
+
 `
 usage: levistate.py [-h] [-tp TEMPLATE_PATH] [-sp SPEC_PATH] [-v VSD_URL]
                     [-u USERNAME] [-p PASSWORD] [-e ENTERPRISE] [-r]
@@ -63,7 +65,9 @@ vsd-api-specifications for operation
 `
 levistate$ python ./levistate.py -sp ../vsd-api-specifications
 Applying enterprise template: {'description': 'Demo enterprise', 'enterprise_name': 'demo_ent'}
+
 Applying domain template: {'domain_name': 'demo_domain_1', 'enterprise_name': 'demo_ent', 'description': 'This is a demo domain'}
+
 Applying acl template: {'protocol': '6', 'description': 'This is a demo policy', 'enterprise_name': 'demo_ent', 'etherType': '*', 'domain_name': 'demo_domain_1', 'policy_name': 'demo_policy_1', 'action': 'FORWARD', 'destinationPort': '80', 'sourcePort': '*'}
 `
 
@@ -72,6 +76,8 @@ Revert (delete) objects configured during application
 `
 levistate$ python ./levistate.py -sp ../vsd-api-specifications -r
 Reverting subnet template: {'domain_name': 'demo_domain_1', 'enterprise_name': 'demo_ent', 'policy_name': 'demo_policy_1'}
+
 Reverting domain template: {'domain_name': 'demo_domain_1', 'enterprise_name': 'demo_ent'}
+
 Reverting enterprise template: {'enterprise_name': 'demo_ent'}
 `
