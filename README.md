@@ -90,3 +90,39 @@ Revert (delete) objects configured during application
                                 'enterprise_name': 'demo_ent'}
     Reverting enterprise template: {'enterprise_name': 'demo_ent'}
 
+## Unit-tests
+
+Unit-tests can be run using 'pytest'.  Bambou adapter tests are complete, the
+VSD writer tests are in progress.
+
+    levistate$ pytest -v
+    ============================================================================================== test session starts ===============================================================================================
+    platform darwin -- Python 2.7.10, pytest-3.2.5, py-1.5.2, pluggy-0.4.0 -- /Users/mpiecuch/virtualenvs/metro/bin/python
+    cachedir: .cache
+    rootdir: /Users/mpiecuch/levistate, inifile:
+    collected 22 items
+
+    tests/test_bambou_adapter.py::TestSession::test_start__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestSession::test_start__invalid_pass <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_delete_child__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_save_parent__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_save_child__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_delete_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_new_object__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_save_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_save_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_create_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_create_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_delete_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_create_child__conflict <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_delete_parent__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestConfigObject::test_create_parent__conflict <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestFetcher::test_find_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestFetcher::test_find_child__invalid_parent <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestFetcher::test_find_parent__multiple <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestFetcher::test_find_child__multiple <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestFetcher::test_find_child__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestFetcher::test_find_parent__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+    tests/test_bambou_adapter.py::TestFetcher::test_find_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
+
+    =========================================================================================== 22 passed in 0.28 seconds ============================================================================================
