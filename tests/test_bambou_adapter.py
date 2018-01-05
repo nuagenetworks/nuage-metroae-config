@@ -147,17 +147,17 @@ class RequestSpy(object):
 
     Example:
 
-    def update(self, session):
-        obj = ConfigObject(ENTERPRISE_SPEC_TEST)
-        obj.id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
-        obj.name = "new_name"
-        obj.save()
+        def update(self, session):
+            obj = ConfigObject(ENTERPRISE_SPEC_TEST)
+            obj.id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
+            obj.name = "new_name"
+            obj.save()
 
-    def test__spy(self):
-        req_spy = RequestSpy()
-        req_spy.spy("enterprises/741fc5d9-fce7-4f98-9172-e962be6ee3e2",
-                    self.update)
-        assert False
+        def test__spy(self):
+            req_spy = RequestSpy()
+            req_spy.spy("enterprises/741fc5d9-fce7-4f98-9172-e962be6ee3e2",
+                        self.update)
+            assert False
 
     """
 
@@ -881,57 +881,3 @@ class TestFetcher(object):
         assert '404' in str(e)
         assert 'enterprise not found' in str(e)
         assert parent_test_id in str(e)
-
-    # def create(self, session):
-    #     parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
-    #     parent_obj.id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
-    #     parent_obj.name = "new_name"
-
-    #     obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
-    #     obj.name = "test_domain_template"
-
-    #     resource_name = DOMAINTMPL_SPEC_TEST["model"]["resource_name"]
-    #     parent_obj.current_child_name = resource_name
-    #     parent_obj.create_child(obj)
-
-    # def test__spy(self):
-    #     req_spy = RequestSpy()
-    #     req_spy.spy("enterprises/741fc5d9-fce7-4f98-9172-e962be6ee3e2/domaintemplates", self.create)
-    #     assert False
-
-    # def update(self, session):
-    #     obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
-    #     obj.id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
-    #     obj.name = "new_name"
-    #     obj.save()
-
-    # def test__spy(self):
-    #     req_spy = RequestSpy()
-    #     req_spy.spy("domaintemplates/e5b683ed-5c24-4d43-bac9-181b6d4eb63b",
-    #                 self.update)
-    #     assert False
-
-    # def find(self, session):
-    #     parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
-    #     parent_obj.id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
-    #     parent_obj.name = "new_name"
-    #     fetcher = Fetcher(parent_obj, DOMAINTMPL_SPEC_TEST)
-    #     objects = fetcher.get(filter='name is "new_names"')
-
-    # def test__spy(self):
-    #     req_spy = RequestSpy()
-    #     req_spy.spy("enterprises/741fc5d9-fce7-4f98-9172-e962be6ee3e2/domaintemplates",
-    #                 self.find)
-    #     assert False
-
-    # def delete(self, session):
-    #     obj = ConfigObject(ENTERPRISE_SPEC_TEST)
-    #     obj.id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
-    #     obj.name = "new_name"
-    #     obj.delete()
-
-    # def test__spy(self):
-    #     req_spy = RequestSpy()
-    #     req_spy.spy("enterprises/741fc5d9-fce7-4f98-9172-e962be6ee3e2?responseChoice=1",
-    #                 self.delete)
-    #     assert False
