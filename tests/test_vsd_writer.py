@@ -52,7 +52,7 @@ def setup_standard_session(vsd_writer, mock_patch):
     mock_session.start.assert_called_once()
     mock_session.set_enterprise_spec.assert_called_once_with(
         vsd_writer.specs['enterprise'])
-    mock_session.root_object.spec = vsd_writer.specs['me']
+    assert mock_session.root_object.spec == vsd_writer.specs['me']
 
     mock_session.start.assert_called_once()
 

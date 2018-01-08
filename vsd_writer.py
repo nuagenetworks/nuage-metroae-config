@@ -108,6 +108,7 @@ class VsdWriter(DeviceWriterBase):
 
         try:
             self.session.start()
+            self.session.root_object.spec = self.specs[self.root_spec_name]
         except BambouHTTPError as e:
             self.session = None
             raise SessionError(str(e))
