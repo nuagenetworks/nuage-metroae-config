@@ -5,6 +5,8 @@ from bambou.exceptions import BambouHTTPError
 from bambou_adapter import ConfigObject, Fetcher, Session
 from device_writer_base import (DeviceWriterBase,
                                 DeviceWriterError,
+                                InvalidAttributeError,
+                                InvalidObjectError,
                                 MissingSelectionError,
                                 MultipleSelectionError,
                                 SessionError,
@@ -161,7 +163,8 @@ class VsdWriter(DeviceWriterBase):
         self.log_debug("Delete object [%s]" % context)
         self._check_session()
 
-        if context is None or context.current_object is None:
+        if (context is None or context.current_object is None or
+                not context.object_exists):
             raise SessionError("No object for deletion")
 
         context.current_object.delete()
@@ -251,7 +254,7 @@ class VsdWriter(DeviceWriterBase):
     def _get_specification(self, object_name):
         name_key = object_name.lower()
         if name_key not in self.specs:
-            raise InvalidSpecification("No specification for" + object_name)
+            raise InvalidObjectError("No specification for " + object_name)
 
         return self.specs[name_key]
 
@@ -264,9 +267,8 @@ class VsdWriter(DeviceWriterBase):
             if remote_name.lower() == local_name.lower():
                 return remote_name
 
-        raise InvalidSpecification("%s spec does not define an attribute %s" %
-                                   (spec['model']['entity_name'],
-                                    local_name))
+        raise InvalidAttributeError("%s spec does not define an attribute %s" %
+                                    (spec['model']['entity_name'], local_name))
 
     def _check_session(self):
         if self.session is None:
@@ -274,6 +276,16 @@ class VsdWriter(DeviceWriterBase):
 
         if self.session.root_object is None:
             raise SessionNotStartedError("Session is invalid")
+
+    def _check_child_object(self, parent_spec, child_spec):
+        child_rest_name = child_spec['model']['rest_name']
+        for child_section in parent_spec['children']:
+            if child_section['rest_name'] == child_rest_name:
+                return
+
+        raise InvalidObjectError("Parent object %s has no child object %s" %
+                                 (parent_spec['model']['entity_name'],
+                                  child_spec['model']['entity_name']))
 
     def _get_new_child_context(self, old_context):
         new_context = Context()
@@ -294,11 +306,15 @@ class VsdWriter(DeviceWriterBase):
         if parent_object is None:
             parent_object = self.session.root_object
 
+        self._check_child_object(parent_object.spec, spec)
+
         return Fetcher(parent_object, spec)
 
     def _add_object(self, obj, parent_object=None):
         if parent_object is None:
             parent_object = self.session.root_object
+
+        self._check_child_object(parent_object.spec, obj.spec)
 
         parent_object.current_child_name = obj.__resource_name__
         parent_object.create_child(obj)
@@ -306,8 +322,8 @@ class VsdWriter(DeviceWriterBase):
     def _select_object(self, object_name, by_field, field_value,
                        parent_object=None):
 
-        fetcher = self._get_fetcher(object_name, parent_object)
         spec = self._get_specification(object_name)
+        fetcher = self._get_fetcher(object_name, parent_object)
         remote_name = self._get_attribute_name(spec, by_field)
 
         selector = '%s is "%s"' % (remote_name, field_value)
@@ -334,8 +350,8 @@ class VsdWriter(DeviceWriterBase):
                                     obj.get_name()))
 
     def _get_attribute(self, obj, field):
+        self._get_attribute_name(obj.spec, field)
         local_name = field.lower()
-        self._get_attribute_name(obj.spec, local_name)
 
         if hasattr(obj, local_name):
             return getattr(obj, local_name)

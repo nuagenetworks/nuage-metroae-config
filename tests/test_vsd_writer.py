@@ -5,6 +5,8 @@ import pytest
 from bambou.exceptions import BambouHTTPError
 from levistate.vsd_writer import (Context,
                                   InvalidSpecification,
+                                  InvalidAttributeError,
+                                  InvalidObjectError,
                                   MissingSelectionError,
                                   MissingSessionParamsError,
                                   MultipleSelectionError,
@@ -50,6 +52,7 @@ def setup_standard_session(vsd_writer, mock_patch):
     mock_session.start.assert_called_once()
     mock_session.set_enterprise_spec.assert_called_once_with(
         vsd_writer.specs['enterprise'])
+    mock_session.root_object.spec = vsd_writer.specs['me']
 
     mock_session.start.assert_called_once()
 
@@ -273,7 +276,7 @@ class TestVsdWriterCreateObject(object):
         vsd_writer = VsdWriter()
         setup_standard_session(vsd_writer)
 
-        with pytest.raises(InvalidSpecification) as e:
+        with pytest.raises(InvalidObjectError) as e:
             vsd_writer.create_object("Foobar")
 
         assert "No specification" in str(e)
@@ -315,7 +318,9 @@ class TestVsdWriterSelectObject(object):
 
         context = Context()
         context.parent_object = "grandparent object"
-        context.current_object = "parent object"
+        mock_parent = MagicMock()
+        context.current_object = mock_parent
+        context.current_object.spec = vsd_writer.specs['enterprise']
         context.object_exists = True
 
         mock_fetcher.return_value = mock_fetcher
@@ -324,11 +329,11 @@ class TestVsdWriterSelectObject(object):
                                                "test_domain",
                                                context)
 
-        mock_fetcher.assert_called_once_with("parent object",
+        mock_fetcher.assert_called_once_with(mock_parent,
                                              vsd_writer.specs['domain'])
         mock_fetcher.get.assert_called_once_with(
             filter='name is "test_domain"')
-        assert new_context.parent_object == "parent object"
+        assert new_context.parent_object == mock_parent
         assert new_context.current_object == "selected object"
         assert new_context.object_exists is True
 
@@ -336,11 +341,37 @@ class TestVsdWriterSelectObject(object):
         vsd_writer = VsdWriter()
         setup_standard_session(vsd_writer)
 
-        with pytest.raises(InvalidSpecification) as e:
+        with pytest.raises(InvalidObjectError) as e:
             vsd_writer.select_object("Foobar", "Name", "test_enterprise")
 
         assert "No specification" in str(e)
         assert "Foobar" in str(e)
+
+    def test__bad_child(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.select_object("BridgeInterface", "Name", "test_child")
+
+        assert "no child" in str(e)
+        assert "Me" in str(e)
+        assert "BridgeInterface" in str(e)
+
+        context = Context()
+        context.parent_object = "grandparent object"
+        mock_parent = MagicMock()
+        context.current_object = mock_parent
+        context.current_object.spec = vsd_writer.specs['enterprise']
+        context.object_exists = True
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.select_object("BridgeInterface", "Name", "test_child",
+                                     context)
+
+        assert "no child" in str(e)
+        assert "Enterprise" in str(e)
+        assert "BridgeInterface" in str(e)
 
     @patch("levistate.vsd_writer.Fetcher")
     def test__not_found(self, mock_fetcher):
@@ -381,6 +412,57 @@ class TestVsdWriterSelectObject(object):
         assert "Enterprise" in str(e)
         assert "Name" in str(e)
         assert "test_enterprise" in str(e)
+
+
+class TestVsdWriterDeleteObject(object):
+
+    def test__no_session(self):
+        vsd_writer = VsdWriter()
+
+        with pytest.raises(SessionNotStartedError) as e:
+            vsd_writer.delete_object("context")
+
+        assert "not started" in str(e)
+
+    def test__success(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        new_context = vsd_writer.delete_object(context)
+
+        mock_object.delete.assert_called_once()
+        assert new_context.current_object is None
+        assert new_context.object_exists is False
+
+    def test__no_object(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = "object"
+        context.object_exists = False
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.delete_object(context)
+
+        assert "No object" in str(e)
+
+        context.current_object = None
+        context.object_exists = True
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.delete_object(context)
+
+        assert "No object" in str(e)
 
 
 class TestVsdWriterSetValues(object):
@@ -462,6 +544,7 @@ class TestVsdWriterSetValues(object):
 
         context = Context()
         context.parent_object = mock_parent
+        mock_parent.spec = vsd_writer.specs['enterprise']
         context.current_object = mock_object
         context.object_exists = False
 
@@ -536,8 +619,111 @@ class TestVsdWriterSetValues(object):
         context.current_object = mock_object
         context.object_exists = False
 
-        with pytest.raises(InvalidSpecification) as e:
+        with pytest.raises(InvalidAttributeError) as e:
             vsd_writer.set_values(context, FooBar="test")
+
+        assert "not define" in str(e)
+        assert "FooBar" in str(e)
+
+    def test__bad_child(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        context = Context()
+        context.parent_object = None
+        mock_object = MagicMock()
+        context.current_object = mock_object
+        context.current_object.spec = vsd_writer.specs['bridgeinterface']
+        context.object_exists = False
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.set_values(context, name="test")
+
+        assert "no child" in str(e)
+        assert "Me" in str(e)
+        assert "BridgeInterface" in str(e)
+
+        context.parent_object = None
+        mock_object = MagicMock()
+        context.parent_object = mock_object
+        context.parent_object.spec = vsd_writer.specs['enterprise']
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.set_values(context, name="test")
+
+        assert "no child" in str(e)
+        assert "Enterprise" in str(e)
+        assert "BridgeInterface" in str(e)
+
+
+class TestVsdWriterGetValue(object):
+
+    def test__no_session(self):
+        vsd_writer = VsdWriter()
+
+        with pytest.raises(SessionNotStartedError) as e:
+            vsd_writer.get_value("field", "context")
+
+        assert "not started" in str(e)
+
+    def test__success(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.name = "test_name"
+        mock_object.id = "test_id"
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        name_value = vsd_writer.get_value("Name", context)
+        id_value = vsd_writer.get_value("Id", context)
+
+        assert name_value == "test_name"
+        assert id_value == "test_id"
+
+    def test__no_object(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = "object"
+        context.object_exists = False
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.get_value("name", context)
+
+        assert "No object" in str(e)
+
+        context.current_object = None
+        context.object_exists = True
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.get_value("name", context)
+
+        assert "No object" in str(e)
+
+    def test__invalid_attr(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.name = "test_name"
+        mock_object.id = "test_id"
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        with pytest.raises(InvalidAttributeError) as e:
+            vsd_writer.get_value("FooBar", context)
 
         assert "not define" in str(e)
         assert "FooBar" in str(e)
