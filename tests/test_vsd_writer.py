@@ -36,6 +36,17 @@ EXPECTED_SESSION_PARAMS = {
     "api_prefix": "nuage/api"
 }
 
+PARSE_ERROR_CASES = [
+    ('noexist.spec', 'not found'),
+    ('notjson.spec', 'Error parsing'),
+    ('nomodel.spec', "'model' missing"),
+    ('noattributes.spec', "'attributes' missing"),
+    ('nochildren.spec', "'children' missing"),
+    ('noentityname.spec', "'entity_name' missing"),
+    ('noresourcename.spec', "'resource_name' missing"),
+    ('norestname.spec', "'rest_name' missing"),
+]
+
 
 @patch("levistate.vsd_writer.Session")
 def setup_standard_session(vsd_writer, mock_patch):
@@ -100,64 +111,16 @@ class TestVsdWriterSpecParsing(object):
         assert "domain" in vsd_writer.specs
         assert vsd_writer.specs['domain']['model']['entity_name'] == "Domain"
 
-    def test_read_files__invalid(self):
+    @pytest.mark.parametrize("filename, message", PARSE_ERROR_CASES)
+    def test_read_files__invalid(self, filename, message):
         vsd_writer = VsdWriter()
 
         with pytest.raises(InvalidSpecification) as e:
             vsd_writer.read_api_specifications(os.path.join(
                 INVALID_SPECS_DIRECTORY,
-                "noexist.spec"))
+                filename))
 
-        assert "not found" in str(e)
-
-        with pytest.raises(InvalidSpecification) as e:
-            vsd_writer.read_api_specifications(os.path.join(
-                INVALID_SPECS_DIRECTORY,
-                "notjson.spec"))
-
-        assert "Error parsing" in str(e)
-
-        with pytest.raises(InvalidSpecification) as e:
-            vsd_writer.read_api_specifications(os.path.join(
-                INVALID_SPECS_DIRECTORY,
-                "nomodel.spec"))
-
-        assert "'model' missing" in str(e)
-
-        with pytest.raises(InvalidSpecification) as e:
-            vsd_writer.read_api_specifications(os.path.join(
-                INVALID_SPECS_DIRECTORY,
-                "noattributes.spec"))
-
-        assert "'attributes' missing" in str(e)
-
-        with pytest.raises(InvalidSpecification) as e:
-            vsd_writer.read_api_specifications(os.path.join(
-                INVALID_SPECS_DIRECTORY,
-                "nochildren.spec"))
-
-        assert "'children' missing" in str(e)
-
-        with pytest.raises(InvalidSpecification) as e:
-            vsd_writer.read_api_specifications(os.path.join(
-                INVALID_SPECS_DIRECTORY,
-                "noentityname.spec"))
-
-        assert "'entity_name' missing" in str(e)
-
-        with pytest.raises(InvalidSpecification) as e:
-            vsd_writer.read_api_specifications(os.path.join(
-                INVALID_SPECS_DIRECTORY,
-                "noresourcename.spec"))
-
-        assert "'resource_name' missing" in str(e)
-
-        with pytest.raises(InvalidSpecification) as e:
-            vsd_writer.read_api_specifications(os.path.join(
-                INVALID_SPECS_DIRECTORY,
-                "norestname.spec"))
-
-        assert "'rest_name' missing" in str(e)
+        assert message in str(e)
 
 
 class TestVsdWriterSession(object):

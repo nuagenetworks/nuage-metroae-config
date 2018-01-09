@@ -171,7 +171,7 @@ class RequestSpy(object):
                                  SESSION_CREDS_REAL['api_prefix'],
                                  SESSION_CREDS_REAL['version'],
                                  url_path)
-            mock.delete(url)
+            mock.put(url)
             test_func(session)
             last_request = mock.last_request
             print "- Request -----"
@@ -179,7 +179,7 @@ class RequestSpy(object):
             print str(last_request.headers)
             print str(last_request.json())
 
-        response = requests.delete(last_request.url,
+        response = requests.put(last_request.url,
                                 headers=last_request.headers,
                                 verify=False,
                                 json=last_request.json())
