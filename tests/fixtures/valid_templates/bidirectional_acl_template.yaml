@@ -78,96 +78,95 @@ actions:
             value: {{ domain_name }}
             actions:
               - create-object:
-                type: Ingress Security Policy
-                actions:
-                  - set-values:
-                      name: {{ acl_name }}
-                      defaultAllowIP: {{ default_allow_ip }}
-                      defaultAllowNonIP: {{ default_allow_non_ip }}
-                      priority: {{ policy_priority }}
-                      allowAddressSpoof: {{ allow_address_spoof }}
-                  - create-object:
-                      type: Ingress Security Policy Entry
-                      actions:
-                        - set-values:
-                            description: {{ description }}
-                            priority: {{ entry_priority }}
-                            protocol: {{ protocol }}
-                            DSCP: '*'
-                            sourcePort: {{ source_port }}
-                            destinationPort: {{ destination_port }}
-                            etherType: {{ ether_type }}
-                            action: {{ action | upper }}
-                            stateful: {{ stateful }}
-                            flowLoggingEnabled: {{ flow_logging_enabled }}
-                            statsLoggingEnabled: {{ stats_logging_enabled }}
-                            locationType: {{ location_type | upper }}
-                            networkType: {{ network_type | upper }}
-                        {% if location_type == 'any' %}
-                        - set-values:
-                            locationID: ""
-                        {% else %}
-                        - set-value-from-object:
-                            from-field: id
-                            to-field: locationID
-                            context: root
-                            actions:
-                              - select-object:
-                                  type: Enterprise
-                                  by-field: name
-                                  value: {{ enterprise_name }}
-                                  actions:
-                                    - select-object:
-                                        type: Domain
-                                        by-field: name
-                                        value: {{ domain_name }}
-                                        actions:
-                                          - select-object:
-                                              {% if location_type == 'policygroup' %}
-                                              type: Policy Group
-                                              {% endif %}
-                                              {% if location_type == 'subnet' %}
-                                              type: Subnet
-                                              {% endif %}
-                                              {% if location_type == 'zone' %}
-                                              type: Zone
-                                              {% endif %}
-                                              by-field: name
-                                              value: {{ location_name }}
-                        {% endif %}
-                        {% if network_type == 'any' %}
-                        - set-values:
-                            locationID: ""
-                        {% else %}
-                        - set-value-from-object:
-                            from-field: id
-                            to-field: networkID
-                            context: root
-                            actions:
-                              - select-object:
-                                  type: Enterprise
-                                  by-field: name
-                                  value: {{ enterprise_name }}
-                                  actions:
-                                    - select-object:
-                                        type: Domain
-                                        by-field: name
-                                        value: {{ domain_name }}
-                                        actions:
-                                          - select-object:
-                                              {% if network_type == 'policygroup' %}
-                                              type: Policy Group
-                                              {% endif %}
-                                              {% if network_type == 'subnet' %}
-                                              type: Subnet
-                                              {% endif %}
-                                              {% if network_type == 'zone' %}
-                                              type: Zone
-                                              {% endif %}
-                                              by-field: name
-                                              value: {{ network_name }}
-                        {% endif %}
-            actions:
+                  type: Ingress Security Policy
+                  actions:
+                    - set-values:
+                        name: {{ acl_name }}
+                        defaultAllowIP: {{ default_allow_ip }}
+                        defaultAllowNonIP: {{ default_allow_non_ip }}
+                        priority: {{ policy_priority }}
+                        allowAddressSpoof: {{ allow_address_spoof }}
+                    - create-object:
+                        type: Ingress Security Policy Entry
+                        actions:
+                          - set-values:
+                              description: {{ description }}
+                              priority: {{ entry_priority }}
+                              protocol: {{ protocol }}
+                              DSCP: '*'
+                              sourcePort: {{ source_port }}
+                              destinationPort: {{ destination_port }}
+                              etherType: {{ ether_type }}
+                              action: {{ action | upper }}
+                              stateful: {{ stateful }}
+                              flowLoggingEnabled: {{ flow_logging_enabled }}
+                              statsLoggingEnabled: {{ stats_logging_enabled }}
+                              locationType: {{ location_type | upper }}
+                              networkType: {{ network_type | upper }}
+                          {% if location_type == 'any' %}
+                          - set-values:
+                              locationID: ""
+                          {% else %}
+                          - set-value-from-object:
+                              from-field: id
+                              to-field: locationID
+                              context: root
+                              actions:
+                                - select-object:
+                                    type: Enterprise
+                                    by-field: name
+                                    value: {{ enterprise_name }}
+                                    actions:
+                                      - select-object:
+                                          type: Domain
+                                          by-field: name
+                                          value: {{ domain_name }}
+                                          actions:
+                                            - select-object:
+                                                {% if location_type == 'policygroup' %}
+                                                type: Policy Group
+                                                {% endif %}
+                                                {% if location_type == 'subnet' %}
+                                                type: Subnet
+                                                {% endif %}
+                                                {% if location_type == 'zone' %}
+                                                type: Zone
+                                                {% endif %}
+                                                by-field: name
+                                                value: {{ location_name }}
+                          {% endif %}
+                          {% if network_type == 'any' %}
+                          - set-values:
+                              locationID: ""
+                          {% else %}
+                          - set-value-from-object:
+                              from-field: id
+                              to-field: networkID
+                              context: root
+                              actions:
+                                - select-object:
+                                    type: Enterprise
+                                    by-field: name
+                                    value: {{ enterprise_name }}
+                                    actions:
+                                      - select-object:
+                                          type: Domain
+                                          by-field: name
+                                          value: {{ domain_name }}
+                                          actions:
+                                            - select-object:
+                                                {% if network_type == 'policygroup' %}
+                                                type: Policy Group
+                                                {% endif %}
+                                                {% if network_type == 'subnet' %}
+                                                type: Subnet
+                                                {% endif %}
+                                                {% if network_type == 'zone' %}
+                                                type: Zone
+                                                {% endif %}
+                                                by-field: name
+                                                value: {{ network_name }}
+                          {% endif %}
               - create-object:
                   type: Egress Security Policy
                   actions:

@@ -4,6 +4,7 @@ import pytest
 from levistate.configuration import (Configuration)
 from levistate.template import (MissingTemplateError,
                                 TemplateStore)
+from .template_test_params import ACL_TEMPLATE_VARS
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
 VALID_TEMPLATE_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
@@ -205,3 +206,17 @@ class TestConfigurationData(object):
             config.remove_template_data(bad_index_id)
 
         assert "Invalid template data id" in str(e)
+
+
+class TestConfigurationActions(object):
+
+    def test__success(self):
+        config = load_standard_configuration()
+        # data1 = {"enterprise_name": "enterprise1",
+        #          "domain_name": "domain1"}
+
+        config.add_template_data("Bidirectional ACL", **ACL_TEMPLATE_VARS)
+
+        config.apply("writer")
+        print str(config.root_action)
+        assert True
