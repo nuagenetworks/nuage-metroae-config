@@ -44,7 +44,7 @@ class VsdWriter(DeviceWriterBase):
         self.api_prefix = "nuage/api"
         self.specs = dict()
         self.root_spec_name = None
-        self.log_entries = []
+        self.log_entries = list()
 
     def set_session_params(self, url, username="csproot",
                            password="csproot", enterprise="csp"):

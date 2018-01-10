@@ -1,5 +1,5 @@
-import os
 from mock import patch, MagicMock
+import os
 import pytest
 
 from bambou.exceptions import BambouHTTPError

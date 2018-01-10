@@ -168,7 +168,7 @@ class TemplateStore(object):
         """
         Standard constructor.
         """
-        self.templates = {}
+        self.templates = dict()
 
     def read_templates(self, path_or_file_name):
         """
