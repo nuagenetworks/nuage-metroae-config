@@ -198,30 +198,87 @@ class TestTemplateSubstitution(object):
                                           "conditionals.yaml"))
 
         json_template = store.get_template('Conditionals JSON')
+
         processed_template = json_template._apply(var1='a', var2='x')
         assert 'var1_is_a' in processed_template['actions']
         assert processed_template['actions']['var1_is_a'] == 'a'
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] == 'false'
+        assert 'and_check' not in processed_template['actions']
         assert 'nested_check' not in processed_template['actions']
-        assert 'var1_is_foobar' in processed_template['actions']
-        assert processed_template['actions']['var1_is_foobar'] is False
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is False
 
-        processed_template = json_template._apply(var1='c', var2='c')
+        processed_template = json_template._apply(var1='', var2=True)
+        assert 'var1_is_a' not in processed_template['actions']
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] is True
+        assert 'and_check' not in processed_template['actions']
+        assert 'nested_check' not in processed_template['actions']
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is True
+
+        processed_template = json_template._apply(var1='peanut butter',
+                                                  var2='jelly')
+        assert 'var1_is_a' not in processed_template['actions']
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] == 'false'
+        assert 'and_check' not in processed_template['actions']
         assert 'nested_check' in processed_template['actions']
-        assert processed_template['actions']['nested_check'] == 'cc'
-        assert 'var1_is_foobar' in processed_template['actions']
-        assert processed_template['actions']['var1_is_foobar'] is False
+        assert (processed_template['actions']['nested_check'] ==
+                'peanut butter and jelly')
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is False
+
+        processed_template = json_template._apply(var1='b', var2=0)
+        assert 'var1_is_a' not in processed_template['actions']
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] == 'false'
+        assert 'and_check' in processed_template['actions']
+        assert processed_template['actions']['and_check'] is True
+        assert 'nested_check' not in processed_template['actions']
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is False
 
         yaml_template = store.get_template('Conditionals Yaml')
+
         processed_template = yaml_template._apply(var1='a', var2='x')
         assert 'var1_is_a' in processed_template['actions']
         assert processed_template['actions']['var1_is_a'] == 'a'
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] == 'false'
+        assert 'and_check' not in processed_template['actions']
         assert 'nested_check' not in processed_template['actions']
-        assert 'var1_is_foobar' in processed_template['actions']
-        assert processed_template['actions']['var1_is_foobar'] is False
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is False
 
-        processed_template = yaml_template._apply(var1='c', var2='c')
+        processed_template = yaml_template._apply(var1='', var2=True)
+        assert 'var1_is_a' not in processed_template['actions']
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] is True
+        assert 'and_check' not in processed_template['actions']
+        assert 'nested_check' not in processed_template['actions']
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is True
+
+        processed_template = yaml_template._apply(var1='peanut butter',
+                                                  var2='jelly')
+        assert 'var1_is_a' not in processed_template['actions']
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] == 'false'
+        assert 'and_check' not in processed_template['actions']
         assert 'nested_check' in processed_template['actions']
-        assert processed_template['actions']['nested_check'] == 'cc'
-        assert 'var1_is_foobar' in processed_template['actions']
-        assert processed_template['actions']['var1_is_foobar'] is False
+        assert (processed_template['actions']['nested_check'] ==
+                'peanut butter and jelly')
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is False
 
+        processed_template = yaml_template._apply(var1='b', var2=0)
+        assert 'var1_is_a' not in processed_template['actions']
+        assert 'var2' in processed_template['actions']
+        assert processed_template['actions']['var2'] == 'false'
+        assert 'and_check' in processed_template['actions']
+        assert processed_template['actions']['and_check'] is True
+        assert 'nested_check' not in processed_template['actions']
+        assert 'var1_is_empty' in processed_template['actions']
+        assert processed_template['actions']['var1_is_empty'] is False

@@ -16,21 +16,19 @@
         {% if var1 == 'a' %}
         "var1_is_a": {{ var1 }},
         {% endif %}
-        {% if var2 == True %}
-        "var2_is_true": {{ var2 }},
-        {% endif %}
+        "var2": {% if var2 == True %} {{ var2 }}, {% else %} "false", {% endif %}
         {% if var1 == 'b' and var2 == 0 %}
         "and_check": true,
         {% endif %}
-        {% if var1 == 'c' %}
-            {% if var2 == 'c' %}
-        "nested_check": {% set concat = var1 + var2 %}{{ concat }},
+        {% if var1 == 'peanut butter' %}
+            {% if var2 == 'jelly' %}
+        "nested_check": {% set concat = var1 + " and " + var2 %}{{ concat }},
             {% endif %}
         {% endif %}
-        {% if var1 == 'foobar' %}
-        "var1_is_foobar": true
+        {% if var1 == '' %}
+        "var1_is_empty": true
         {% else %}
-        "var1_is_foobar": false
+        "var1_is_empty": false
         {% endif %}
     }
 }
