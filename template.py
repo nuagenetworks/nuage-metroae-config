@@ -3,9 +3,6 @@ import jinja2.ext
 import os
 import yaml
 
-# RESERVED_YAML_KEYWORDS = ['true', 'false', 'yes', 'no', 'on', 'off', 'null']
-# RESERVED_YAML_CHARS = ['>', '*', '|']
-
 
 class TemplateError(Exception):
     """
@@ -138,12 +135,11 @@ class Template(object):
 
     def _substitute_vars(self, **kwargs):
         try:
+            self._verify_substitution(**kwargs)
             template = jinja2.Template(self.template_string,
-                                       extensions=(YAMLEverythingExtension,),
+                                       extensions=(JSONEverythingExtension,),
                                        autoescape=False,
-                                       # finalize=format_yaml,
                                        undefined=jinja2.StrictUndefined)
-            # variables = self._sanitize_variables(kwargs)
 
             return template.render(**kwargs)
         except jinja2.TemplateSyntaxError as e:
@@ -153,15 +149,11 @@ class Template(object):
             raise UndefinedVariableError("For template %s: Variable value %s" %
                                          (self.get_name(), e.message))
 
-    # def _sanitize_variables(self, variables):
-    #     return_vars = dict()
-    #     for key, value in variables.iteritems():
-    #         if isinstance(value, basestring):
-    #             return_vars[key] = "'" + value + "'"
-    #         else:
-    #             return_vars[key] = value
-
-    #     return return_vars
+    def _verify_substitution(self, **kwargs):
+        template = jinja2.Template(self.template_string,
+                                   autoescape=False,
+                                   undefined=jinja2.StrictUndefined)
+        template.render(**kwargs)
 
     def _apply(self, **kwargs):
         filled_template = self._substitute_vars(**kwargs)
@@ -172,7 +164,6 @@ class TemplateStore(object):
     """
     Reads and parses configuration templates.
     """
-
     def __init__(self):
         """
         Standard constructor.
@@ -283,20 +274,7 @@ class NullUndefined(jinja2.Undefined):
         return "null"
 
 
-def format_yaml(data):
-    if data is None:
-        return "null"
-
-    if type(data) is bool:
-        if data is True:
-            return "true"
-        else:
-            return "false"
-
-    return data
-
-
-class YAMLEverythingExtension(jinja2.ext.Extension):
+class JSONEverythingExtension(jinja2.ext.Extension):
     """
     Insert a `|tojson` filter at the end of every variable substitution.
 
@@ -309,11 +287,3 @@ class YAMLEverythingExtension(jinja2.ext.Extension):
                 yield jinja2.lexer.Token(token.lineno, 'pipe', '|')
                 yield jinja2.lexer.Token(token.lineno, 'name', 'tojson')
             yield token
-
-
-# store = TemplateStore()
-# store.read_templates("tests/fixtures/valid_templates")
-# print str(store.get_template_names())
-# print str(store.get_template("Bidirectional ACL").get_schema())
-# print str(store.get_template("Bidirectional ACL")._apply(enterprise_name="True",
-#                                                          domain_name="test_domain"))

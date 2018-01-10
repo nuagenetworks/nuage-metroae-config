@@ -1,0 +1,36 @@
+{
+    "name": "Conditionals JSON",
+    "description": "Test template for conditional statements",
+    "template-version": "1.0",
+    "software-type": "Nuage Networks VSD",
+    "software-version": "5.0.2",
+    "variables": [{
+        "name": "var1",
+        "type": "string"
+    },
+    {
+        "name": "var2",
+        "type": "string"
+    }],
+    "actions": {
+        {% if var1 == 'a' %}
+        "var1_is_a": {{ var1 }},
+        {% endif %}
+        {% if var2 == True %}
+        "var2_is_true": {{ var2 }},
+        {% endif %}
+        {% if var1 == 'b' and var2 == 0 %}
+        "and_check": true,
+        {% endif %}
+        {% if var1 == 'c' %}
+            {% if var2 == 'c' %}
+        "nested_check": {% set concat = var1 + var2 %}{{ concat }},
+            {% endif %}
+        {% endif %}
+        {% if var1 == 'foobar' %}
+        "var1_is_foobar": true
+        {% else %}
+        "var1_is_foobar": false
+        {% endif %}
+    }
+}

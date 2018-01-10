@@ -38,7 +38,9 @@ PARSE_ERROR_CASES = [
     ('missing_actions.json', 'actions missing'),
     ('missing_actions.yaml', 'actions missing'),
     ('invalid_json.json', 'Syntax error'),
-    ('invalid_yaml.yaml', 'Syntax error')]
+    ('invalid_yaml.yaml', 'Syntax error'),
+    ('invalid_jinja.json', 'Syntax error'),
+    ('invalid_jinja.yaml', 'Syntax error')]
 
 SUBSTITUTE_CASES = ['string', True, False, 0, 1.0, '0', 'true', 'false', 'yes',
                     'no', 'on', 'off', '*', None, 'null', 'with"dquote',
@@ -164,8 +166,62 @@ class TestTemplateSubstitution(object):
         processed_value = self.get_enterprise_value(processed_template)
         assert processed_value == value
 
-        json_template = store.get_template('domain')
-        processed_template = json_template._apply(enterprise_name=value,
+        yaml_template = store.get_template('domain')
+        processed_template = yaml_template._apply(enterprise_name=value,
                                                   domain_name=value)
         processed_value = self.get_domain_value(processed_template)
         assert processed_value == value
+
+    def test__missing_var(self):
+        store = TemplateStore()
+        store.read_templates(VALID_TEMPLATE_DIRECTORY)
+
+        json_template = store.get_template('enterprise')
+        with pytest.raises(UndefinedVariableError) as e:
+            json_template._apply()
+
+        assert "'enterprise_name' is undefined" in str(e)
+        assert "Enterprise" in str(e)
+
+        yaml_template = store.get_template('Domain')
+        with pytest.raises(UndefinedVariableError) as e:
+            yaml_template._apply(enterprise_name="test_enterprise")
+
+        assert "'domain_name' is undefined" in str(e)
+        assert "Domain" in str(e)
+
+    def test__conditionals(self):
+        store = TemplateStore()
+        store.read_templates(os.path.join(INVALID_TEMPLATE_DIRECTORY,
+                                          "conditionals.json"))
+        store.read_templates(os.path.join(INVALID_TEMPLATE_DIRECTORY,
+                                          "conditionals.yaml"))
+
+        json_template = store.get_template('Conditionals JSON')
+        processed_template = json_template._apply(var1='a', var2='x')
+        assert 'var1_is_a' in processed_template['actions']
+        assert processed_template['actions']['var1_is_a'] == 'a'
+        assert 'nested_check' not in processed_template['actions']
+        assert 'var1_is_foobar' in processed_template['actions']
+        assert processed_template['actions']['var1_is_foobar'] is False
+
+        processed_template = json_template._apply(var1='c', var2='c')
+        assert 'nested_check' in processed_template['actions']
+        assert processed_template['actions']['nested_check'] == 'cc'
+        assert 'var1_is_foobar' in processed_template['actions']
+        assert processed_template['actions']['var1_is_foobar'] is False
+
+        yaml_template = store.get_template('Conditionals Yaml')
+        processed_template = yaml_template._apply(var1='a', var2='x')
+        assert 'var1_is_a' in processed_template['actions']
+        assert processed_template['actions']['var1_is_a'] == 'a'
+        assert 'nested_check' not in processed_template['actions']
+        assert 'var1_is_foobar' in processed_template['actions']
+        assert processed_template['actions']['var1_is_foobar'] is False
+
+        processed_template = yaml_template._apply(var1='c', var2='c')
+        assert 'nested_check' in processed_template['actions']
+        assert processed_template['actions']['nested_check'] == 'cc'
+        assert 'var1_is_foobar' in processed_template['actions']
+        assert processed_template['actions']['var1_is_foobar'] is False
+
