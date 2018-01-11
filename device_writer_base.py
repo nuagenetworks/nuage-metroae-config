@@ -33,6 +33,20 @@ class MultipleSelectionError(DeviceWriterError):
     pass
 
 
+class InvalidAttributeError(DeviceWriterError):
+    """
+    Exception class when an attribute on an object does not exist
+    """
+    pass
+
+
+class InvalidObjectError(DeviceWriterError):
+    """
+    Exception class when an object or child of an object does not exist
+    """
+    pass
+
+
 class DeviceWriterBase(object):
     """
     Base class for writing configurations to devices.  This is an
