@@ -8,6 +8,14 @@ class ConflictError(TemplateError):
     """
     pass
 
+
+class TemplateActionError(TemplateError):
+    """
+    Exception class when there is a problem with an action in a template
+    """
+    pass
+
+
 class Configuration(object):
     """
     Container for template instances.
@@ -103,7 +111,8 @@ class Configuration(object):
         writer.  Returns True if ok, otherwise an exception is
         raised.
         """
-        self.root_action = Action(None)
+        self.root_action = Action()
+        self.root_action.root = self.root_action
         self.writer = writer
         self._walk_data(self._apply_data)
 
@@ -176,12 +185,7 @@ class Configuration(object):
 
     def _apply_data(self, template, data):
         template_dict = template._apply(**data)
-        child_actions = Action.get_dict_field(template_dict, 'actions')
-        if child_actions is not None:
-            self.root_action.read_children_actions(child_actions)
-        else:
-            raise TemplateParseError("Template %s missing actions" %
-                                     template.get_name())
+        self.root_action.read_children_actions(template_dict)
 
 
 #
@@ -193,42 +197,26 @@ class Action(object):
     Private class to track and perform the actions required to write the
     configuration to the device
     """
-    def __init__(self, root):
-        self.root = root
-        self.object_type = None
-        self.context = None
+    def __init__(self):
         self.children = list()
-        self.is_select = False
-        self.is_delete = False
-        self.is_get = False
-        self.select_field = None
-        self.select_value = None
-        self.attributes = dict()
 
     def __str__(self):
         return self._to_string(0)
 
     def _to_string(self, indent_level):
-        cur_output = ""
-        indent = "    " * indent_level
-
-        if self.object_type is not None:
-            if self.is_select is True:
-                cur_output = "%s[select %s (%s = %s)]\n" % (
-                    indent,
-                    str(self.object_type),
-                    str(self.select_field),
-                    str(self.select_value))
-            else:
-                cur_output = "%s%s\n" % (indent, str(self.object_type))
-
-        for field, value in self.attributes.iteritems():
-            cur_output += "%s%s = %s\n" % (indent, str(field), str(value))
+        if indent_level == 0:
+            cur_output = "Configuration\n"
+        else:
+            cur_output = "%s[Unknown action]\n" % Action._indent(indent_level)
 
         for child in self.children:
             cur_output += child._to_string(indent_level + 1)
 
         return cur_output
+
+    @staticmethod
+    def _indent(level):
+        return "    " * level
 
     @staticmethod
     def get_dict_field(action_dict, field):
@@ -241,7 +229,8 @@ class Action(object):
 
         return None
 
-    def read(self, action_dict):
+    @staticmethod
+    def new(action_dict, root):
         if type(action_dict) != dict:
             raise TemplateParseError("Invalid action: " + str(action_dict))
 
@@ -252,79 +241,125 @@ class Action(object):
         action_key = action_keys[0]
         action_type = str(action_key).lower()
         if action_type == "create-object":
-            self.read_create_object(action_dict[action_key])
+            new_action = CreateObjectAction(root)
         elif action_type == "select-object":
-            self.read_select_object(action_dict[action_key])
+            new_action = SelectObjectAction(root)
         elif action_type == "set-values":
-            self.read_set_values(action_dict[action_key])
+            new_action = SetValuesAction(root)
         elif action_type == "set-value-from-object":
-            self.read_set_value_from_object(action_dict[action_key])
+            new_action = SetValueFromObjectAction(root)
         else:
             raise TemplateParseError("Invalid action: " + str(action_key))
 
-    def read_create_object(self, create_dict):
+        new_action.read(action_dict[action_key])
+        return new_action
+
+    def read_children_actions(self, current_dict):
+        child_actions = Action.get_dict_field(current_dict, 'actions')
+        if child_actions is None:
+            return
+
+        if type(child_actions) != list:
+            raise TemplateParseError("Invalid actions: " + str(child_actions))
+
+        for action_dict in child_actions:
+            new_action = Action.new(action_dict, self.root)
+            self.children.append(new_action)
+
+
+class CreateObjectAction(Action):
+
+    def __init__(self, root):
+        super(CreateObjectAction, self).__init__()
+        self.root = root
+        self.object_type = None
+
+    def _to_string(self, indent_level):
+        cur_output = ""
+        indent = Action._indent(indent_level)
+
+        cur_output = "%s%s\n" % (indent, str(self.object_type))
+
+        for child in self.children:
+            cur_output += child._to_string(indent_level + 1)
+
+        return cur_output
+
+    def read(self, create_dict):
         self.object_type = Action.get_dict_field(create_dict, 'type')
         if self.object_type is None:
             raise TemplateParseError(
                 "Create object action missing required 'type' field")
 
-        child_actions = Action.get_dict_field(create_dict, 'actions')
-        if child_actions is not None:
-            self.read_children_actions(child_actions)
+        self.read_children_actions(create_dict)
 
-    def read_select_object(self, select_dict):
+
+class SelectObjectAction(Action):
+
+    def __init__(self, root):
+        super(SelectObjectAction, self).__init__()
+        self.root = root
+        self.object_type = None
+        self.field = None
+        self.value = None
+
+    def _to_string(self, indent_level):
+        cur_output = ""
+        indent = Action._indent(indent_level)
+
+        cur_output = "%s[select %s (%s of %s)]\n" % (indent,
+                                                     str(self.object_type),
+                                                     str(self.field),
+                                                     str(self.value))
+
+        for child in self.children:
+            cur_output += child._to_string(indent_level + 1)
+
+        return cur_output
+
+    def read(self, select_dict):
         self.object_type = Action.get_dict_field(select_dict, 'type')
         if self.object_type is None:
             raise TemplateParseError(
                 "Select object action missing required 'type' field")
 
-        self.select_field = Action.get_dict_field(select_dict, 'by-field')
-        if self.select_field is None:
+        self.field = Action.get_dict_field(select_dict, 'by-field')
+        if self.field is None:
             raise TemplateParseError(
                 "Select object action missing required 'by-field' field")
 
-        self.select_value = Action.get_dict_field(select_dict, 'value')
-        if self.select_value is None:
+        self.value = Action.get_dict_field(select_dict, 'value')
+        if self.value is None:
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
 
-        self.is_select = True
-        child_actions = Action.get_dict_field(select_dict, 'actions')
-        if child_actions is not None:
-            self.read_children_actions(child_actions)
+        self.read_children_actions(select_dict)
 
-    def read_set_values(self, set_values_dict):
+
+class SetValuesAction(Action):
+
+    def __init__(self, root):
+        super(SetValuesAction, self).__init__()
+        self.root = root
+        self.attributes = dict()
+
+    def _to_string(self, indent_level):
+        cur_output = ""
+        indent = Action._indent(indent_level)
+
+        for field, value in self.attributes.iteritems():
+            if value == '':
+                value = '""'
+            cur_output += "%s%s = %s\n" % (indent, str(field), str(value))
+
+        return cur_output
+
+    def read(self, set_values_dict):
         if type(set_values_dict) != dict:
             raise TemplateParseError("Invalid action: " + str(set_values_dict))
 
         for key, value in set_values_dict.iteritems():
             self.add_attribute(key, value)
-
-    def read_set_value_from_object(self, set_value_dict):
-        self.select_field = Action.get_dict_field(set_value_dict, 'from-field')
-        if self.select_field is None:
-            raise TemplateParseError(
-                "Set value from object action missing required "
-                "'from-field' field")
-
-        self.select_value = Action.get_dict_field(set_value_dict, 'to-field')
-        if self.select_value is None:
-            raise TemplateParseError(
-                "Set value from object action missing required "
-                "'to-field' field")
-
-        child_actions = Action.get_dict_field(set_value_dict, 'actions')
-        if child_actions is not None:
-            self.read_children_actions(child_actions)
-
-    def read_children_actions(self, child_actions):
-        if type(child_actions) != list:
-            raise TemplateParseError("Invalid actions: " + str(child_actions))
-
-        for action_dict in child_actions:
-            new_action = Action(self.root)
-            self.children.append(new_action)
-            new_action.read(action_dict)
 
     def add_attribute(self, field, value):
         existing_value = Action.get_dict_field(self.attributes, field.lower())
@@ -335,3 +370,37 @@ class Action(object):
                                  str(value), str(existing_value)))
 
         self.attributes[field] = value
+
+
+class SetValueFromObjectAction(Action):
+
+    def __init__(self, root):
+        super(SetValueFromObjectAction, self).__init__()
+        self.root = root
+        self.from_field = None
+        self.to_field = None
+
+    def _to_string(self, indent_level):
+        cur_output = ""
+        indent = Action._indent(indent_level)
+
+        cur_output += "%s%s = [get %s]\n" % (indent,
+                                             str(self.to_field),
+                                             str(self.from_field))
+
+        return cur_output
+
+    def read(self, set_value_dict):
+        self.from_field = Action.get_dict_field(set_value_dict, 'from-field')
+        if self.from_field is None:
+            raise TemplateParseError(
+                "Set value from object action missing required "
+                "'from-field' field")
+
+        self.to_field = Action.get_dict_field(set_value_dict, 'to-field')
+        if self.to_field is None:
+            raise TemplateParseError(
+                "Set value from object action missing required "
+                "'to-field' field")
+
+        self.read_children_actions(set_value_dict)

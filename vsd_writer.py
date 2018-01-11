@@ -38,13 +38,13 @@ class VsdWriter(DeviceWriterBase):
         """
         Derived class from DeviceWriterBase.
         """
+        super(VsdWriter, self).__init__()
         self.session_params = None
         self.session = None
         self.version = "5.0"
         self.api_prefix = "nuage/api"
         self.specs = dict()
         self.root_spec_name = None
-        self.log_entries = list()
 
     def set_session_params(self, url, username="csproot",
                            password="csproot", enterprise="csp"):

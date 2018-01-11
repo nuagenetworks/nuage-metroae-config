@@ -58,10 +58,7 @@ class DeviceWriterBase(object):
         Abstract Base Class.  Cannot be instantiated directly. Use
         device-specific derived class.
         """
-
-    # Abstract prototype functions
-    # All types of device writer classes will need to implement these
-    # functions in order to apply the configurations to the device.
+        self.log_entries = list()
 
     def log(self, log_type, message):
         self.log_entries.append((log_type, message))
@@ -78,6 +75,10 @@ class DeviceWriterBase(object):
             log_output.append("%s: %s" % entry)
 
         return '\n'.join(log_output)
+
+    # Abstract prototype functions
+    # All types of device writer classes will need to implement these
+    # functions in order to apply the configurations to the device.
 
     def start_session(self):
         """
