@@ -169,4 +169,5 @@ class Configuration(object):
 
     def _apply_data(self, template, data):
         template_dict = template._parse_with_vars(**data)
+        self.root_action.reset_state()
         self.root_action.read_children_actions(template_dict)

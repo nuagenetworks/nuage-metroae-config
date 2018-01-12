@@ -21,8 +21,9 @@ class Action(object):
     Private class to track and perform the actions required to write the
     configuration to the device
     """
-    def __init__(self, parent):
+    def __init__(self, parent, state=dict()):
         self.parent = parent
+        self.state = state
         self.children = list()
 
     def __str__(self):
@@ -55,7 +56,7 @@ class Action(object):
         return None
 
     @staticmethod
-    def new(action_dict, parent):
+    def new(action_dict, parent, state):
         if type(action_dict) != dict:
             raise TemplateParseError("Invalid action: " + str(action_dict))
 
@@ -66,20 +67,26 @@ class Action(object):
         action_key = action_keys[0]
         action_type = str(action_key).lower()
         if action_type == "create-object":
-            new_action = CreateObjectAction(parent)
+            new_action = CreateObjectAction(parent, state)
         elif action_type == "select-object":
-            new_action = SelectObjectAction(parent)
+            new_action = SelectObjectAction(parent, state)
         elif action_type == "set-values":
-            new_action = SetValuesAction(parent)
+            new_action = SetValuesAction(parent, state)
         elif action_type == "store-value":
-            new_action = StoreValueAction(parent)
+            new_action = StoreValueAction(parent, state)
         elif action_type == "retrieve-value":
-            new_action = RetrieveValueAction(parent)
+            new_action = RetrieveValueAction(parent, state)
         else:
             raise TemplateParseError("Invalid action: " + str(action_key))
 
         new_action.read(action_dict[action_key])
         return new_action
+
+    def is_set_values(self):
+        return False
+
+    def reset_state(self):
+        self.state = dict()
 
     def read_children_actions(self, current_dict):
         child_actions = Action.get_dict_field(current_dict, 'actions')
@@ -90,7 +97,7 @@ class Action(object):
             raise TemplateParseError("Invalid actions: " + str(child_actions))
 
         for action_dict in child_actions:
-            new_action = Action.new(action_dict, self)
+            new_action = Action.new(action_dict, self, self.state)
             self.add_child_action_sorted(new_action)
 
     def add_child_action_sorted(self, new_action):
@@ -103,15 +110,20 @@ class Action(object):
         else:
             self.children.append(new_action)
 
-    def is_set_values(self):
-        return False
-
 
 class CreateObjectAction(Action):
 
-    def __init__(self, parent):
-        super(CreateObjectAction, self).__init__(parent)
+    def __init__(self, parent, state):
+        super(CreateObjectAction, self).__init__(parent, state)
         self.object_type = None
+
+    def read(self, create_dict):
+        self.object_type = Action.get_dict_field(create_dict, 'type')
+        if self.object_type is None:
+            raise TemplateParseError(
+                "Create object action missing required 'type' field")
+
+        self.read_children_actions(create_dict)
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -124,36 +136,14 @@ class CreateObjectAction(Action):
 
         return cur_output
 
-    def read(self, create_dict):
-        self.object_type = Action.get_dict_field(create_dict, 'type')
-        if self.object_type is None:
-            raise TemplateParseError(
-                "Create object action missing required 'type' field")
-
-        self.read_children_actions(create_dict)
-
 
 class SelectObjectAction(Action):
 
-    def __init__(self, parent):
-        super(SelectObjectAction, self).__init__(parent)
+    def __init__(self, parent, state):
+        super(SelectObjectAction, self).__init__(parent, state)
         self.object_type = None
         self.field = None
         self.value = None
-
-    def _to_string(self, indent_level):
-        cur_output = ""
-        indent = Action._indent(indent_level)
-
-        cur_output = "%s[select %s (%s of %s)]\n" % (indent,
-                                                     str(self.object_type),
-                                                     str(self.field),
-                                                     str(self.value))
-
-        for child in self.children:
-            cur_output += child._to_string(indent_level + 1)
-
-        return cur_output
 
     def read(self, select_dict):
         self.object_type = Action.get_dict_field(select_dict, 'type')
@@ -173,23 +163,26 @@ class SelectObjectAction(Action):
 
         self.read_children_actions(select_dict)
 
-
-class SetValuesAction(Action):
-
-    def __init__(self, parent):
-        super(SetValuesAction, self).__init__(parent)
-        self.attributes = dict()
-
     def _to_string(self, indent_level):
         cur_output = ""
         indent = Action._indent(indent_level)
 
-        for field, value in self.attributes.iteritems():
-            if value == '':
-                value = '""'
-            cur_output += "%s%s = %s\n" % (indent, str(field), str(value))
+        cur_output = "%s[select %s (%s of %s)]\n" % (indent,
+                                                     str(self.object_type),
+                                                     str(self.field),
+                                                     str(self.value))
+
+        for child in self.children:
+            cur_output += child._to_string(indent_level + 1)
 
         return cur_output
+
+
+class SetValuesAction(Action):
+
+    def __init__(self, parent, state):
+        super(SetValuesAction, self).__init__(parent, state)
+        self.attributes = dict()
 
     def is_set_values(self):
         return True
@@ -218,13 +211,64 @@ class SetValuesAction(Action):
         for key, value in new_set_values_action.attributes.iteritems():
             self.add_attribute(key, value)
 
+    def _to_string(self, indent_level):
+        cur_output = ""
+        indent = Action._indent(indent_level)
+
+        for field, value in self.attributes.iteritems():
+            if isinstance(value, basestring):
+                if "'" in value:
+                    value = '"' + value + '"'
+                else:
+                    value = "'" + value + "'"
+            elif isinstance(value, Action):
+                value = "[retrieve %s]" % value._get_reference_string()
+
+            cur_output += "%s%s = %s\n" % (indent, str(field), str(value))
+
+        return cur_output
+
 
 class StoreValueAction(Action):
 
-    def __init__(self, parent):
-        super(StoreValueAction, self).__init__(parent)
+    def __init__(self, parent, state):
+        super(StoreValueAction, self).__init__(parent, state)
         self.as_name = None
         self.from_field = None
+        self.stored_value = None
+
+    def read(self, store_value_dict):
+        self.from_field = Action.get_dict_field(store_value_dict, 'from-field')
+        if self.from_field is None:
+            raise TemplateParseError(
+                "Store value action missing required 'from-field' field")
+
+        self.as_name = Action.get_dict_field(store_value_dict, 'as-name')
+        if self.as_name is None:
+            raise TemplateParseError(
+                "Store value action missing required 'as-name' field")
+
+        if self.parent is None or self.parent.parent is None:
+            raise TemplateActionError("No object exists for storing values")
+
+        if type(self.state) != dict:
+            raise TemplateActionError('Invalid state for store value')
+
+        if 'stored_values' not in self.state:
+            self.state['stored_values'] = dict()
+
+        if self.as_name not in self.state['stored_values']:
+            self.state['stored_values'][self.as_name] = self
+        else:
+            raise TemplateActionError(
+                'Value of name %s already stored' % self.from_name)
+
+    def get_stored_value(self):
+        if self.stored_value is not None:
+            return self.stored_value
+        else:
+            raise TemplateActionError("No value stored as name %s" %
+                                      self.as_name)
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -235,33 +279,19 @@ class StoreValueAction(Action):
                                                      str(self.as_name))
         return cur_output
 
-    def read(self, set_value_dict):
-        self.from_field = Action.get_dict_field(set_value_dict, 'from-field')
-        if self.from_field is None:
-            raise TemplateParseError(
-                "Store value action missing required 'from-field' field")
-
-        self.as_name = Action.get_dict_field(set_value_dict, 'as-name')
-        if self.as_name is None:
-            raise TemplateParseError(
-                "Store value action missing required 'as-name' field")
+    def _get_reference_string(self):
+        object_type = self.parent.object_type
+        return "%s (%s:%s)" % (str(self.as_name),
+                               str(object_type),
+                               str(self.from_field))
 
 
-class RetrieveValueAction(Action):
+class RetrieveValueAction(SetValuesAction):
 
-    def __init__(self, parent):
-        super(RetrieveValueAction, self).__init__(parent)
+    def __init__(self, parent, state):
+        super(RetrieveValueAction, self).__init__(parent, state)
         self.from_name = None
         self.to_field = None
-
-    def _to_string(self, indent_level):
-        cur_output = ""
-        indent = Action._indent(indent_level)
-
-        cur_output += "%s%s = [retrieve %s]\n" % (indent,
-                                                  str(self.to_field),
-                                                  str(self.from_name))
-        return cur_output
 
     def read(self, set_value_dict):
         self.to_field = Action.get_dict_field(set_value_dict, 'to-field')
@@ -273,3 +303,15 @@ class RetrieveValueAction(Action):
         if self.from_name is None:
             raise TemplateParseError(
                 "Retrieve value action missing required 'from-name' field")
+
+        if self.parent is None or self.parent.parent is None:
+            raise TemplateActionError("No object exists for retrieving values")
+
+        if (type(self.state) != dict or
+                'stored_values' not in self.state or
+                self.from_name not in self.state['stored_values']):
+            raise TemplateActionError(
+                'No value of name %s stored to be retrieved' % self.from_name)
+
+        self.add_attribute(self.to_field,
+                           self.state['stored_values'][self.from_name])

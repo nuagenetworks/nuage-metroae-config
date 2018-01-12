@@ -208,7 +208,7 @@ class TestConfigurationData(object):
         assert "Invalid template data id" in str(e)
 
 
-class TestConfigurationActions(object):
+class TestConfigurationApply(object):
 
     def test__success(self):
         config = load_standard_configuration()
