@@ -266,9 +266,19 @@ class Action(object):
 
         for action_dict in child_actions:
             new_action = Action.new(action_dict, self)
+            self.add_child_action_sorted(new_action)
+
+    def add_child_action_sorted(self, new_action):
+        if len(self.children) > 0 and new_action.is_set_values():
+            # A single set values action must always be at position 0
+            if self.children[0].is_set_values():
+                self.children[0].combine(new_action)
+            else:
+                self.children.insert(0, new_action)
+        else:
             self.children.append(new_action)
 
-    def is_attributes(self):
+    def is_set_values(self):
         return False
 
 
@@ -356,21 +366,18 @@ class SetValuesAction(Action):
 
         return cur_output
 
-    def is_attributes(self):
+    def is_set_values(self):
         return True
 
     def read(self, set_values_dict):
         if type(set_values_dict) != dict:
             raise TemplateParseError("Invalid action: " + str(set_values_dict))
 
+        if self.parent is None or self.parent.parent is None:
+            raise TemplateActionError("No object exists for setting values")
+
         for key, value in set_values_dict.iteritems():
             self.add_attribute(key, value)
-
-        # TODO
-        # if self.parent is not None:
-        #     self.parent.move_attributes_to_front(self)
-        # else:
-        #     raise TemplateActionError("No object exists for setting values")
 
     def add_attribute(self, field, value):
         existing_value = Action.get_dict_field(self.attributes, field.lower())
@@ -381,6 +388,10 @@ class SetValuesAction(Action):
                                  str(value), str(existing_value)))
 
         self.attributes[field] = value
+
+    def combine(self, new_set_values_action):
+        for key, value in new_set_values_action.attributes.iteritems():
+            self.add_attribute(key, value)
 
 
 class StoreValueAction(Action):
@@ -395,8 +406,8 @@ class StoreValueAction(Action):
         indent = Action._indent(indent_level)
 
         cur_output += "%s[store %s to name %s]\n" % (indent,
-                                                   str(self.from_field),
-                                                   str(self.as_name))
+                                                     str(self.from_field),
+                                                     str(self.as_name))
         return cur_output
 
     def read(self, set_value_dict):
