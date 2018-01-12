@@ -77,6 +77,42 @@ actions:
             by-field: name
             value: {{ domain_name }}
             actions:
+              {% if location_type != 'any' %}
+              - select-object:
+                  {% if location_type == 'policygroup' %}
+                  type: Policy Group
+                  {% endif %}
+                  {% if location_type == 'subnet' %}
+                  type: Subnet
+                  {% endif %}
+                  {% if location_type == 'zone' %}
+                  type: Zone
+                  {% endif %}
+                  by-field: name
+                  value: {{ location_name }}
+                  actions:
+                    - store-value:
+                        as-name: location_id
+                        from-field: id
+              {% endif %}
+              {% if network_type != 'any' %}
+              - select-object:
+                  {% if network_type == 'policygroup' %}
+                  type: Policy Group
+                  {% endif %}
+                  {% if network_type == 'subnet' %}
+                  type: Subnet
+                  {% endif %}
+                  {% if network_type == 'zone' %}
+                  type: Zone
+                  {% endif %}
+                  by-field: name
+                  value: {{ network_name }}
+                  actions:
+                    - store-value:
+                        as-name: network_id
+                        from-field: id
+              {% endif %}
               - create-object:
                   type: Ingress Security Policy
                   actions:
@@ -107,65 +143,17 @@ actions:
                           - set-values:
                               locationID: ""
                           {% else %}
-                          - set-value-from-object:
-                              from-field: id
+                          - retrieve-value:
+                              from-name: location_id
                               to-field: locationID
-                              context: root
-                              actions:
-                                - select-object:
-                                    type: Enterprise
-                                    by-field: name
-                                    value: {{ enterprise_name }}
-                                    actions:
-                                      - select-object:
-                                          type: Domain
-                                          by-field: name
-                                          value: {{ domain_name }}
-                                          actions:
-                                            - select-object:
-                                                {% if location_type == 'policygroup' %}
-                                                type: Policy Group
-                                                {% endif %}
-                                                {% if location_type == 'subnet' %}
-                                                type: Subnet
-                                                {% endif %}
-                                                {% if location_type == 'zone' %}
-                                                type: Zone
-                                                {% endif %}
-                                                by-field: name
-                                                value: {{ location_name }}
                           {% endif %}
                           {% if network_type == 'any' %}
                           - set-values:
-                              locationID: ""
+                              networkID: ""
                           {% else %}
-                          - set-value-from-object:
-                              from-field: id
+                          - retrieve-value:
+                              from-name: network_id
                               to-field: networkID
-                              context: root
-                              actions:
-                                - select-object:
-                                    type: Enterprise
-                                    by-field: name
-                                    value: {{ enterprise_name }}
-                                    actions:
-                                      - select-object:
-                                          type: Domain
-                                          by-field: name
-                                          value: {{ domain_name }}
-                                          actions:
-                                            - select-object:
-                                                {% if network_type == 'policygroup' %}
-                                                type: Policy Group
-                                                {% endif %}
-                                                {% if network_type == 'subnet' %}
-                                                type: Subnet
-                                                {% endif %}
-                                                {% if network_type == 'zone' %}
-                                                type: Zone
-                                                {% endif %}
-                                                by-field: name
-                                                value: {{ network_name }}
                           {% endif %}
               - create-object:
                   type: Egress Security Policy
@@ -197,63 +185,15 @@ actions:
                           - set-values:
                               locationID: ""
                           {% else %}
-                          - set-value-from-object:
-                              from-field: id
+                          - retrieve-value:
+                              from-name: location_id
                               to-field: locationID
-                              context: root
-                              actions:
-                                - select-object:
-                                    type: Enterprise
-                                    by-field: name
-                                    value: {{ enterprise_name }}
-                                    actions:
-                                      - select-object:
-                                          type: Domain
-                                          by-field: name
-                                          value: {{ domain_name }}
-                                          actions:
-                                            - select-object:
-                                                {% if location_type == 'policygroup' %}
-                                                type: Policy Group
-                                                {% endif %}
-                                                {% if location_type == 'subnet' %}
-                                                type: Subnet
-                                                {% endif %}
-                                                {% if location_type == 'zone' %}
-                                                type: Zone
-                                                {% endif %}
-                                                by-field: name
-                                                value: {{ location_name }}
                           {% endif %}
                           {% if network_type == 'any' %}
                           - set-values:
-                              locationID: ""
+                              networkID: ""
                           {% else %}
-                          - set-value-from-object:
-                              from-field: id
+                          - retrieve-value:
+                              from-name: network_id
                               to-field: networkID
-                              context: root
-                              actions:
-                                  - select-object:
-                                      type: Enterprise
-                                      by-field: name
-                                      value: {{ enterprise_name }}
-                                      actions:
-                                        - select-object:
-                                            type: Domain
-                                            by-field: name
-                                            value: {{ domain_name }}
-                                            actions:
-                                              - select-object:
-                                                  {% if network_type == 'policygroup' %}
-                                                  type: Policy Group
-                                                  {% endif %}
-                                                  {% if network_type == 'subnet' %}
-                                                  type: Subnet
-                                                  {% endif %}
-                                                  {% if network_type == 'zone' %}
-                                                  type: Zone
-                                                  {% endif %}
-                                                  by-field: name
-                                                  value: {{ location_name }}
                           {% endif %}

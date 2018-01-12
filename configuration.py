@@ -183,7 +183,7 @@ class Configuration(object):
                     callback_func(template, data)
 
     def _apply_data(self, template, data):
-        template_dict = template._apply(**data)
+        template_dict = template._parse_with_vars(**data)
         self.root_action.read_children_actions(template_dict)
 
 
@@ -246,8 +246,10 @@ class Action(object):
             new_action = SelectObjectAction(parent)
         elif action_type == "set-values":
             new_action = SetValuesAction(parent)
-        elif action_type == "set-value-from-object":
-            new_action = SetValueFromObjectAction(parent)
+        elif action_type == "store-value":
+            new_action = StoreValueAction(parent)
+        elif action_type == "retrieve-value":
+            new_action = RetrieveValueAction(parent)
         else:
             raise TemplateParseError("Invalid action: " + str(action_key))
 
@@ -268,6 +270,7 @@ class Action(object):
 
     def is_attributes(self):
         return False
+
 
 class CreateObjectAction(Action):
 
@@ -380,34 +383,57 @@ class SetValuesAction(Action):
         self.attributes[field] = value
 
 
-class SetValueFromObjectAction(Action):
+class StoreValueAction(Action):
 
     def __init__(self, parent):
-        super(SetValueFromObjectAction, self).__init__(parent)
+        super(StoreValueAction, self).__init__(parent)
+        self.as_name = None
         self.from_field = None
-        self.to_field = None
 
     def _to_string(self, indent_level):
         cur_output = ""
         indent = Action._indent(indent_level)
 
-        cur_output += "%s%s = [get %s]\n" % (indent,
-                                             str(self.to_field),
-                                             str(self.from_field))
-
+        cur_output += "%s[store %s to name %s]\n" % (indent,
+                                                   str(self.from_field),
+                                                   str(self.as_name))
         return cur_output
 
     def read(self, set_value_dict):
         self.from_field = Action.get_dict_field(set_value_dict, 'from-field')
         if self.from_field is None:
             raise TemplateParseError(
-                "Set value from object action missing required "
-                "'from-field' field")
+                "Store value action missing required 'from-field' field")
 
+        self.as_name = Action.get_dict_field(set_value_dict, 'as-name')
+        if self.as_name is None:
+            raise TemplateParseError(
+                "Store value action missing required 'as-name' field")
+
+
+class RetrieveValueAction(Action):
+
+    def __init__(self, parent):
+        super(RetrieveValueAction, self).__init__(parent)
+        self.from_name = None
+        self.to_field = None
+
+    def _to_string(self, indent_level):
+        cur_output = ""
+        indent = Action._indent(indent_level)
+
+        cur_output += "%s%s = [retrieve %s]\n" % (indent,
+                                                  str(self.to_field),
+                                                  str(self.from_name))
+        return cur_output
+
+    def read(self, set_value_dict):
         self.to_field = Action.get_dict_field(set_value_dict, 'to-field')
         if self.to_field is None:
             raise TemplateParseError(
-                "Set value from object action missing required "
-                "'to-field' field")
+                "Retrieve value action missing required 'to-field' field")
 
-        self.read_children_actions(set_value_dict)
+        self.from_name = Action.get_dict_field(set_value_dict, 'from-name')
+        if self.from_name is None:
+            raise TemplateParseError(
+                "Retrieve value action missing required 'from-name' field")
