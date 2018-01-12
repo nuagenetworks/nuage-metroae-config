@@ -59,7 +59,7 @@ class TestTemplateParsing(object):
         assert template.get_template_version() == "1.0"
         assert template.get_software_version() == EXPECTED_VERSION
         assert template.get_schema() == EXPECTED_ENTERPRISE_SCHEMA
-        body = template._apply(**ENTERPRISE_TEMPLATE_VARS)
+        body = template._parse_with_vars(**ENTERPRISE_TEMPLATE_VARS)
         assert body == EXPECTED_ENTERPRISE_TEMPLATE
 
         template = store.get_template("Domain")
@@ -67,7 +67,7 @@ class TestTemplateParsing(object):
         assert template.get_template_version() == "1.0"
         assert template.get_software_version() == EXPECTED_VERSION
         assert template.get_schema() == EXPECTED_DOMAIN_SCHEMA
-        body = template._apply(**DOMAIN_TEMPLATE_VARS)
+        body = template._parse_with_vars(**DOMAIN_TEMPLATE_VARS)
         assert body == EXPECTED_DOMAIN_TEMPLATE
 
         template = store.get_template("bidirectional acl")
@@ -75,7 +75,7 @@ class TestTemplateParsing(object):
         assert template.get_template_version() == "1.0"
         assert template.get_software_version() == EXPECTED_VERSION
         assert template.get_schema() == EXPECTED_ACL_SCHEMA
-        body = template._apply(**ACL_TEMPLATE_VARS)
+        body = template._parse_with_vars(**ACL_TEMPLATE_VARS)
         assert body == EXPECTED_ACL_TEMPLATE
 
     def test_read_dir__success(self):
@@ -162,13 +162,15 @@ class TestTemplateSubstitution(object):
         store.read_templates(VALID_TEMPLATE_DIRECTORY)
 
         json_template = store.get_template('enterprise')
-        processed_template = json_template._apply(enterprise_name=value)
+        processed_template = json_template._parse_with_vars(
+            enterprise_name=value)
         processed_value = self.get_enterprise_value(processed_template)
         assert processed_value == value
 
         yaml_template = store.get_template('domain')
-        processed_template = yaml_template._apply(enterprise_name=value,
-                                                  domain_name=value)
+        processed_template = yaml_template._parse_with_vars(
+            enterprise_name=value,
+            domain_name=value)
         processed_value = self.get_domain_value(processed_template)
         assert processed_value == value
 
@@ -178,14 +180,14 @@ class TestTemplateSubstitution(object):
 
         json_template = store.get_template('enterprise')
         with pytest.raises(UndefinedVariableError) as e:
-            json_template._apply()
+            json_template._parse_with_vars()
 
         assert "'enterprise_name' is undefined" in str(e)
         assert "Enterprise" in str(e)
 
         yaml_template = store.get_template('Domain')
         with pytest.raises(UndefinedVariableError) as e:
-            yaml_template._apply(enterprise_name="test_enterprise")
+            yaml_template._parse_with_vars(enterprise_name="test_enterprise")
 
         assert "'domain_name' is undefined" in str(e)
         assert "Domain" in str(e)
@@ -199,7 +201,7 @@ class TestTemplateSubstitution(object):
 
         json_template = store.get_template('Conditionals JSON')
 
-        processed_template = json_template._apply(var1='a', var2='x')
+        processed_template = json_template._parse_with_vars(var1='a', var2='x')
         assert 'var1_is_a' in processed_template['actions']
         assert processed_template['actions']['var1_is_a'] == 'a'
         assert 'var2' in processed_template['actions']
@@ -209,7 +211,7 @@ class TestTemplateSubstitution(object):
         assert 'var1_is_empty' in processed_template['actions']
         assert processed_template['actions']['var1_is_empty'] is False
 
-        processed_template = json_template._apply(var1='', var2=True)
+        processed_template = json_template._parse_with_vars(var1='', var2=True)
         assert 'var1_is_a' not in processed_template['actions']
         assert 'var2' in processed_template['actions']
         assert processed_template['actions']['var2'] is True
@@ -218,8 +220,9 @@ class TestTemplateSubstitution(object):
         assert 'var1_is_empty' in processed_template['actions']
         assert processed_template['actions']['var1_is_empty'] is True
 
-        processed_template = json_template._apply(var1='peanut butter',
-                                                  var2='jelly')
+        processed_template = json_template._parse_with_vars(
+            var1='peanut butter',
+            var2='jelly')
         assert 'var1_is_a' not in processed_template['actions']
         assert 'var2' in processed_template['actions']
         assert processed_template['actions']['var2'] == 'false'
@@ -230,7 +233,7 @@ class TestTemplateSubstitution(object):
         assert 'var1_is_empty' in processed_template['actions']
         assert processed_template['actions']['var1_is_empty'] is False
 
-        processed_template = json_template._apply(var1='b', var2=0)
+        processed_template = json_template._parse_with_vars(var1='b', var2=0)
         assert 'var1_is_a' not in processed_template['actions']
         assert 'var2' in processed_template['actions']
         assert processed_template['actions']['var2'] == 'false'
@@ -242,7 +245,7 @@ class TestTemplateSubstitution(object):
 
         yaml_template = store.get_template('Conditionals Yaml')
 
-        processed_template = yaml_template._apply(var1='a', var2='x')
+        processed_template = yaml_template._parse_with_vars(var1='a', var2='x')
         assert 'var1_is_a' in processed_template['actions']
         assert processed_template['actions']['var1_is_a'] == 'a'
         assert 'var2' in processed_template['actions']
@@ -252,7 +255,7 @@ class TestTemplateSubstitution(object):
         assert 'var1_is_empty' in processed_template['actions']
         assert processed_template['actions']['var1_is_empty'] is False
 
-        processed_template = yaml_template._apply(var1='', var2=True)
+        processed_template = yaml_template._parse_with_vars(var1='', var2=True)
         assert 'var1_is_a' not in processed_template['actions']
         assert 'var2' in processed_template['actions']
         assert processed_template['actions']['var2'] is True
@@ -261,8 +264,9 @@ class TestTemplateSubstitution(object):
         assert 'var1_is_empty' in processed_template['actions']
         assert processed_template['actions']['var1_is_empty'] is True
 
-        processed_template = yaml_template._apply(var1='peanut butter',
-                                                  var2='jelly')
+        processed_template = yaml_template._parse_with_vars(
+            var1='peanut butter',
+            var2='jelly')
         assert 'var1_is_a' not in processed_template['actions']
         assert 'var2' in processed_template['actions']
         assert processed_template['actions']['var2'] == 'false'
@@ -273,7 +277,7 @@ class TestTemplateSubstitution(object):
         assert 'var1_is_empty' in processed_template['actions']
         assert processed_template['actions']['var1_is_empty'] is False
 
-        processed_template = yaml_template._apply(var1='b', var2=0)
+        processed_template = yaml_template._parse_with_vars(var1='b', var2=0)
         assert 'var1_is_a' not in processed_template['actions']
         assert 'var2' in processed_template['actions']
         assert processed_template['actions']['var2'] == 'false'

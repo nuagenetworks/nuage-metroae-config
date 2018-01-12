@@ -85,14 +85,14 @@ class Template(object):
     # Private functions to do the work
     #
 
-    def _parse(self, template_string, filename):
+    def _parse_without_vars(self, template_string, filename):
         self.filename = filename
         self.template_string = template_string
-        filled_template = self._substitute_null()
-        template_dict = self._decode(filled_template)
+        filled_template = self._replace_vars_with_null()
+        template_dict = self._decode_to_dict(filled_template)
         self._parse_headers(template_dict)
 
-    def _decode(self, filled_template):
+    def _decode_to_dict(self, filled_template):
         try:
             template_dict = yaml.safe_load(filled_template)
         except yaml.YAMLError as e:
@@ -104,7 +104,7 @@ class Template(object):
                                      (self.filename, lineno, str(e)))
         return template_dict
 
-    def _substitute_null(self):
+    def _replace_vars_with_null(self):
         try:
             template = jinja2.Template(self.template_string,
                                        autoescape=False,
@@ -133,11 +133,11 @@ class Template(object):
                 "Required field %s missing from template %s" % (field,
                                                                 self.filename))
 
-    def _substitute_vars(self, **kwargs):
+    def _replace_vars_with_kwargs(self, **kwargs):
         try:
-            self._verify_substitution(**kwargs)
+            self._verify_all_vars_defined(**kwargs)
             template = jinja2.Template(self.template_string,
-                                       extensions=(JSONEverythingExtension,),
+                                       extensions=(JSONEscapingExtension,),
                                        autoescape=False,
                                        undefined=jinja2.StrictUndefined)
 
@@ -149,15 +149,15 @@ class Template(object):
             raise UndefinedVariableError("For template %s: Variable value %s" %
                                          (self.get_name(), e.message))
 
-    def _verify_substitution(self, **kwargs):
+    def _verify_all_vars_defined(self, **kwargs):
         template = jinja2.Template(self.template_string,
                                    autoescape=False,
                                    undefined=jinja2.StrictUndefined)
         template.render(**kwargs)
 
-    def _apply(self, **kwargs):
-        filled_template = self._substitute_vars(**kwargs)
-        return self._decode(filled_template)
+    def _parse_with_vars(self, **kwargs):
+        filled_template = self._replace_vars_with_kwargs(**kwargs)
+        return self._decode_to_dict(filled_template)
 
 
 class TemplateStore(object):
@@ -199,7 +199,7 @@ class TemplateStore(object):
         template = Template()
         if filename is None:
             filename = "(internal)"
-        template._parse(template_string, filename)
+        template._parse_without_vars(template_string, filename)
         self._register_template(template)
 
     def get_template_names(self, software_version=None, software_type=None):
@@ -274,7 +274,7 @@ class NullUndefined(jinja2.Undefined):
         return "null"
 
 
-class JSONEverythingExtension(jinja2.ext.Extension):
+class JSONEscapingExtension(jinja2.ext.Extension):
     """
     Insert a `|tojson` filter at the end of every variable substitution.
 

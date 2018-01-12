@@ -72,11 +72,7 @@ def setup_standard_session(vsd_writer, mock_patch):
 
 class TestVsdWriterSpecParsing(object):
 
-    def test_read_dir__success(self):
-        vsd_writer = VsdWriter()
-
-        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
-
+    def validate_valid_specs(self, vsd_writer):
         assert "me" in vsd_writer.specs
         assert vsd_writer.specs['me']['model']['entity_name'] == "Me"
         assert "enterprise" in vsd_writer.specs
@@ -87,6 +83,13 @@ class TestVsdWriterSpecParsing(object):
             "DomainTemplate")
         assert "domain" in vsd_writer.specs
         assert vsd_writer.specs['domain']['model']['entity_name'] == "Domain"
+
+    def test_read_dir__success(self):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        self.validate_valid_specs(vsd_writer)
 
     def test_read_files__success(self):
         vsd_writer = VsdWriter()
@@ -100,16 +103,7 @@ class TestVsdWriterSpecParsing(object):
         vsd_writer.read_api_specifications(os.path.join(VALID_SPECS_DIRECTORY,
                                                         "domain.spec"))
 
-        assert "me" in vsd_writer.specs
-        assert vsd_writer.specs['me']['model']['entity_name'] == "Me"
-        assert "enterprise" in vsd_writer.specs
-        assert vsd_writer.specs['enterprise']['model']['entity_name'] == (
-            "Enterprise")
-        assert "domaintemplate" in vsd_writer.specs
-        assert vsd_writer.specs['domaintemplate']['model']['entity_name'] == (
-            "DomainTemplate")
-        assert "domain" in vsd_writer.specs
-        assert vsd_writer.specs['domain']['model']['entity_name'] == "Domain"
+        self.validate_valid_specs(vsd_writer)
 
     @pytest.mark.parametrize("filename, message", PARSE_ERROR_CASES)
     def test_read_files__invalid(self, filename, message):
