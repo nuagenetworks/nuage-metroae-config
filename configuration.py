@@ -1,3 +1,5 @@
+import collections
+
 from actions import Action
 
 
@@ -12,7 +14,7 @@ class Configuration(object):
         self.store = template_store
         self.software_version = None
         self.software_type = None
-        self.data = dict()
+        self.data = collections.OrderedDict()
 
     def set_software_version(self, software_version, software_type=None):
         """

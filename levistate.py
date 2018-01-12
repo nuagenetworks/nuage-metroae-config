@@ -1,11 +1,13 @@
 import argparse
 from configuration import Configuration
 from template import TemplateStore
+from user_data_parser import UserDataParser
 from vsd_writer import DeviceWriterError, VsdWriter
 # import vspk.v5_0 as vspk
 
 DEFAULT_SPEC_PATH = "vsd-api-specifications"
 DEFAULT_TEMPLATE_PATH = "templates"
+DEFAULT_DATA_PATH = "data"
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
@@ -38,6 +40,10 @@ def parse_args():
                         action='store', required=False,
                         default=DEFAULT_SPEC_PATH,
                         help='Path containing object specifications')
+    parser.add_argument('-dp', '--data-path', dest='data_path',
+                        action='store', required=False,
+                        default=DEFAULT_DATA_PATH,
+                        help='Path containing user data')
     parser.add_argument('-t', '--template', dest='template_name',
                         action='store', required=False,
                         default=None,
@@ -72,16 +78,17 @@ class Levistate(object):
 
     def __init__(self, args):
         self.args = args
-        self.template_data = {}
+        self.template_data = list()
 
     def run(self):
 
-        self.parse_extra_vars()
         self.setup_vsd_writer()
         self.setup_template_store()
+        self.parse_user_data()
+        self.parse_extra_vars()
 
         try:
-            self.apply_template(self.args.template_name, self.template_data)
+            self.apply_templates()
         except DeviceWriterError as e:
             self.writer.log_error(str(e))
         except Exception as e:
@@ -91,6 +98,7 @@ class Levistate(object):
 
     def parse_extra_vars(self):
         if self.args.data is not None:
+            template_data = dict()
             for data in self.args.data:
                 for var in data.split(','):
                     key_value_pair = var.split('=')
@@ -99,7 +107,9 @@ class Levistate(object):
                                         "be key=value format: " + var)
                     key = key_value_pair[0]
                     value = key_value_pair[1]
-                    self.template_data[key] = value
+                    template_data[key] = value
+
+            self.template_data.append((self.template_name, template_data))
 
     def setup_vsd_writer(self):
         self.writer = VsdWriter()
@@ -110,11 +120,21 @@ class Levistate(object):
         self.store = TemplateStore()
         self.store.read_templates(self.args.template_path)
 
-    def apply_template(self, template_name, template_data):
+    def parse_user_data(self):
+        parser = UserDataParser()
+        parser.read_data(self.args.data_path)
+        self.template_data = parser.get_template_name_data_pairs()
+        # print str(self.template_data)
+
+    def apply_templates(self):
         config = Configuration(self.store)
-        config.add_template_data(template_name, **template_data)
+        for data in self.template_data:
+            template_name = data[0]
+            template_data = data[1]
+            config.add_template_data(template_name, **template_data)
         config.apply(self.writer)
         print str(config.root_action)
+
 
     #
     # Old prototype code
@@ -214,7 +234,7 @@ class Levistate(object):
     def apply_acl_template(self, **kwargs):
         print "Applying acl template: %s" % kwargs
         context = self.vsd_writer.select_object("Enterprise", "name",
-                                                    kwargs['enterprise_name'])
+                                                kwargs['enterprise_name'])
         dom_context = self.vsd_writer.select_object("Domain", "name",
                                                     kwargs['domain_name'],
                                                     context)

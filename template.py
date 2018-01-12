@@ -174,8 +174,7 @@ class TemplateStore(object):
         """
         Reads and parses templates from either all templates in a
         directory path, or a single template specified by filename.
-        The file extension determines the file type. Either yaml (.yml)
-        or JSON (.json).
+        Both yaml (.yml) and JSON (.json) files are supported.
         """
         if (os.path.isdir(path_or_file_name)):
             for file_name in os.listdir(path_or_file_name):

@@ -1,0 +1,10 @@
+template:
+  name: Enterprise
+  values:
+    enterprise_name: test_enterprise
+  children:
+    - template:
+        name: Domain
+        values:
+          - domain_name: public
+          - domain_name: private
