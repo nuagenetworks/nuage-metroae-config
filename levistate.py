@@ -1,4 +1,6 @@
 import argparse
+from configuration import Configuration
+from template import TemplateStore
 from vsd_writer import DeviceWriterError, VsdWriter
 # import vspk.v5_0 as vspk
 
@@ -36,6 +38,13 @@ def parse_args():
                         action='store', required=False,
                         default=DEFAULT_SPEC_PATH,
                         help='Path containing object specifications')
+    parser.add_argument('-t', '--template', dest='template_name',
+                        action='store', required=False,
+                        default=None,
+                        help='Template name')
+    parser.add_argument('-d', '--data', dest='data',
+                        action='append', required=False,
+                        help='Specify extra variable as key=value')
     parser.add_argument('-v', '--vsd-url', dest='vsd_url',
                         action='store', required=False,
                         default=DEFAULT_URL,
@@ -63,47 +72,93 @@ class Levistate(object):
 
     def __init__(self, args):
         self.args = args
-        self.vsd_writer = VsdWriter()
+        self.template_data = {}
 
     def run(self):
+
+        self.parse_extra_vars()
+        self.setup_vsd_writer()
+        self.setup_template_store()
+
         try:
-            self.start_vsd_session()
-
-            if self.args.revert:
-                self.revert_acl_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1',
-                    policy_name='demo_policy_1')
-                self.revert_domain_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1')
-                self.revert_enterprise_template(enterprise_name='demo_ent')
-            else:
-                self.apply_enterprise_template(enterprise_name='demo_ent',
-                                               description='Demo enterprise')
-                self.apply_domain_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1',
-                    description='This is a demo domain')
-                self.apply_acl_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1',
-                    policy_name='demo_policy_1',
-                    description='This is a demo policy',
-                    protocol='6',
-                    sourcePort='*',
-                    destinationPort='80',
-                    action='FORWARD',
-                    etherType='*')
-
+            self.apply_template(self.args.template_name, self.template_data)
         except DeviceWriterError as e:
-            self.vsd_writer.log_error(str(e))
+            self.writer.log_error(str(e))
         except Exception as e:
-            self.vsd_writer.log_error(str(e))
+            self.writer.log_error(str(e))
 
-        self.stop_vsd_session()
-        print ""
-        print self.vsd_writer.get_logs()
+        print self.writer.get_logs()
+
+    def parse_extra_vars(self):
+        if self.args.data is not None:
+            for data in self.args.data:
+                for var in data.split(','):
+                    key_value_pair = var.split('=')
+                    if len(key_value_pair) != 2:
+                        raise Exception("Invalid extra-vars argument, must "
+                                        "be key=value format: " + var)
+                    key = key_value_pair[0]
+                    value = key_value_pair[1]
+                    self.template_data[key] = value
+
+    def setup_vsd_writer(self):
+        self.writer = VsdWriter()
+        self.writer.read_api_specifications(self.args.spec_path)
+        self.writer.set_session_params(self.args.vsd_url)
+
+    def setup_template_store(self):
+        self.store = TemplateStore()
+        self.store.read_templates(self.args.template_path)
+
+    def apply_template(self, template_name, template_data):
+        config = Configuration(self.store)
+        config.add_template_data(template_name, **template_data)
+        config.apply(self.writer)
+        print str(config.root_action)
+
+    #
+    # Old prototype code
+    #
+
+    # def run(self):
+    #     try:
+    #         self.start_vsd_session()
+
+    #         if self.args.revert:
+    #             self.revert_acl_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1',
+    #                 policy_name='demo_policy_1')
+    #             self.revert_domain_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1')
+    #             self.revert_enterprise_template(enterprise_name='demo_ent')
+    #         else:
+    #             self.apply_enterprise_template(enterprise_name='demo_ent',
+    #                                            description='Demo enterprise')
+    #             self.apply_domain_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1',
+    #                 description='This is a demo domain')
+    #             self.apply_acl_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1',
+    #                 policy_name='demo_policy_1',
+    #                 description='This is a demo policy',
+    #                 protocol='6',
+    #                 sourcePort='*',
+    #                 destinationPort='80',
+    #                 action='FORWARD',
+    #                 etherType='*')
+
+    #     except DeviceWriterError as e:
+    #         self.vsd_writer.log_error(str(e))
+    #     except Exception as e:
+    #         self.vsd_writer.log_error(str(e))
+
+    #     self.stop_vsd_session()
+    #     print ""
+    #     print self.vsd_writer.get_logs()
 
     def start_vsd_session(self):
         self.vsd_writer.read_api_specifications(self.args.spec_path)

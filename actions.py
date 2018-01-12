@@ -1,5 +1,5 @@
-from .template import (TemplateError,
-                       TemplateParseError)
+from template import (TemplateError,
+                      TemplateParseError)
 
 
 class ConflictError(TemplateError):
@@ -198,14 +198,16 @@ class SetValuesAction(Action):
             self.add_attribute(key, value)
 
     def add_attribute(self, field, value):
-        existing_value = Action.get_dict_field(self.attributes, field.lower())
-        if existing_value is not None:
-            raise ConflictError("Setting field '%s' of object %s to '%s' "
-                                "when it is already set to '%s'" %
-                                (str(value), str(self.object_type),
-                                 str(value), str(existing_value)))
+        if value is not None:
+            existing_value = Action.get_dict_field(self.attributes,
+                                                   field.lower())
+            if existing_value is not None:
+                raise ConflictError("Setting field '%s' of object %s to '%s' "
+                                    "when it is already set to '%s'" %
+                                    (str(value), str(self.object_type),
+                                     str(value), str(existing_value)))
 
-        self.attributes[field] = value
+            self.attributes[field] = value
 
     def combine(self, new_set_values_action):
         for key, value in new_set_values_action.attributes.iteritems():

@@ -1,4 +1,4 @@
-from .actions import Action
+from actions import Action
 
 
 class Configuration(object):

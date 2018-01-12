@@ -211,12 +211,4 @@ class TestConfigurationData(object):
 class TestConfigurationApply(object):
 
     def test__success(self):
-        config = load_standard_configuration()
-        # data1 = {"enterprise_name": "enterprise1",
-        #          "domain_name": "domain1"}
-
-        config.add_template_data("Bidirectional ACL", **ACL_TEMPLATE_VARS)
-
-        config.apply("writer")
-        print str(config.root_action)
-        assert True
+        pass
