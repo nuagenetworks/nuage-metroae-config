@@ -111,8 +111,7 @@ class Configuration(object):
         writer.  Returns True if ok, otherwise an exception is
         raised.
         """
-        self.root_action = Action()
-        self.root_action.root = self.root_action
+        self.root_action = Action(None)
         self.writer = writer
         self._walk_data(self._apply_data)
 
@@ -197,7 +196,8 @@ class Action(object):
     Private class to track and perform the actions required to write the
     configuration to the device
     """
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
         self.children = list()
 
     def __str__(self):
@@ -230,7 +230,7 @@ class Action(object):
         return None
 
     @staticmethod
-    def new(action_dict, root):
+    def new(action_dict, parent):
         if type(action_dict) != dict:
             raise TemplateParseError("Invalid action: " + str(action_dict))
 
@@ -241,13 +241,13 @@ class Action(object):
         action_key = action_keys[0]
         action_type = str(action_key).lower()
         if action_type == "create-object":
-            new_action = CreateObjectAction(root)
+            new_action = CreateObjectAction(parent)
         elif action_type == "select-object":
-            new_action = SelectObjectAction(root)
+            new_action = SelectObjectAction(parent)
         elif action_type == "set-values":
-            new_action = SetValuesAction(root)
+            new_action = SetValuesAction(parent)
         elif action_type == "set-value-from-object":
-            new_action = SetValueFromObjectAction(root)
+            new_action = SetValueFromObjectAction(parent)
         else:
             raise TemplateParseError("Invalid action: " + str(action_key))
 
@@ -263,15 +263,16 @@ class Action(object):
             raise TemplateParseError("Invalid actions: " + str(child_actions))
 
         for action_dict in child_actions:
-            new_action = Action.new(action_dict, self.root)
+            new_action = Action.new(action_dict, self)
             self.children.append(new_action)
 
+    def is_attributes(self):
+        return False
 
 class CreateObjectAction(Action):
 
-    def __init__(self, root):
-        super(CreateObjectAction, self).__init__()
-        self.root = root
+    def __init__(self, parent):
+        super(CreateObjectAction, self).__init__(parent)
         self.object_type = None
 
     def _to_string(self, indent_level):
@@ -296,9 +297,8 @@ class CreateObjectAction(Action):
 
 class SelectObjectAction(Action):
 
-    def __init__(self, root):
-        super(SelectObjectAction, self).__init__()
-        self.root = root
+    def __init__(self, parent):
+        super(SelectObjectAction, self).__init__(parent)
         self.object_type = None
         self.field = None
         self.value = None
@@ -338,9 +338,8 @@ class SelectObjectAction(Action):
 
 class SetValuesAction(Action):
 
-    def __init__(self, root):
-        super(SetValuesAction, self).__init__()
-        self.root = root
+    def __init__(self, parent):
+        super(SetValuesAction, self).__init__(parent)
         self.attributes = dict()
 
     def _to_string(self, indent_level):
@@ -354,6 +353,9 @@ class SetValuesAction(Action):
 
         return cur_output
 
+    def is_attributes(self):
+        return True
+
     def read(self, set_values_dict):
         if type(set_values_dict) != dict:
             raise TemplateParseError("Invalid action: " + str(set_values_dict))
@@ -361,10 +363,16 @@ class SetValuesAction(Action):
         for key, value in set_values_dict.iteritems():
             self.add_attribute(key, value)
 
+        # TODO
+        # if self.parent is not None:
+        #     self.parent.move_attributes_to_front(self)
+        # else:
+        #     raise TemplateActionError("No object exists for setting values")
+
     def add_attribute(self, field, value):
         existing_value = Action.get_dict_field(self.attributes, field.lower())
         if existing_value is not None:
-            raise ConflictError("Setting attribute '%s' of object %s to '%s' "
+            raise ConflictError("Setting field '%s' of object %s to '%s' "
                                 "when it is already set to '%s'" %
                                 (str(value), str(self.object_type),
                                  str(value), str(existing_value)))
@@ -374,9 +382,8 @@ class SetValuesAction(Action):
 
 class SetValueFromObjectAction(Action):
 
-    def __init__(self, root):
-        super(SetValueFromObjectAction, self).__init__()
-        self.root = root
+    def __init__(self, parent):
+        super(SetValueFromObjectAction, self).__init__(parent)
         self.from_field = None
         self.to_field = None
 
