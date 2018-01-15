@@ -1,5 +1,8 @@
+from device_writer_base import MissingSelectionError
 from template import (TemplateError,
                       TemplateParseError)
+
+DEFAULT_SELECTION_FIELD = 'name'
 
 
 class ConflictError(TemplateError):
@@ -88,6 +91,12 @@ class Action(object):
     def reset_state(self):
         self.state = dict()
 
+    def set_revert(self, is_revert=True):
+        self.state['is_revert'] = is_revert
+
+    def is_revert(self):
+        return 'is_revert' in self.state and self.state['is_revert'] is True
+
     def read_children_actions(self, current_dict):
         child_actions = Action.get_dict_field(current_dict, 'actions')
         if child_actions is None:
@@ -114,8 +123,12 @@ class Action(object):
         self.execute_children(writer, context=None)
 
     def execute_children(self, writer, context=None):
-        for child in self.children:
-            child.execute(writer, context)
+        if self.is_revert() is True:
+            for child in reversed(self.children):
+                child.execute(writer, context)
+        else:
+            for child in self.children:
+                child.execute(writer, context)
 
 
 class CreateObjectAction(Action):
@@ -123,6 +136,7 @@ class CreateObjectAction(Action):
     def __init__(self, parent, state):
         super(CreateObjectAction, self).__init__(parent, state)
         self.object_type = None
+        self.select_by_field = DEFAULT_SELECTION_FIELD
 
     def read(self, create_dict):
         self.object_type = Action.get_dict_field(create_dict, 'type')
@@ -130,11 +144,40 @@ class CreateObjectAction(Action):
             raise TemplateParseError(
                 "Create object action missing required 'type' field")
 
+        field = Action.get_dict_field(create_dict, 'select-by-field')
+        if field is not None:
+            self.select_by_field = field
+
         self.read_children_actions(create_dict)
 
     def execute(self, writer, context=None):
-        new_context = writer.create_object(self.object_type, context)
-        self.execute_children(writer, new_context)
+        if self.is_revert() is False:
+            new_context = writer.create_object(self.object_type, context)
+            self.execute_children(writer, new_context)
+        else:
+            self.delete_object(writer, context)
+
+    def delete_object(self, writer, context=None):
+        select_value = self.get_select_value()
+        if select_value is not None:
+            try:
+                new_context = writer.select_object(self.object_type,
+                                                   self.select_by_field,
+                                                   select_value,
+                                                   context)
+
+                # Always delete children first
+                self.execute_children(writer, new_context)
+                writer.delete_object(new_context)
+            except MissingSelectionError:
+                # Skip deletion if object is not present (not created)
+                pass
+
+    def get_select_value(self):
+        if len(self.children) > 0 and self.children[0].is_set_values():
+            return self.children[0].get_value(self.select_by_field)
+        else:
+            return None
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -232,8 +275,9 @@ class SetValuesAction(Action):
             self.add_attribute(key, value)
 
     def execute(self, writer, context=None):
-        resolved_attributes = self.resolve_attributes()
-        writer.set_values(context, **resolved_attributes)
+        if self.is_revert() is False:
+            resolved_attributes = self.resolve_attributes()
+            writer.set_values(context, **resolved_attributes)
 
     def resolve_attributes(self):
         attributes_copy = dict()
@@ -245,6 +289,12 @@ class SetValuesAction(Action):
                 attributes_copy[key] = value
 
         return attributes_copy
+
+    def get_value(self, field):
+        if field in self.attributes:
+            return self.attributes[field]
+
+        return None
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -306,7 +356,8 @@ class StoreValueAction(Action):
                                       self.as_name)
 
     def execute(self, writer, context=None):
-        self.stored_value = writer.get_value(self.from_field, context)
+        if self.is_revert() is False:
+            self.stored_value = writer.get_value(self.from_field, context)
 
     def _to_string(self, indent_level):
         cur_output = ""

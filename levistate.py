@@ -132,7 +132,11 @@ class Levistate(object):
             template_name = data[0]
             template_data = data[1]
             config.add_template_data(template_name, **template_data)
-        config.apply(self.writer)
+        if self.args.revert is True:
+            config.revert(self.writer)
+        else:
+            config.apply(self.writer)
+
         print str(config.root_action)
 
 

@@ -98,12 +98,7 @@ class Configuration(object):
         writer.  Returns True if ok, otherwise an exception is
         raised.
         """
-        self.root_action = Action(None)
-        self._walk_data(self._apply_data)
-        writer.start_session()
-        self.root_action.execute(writer)
-        writer.stop_session()
-
+        self._execute_templates(writer, is_revert=False)
         return True
 
     def update(self, writer):
@@ -121,7 +116,9 @@ class Configuration(object):
         provided device writer.  Returns True if ok, otherwise
         an exception is raised.
         """
-        pass
+        self._execute_templates(writer, is_revert=True)
+
+        return True
 
     #
     # Private functions to do the work
@@ -166,6 +163,16 @@ class Configuration(object):
     def _get_template_key(self, id):
         return id['key']
 
+    def _execute_templates(self, writer, is_revert=False):
+        self.root_action = Action(None)
+        if is_revert is True:
+            self._walk_data(self._revert_data)
+        else:
+            self._walk_data(self._apply_data)
+        writer.start_session()
+        self.root_action.execute(writer)
+        writer.stop_session()
+
     def _walk_data(self, callback_func):
         for template_name, data_list in self.data.iteritems():
             template = self.get_template(template_name)
@@ -175,5 +182,11 @@ class Configuration(object):
 
     def _apply_data(self, template, data):
         template_dict = template._parse_with_vars(**data)
+        self.root_action.set_revert(False)
+        self.root_action.read_children_actions(template_dict)
+
+    def _revert_data(self, template, data):
+        template_dict = template._parse_with_vars(**data)
         self.root_action.reset_state()
+        self.root_action.set_revert(True)
         self.root_action.read_children_actions(template_dict)
