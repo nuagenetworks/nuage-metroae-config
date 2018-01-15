@@ -36,14 +36,15 @@ EXPECTED_DOMAIN_SCHEMA = \
 
 EXPECTED_DOMAIN_TEMPLATE = \
     {'name': 'Domain',
+     'description': 'Creates a domain',
+     'template-version': 1.0,
+     'software-type': 'Nuage Networks VSD',
+     'software-version': '5.0.2',
      'variables': [
          {'type': 'reference', 'required_for_delete': True,
           'name': 'enterprise_name'},
          {'type': 'string', 'required_for_delete': True,
           'name': 'domain_name'}],
-     'description': 'Creates a domain',
-     'software-version': '5.0.2',
-     'template-version': 1.0,
      'actions': [
          {'select-object':
              {'type': 'Enterprise',
@@ -51,10 +52,21 @@ EXPECTED_DOMAIN_TEMPLATE = \
               'value': 'test_enterprise',
               'actions': [
                   {'create-object':
+                      {'type': 'DomainTemplate',
+                       'actions': [
+                           {'set-values':
+                               {'name': 'template_test_domain'}},
+                           {'store-value':
+                               {'from-field': 'id',
+                                'as-name': 'domain_template_id'}}]}},
+                  {'create-object':
                       {'type': 'Domain',
                        'actions': [
-                           {'set-values': {'name': 'test_domain'}}]}}]}}],
-     'software-type': 'Nuage Networks VSD'}
+                           {'set-values':
+                               {'name': 'test_domain'}},
+                           {'retrieve-value':
+                               {'to-field': 'templateID',
+                                'from-name': 'domain_template_id'}}]}}]}}]}
 
 ACL_TEMPLATE_VARS = {
     'enterprise_name': 'test_enterprise',

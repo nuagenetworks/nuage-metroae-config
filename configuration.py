@@ -99,8 +99,12 @@ class Configuration(object):
         raised.
         """
         self.root_action = Action(None)
-        self.writer = writer
         self._walk_data(self._apply_data)
+        writer.start_session()
+        self.root_action.execute(writer)
+        writer.stop_session()
+
+        return True
 
     def update(self, writer):
         """

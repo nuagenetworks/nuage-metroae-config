@@ -110,6 +110,13 @@ class Action(object):
         else:
             self.children.append(new_action)
 
+    def execute(self, writer, context=None):
+        self.execute_children(writer, context=None)
+
+    def execute_children(self, writer, context=None):
+        for child in self.children:
+            child.execute(writer, context)
+
 
 class CreateObjectAction(Action):
 
@@ -124,6 +131,10 @@ class CreateObjectAction(Action):
                 "Create object action missing required 'type' field")
 
         self.read_children_actions(create_dict)
+
+    def execute(self, writer, context=None):
+        new_context = writer.create_object(self.object_type, context)
+        self.execute_children(writer, new_context)
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -162,6 +173,13 @@ class SelectObjectAction(Action):
                 "Select object action missing required 'value' field")
 
         self.read_children_actions(select_dict)
+
+    def execute(self, writer, context=None):
+        new_context = writer.select_object(self.object_type,
+                                           self.field,
+                                           self.value,
+                                           context)
+        self.execute_children(writer, new_context)
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -212,6 +230,21 @@ class SetValuesAction(Action):
     def combine(self, new_set_values_action):
         for key, value in new_set_values_action.attributes.iteritems():
             self.add_attribute(key, value)
+
+    def execute(self, writer, context=None):
+        resolved_attributes = self.resolve_attributes()
+        writer.set_values(context, **resolved_attributes)
+
+    def resolve_attributes(self):
+        attributes_copy = dict()
+        for key, value in self.attributes.iteritems():
+            if isinstance(value, Action):
+                resolved_value = value.get_stored_value()
+                attributes_copy[key] = resolved_value
+            else:
+                attributes_copy[key] = value
+
+        return attributes_copy
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -271,6 +304,9 @@ class StoreValueAction(Action):
         else:
             raise TemplateActionError("No value stored as name %s" %
                                       self.as_name)
+
+    def execute(self, writer, context=None):
+        self.stored_value = writer.get_value(self.from_field, context)
 
     def _to_string(self, indent_level):
         cur_output = ""

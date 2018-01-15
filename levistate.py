@@ -91,8 +91,8 @@ class Levistate(object):
             self.apply_templates()
         except DeviceWriterError as e:
             self.writer.log_error(str(e))
-        except Exception as e:
-            self.writer.log_error(str(e))
+        # except Exception as e:
+        #     self.writer.log_error(str(e))
 
         print self.writer.get_logs()
 

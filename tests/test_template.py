@@ -153,7 +153,7 @@ class TestTemplateSubstitution(object):
 
     def get_domain_value(self, processed_template):
         return (processed_template['actions'][0]['select-object']
-                                  ['actions'][0]['create-object']
+                                  ['actions'][1]['create-object']
                                   ['actions'][0]['set-values']['name'])
 
     @pytest.mark.parametrize("value", SUBSTITUTE_CASES)

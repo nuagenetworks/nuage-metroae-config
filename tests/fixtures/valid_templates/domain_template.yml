@@ -17,7 +17,18 @@ actions:
       value: {{ enterprise_name }}
       actions:
         - create-object:
+            type: DomainTemplate
+            actions:
+              - set-values:
+                  name: {% set concat = "template_" + domain_name|default('')|string %}{{ concat }}
+              - store-value:
+                  as-name: domain_template_id
+                  from-field: id
+        - create-object:
             type: Domain
             actions:
               - set-values:
                   name: {{ domain_name }}
+              - retrieve-value:
+                  from-name: domain_template_id
+                  to-field: templateID
