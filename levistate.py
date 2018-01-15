@@ -5,13 +5,13 @@ from user_data_parser import UserDataParser
 from vsd_writer import DeviceWriterError, VsdWriter
 # import vspk.v5_0 as vspk
 
-DEFAULT_SPEC_PATH = "vsd-api-specifications"
-DEFAULT_TEMPLATE_PATH = "templates"
-DEFAULT_DATA_PATH = "data"
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
 DEFAULT_URL = 'https://localhost:8080'
+
+DESCRIPTION = """Command-line tool for running template commands.
+    See README.md for more."""
 
 
 def main():
@@ -30,19 +30,15 @@ def main():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Command-line tool for running template commands')
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('-tp', '--template-path', dest='template_path',
-                        action='store', required=False,
-                        default=DEFAULT_TEMPLATE_PATH,
+                        action='append', required=True,
                         help='Path containing template files')
     parser.add_argument('-sp', '--spec-path', dest='spec_path',
-                        action='store', required=False,
-                        default=DEFAULT_SPEC_PATH,
+                        action='append', required=False,
                         help='Path containing object specifications')
     parser.add_argument('-dp', '--data-path', dest='data_path',
-                        action='store', required=False,
-                        default=DEFAULT_DATA_PATH,
+                        action='append', required=False,
                         help='Path containing user data')
     parser.add_argument('-t', '--template', dest='template_name',
                         action='store', required=False,
@@ -50,7 +46,10 @@ def parse_args():
                         help='Template name')
     parser.add_argument('-d', '--data', dest='data',
                         action='append', required=False,
-                        help='Specify extra variable as key=value')
+                        help='Specify user data as key=value')
+    parser.add_argument('-r', '--revert', dest='revert',
+                        action='store_true', required=False,
+                        help='Revert (delete) templates instead of applying')
     parser.add_argument('-v', '--vsd-url', dest='vsd_url',
                         action='store', required=False,
                         default=DEFAULT_URL,
@@ -67,9 +66,6 @@ def parse_args():
                         action='store', required=False,
                         default=DEFAULT_VSD_ENTERPRISE,
                         help='Enterprise for VSD')
-    parser.add_argument('-r', '--revert', dest='revert',
-                        action='store_true', required=False,
-                        help='Revert (delete) templates instead of applying')
 
     return parser.parse_args()
 
@@ -113,16 +109,19 @@ class Levistate(object):
 
     def setup_vsd_writer(self):
         self.writer = VsdWriter()
-        self.writer.read_api_specifications(self.args.spec_path)
+        for path in self.args.spec_path:
+            self.writer.read_api_specifications(path)
         self.writer.set_session_params(self.args.vsd_url)
 
     def setup_template_store(self):
         self.store = TemplateStore()
-        self.store.read_templates(self.args.template_path)
+        for path in self.args.template_path:
+            self.store.read_templates(path)
 
     def parse_user_data(self):
         parser = UserDataParser()
-        parser.read_data(self.args.data_path)
+        for path in self.args.data_path:
+            parser.read_data(path)
         self.template_data = parser.get_template_name_data_pairs()
         # print str(self.template_data)
 
