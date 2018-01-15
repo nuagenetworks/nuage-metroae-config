@@ -182,7 +182,7 @@ EXPECTED_ACL_TEMPLATE = \
                                         {'as-name': 'location_id',
                                          'from-field': 'id'}}]}},
                            {'create-object':
-                               {'type': 'Ingress Security Policy',
+                               {'type': 'IngressACLTemplate',
                                 'actions': [
                                     {'set-values':
                                         {'priority': 100,
@@ -192,7 +192,7 @@ EXPECTED_ACL_TEMPLATE = \
                                          'name': 'test_acl'}},
                                     {'create-object':
                                         {'type':
-                                         'Ingress Security Policy Entry',
+                                         'IngressACLEntryTemplate',
                                          'actions': [
                                              {'set-values':
                                                  {'priority': 200,
@@ -214,7 +214,7 @@ EXPECTED_ACL_TEMPLATE = \
                                              {'set-values':
                                                  {'networkID': ''}}]}}]}},
                            {'create-object':
-                               {'type': 'Egress Security Policy',
+                               {'type': 'EgressACLTemplate',
                                 'actions': [
                                     {'set-values':
                                         {'priority': 100,
@@ -225,7 +225,7 @@ EXPECTED_ACL_TEMPLATE = \
                                          'name': 'test_acl'}},
                                     {'create-object':
                                         {'type':
-                                            'Egress Security Policy Entry',
+                                            'EgressACLEntryTemplate',
                                          'actions': [
                                              {'set-values':
                                                  {'priority': 200,

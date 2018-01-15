@@ -1,0 +1,36 @@
+name: MultiDomain
+description: Creates multiple domains
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: enterprise_name
+    type: reference
+    required_for_delete: true
+  - name: domain_name
+    type: string
+    required_for_delete: true
+actions:
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+        - create-object:
+            type: DomainTemplate
+            actions:
+              - set-values:
+                  name: {% set concat = "template_" + domain_name|default('')|string %}{{ concat }}
+              - store-value:
+                  as-name: domain_template_id
+                  from-field: id
+        {% for domain_index in range(1, num_domains|default(0) + 1) %}
+        - create-object:
+            type: Domain
+            actions:
+              - set-values:
+                  name: {% set concat = domain_name|default('') + "_" + domain_index|string %}{{ concat }}
+              - retrieve-value:
+                  from-name: domain_template_id
+                  to-field: templateID
+        {% endfor %}
