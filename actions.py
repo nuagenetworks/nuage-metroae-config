@@ -218,11 +218,15 @@ class SelectObjectAction(Action):
         self.read_children_actions(select_dict)
 
     def execute(self, writer, context=None):
-        new_context = writer.select_object(self.object_type,
-                                           self.field,
-                                           self.value,
-                                           context)
-        self.execute_children(writer, new_context)
+        try:
+            new_context = writer.select_object(self.object_type,
+                                               self.field,
+                                               self.value,
+                                               context)
+            self.execute_children(writer, new_context)
+        except MissingSelectionError as e:
+            if self.is_revert() is not True:
+                raise e
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -346,7 +350,7 @@ class StoreValueAction(Action):
             self.state['stored_values'][self.as_name] = self
         else:
             raise TemplateActionError(
-                'Value of name %s already stored' % self.from_name)
+                'Value of name %s already stored' % self.as_name)
 
     def get_stored_value(self):
         if self.stored_value is not None:
