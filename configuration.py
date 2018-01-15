@@ -108,7 +108,7 @@ class Configuration(object):
         not be considered conflicts.  Returns True if ok, otherwise
         an exception is raised.
         """
-        pass
+        raise NotImplementedError("Template update not yet implemented")
 
     def revert(self, writer):
         """
