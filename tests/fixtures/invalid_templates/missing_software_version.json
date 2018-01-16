@@ -1,0 +1,22 @@
+{
+    "name": "Enterprise",
+    "description": "Creates an enterprise",
+    "template-version": "1.0",
+    "software-type": "Nuage Networks VSD",
+    "software-version": null,
+    "variables": [{
+        "name": "enterprise_name",
+        "type": "string",
+        "required_for_delete": true
+    }],
+    "actions": [{
+        "create-object": {
+            "type": "Enterprise",
+            "actions": [{
+                "set-values": {
+                    "name": {{ enterprise_name }}
+                }
+            }]
+        }
+    }]
+}

@@ -1,0 +1,28 @@
+name: Conditionals Yaml
+description: Test template for conditional statements
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: var1
+    type: string
+  - name: var2
+    type: string
+actions:
+    {% if var1 == 'a' %}
+    var1_is_a: {{ var1 }}
+    {% endif %}
+    var2: {% if var2 == True %} {{ var2 }} {% else %} "false" {% endif %}
+    {% if var1 == 'b' and var2 == 0 %}
+    and_check: true
+    {% endif %}
+    {% if var1 == 'peanut butter' %}
+      {% if var2 == 'jelly' %}
+    nested_check: {% set concat = var1 + " and " + var2 %}{{ concat }}
+      {% endif %}
+    {% endif %}
+    {% if var1 == '' %}
+    var1_is_empty: true
+    {% else %}
+    var1_is_empty: false
+    {% endif %}

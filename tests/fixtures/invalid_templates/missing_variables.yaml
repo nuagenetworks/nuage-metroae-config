@@ -1,0 +1,17 @@
+name: Domain
+description: Creates a domain
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables: null
+actions:
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+        - create-object:
+            type: Domain
+            actions:
+              - set-values:
+                  name: {{ domain_name }}
