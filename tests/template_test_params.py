@@ -36,12 +36,15 @@ EXPECTED_DOMAIN_SCHEMA = \
 
 EXPECTED_DOMAIN_TEMPLATE = \
     {'name': 'Domain',
-     'variables': [
-         {'type': 'reference', 'required_for_delete': True, 'name': 'enterprise_name'},
-         {'type': 'string', 'required_for_delete': True, 'name': 'domain_name'}],
      'description': 'Creates a domain',
-     'software-version': '5.0.2',
      'template-version': 1.0,
+     'software-type': 'Nuage Networks VSD',
+     'software-version': '5.0.2',
+     'variables': [
+         {'type': 'reference', 'required_for_delete': True,
+          'name': 'enterprise_name'},
+         {'type': 'string', 'required_for_delete': True,
+          'name': 'domain_name'}],
      'actions': [
          {'select-object':
              {'type': 'Enterprise',
@@ -49,10 +52,21 @@ EXPECTED_DOMAIN_TEMPLATE = \
               'value': 'test_enterprise',
               'actions': [
                   {'create-object':
+                      {'type': 'DomainTemplate',
+                       'actions': [
+                           {'set-values':
+                               {'name': 'template_test_domain'}},
+                           {'store-value':
+                               {'from-field': 'id',
+                                'as-name': 'domain_template_id'}}]}},
+                  {'create-object':
                       {'type': 'Domain',
                        'actions': [
-                           {'set-values': {'name': 'test_domain'}}]}}]}}],
-     'software-type': 'Nuage Networks VSD'}
+                           {'set-values':
+                               {'name': 'test_domain'}},
+                           {'retrieve-value':
+                               {'to-field': 'templateID',
+                                'from-name': 'domain_template_id'}}]}}]}}]}
 
 ACL_TEMPLATE_VARS = {
     'enterprise_name': 'test_enterprise',
@@ -82,134 +96,154 @@ EXPECTED_ACL_SCHEMA = \
     {'schema': [{'name': 'enterprise_name',
                  'required_for_delete': True,
                  'type': 'reference'},
-                 {'name': 'domain_name',
-                  'required_for_delete': True,
-                  'type': 'reference'},
-                 {'name': 'acl_name',
-                  'required_for_delete': True,
-                  'type': 'string'},
-                 {'name': 'default_allow_ip', 'type': 'boolean'},
-                 {'name': 'default_allow_non_ip', 'type': 'boolean'},
-                 {'name': 'policy_priority', 'type': 'integer'},
-                 {'name': 'allow_address_spoof', 'type': 'boolean'},
-                 {'name': 'default_install_acl_implicit_rules',
-                  'type': 'boolean'},
-                 {'name': 'description', 'type': 'string'},
-                 {'name': 'entry_priority', 'type': 'integer'},
-                 {'name': 'protocol', 'type': 'string'},
-                 {'name': 'source_port', 'type': 'string'},
-                 {'name': 'destination_port', 'type': 'string'},
-                 {'name': 'ether_type', 'type': 'string'},
-                 {'choices': ['forward', 'drop'],
-                  'name': 'action',
-                  'type': 'choice'},
-                 {'choices': ['any', 'policygroup', 'subnet', 'zone'],
-                  'name': 'location_type',
-                  'type': 'choice'},
-                 {'name': 'location_name', 'type': 'string'},
-                 {'choices': ['any', 'policygroup', 'subnet', 'zone'],
-                  'name': 'network_type',
-                  'type': 'choice'},
-                 {'name': 'network_name', 'type': 'string'},
-                 {'name': 'stateful', 'type': 'boolean'},
-                 {'name': 'flow_logging_enabled', 'type': 'boolean'},
-                 {'name': 'stats_logging_enabled', 'type': 'boolean'}]}
+                {'name': 'domain_name',
+                 'required_for_delete': True,
+                 'type': 'reference'},
+                {'name': 'acl_name',
+                 'required_for_delete': True,
+                 'type': 'string'},
+                {'name': 'default_allow_ip', 'type': 'boolean'},
+                {'name': 'default_allow_non_ip', 'type': 'boolean'},
+                {'name': 'policy_priority', 'type': 'integer'},
+                {'name': 'allow_address_spoof', 'type': 'boolean'},
+                {'name': 'default_install_acl_implicit_rules',
+                 'type': 'boolean'},
+                {'name': 'description', 'type': 'string'},
+                {'name': 'entry_priority', 'type': 'integer'},
+                {'name': 'protocol', 'type': 'string'},
+                {'name': 'source_port', 'type': 'string'},
+                {'name': 'destination_port', 'type': 'string'},
+                {'name': 'ether_type', 'type': 'string'},
+                {'choices': ['forward', 'drop'],
+                 'name': 'action',
+                 'type': 'choice'},
+                {'choices': ['any', 'policygroup', 'subnet', 'zone'],
+                 'name': 'location_type',
+                 'type': 'choice'},
+                {'name': 'location_name', 'type': 'string'},
+                {'choices': ['any', 'policygroup', 'subnet', 'zone'],
+                 'name': 'network_type',
+                 'type': 'choice'},
+                {'name': 'network_name', 'type': 'string'},
+                {'name': 'stateful', 'type': 'boolean'},
+                {'name': 'flow_logging_enabled', 'type': 'boolean'},
+                {'name': 'stats_logging_enabled', 'type': 'boolean'}]}
 
 EXPECTED_ACL_TEMPLATE = \
-    {'actions': [
-        {'select-object':
-            {'actions': [
-                {'select-object':
-                    {'actions': [
-                        {'create-object':
-                            {'actions': [
-                                {'set-values':
-                                    {'defaultAllowIP': True,
-                                     'defaultAllowNonIP': False,
-                                     'defaultInstallACLImplicitRules': True,
-                                     'name': 'test_acl',
-                                     'priority': 100}},
-                                {'create-object':
-                                    {'actions': [
-                                        {'set-values':
-                                            {'DSCP': '*',
-                                             'action': 'FORWARD',
-                                             'description': 'Test ACL',
-                                             'destinationPort': '*',
-                                             'etherType': '0x0800',
-                                             'flowLoggingEnabled': True,
-                                             'locationType': 'SUBNET',
-                                             'networkType': 'ANY',
-                                             'priority': 200,
-                                             'protocol': 'tcp',
-                                             'sourcePort': 80,
-                                             'stateful': True,
-                                             'statsLoggingEnabled': True}},
-                                        {'set-value-from-object':
-                                            {'actions': [
-                                                {'select-object':
-                                                    {'actions': [
-                                                        {'select-object':
-                                                            {'actions': [
-                                                                {'select-object':
-                                                                    {'by-field': 'name',
-                                                                     'type': 'Subnet',
-                                                                     'value': 'test_subnet'}}],
-                                                             'by-field': 'name',
-                                                             'type': 'Domain',
-                                                             'value': 'test_domain'}}],
-                                                    'by-field': 'name',
-                                                    'type': 'Enterprise',
-                                                    'value': 'test_enterprise'}}],
-                                            'context': 'root',
-                                            'from-field': 'id',
-                                            'to-field': 'locationID'}},
-                                    {'set-values': { 'locationID': ''}}],
-                                 'type': 'Egress Security Policy Entry'}}],
-                     'type': 'Egress Security Policy'}}],
-                'by-field': 'name',
-                'type': 'Domain',
-                'value': 'test_domain'}}],
-            'by-field': 'name',
-            'type': 'Enterprise',
-            'value': 'test_enterprise'}}],
-    'description': 'Creates a set of ingress and egress ACLs',
-    'name': 'Bidirectional ACL',
-    'software-type': 'Nuage Networks VSD',
-    'software-version': '5.0.2',
-    'template-version': 1.0,
-    'variables': [{'name': 'enterprise_name',
-                   'required_for_delete': True,
-                   'type': 'reference'},
-                   {'name': 'domain_name',
-                    'required_for_delete': True,
-                    'type': 'reference'},
-                   {'name': 'acl_name',
-                    'required_for_delete': True,
-                    'type': 'string'},
-                   {'name': 'default_allow_ip', 'type': 'boolean'},
-                   {'name': 'default_allow_non_ip', 'type': 'boolean'},
-                   {'name': 'policy_priority', 'type': 'integer'},
-                   {'name': 'allow_address_spoof', 'type': 'boolean'},
-                   {'name': 'default_install_acl_implicit_rules',
-                    'type': 'boolean'},
-                   {'name': 'description', 'type': 'string'},
-                   {'name': 'entry_priority', 'type': 'integer'},
-                   {'name': 'protocol', 'type': 'string'},
-                   {'name': 'source_port', 'type': 'string'},
-                   {'name': 'destination_port', 'type': 'string'},
-                   {'name': 'ether_type', 'type': 'string'},
-                   {'choices': ['forward', 'drop'],
-                    'name': 'action',
-                    'type': 'choice'},
-                   {'choices': ['any', 'policygroup', 'subnet', 'zone'],
-                    'name': 'location_type',
-                    'type': 'choice'},
-                   {'name': 'location_name', 'type': 'string'},
-                   {'choices': ['any', 'policygroup', 'subnet', 'zone'],
-                    'name': 'network_type',
-                    'type': 'choice'},
-                   {'name': 'network_name', 'type': 'string'},
-                   {'name': 'stateful', 'type': 'boolean'},
-                   {'name': 'flow_logging_enabled', 'type': 'boolean'},
-                   {'name': 'stats_logging_enabled', 'type': 'boolean'}]}
+    {'name': 'Bidirectional ACL',
+     'description': 'Creates a set of ingress and egress ACLs',
+     'template-version': 1.0,
+     'software-type': 'Nuage Networks VSD',
+     'software-version': '5.0.2',
+     'variables': [
+         {'type': 'reference', 'required_for_delete': True,
+          'name': 'enterprise_name'},
+         {'type': 'reference', 'required_for_delete': True,
+          'name': 'domain_name'},
+         {'type': 'string', 'required_for_delete': True, 'name': 'acl_name'},
+         {'type': 'boolean', 'name': 'default_allow_ip'},
+         {'type': 'boolean', 'name': 'default_allow_non_ip'},
+         {'type': 'integer', 'name': 'policy_priority'},
+         {'type': 'boolean', 'name': 'allow_address_spoof'},
+         {'type': 'boolean', 'name': 'default_install_acl_implicit_rules'},
+         {'type': 'string', 'name': 'description'},
+         {'type': 'integer', 'name': 'entry_priority'},
+         {'type': 'string', 'name': 'protocol'},
+         {'type': 'string', 'name': 'source_port'},
+         {'type': 'string', 'name': 'destination_port'},
+         {'type': 'string', 'name': 'ether_type'},
+         {'type': 'choice', 'name': 'action', 'choices': ['forward', 'drop']},
+         {'type': 'choice', 'name': 'location_type',
+          'choices': ['any', 'policygroup', 'subnet', 'zone']},
+         {'type': 'string', 'name': 'location_name'},
+         {'type': 'choice', 'name': 'network_type',
+          'choices': ['any', 'policygroup', 'subnet', 'zone']},
+         {'type': 'string', 'name': 'network_name'},
+         {'type': 'boolean', 'name': 'stateful'},
+         {'type': 'boolean', 'name': 'flow_logging_enabled'},
+         {'type': 'boolean', 'name': 'stats_logging_enabled'}],
+     'actions': [
+         {'select-object':
+             {'type': 'Enterprise',
+              'by-field': 'name',
+              'value': 'test_enterprise',
+              'actions': [
+                  {'select-object':
+                      {'type': 'Domain',
+                       'by-field': 'name',
+                       'value': 'test_domain',
+                       'actions': [
+                           {'select-object':
+                               {'type': 'Subnet',
+                                'by-field': 'name',
+                                'value': 'test_subnet',
+                                'actions': [
+                                    {'store-value':
+                                        {'as-name': 'location_id',
+                                         'from-field': 'id'}}]}},
+                           {'create-object':
+                               {'type': 'IngressACLTemplate',
+                                'actions': [
+                                    {'set-values':
+                                        {'priority': 100,
+                                         'allowAddressSpoof': False,
+                                         'defaultAllowIP': True,
+                                         'defaultAllowNonIP': False,
+                                         'name': 'test_acl'}},
+                                    {'create-object':
+                                        {'type':
+                                         'IngressACLEntryTemplate',
+                                         'actions': [
+                                             {'set-values':
+                                                 {'priority': 200,
+                                                  'protocol': 'tcp',
+                                                  'description': 'Test ACL',
+                                                  'etherType': '0x0800',
+                                                  'statsLoggingEnabled': True,
+                                                  'DSCP': '*',
+                                                  'stateful': True,
+                                                  'sourcePort': 80,
+                                                  'destinationPort': '*',
+                                                  'locationType': 'SUBNET',
+                                                  'action': 'FORWARD',
+                                                  'networkType': 'ANY',
+                                                  'flowLoggingEnabled': True}},
+                                             {'retrieve-value':
+                                                 {'from-name': 'location_id',
+                                                  'to-field': 'locationID'}},
+                                             {'set-values':
+                                                 {'networkID': ''}}]}}]}},
+                           {'create-object':
+                               {'type': 'EgressACLTemplate',
+                                'actions': [
+                                    {'set-values':
+                                        {'priority': 100,
+                                         'defaultInstallACLImplicitRules':
+                                             True,
+                                         'defaultAllowIP': True,
+                                         'defaultAllowNonIP': False,
+                                         'name': 'test_acl'}},
+                                    {'create-object':
+                                        {'type':
+                                            'EgressACLEntryTemplate',
+                                         'actions': [
+                                             {'set-values':
+                                                 {'priority': 200,
+                                                  'protocol': 'tcp',
+                                                  'description': 'Test ACL',
+                                                  'etherType': '0x0800',
+                                                  'statsLoggingEnabled': True,
+                                                  'DSCP': '*',
+                                                  'stateful': True,
+                                                  'sourcePort': 80,
+                                                  'destinationPort': '*',
+                                                  'locationType': 'SUBNET',
+                                                  'action': 'FORWARD',
+                                                  'networkType': 'ANY',
+                                                  'flowLoggingEnabled': True}},
+                                             {'retrieve-value':
+                                                 {'from-name': 'location_id',
+                                                  'to-field': 'locationID'}},
+                                             {'set-values':
+                                                 {'networkID':
+                                                     ''}}]}}]}}]}}]}}]}
