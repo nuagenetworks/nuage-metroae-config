@@ -269,8 +269,9 @@ class SetValuesAction(Action):
             if existing_value is not None:
                 raise ConflictError("Setting field '%s' of object %s to '%s' "
                                     "when it is already set to '%s'" %
-                                    (str(value), str(self.object_type),
-                                     str(value), str(existing_value)))
+                                    (str(field), str(self.parent.object_type),
+                                     str(value).strip(),
+                                     str(existing_value).strip()))
 
             self.attributes[field] = value
 
