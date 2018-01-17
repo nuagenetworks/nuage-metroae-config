@@ -24,9 +24,12 @@ class Action(object):
     Private class to track and perform the actions required to write the
     configuration to the device
     """
-    def __init__(self, parent, state=dict()):
+    def __init__(self, parent, state=None):
         self.parent = parent
-        self.state = state
+        if state is None:
+            self.state = dict()
+        else:
+            self.state = state
         self.children = list()
 
     def __str__(self):

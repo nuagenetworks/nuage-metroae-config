@@ -99,6 +99,7 @@ SELECT_OBJECTS_NO_VALUE = {"actions": [
 SET_VALUES_DICT = {"actions": [
     {"Create-object":
         {"Type": "Enterprise",
+         "Select-by-field": "field1",
          "Actions": [
              {"Create-object":
                  {"Type": "DomainTemplate"}},
@@ -134,6 +135,8 @@ STORE_RETRIEVE_DICT = {"actions": [
     {"Create-object":
         {"Type": "Enterprise",
          "Actions": [
+             {"Set-values":
+                 {"name": "enterprise1"}},
              {"Create-object":
                  {"Type": "DomainTemplate",
                   "Actions": [
