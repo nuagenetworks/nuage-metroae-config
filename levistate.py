@@ -1,13 +1,17 @@
 import argparse
+from configuration import Configuration
+from template import TemplateStore
+from user_data_parser import UserDataParser
 from vsd_writer import DeviceWriterError, VsdWriter
 # import vspk.v5_0 as vspk
 
-DEFAULT_SPEC_PATH = "vsd-api-specifications"
-DEFAULT_TEMPLATE_PATH = "templates"
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
 DEFAULT_URL = 'https://localhost:8080'
+
+DESCRIPTION = """Command-line tool for running template commands.
+    See README.md for more."""
 
 
 def main():
@@ -26,16 +30,26 @@ def main():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Command-line tool for running template commands')
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('-tp', '--template-path', dest='template_path',
-                        action='store', required=False,
-                        default=DEFAULT_TEMPLATE_PATH,
+                        action='append', required=True,
                         help='Path containing template files')
     parser.add_argument('-sp', '--spec-path', dest='spec_path',
-                        action='store', required=False,
-                        default=DEFAULT_SPEC_PATH,
+                        action='append', required=False,
                         help='Path containing object specifications')
+    parser.add_argument('-dp', '--data-path', dest='data_path',
+                        action='append', required=False,
+                        help='Path containing user data')
+    parser.add_argument('-t', '--template', dest='template_name',
+                        action='store', required=False,
+                        default=None,
+                        help='Template name')
+    parser.add_argument('-d', '--data', dest='data',
+                        action='append', required=False,
+                        help='Specify user data as key=value')
+    parser.add_argument('-r', '--revert', dest='revert',
+                        action='store_true', required=False,
+                        help='Revert (delete) templates instead of applying')
     parser.add_argument('-v', '--vsd-url', dest='vsd_url',
                         action='store', required=False,
                         default=DEFAULT_URL,
@@ -52,9 +66,6 @@ def parse_args():
                         action='store', required=False,
                         default=DEFAULT_VSD_ENTERPRISE,
                         help='Enterprise for VSD')
-    parser.add_argument('-r', '--revert', dest='revert',
-                        action='store_true', required=False,
-                        help='Revert (delete) templates instead of applying')
 
     return parser.parse_args()
 
@@ -63,47 +74,114 @@ class Levistate(object):
 
     def __init__(self, args):
         self.args = args
-        self.vsd_writer = VsdWriter()
+        self.template_data = list()
 
     def run(self):
+
+        self.setup_vsd_writer()
+        self.setup_template_store()
+        self.parse_user_data()
+        self.parse_extra_vars()
+
         try:
-            self.start_vsd_session()
-
-            if self.args.revert:
-                self.revert_acl_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1',
-                    policy_name='demo_policy_1')
-                self.revert_domain_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1')
-                self.revert_enterprise_template(enterprise_name='demo_ent')
-            else:
-                self.apply_enterprise_template(enterprise_name='demo_ent',
-                                               description='Demo enterprise')
-                self.apply_domain_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1',
-                    description='This is a demo domain')
-                self.apply_acl_template(
-                    enterprise_name='demo_ent',
-                    domain_name='demo_domain_1',
-                    policy_name='demo_policy_1',
-                    description='This is a demo policy',
-                    protocol='6',
-                    sourcePort='*',
-                    destinationPort='80',
-                    action='FORWARD',
-                    etherType='*')
-
+            self.apply_templates()
         except DeviceWriterError as e:
-            self.vsd_writer.log_error(str(e))
-        except Exception as e:
-            self.vsd_writer.log_error(str(e))
+            self.writer.log_error(str(e))
+        # except Exception as e:
+        #     self.writer.log_error(str(e))
 
-        self.stop_vsd_session()
-        print ""
-        print self.vsd_writer.get_logs()
+        print self.writer.get_logs()
+
+    def parse_extra_vars(self):
+        if self.args.data is not None:
+            template_data = dict()
+            for data in self.args.data:
+                for var in data.split(','):
+                    key_value_pair = var.split('=')
+                    if len(key_value_pair) != 2:
+                        raise Exception("Invalid extra-vars argument, must "
+                                        "be key=value format: " + var)
+                    key = key_value_pair[0]
+                    value = key_value_pair[1]
+                    template_data[key] = value
+
+            self.template_data.append((self.template_name, template_data))
+
+    def setup_vsd_writer(self):
+        self.writer = VsdWriter()
+        for path in self.args.spec_path:
+            self.writer.read_api_specifications(path)
+        self.writer.set_session_params(self.args.vsd_url)
+
+    def setup_template_store(self):
+        self.store = TemplateStore()
+        for path in self.args.template_path:
+            self.store.read_templates(path)
+
+    def parse_user_data(self):
+        parser = UserDataParser()
+        for path in self.args.data_path:
+            parser.read_data(path)
+        self.template_data = parser.get_template_name_data_pairs()
+        # print str(self.template_data)
+
+    def apply_templates(self):
+        config = Configuration(self.store)
+        for data in self.template_data:
+            template_name = data[0]
+            template_data = data[1]
+            config.add_template_data(template_name, **template_data)
+        if self.args.revert is True:
+            config.revert(self.writer)
+        else:
+            config.apply(self.writer)
+
+        print str(config.root_action)
+
+
+    #
+    # Old prototype code
+    #
+
+    # def run(self):
+    #     try:
+    #         self.start_vsd_session()
+
+    #         if self.args.revert:
+    #             self.revert_acl_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1',
+    #                 policy_name='demo_policy_1')
+    #             self.revert_domain_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1')
+    #             self.revert_enterprise_template(enterprise_name='demo_ent')
+    #         else:
+    #             self.apply_enterprise_template(enterprise_name='demo_ent',
+    #                                            description='Demo enterprise')
+    #             self.apply_domain_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1',
+    #                 description='This is a demo domain')
+    #             self.apply_acl_template(
+    #                 enterprise_name='demo_ent',
+    #                 domain_name='demo_domain_1',
+    #                 policy_name='demo_policy_1',
+    #                 description='This is a demo policy',
+    #                 protocol='6',
+    #                 sourcePort='*',
+    #                 destinationPort='80',
+    #                 action='FORWARD',
+    #                 etherType='*')
+
+    #     except DeviceWriterError as e:
+    #         self.vsd_writer.log_error(str(e))
+    #     except Exception as e:
+    #         self.vsd_writer.log_error(str(e))
+
+    #     self.stop_vsd_session()
+    #     print ""
+    #     print self.vsd_writer.get_logs()
 
     def start_vsd_session(self):
         self.vsd_writer.read_api_specifications(self.args.spec_path)
@@ -159,7 +237,7 @@ class Levistate(object):
     def apply_acl_template(self, **kwargs):
         print "Applying acl template: %s" % kwargs
         context = self.vsd_writer.select_object("Enterprise", "name",
-                                                    kwargs['enterprise_name'])
+                                                kwargs['enterprise_name'])
         dom_context = self.vsd_writer.select_object("Domain", "name",
                                                     kwargs['domain_name'],
                                                     context)

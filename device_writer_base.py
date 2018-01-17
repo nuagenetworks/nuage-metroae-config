@@ -58,6 +58,7 @@ class DeviceWriterBase(object):
         Abstract Base Class.  Cannot be instantiated directly. Use
         device-specific derived class.
         """
+        self.log_entries = list()
 
     def log(self, log_type, message):
         self.log_entries.append((log_type, message))
