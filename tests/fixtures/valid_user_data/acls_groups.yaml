@@ -1,0 +1,31 @@
+- group: http
+  values:
+    protocol: 6
+    source_port: 80
+    destination_port: 80
+    ether_type: '0x0800'
+- group: ssh
+  fields: ['protocol', 'source_port', 'destination_port', 'ether_type']
+  values: [ 6,          23,            23,                '0x0800']
+- group: enterprise
+  values:
+    enterprise_name: test_enterprise
+  children:
+    group: domain
+    values:
+      domain_name: private
+    children:
+      - template: Bidirectional ACL
+        values:
+          acl_name: test_acl_1
+          policy_priority: 100
+          description: Test ACL 1
+          entry_priority: 200
+          destination_port: '*'
+          action: forward
+          $group_1: http
+      - template: Bidirectional ACL
+        fields: [acl_name,   policy_priority, description, entry_priority, destination_port, action, $group_1]
+        values:
+          -     [test_acl_2, 300,             Test ACL 2,  400,            '*',              deny,   ssh]
+          -     [test_acl_3, 500,             Test ACL 3,  600,            '*',              deny,   http]

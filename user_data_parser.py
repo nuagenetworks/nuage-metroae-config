@@ -1,6 +1,8 @@
 import os
 import yaml
 
+from util import get_dict_field_no_case
+
 
 class UserDataParseError(Exception):
     """
@@ -15,6 +17,7 @@ class UserDataParser(object):
     """
     def __init__(self):
         self.data = list()
+        self.groups = dict()
 
     def read_data(self, path_or_file_name):
         """
@@ -44,6 +47,7 @@ class UserDataParser(object):
         self._parse_data_string(user_data_string)
 
     def get_template_name_data_pairs(self):
+        self._resolve_groups()
         return self.data
 
     #
@@ -52,15 +56,11 @@ class UserDataParser(object):
 
     @staticmethod
     def _get_dict_field(data_dict, field):
-        if type(data_dict) != dict:
+        try:
+            return get_dict_field_no_case(data_dict, field)
+        except TypeError:
             raise UserDataParseError("Invalid user data entry: " +
                                      str(data_dict))
-
-        for key, value in data_dict.iteritems():
-            if str(key).lower() == field:
-                return value
-
-        return None
 
     def _read_data(self, filename):
         try:
@@ -94,33 +94,46 @@ class UserDataParser(object):
 
     def _parse_data_entry(self, data_dict, parent_values):
         template = UserDataParser._get_dict_field(data_dict, 'template')
+        group = UserDataParser._get_dict_field(data_dict, 'group')
 
-        if len(data_dict.keys()) != 1 or template is None:
+        if template is not None:
+            values_list = self._parse_entry_contents(data_dict,
+                                                     parent_values)
+            self._add_data(template, values_list)
+        elif group is not None:
+            values_list = self._parse_entry_contents(data_dict,
+                                                     parent_values)
+            self._add_group(group, values_list)
+        else:
             raise UserDataParseError("Invalid user data entry: " +
                                      str(data_dict))
 
-        self._parse_template_entry(template, parent_values)
+        self._parse_children(data_dict, values_list)
 
-    def _parse_template_entry(self, template_dict, parent_values):
-        name = UserDataParser._get_dict_field(template_dict, 'name')
-        if name is None:
-            raise UserDataParseError("Missing required template field 'name'")
-
-        values = UserDataParser._get_dict_field(template_dict, 'values')
+    def _parse_entry_contents(self, entry_dict, parent_values):
+        values = UserDataParser._get_dict_field(entry_dict, 'values')
         if values is None:
             raise UserDataParseError(
-                "Missing required template field 'values'")
+                "Missing required entry field 'values'")
 
-        values_list = self._parse_values_list(values)
-        self._add_data_entries(name, values_list, parent_values)
+        fields = UserDataParser._get_dict_field(entry_dict, 'fields')
 
-        children = UserDataParser._get_dict_field(template_dict, 'children')
+        if fields is None:
+            values_list = self._parse_values_list(values)
+        else:
+            values_list = self._parse_fields(fields, values)
+
+        self._combine_entries(values_list, parent_values)
+        return values_list
+
+    def _parse_children(self, entry_dict, values_list):
+        children = UserDataParser._get_dict_field(entry_dict, 'children')
         if children is not None:
             if len(values_list) == 1:
                 self._parse_data_entries(children, values_list[0])
             else:
                 raise UserDataParseError(
-                    "Only templates with single value sets may have children")
+                    "Only entries with single value sets may have children")
 
     def _parse_values_list(self, values_entry):
         values = list()
@@ -139,10 +152,71 @@ class UserDataParser(object):
 
         return values_dict
 
-    def _add_data_entries(self, template_name, template_values_list,
-                          parent_values):
-        for values_dict in template_values_list:
+    def _parse_fields(self, fields, values_list):
+        values = list()
+
+        if type(fields) != list:
+            raise UserDataParseError("Fields must be a list: " +
+                                     str(fields))
+
+        if type(values_list) != list:
+            raise UserDataParseError(
+                "Values must be a list when fields specified: " +
+                str(values_list))
+
+        if len(values_list) == 0:
+            return values
+
+        if type(values_list[0]) == list:
+            for entry in values_list:
+                values.append(self._parse_field_value_entry(fields, entry))
+        else:
+            values.append(self._parse_field_value_entry(fields, values_list))
+
+        return values
+
+    def _parse_field_value_entry(self, fields, values):
+        if type(values) != list:
+            raise UserDataParseError(
+                "Values must be a list when fields specified: " +
+                str(values))
+
+        if len(fields) != len(values):
+            raise UserDataParseError(
+                "Values list does not match the number of fields specified: " +
+                str(values))
+
+        values_dict = dict()
+        for i, key in enumerate(fields):
+            values_dict[key] = values[i]
+
+        return values_dict
+
+    def _combine_entries(self, values_list, parent_values):
+        for values_dict in values_list:
             for key, value in parent_values.iteritems():
                 if key not in values_dict:
                     values_dict[key] = value
-            self.data.append((template_name, values_dict))
+
+    def _add_data(self, name, values_list):
+        for entry in values_list:
+            self.data.append((name, entry))
+
+    def _add_group(self, name, values_list):
+        if len(values_list) != 1:
+            raise UserDataParseError(
+                "Group %s must have exactly one set of values" % name)
+        self.groups[name] = values_list[0]
+
+    def _resolve_groups(self):
+        for entry_pair in self.data:
+            value_dict = entry_pair[1]
+            group_apply_dict = dict()
+            for key, group_name in value_dict.iteritems():
+                if key.lower().startswith('$group'):
+                    if group_name not in self.groups:
+                        raise UserDataParseError(
+                            "Group %s not defined" % group_name)
+                    self._combine_entries([group_apply_dict],
+                                          self.groups[group_name])
+            self._combine_entries([value_dict], group_apply_dict)

@@ -1,6 +1,7 @@
 from device_writer_base import MissingSelectionError
 from template import (TemplateError,
                       TemplateParseError)
+from util import get_dict_field_no_case
 
 DEFAULT_SELECTION_FIELD = 'name'
 
@@ -49,14 +50,10 @@ class Action(object):
 
     @staticmethod
     def get_dict_field(action_dict, field):
-        if type(action_dict) != dict:
+        try:
+            return get_dict_field_no_case(action_dict, field)
+        except TypeError:
             raise TemplateParseError("Invalid action: " + str(action_dict))
-
-        for key, value in action_dict.iteritems():
-            if str(key).lower() == field:
-                return value
-
-        return None
 
     @staticmethod
     def new(action_dict, parent, state):

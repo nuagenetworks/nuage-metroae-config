@@ -1,35 +1,30 @@
-template:
-  name: Enterprise
+template: Enterprise
+values:
+  enterprise_name: test_enterprise
+children:
+  template: Domain
   values:
-    enterprise_name: test_enterprise
+    domain_name: public
   children:
-    - template:
-        name: Domain
-        values:
-          - domain_name: public
-            num_domains: 5
-        children:
-          - template:
-              name: Bidirectional ACL
-              values:
-                acl_name: test_acl
-                default_allow_ip: True
-                default_allow_non_ip: False
-                policy_priority: 100
-                allow_address_spoof: False
-                default_install_acl_implicit_rules: True
-                description: Test ACL
-                entry_priority: 200
-                protocol: 6
-                source_port: 80
-                destination_port: '*'
-                ether_type: '0x0800'
-                action: forward
-                location_type: any
-                location_name: ''
-                network_type: any
-                network_name: ''
-                stateful: True
-                flow_logging_enabled: True
-                stats_logging_enabled: True
-
+    template: Bidirectional ACL
+    values:
+      acl_name: test_acl
+      default_allow_ip: True
+      default_allow_non_ip: False
+      policy_priority: 100
+      allow_address_spoof: False
+      default_install_acl_implicit_rules: True
+      description: Test ACL
+      entry_priority: 200
+      protocol: 6
+      source_port: 80
+      destination_port: '*'
+      ether_type: '0x0800'
+      action: forward
+      location_type: any
+      location_name: ''
+      network_type: any
+      network_name: ''
+      stateful: True
+      flow_logging_enabled: True
+      stats_logging_enabled: True
