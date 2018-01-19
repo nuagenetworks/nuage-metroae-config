@@ -1,0 +1,6 @@
+{'template': 'Enterprise',
+ 'fields': ['enterprise_name'],
+ 'values': [['test_ent_1'], ['test_ent_2']],
+ 'children': [
+     {'template': 'Domain',
+      'values': {'domain_name': 'test_domain'}}]}

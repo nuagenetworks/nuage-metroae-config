@@ -1,0 +1,11 @@
+- group: parent
+  values:
+      - parent_val: parent
+  children:
+    - group: child
+      values:
+          - child_val: child
+- template: Template
+  values:
+    - template_val: template
+      $group_1: child

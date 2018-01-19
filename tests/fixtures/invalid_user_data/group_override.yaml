@@ -1,0 +1,11 @@
+- group: test_group
+  values:
+      - val1: 1
+        val2: 2
+- template: Override
+  values:
+    - val1: override
+      $group_1: test_group
+      val3: 3
+    - $group_1: test_group
+      val3: 3

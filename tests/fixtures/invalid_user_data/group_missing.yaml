@@ -1,0 +1,9 @@
+- template: not_a_group
+  values:
+      - val1: 1
+        val2: 2
+- template: Missing group
+  values:
+    - val1: override
+      $group_1: not_a_group
+      val3: 3
