@@ -1,0 +1,17 @@
+- group: test_group_1
+  values:
+      - val1: 1
+        val2: 2
+        $group_1: test_group_2
+- group: test_group_2
+  values:
+      - val3: 3
+        val4: 4
+        $group_1: test_group_1
+- template: Loop
+  values:
+    - val1: override
+      $group_1: test_group_1
+      val5: 5
+    - $group_1: test_group_2
+      val5: 5

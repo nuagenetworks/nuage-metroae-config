@@ -1,0 +1,9 @@
+template: Cross file
+values:
+  - val1: override
+    $group_1: test_group_1
+    $group_2: test_group_2
+    val5: 5
+  - $group_1: test_group_1
+    $group_2: test_group_2
+    val5: 5

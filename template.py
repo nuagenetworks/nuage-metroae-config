@@ -3,6 +3,8 @@ import jinja2.ext
 import os
 import yaml
 
+from util import get_dict_field_no_case
+
 
 class TemplateError(Exception):
     """
@@ -116,22 +118,26 @@ class Template(object):
                                      (self.filename, e.lineno, e.message))
 
     def _parse_headers(self, template_dict):
-        self._validate_field(template_dict, "name")
-        self._validate_field(template_dict, "software-type")
-        self._validate_field(template_dict, "software-version")
-        self._validate_field(template_dict, "variables")
-        self._validate_field(template_dict, "actions")
+        self.name = self._get_required_field(template_dict, "name")
+        self.software_type = \
+            self._get_required_field(template_dict, "software-type")
+        self.software_version = \
+            self._get_required_field(template_dict, "software-version")
+        self.schema = \
+            self._get_required_field(template_dict, "variables")
+        self._get_required_field(template_dict, "actions")
 
-        self.name = template_dict["name"]
-        self.software_type = template_dict["software-type"]
-        self.software_version = template_dict["software-version"]
-        self.schema = template_dict["variables"]
+    def _get_required_field(self, template_dict, field):
+        try:
+            value = get_dict_field_no_case(template_dict, field)
+            if value is not None:
+                return value
+        except TypeError:
+            pass
 
-    def _validate_field(self, template_dict, field):
-        if field not in template_dict or template_dict[field] is None:
-            raise TemplateParseError(
-                "Required field %s missing from template %s" % (field,
-                                                                self.filename))
+        raise TemplateParseError(
+            "Required field %s missing from template %s" % (field,
+                                                            self.filename))
 
     def _replace_vars_with_kwargs(self, **kwargs):
         try:

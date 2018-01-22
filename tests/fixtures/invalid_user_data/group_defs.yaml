@@ -1,0 +1,8 @@
+- group: test_group_1
+  values:
+      - val1: 1
+        val2: 2
+- group: test_group_2
+  values:
+      - val3: 3
+        val4: 4

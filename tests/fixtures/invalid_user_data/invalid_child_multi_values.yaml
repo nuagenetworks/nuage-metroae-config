@@ -1,0 +1,8 @@
+template: Enterprise
+values:
+    - enterprise_name: test_ent_1
+    - enterprise_name: test_ent_2
+children:
+    - template: Domain
+      values:
+          domain_name: test_domain

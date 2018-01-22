@@ -1,0 +1,3 @@
+template: Domain
+fields: ['enterprise_name', 'domain_name']
+values: ['test_ent']

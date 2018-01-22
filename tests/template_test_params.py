@@ -1,7 +1,8 @@
 EXPECTED_VERSION = {"software_version": "5.0.2",
                     "software_type": "Nuage Networks VSD"}
 
-ENTERPRISE_TEMPLATE_VARS = {"enterprise_name": "test_enterprise"}
+ENTERPRISE_TEMPLATE_VARS = {"enterprise_name": "test_enterprise",
+                            "$group_1": "extra"}
 
 EXPECTED_ENTERPRISE_SCHEMA = \
     {'schema': [
@@ -25,7 +26,8 @@ EXPECTED_ENTERPRISE_TEMPLATE = \
      'software-type': 'Nuage Networks VSD'}
 
 DOMAIN_TEMPLATE_VARS = {"enterprise_name": "test_enterprise",
-                        "domain_name": "test_domain"}
+                        "domain_name": "test_domain",
+                        "$group_1": "extra"}
 
 EXPECTED_DOMAIN_SCHEMA = \
     {'schema': [
@@ -90,7 +92,8 @@ ACL_TEMPLATE_VARS = {
     'network_name': '',
     'stateful': True,
     'flow_logging_enabled': True,
-    'stats_logging_enabled': True}
+    'stats_logging_enabled': True,
+    "$group_1": "extra"}
 
 EXPECTED_ACL_SCHEMA = \
     {'schema': [{'name': 'enterprise_name',

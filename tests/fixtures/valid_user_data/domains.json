@@ -1,0 +1,8 @@
+{'template': 'Enterprise',
+ 'values':
+     {'enterprise_name': 'test_enterprise'},
+ 'children': [
+     {'template': 'Domain',
+      'values': [
+          {'domain_name': 'public'},
+          {'domain_name': 'private'}]}]}
