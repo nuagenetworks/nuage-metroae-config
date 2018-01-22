@@ -25,9 +25,12 @@ class Action(object):
     Private class to track and perform the actions required to write the
     configuration to the device
     """
-    def __init__(self, parent, state=dict()):
+    def __init__(self, parent, state=None):
         self.parent = parent
-        self.state = state
+        if state is None:
+            self.state = dict()
+        else:
+            self.state = state
         self.children = list()
 
     def __str__(self):
@@ -266,8 +269,9 @@ class SetValuesAction(Action):
             if existing_value is not None:
                 raise ConflictError("Setting field '%s' of object %s to '%s' "
                                     "when it is already set to '%s'" %
-                                    (str(value), str(self.object_type),
-                                     str(value), str(existing_value)))
+                                    (str(field), str(self.parent.object_type),
+                                     str(value).strip(),
+                                     str(existing_value).strip()))
 
             self.attributes[field] = value
 
