@@ -311,3 +311,163 @@ RETRIEVE_CONFLICT_2 = {"actions": [
                       {"Set-values":
                           {"name": "domain1",
                            "templateid": "id1"}}]}}]}}]}
+
+
+ORDER_CREATE = {"actions": [
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O1"}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O2"}}]}},
+             {"Set-values":
+                 {"name": "L1-O1",
+                  "field1": "value1"}}]}}]}
+
+
+ORDER_SELECT_1 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "name",
+         "Value": "L1-O1",
+         "Actions": [
+             {"Select-object":
+                 {"Type": "Level2",
+                  "By-field": "field1",
+                  "Value": "L2-O2",
+                  "Actions": [
+                      {"Set-values":
+                          {"field2": "value2"}},
+                      {"Create-object":
+                          {"Type": "Level3",
+                           "Select-by-field": "field1",
+                           "Actions": [
+                               {"Set-values":
+                                   {"field1": "L3-O1"}}]}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O3"}}]}},
+             {"Set-values":
+                 {"field2": "value2"}}]}}]}
+
+
+ORDER_SELECT_2 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "field1",
+         "Value": "value1",
+         "Actions": [
+             {"Select-object":
+                 {"Type": "Level2",
+                  "By-field": "field1",
+                  "Value": "L2-O3",
+                  "Actions": [
+                      {"Set-values":
+                          {"field3": "value3"}},
+                      {"Create-object":
+                          {"Type": "Level3",
+                           "Select-by-field": "field1",
+                           "Actions": [
+                               {"Set-values":
+                                   {"field1": "L3-O2"}}]}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O4"}}]}},
+             {"Set-values":
+                 {"field3": "value3"}}]}}]}
+
+
+ORDER_STORE_1 = {"actions": [
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O1"}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}},
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O2"}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O2"}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O3"}}]}}]}}]}
+
+
+ORDER_STORE_2 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "name",
+         "Value": "L1-O2",
+         "Actions": [
+             {"Select-object":
+                 {"Type": "Level2",
+                  "By-field": "name",
+                  "Value": "L2-O2",
+                  "Actions": [
+                      {"Store-value":
+                          {"from-field": "field1",
+                           "As-name": "store_1"}}]}}]}},
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "name",
+         "Value": "L1-O1",
+         "Actions": [
+             {"select-object":
+                 {"Type": "Level2",
+                  "By-field": "name",
+                  "Value": "L2-O1",
+                  "Actions": [
+                      {"Retrieve-value":
+                          {"To-field": "field1",
+                           "From-name": "store_1"}}]}}]}}]}
+
+
+ORDER_STORE_3 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "name",
+         "Value": "L1-O2",
+         "Actions": [
+             {"Select-object":
+                 {"Type": "Level2",
+                  "By-field": "name",
+                  "Value": "L2-O3",
+                  "Actions": [
+                      {"Store-value":
+                          {"from-field": "field1",
+                           "As-name": "store_1"}}]}},
+             {"select-object":
+                 {"Type": "Level2",
+                  "By-field": "name",
+                  "Value": "L2-O2",
+                  "Actions": [
+                      {"Retrieve-value":
+                          {"To-field": "field1",
+                           "From-name": "store_1"}}]}}]}}]}

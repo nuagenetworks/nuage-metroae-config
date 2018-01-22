@@ -31,6 +31,7 @@ class Action(object):
         else:
             self.state = state
         self.children = list()
+        self.reorder_mark = None
 
     def __str__(self):
         return self._to_string(0)
@@ -88,14 +89,43 @@ class Action(object):
         new_action.read(action_dict[action_key])
         return new_action
 
-    def is_set_values(self):
-        return False
-
     def reset_state(self):
         self.state = dict()
 
     def set_revert(self, is_revert=True):
         self.state['is_revert'] = is_revert
+
+    def execute(self, writer, context=None):
+        self.execute_children(writer, context=None)
+
+    def execute_children(self, writer, context=None):
+        if self.is_revert() is True:
+            for child in reversed(self.children):
+                child.execute(writer, context)
+        else:
+            for child in self.children:
+                child.execute(writer, context)
+
+    def is_set_values(self):
+        return False
+
+    def is_create(self):
+        return False
+
+    def is_retrieve(self):
+        return False
+
+    def get_object_selector(self):
+        return None
+
+    def is_same_object(self, other_action):
+        return False
+
+    def get_child_value(self, field):
+        if len(self.children) > 0 and self.children[0].is_set_values():
+            return self.children[0].get_value(field)
+        else:
+            return None
 
     def is_revert(self):
         return 'is_revert' in self.state and self.state['is_revert'] is True
@@ -120,18 +150,73 @@ class Action(object):
             else:
                 self.children.insert(0, new_action)
         else:
-            self.children.append(new_action)
+            match_indicies = self.find_same_object_indicies_in_children(
+                new_action)
+            if len(match_indicies) > 0:
+                self.combine_same_objects(match_indicies[0], new_action)
+                self.combine_children_indicies(match_indicies[0],
+                                               match_indicies[1:])
+            else:
+                self.children.append(new_action)
 
-    def execute(self, writer, context=None):
-        self.execute_children(writer, context=None)
+        self.reorder_retrieve(new_action)
 
-    def execute_children(self, writer, context=None):
-        if self.is_revert() is True:
-            for child in reversed(self.children):
-                child.execute(writer, context)
+    def find_same_object_indicies_in_children(self, new_action):
+        indicies = []
+        for i, child in enumerate(self.children):
+            if (child.is_same_object(new_action) or
+                    new_action.is_same_object(child)):
+                indicies.append(i)
+        return indicies
+
+    def combine_same_objects(self, existing_index, combine_action):
+        if combine_action.is_create():
+            combine_action.combine(self.children[existing_index])
+            self.children[existing_index] = combine_action
         else:
-            for child in self.children:
-                child.execute(writer, context)
+            self.children[existing_index].combine(combine_action)
+
+    def combine_children_indicies(self, first_index, remaining_indicies):
+        for remaining_index in remaining_indicies:
+            self.combine_same_objects(first_index,
+                                      self.children[remaining_index])
+        for remaining_index in reversed(remaining_indicies):
+            del self.children[remaining_index]
+
+    def mark_ancestors_for_reorder(self, mark):
+        if self.parent is not None:
+            self.parent.reorder_mark = mark
+            self.parent.mark_ancestors_for_reorder(mark)
+
+    def reorder_retrieve(self, new_action):
+        if new_action.is_retrieve():
+            new_action.mark_for_reorder()
+            self.reorder_ancestors()
+            new_action.clear_reorder_marks()
+
+    def reorder_ancestors(self):
+        store_indicies = self.find_marked_indicies_in_children("store")
+        retrieve_indicies = self.find_marked_indicies_in_children("retrieve")
+
+        if len(store_indicies) > 0 and len(retrieve_indicies) > 0:
+            first_retrieve_index = retrieve_indicies[0]
+
+            # Move store actions just before first receive
+            for store_index in store_indicies:
+                if store_index > first_retrieve_index:
+                    store_action = self.children[store_index]
+                    del self.children[store_index]
+                    self.children.insert(first_retrieve_index, store_action)
+
+        if self.parent is not None:
+            self.parent.reorder_ancestors()
+
+    def find_marked_indicies_in_children(self, mark):
+        indicies = []
+        for i, child in enumerate(self.children):
+            if child.reorder_mark == mark:
+                indicies.append(i)
+        return indicies
 
 
 class CreateObjectAction(Action):
@@ -140,6 +225,9 @@ class CreateObjectAction(Action):
         super(CreateObjectAction, self).__init__(parent, state)
         self.object_type = None
         self.select_by_field = DEFAULT_SELECTION_FIELD
+
+    def is_create(self):
+        return True
 
     def read(self, create_dict):
         self.object_type = Action.get_dict_field(create_dict, 'type')
@@ -177,10 +265,36 @@ class CreateObjectAction(Action):
                 pass
 
     def get_select_value(self):
-        if len(self.children) > 0 and self.children[0].is_set_values():
-            return self.children[0].get_value(self.select_by_field)
-        else:
-            return None
+        return self.get_child_value(self.select_by_field)
+
+    def get_object_selector(self):
+        select_value = self.get_select_value()
+        return {'type': self.object_type.lower(),
+                'field': self.select_by_field.lower(),
+                'value': select_value}
+
+    def is_same_object(self, other_action):
+        other_selector = other_action.get_object_selector()
+        if other_selector is None:
+            return False
+
+        if other_selector['type'] != self.object_type.lower():
+            return False
+
+        other_value = other_action.get_child_value(self.select_by_field)
+        this_value = self.get_select_value()
+        return this_value is not None and this_value == other_value
+
+    def combine(self, other_action):
+        if other_action.is_create():
+            select_value = self.get_select_value()
+            raise ConflictError("Creating the same object twice %s: %s = %s" %
+                                (self.object_type, self.select_by_field,
+                                 str(select_value)))
+
+        for child in other_action.children:
+            child.parent = self
+            self.add_child_action_sorted(child)
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -230,6 +344,31 @@ class SelectObjectAction(Action):
         except MissingSelectionError as e:
             if self.is_revert() is not True:
                 raise e
+
+    def get_object_selector(self):
+        return {'type': self.object_type.lower(),
+                'field': self.field.lower(),
+                'value': self.value}
+
+    def is_same_object(self, other_action):
+        other_selector = other_action.get_object_selector()
+        if other_selector is None:
+            return False
+
+        if other_selector['type'] != self.object_type.lower():
+            return False
+
+        other_value = other_action.get_child_value(self.field)
+        if self.value == other_value:
+            return True
+
+        return (other_selector['field'] == self.field.lower() and
+                other_selector['value'] == self.value)
+
+    def combine(self, other_action):
+        for child in other_action.children:
+            child.parent = self
+            self.add_child_action_sorted(child)
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -299,10 +438,7 @@ class SetValuesAction(Action):
         return attributes_copy
 
     def get_value(self, field):
-        if field in self.attributes:
-            return self.attributes[field]
-
-        return None
+        return Action.get_dict_field(self.attributes, field.lower())
 
     def _to_string(self, indent_level):
         cur_output = ""
@@ -390,6 +526,9 @@ class RetrieveValueAction(SetValuesAction):
         self.from_name = None
         self.to_field = None
 
+    def is_retrieve(self):
+        return True
+
     def read(self, set_value_dict):
         self.to_field = Action.get_dict_field(set_value_dict, 'to-field')
         if self.to_field is None:
@@ -410,5 +549,17 @@ class RetrieveValueAction(SetValuesAction):
             raise TemplateActionError(
                 'No value of name %s stored to be retrieved' % self.from_name)
 
-        self.add_attribute(self.to_field,
-                           self.state['stored_values'][self.from_name])
+        stored_action = self.state['stored_values'][self.from_name]
+        self.add_attribute(self.to_field, stored_action)
+
+    def mark_for_reorder(self):
+        # Important: Mark retrieve before store so common ancestors have a
+        # store value and don't get reordered
+        stored_action = self.state['stored_values'][self.from_name]
+        self.mark_ancestors_for_reorder("retrieve")
+        stored_action.mark_ancestors_for_reorder("store")
+
+    def clear_reorder_marks(self):
+        stored_action = self.state['stored_values'][self.from_name]
+        self.mark_ancestors_for_reorder(None)
+        stored_action.mark_ancestors_for_reorder(None)

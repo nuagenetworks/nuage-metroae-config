@@ -5,6 +5,12 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 INVALID_ACTION_1,
                                 INVALID_ACTION_2,
                                 INVALID_ACTION_3,
+                                ORDER_CREATE,
+                                ORDER_SELECT_1,
+                                ORDER_SELECT_2,
+                                ORDER_STORE_1,
+                                ORDER_STORE_2,
+                                ORDER_STORE_3,
                                 RETRIEVE_CONFLICT_1,
                                 RETRIEVE_CONFLICT_2,
                                 RETRIEVE_BEFORE_STORE,
@@ -34,6 +40,38 @@ from mock_writer import MockWriter
 from template_test_params import (EXPECTED_ACL_TEMPLATE,
                                   EXPECTED_DOMAIN_TEMPLATE,
                                   EXPECTED_ENTERPRISE_TEMPLATE)
+
+CREATE_SELECT_ORDERING_CASES = [
+    (ORDER_CREATE, ORDER_SELECT_1, ORDER_SELECT_2),
+    (ORDER_CREATE, ORDER_SELECT_2, ORDER_SELECT_1),
+    (ORDER_SELECT_1, ORDER_CREATE, ORDER_SELECT_2),
+    (ORDER_SELECT_2, ORDER_CREATE, ORDER_SELECT_1),
+    (ORDER_SELECT_1, ORDER_SELECT_2, ORDER_CREATE),
+    (ORDER_SELECT_2, ORDER_SELECT_1, ORDER_CREATE)]
+
+CREATE_CONFLICT_ORDERING_CASES = [
+    (ORDER_CREATE, ORDER_SELECT_1, ORDER_CREATE),
+    (ORDER_CREATE, ORDER_SELECT_2, ORDER_CREATE),
+    (ORDER_SELECT_1, ORDER_CREATE, ORDER_CREATE),
+    (ORDER_SELECT_2, ORDER_CREATE, ORDER_CREATE),
+    (ORDER_CREATE, ORDER_CREATE, ORDER_SELECT_1),
+    (ORDER_CREATE, ORDER_CREATE, ORDER_SELECT_2)]
+
+ATTR_CONFLICT_ORDERING_CASES = [
+    (ORDER_CREATE, ORDER_SELECT_1, ORDER_SELECT_1),
+    (ORDER_SELECT_1, ORDER_SELECT_1, ORDER_CREATE),
+    (ORDER_SELECT_1, ORDER_CREATE, ORDER_SELECT_1),
+    (ORDER_SELECT_2, ORDER_SELECT_1, ORDER_SELECT_1),
+    (ORDER_SELECT_1, ORDER_SELECT_1, ORDER_SELECT_2),
+    (ORDER_SELECT_1, ORDER_SELECT_2, ORDER_SELECT_1)]
+
+STORE_ORDERING_CASES = [
+    (ORDER_STORE_1, ORDER_STORE_2, ORDER_STORE_3),
+    (ORDER_STORE_1, ORDER_STORE_3, ORDER_STORE_2),
+    (ORDER_STORE_2, ORDER_STORE_1, ORDER_STORE_3),
+    (ORDER_STORE_3, ORDER_STORE_1, ORDER_STORE_2),
+    (ORDER_STORE_2, ORDER_STORE_3, ORDER_STORE_1),
+    (ORDER_STORE_3, ORDER_STORE_2, ORDER_STORE_1)]
 
 
 class TestActionsRead(object):
@@ -442,6 +480,142 @@ class TestActionsRead(object):
         assert "Domain" in str(e)
         assert "'id1'" in str(e)
         assert "template_id" in str(e)
+
+
+class TestActionsOrdering(object):
+
+    @pytest.mark.parametrize("read_order", CREATE_SELECT_ORDERING_CASES)
+    def test_create_select__success(self, read_order):
+        root_action = Action(None)
+
+        for template in read_order:
+            root_action.read_children_actions(template)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Level1"
+        assert current_action.select_by_field == "name"
+
+        current_action = root_action.children[0].children[0]
+        assert current_action.attributes == {'field1': 'value1',
+                                             'field2': 'value2',
+                                             'field3': 'value3',
+                                             'name': 'L1-O1'}
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "field1"
+
+        current_action = root_action.children[0].children[1].children[0]
+        assert current_action.attributes == {'field1': 'L2-O1'}
+
+        current_action = root_action.children[0].children[2]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "field1"
+
+        current_action = root_action.children[0].children[2].children[0]
+        assert current_action.attributes == {'field1': 'L2-O2',
+                                             'field2': 'value2'}
+
+        current_action = root_action.children[0].children[2].children[1]
+        assert current_action.object_type == "Level3"
+        assert current_action.select_by_field == "field1"
+
+        current_action = \
+            root_action.children[0].children[2].children[1].children[0]
+        assert current_action.attributes == {'field1': 'L3-O1'}
+
+        current_action = root_action.children[0].children[3].children[0]
+        assert current_action.attributes == {'field1': 'L2-O3',
+                                             'field3': 'value3'}
+
+        current_action = root_action.children[0].children[3].children[1]
+        assert current_action.object_type == "Level3"
+        assert current_action.select_by_field == "field1"
+
+        current_action = \
+            root_action.children[0].children[3].children[1].children[0]
+        assert current_action.attributes == {'field1': 'L3-O2'}
+
+        current_action = root_action.children[0].children[4]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "field1"
+
+        current_action = root_action.children[0].children[4].children[0]
+        assert current_action.attributes == {'field1': 'L2-O4'}
+
+    @pytest.mark.parametrize("read_order", CREATE_CONFLICT_ORDERING_CASES)
+    def test_create__conflict(self, read_order):
+        root_action = Action(None)
+
+        with pytest.raises(ConflictError) as e:
+            for template in read_order:
+                root_action.read_children_actions(template)
+
+        assert "same object twice" in str(e)
+        assert "Level1" in str(e)
+
+    @pytest.mark.parametrize("read_order", ATTR_CONFLICT_ORDERING_CASES)
+    def test_attribute__conflict(self, read_order):
+        root_action = Action(None)
+
+        with pytest.raises(ConflictError) as e:
+            for template in read_order:
+                root_action.read_children_actions(template)
+
+        assert "already set" in str(e)
+        assert "Level1" in str(e)
+
+    @pytest.mark.parametrize("read_order", STORE_ORDERING_CASES)
+    def test_store__success(self, read_order):
+        root_action = Action(None)
+
+        for template in read_order:
+            root_action.reset_state()
+            root_action.read_children_actions(template)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Level1"
+        assert current_action.select_by_field == "name"
+
+        current_action = root_action.children[0].children[0]
+        assert current_action.attributes == {'name': 'L1-O2'}
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "name"
+
+        current_action = root_action.children[0].children[1].children[0]
+        assert current_action.attributes == {'name': 'L2-O3'}
+
+        current_action = root_action.children[0].children[1].children[1]
+        store_action_1 = current_action
+        assert current_action.as_name == 'store_1'
+        assert current_action.from_field == 'field1'
+
+        current_action = root_action.children[0].children[2]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "name"
+
+        current_action = root_action.children[0].children[2].children[0]
+        assert current_action.attributes == {'name': 'L2-O2',
+                                             'field1': store_action_1}
+
+        current_action = root_action.children[0].children[2].children[1]
+        store_action_2 = current_action
+        assert current_action.as_name == 'store_1'
+        assert current_action.from_field == 'field1'
+
+        current_action = root_action.children[1]
+        assert current_action.object_type == "Level1"
+        assert current_action.select_by_field == "name"
+
+        current_action = root_action.children[1].children[1]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "name"
+
+        current_action = root_action.children[1].children[1].children[0]
+        assert current_action.attributes == {'name': 'L2-O1',
+                                             'field1': store_action_2}
 
 
 class TestActionsExecute(object):
