@@ -7,6 +7,7 @@ from device_writer_base import (DeviceWriterBase,
                                 DeviceWriterError,
                                 InvalidAttributeError,
                                 InvalidObjectError,
+                                InvalidValueError,
                                 MissingSelectionError,
                                 MultipleSelectionError,
                                 SessionError,
@@ -185,6 +186,7 @@ class VsdWriter(DeviceWriterBase):
             raise SessionError("No object for setting values")
 
         self._set_attributes(context.current_object, **kwargs)
+        self._validate_values(context.current_object)
 
         if context.object_exists:
             self.log_debug("Saving [%s]" % context)
@@ -359,6 +361,13 @@ class VsdWriter(DeviceWriterBase):
         else:
             raise SessionError("Missing field %s in %s object" %
                                (field, obj.get_name()))
+
+    def _validate_values(self, obj):
+        if not obj.validate():
+            messages = []
+            for attr_name, message in obj.errors.iteritems():
+                messages.append("%s: %s" % (attr_name, message))
+            raise InvalidValueError("Invalid values: " + ', '.join(messages))
 
 
 #

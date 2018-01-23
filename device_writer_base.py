@@ -40,6 +40,13 @@ class InvalidAttributeError(DeviceWriterError):
     pass
 
 
+class InvalidValueError(DeviceWriterError):
+    """
+    Exception class when setting an attribute to an invalid value
+    """
+    pass
+
+
 class InvalidObjectError(DeviceWriterError):
     """
     Exception class when an object or child of an object does not exist

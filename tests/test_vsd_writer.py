@@ -7,6 +7,7 @@ from levistate.vsd_writer import (Context,
                                   InvalidSpecification,
                                   InvalidAttributeError,
                                   InvalidObjectError,
+                                  InvalidValueError,
                                   MissingSelectionError,
                                   MissingSessionParamsError,
                                   MultipleSelectionError,
@@ -439,6 +440,7 @@ class TestVsdWriterSetValues(object):
         mock_object = MagicMock()
         mock_object.spec = vsd_writer.specs['enterprise']
         mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
 
         context = Context()
         context.parent_object = None
@@ -455,6 +457,7 @@ class TestVsdWriterSetValues(object):
         assert mock_object.dhcpleaseinterval == 10
         assert mock_object.encryptionmanagementmode == 'managed'
         assert mock_object.name == 'test_enterprise'
+        mock_object.validate.assert_called_once()
         mock_session.root_object.current_child_name == "enterprises"
         mock_session.root_object.create_child.assert_called_once_with(
             mock_object)
@@ -468,6 +471,7 @@ class TestVsdWriterSetValues(object):
 
         mock_object = MagicMock()
         mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.validate.return_value = True
 
         context = Context()
         context.parent_object = None
@@ -484,6 +488,7 @@ class TestVsdWriterSetValues(object):
         assert mock_object.dhcpleaseinterval == 10
         assert mock_object.encryptionmanagementmode == 'managed'
         assert mock_object.name == 'test_enterprise'
+        mock_object.validate.assert_called_once()
         mock_object.save.assert_called_once()
         assert new_context.parent_object is None
         assert new_context.current_object == mock_object
@@ -496,6 +501,7 @@ class TestVsdWriterSetValues(object):
         mock_object = MagicMock()
         mock_object.spec = vsd_writer.specs['domain']
         mock_object.__resource_name__ = "domains"
+        mock_object.validate.return_value = True
 
         mock_parent = MagicMock()
 
@@ -515,6 +521,7 @@ class TestVsdWriterSetValues(object):
         assert mock_object.ecmpcount == 10
         assert mock_object.dpi == 'enabled'
         assert mock_object.name == 'test_domain'
+        mock_object.validate.assert_called_once()
         mock_parent.current_child_name == "domains"
         mock_parent.create_child.assert_called_once_with(mock_object)
         assert new_context.parent_object == mock_parent
@@ -527,6 +534,7 @@ class TestVsdWriterSetValues(object):
 
         mock_object = MagicMock()
         mock_object.spec = vsd_writer.specs['domain']
+        mock_object.validate.return_value = True
 
         mock_parent = MagicMock()
 
@@ -545,6 +553,7 @@ class TestVsdWriterSetValues(object):
         assert mock_object.ecmpcount == 10
         assert mock_object.dpi == 'enabled'
         assert mock_object.name == 'test_domain'
+        mock_object.validate.assert_called_once()
         mock_object.save.assert_called_once()
         assert new_context.parent_object == mock_parent
         assert new_context.current_object == mock_object
@@ -611,6 +620,43 @@ class TestVsdWriterSetValues(object):
         assert "no child" in str(e)
         assert "Enterprise" in str(e)
         assert "BridgeInterface" in str(e)
+
+    def test__invalid_values(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['domain']
+        mock_object.validate.return_value = False
+        mock_object.errors = {
+            'name': {'title': 'Invalid input',
+                     'description': "Name is invalid",
+                     'remote_name': "name"},
+            'bgpenabled': {'title': 'Invalid input',
+                           'description': "BGPEnabled is invalid",
+                           'remote_name': "BGPEnabled"}}
+
+        mock_parent = MagicMock()
+
+        context = Context()
+        context.parent_object = mock_parent
+        context.current_object = mock_object
+        context.object_exists = True
+
+        with pytest.raises(InvalidValueError) as e:
+            vsd_writer.set_values(context,
+                                  BGPEnabled=True,
+                                  name='test_domain')
+
+        assert mock_object.bgpenabled is True
+        assert mock_object.name == 'test_domain'
+        mock_object.validate.assert_called_once()
+        mock_object.save.assert_not_called()
+
+        assert "name" in str(e)
+        assert "Name is invalid" in str(e)
+        assert "bgpenabled" in str(e)
+        assert "BGPEnabled is invalid" in str(e)
 
 
 class TestVsdWriterGetValue(object):
