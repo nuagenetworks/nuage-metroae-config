@@ -66,6 +66,9 @@ def parse_args():
                         action='store', required=False,
                         default=DEFAULT_VSD_ENTERPRISE,
                         help='Enterprise for VSD')
+    parser.add_argument('-dr', '--dry-run', dest='dry_run',
+                        action='store_true', required=False,
+                        help='Perform validation only')
 
     return parser.parse_args()
 
@@ -87,8 +90,8 @@ class Levistate(object):
             self.apply_templates()
         except DeviceWriterError as e:
             self.writer.log_error(str(e))
-        # except Exception as e:
-        #     self.writer.log_error(str(e))
+        except Exception as e:
+            self.writer.log_error(str(e))
 
         print self.writer.get_logs()
 
@@ -131,10 +134,20 @@ class Levistate(object):
             template_name = data[0]
             template_data = data[1]
             config.add_template_data(template_name, **template_data)
-        if self.args.revert is True:
-            config.revert(self.writer)
+
+        if self.args.dry_run is True:
+            validate_actions = [True]
         else:
-            config.apply(self.writer)
+            validate_actions = [True, False]
+
+        for validate_only in validate_actions:
+            self.writer.set_validate_only(validate_only)
+            if self.args.revert is True:
+                config.revert(self.writer)
+            else:
+                config.apply(self.writer)
+
+            self.writer.set_validate_only(False)
 
         print str(config.root_action)
 

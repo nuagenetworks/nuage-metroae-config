@@ -48,6 +48,8 @@ PARSE_ERROR_CASES = [
     ('norestname.spec', "'rest_name' missing"),
 ]
 
+VALIDATE_ONLY_CASES = [False, True]
+
 
 @patch("levistate.vsd_writer.Session")
 def setup_standard_session(vsd_writer, mock_patch):
@@ -61,12 +63,14 @@ def setup_standard_session(vsd_writer, mock_patch):
 
     mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
                                        **EXPECTED_SESSION_PARAMS)
-    mock_session.start.assert_called_once()
+    if vsd_writer.validate_only is True:
+        mock_session.start.assert_not_called()
+    else:
+        mock_session.start.assert_called_once()
+
     mock_session.set_enterprise_spec.assert_called_once_with(
         vsd_writer.specs['enterprise'])
     assert mock_session.root_object.spec == vsd_writer.specs['me']
-
-    mock_session.start.assert_called_once()
 
     return mock_session
 
@@ -120,24 +124,34 @@ class TestVsdWriterSpecParsing(object):
 
 class TestVsdWriterSession(object):
 
-    def test_start__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         mock_session = setup_standard_session(vsd_writer)
 
-        mock_session.start.assert_called_once()
+        if validate_only is True:
+            mock_session.start.assert_not_called()
+        else:
+            mock_session.start.assert_called_once()
+
         mock_session.set_enterprise_spec.assert_called_once_with(
             vsd_writer.specs['enterprise'])
 
-    def test_start__no_params(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_params(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
 
         with pytest.raises(MissingSessionParamsError) as e:
             vsd_writer.start_session()
 
         assert "session without parameters" in str(e)
 
-    def test_start__no_root_spec(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_root_spec(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
 
         vsd_writer.set_session_params(**SESSION_PARAMS)
 
@@ -146,8 +160,10 @@ class TestVsdWriterSession(object):
 
         assert "No root specification" in str(e)
 
-    def test_start__no_enterprise_spec(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_enterprise_spec(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
 
         vsd_writer.set_session_params(**SESSION_PARAMS)
 
@@ -179,29 +195,43 @@ class TestVsdWriterSession(object):
         assert "403" in str(e)
         assert "forbidden" in str(e)
 
-    def test_stop__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_stop__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
         mock_session = setup_standard_session(vsd_writer)
 
-        mock_session.start.assert_called_once()
+        if validate_only is True:
+            mock_session.start.assert_not_called()
+        else:
+            mock_session.start.assert_called_once()
 
         vsd_writer.stop_session()
-        mock_session.reset.assert_called_once()
+
+        if validate_only is True:
+            mock_session.reset.assert_not_called()
+        else:
+            mock_session.reset.assert_called_once()
 
 
 class TestVsdWriterCreateObject(object):
 
-    def test__no_session(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_session(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
 
         with pytest.raises(SessionNotStartedError) as e:
             vsd_writer.create_object("Enterprise")
 
         assert "not started" in str(e)
 
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     @patch("levistate.vsd_writer.ConfigObject")
-    def test_parent__success(self, mock_object):
+    def test_parent__success(self, mock_object, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object.return_value = "new object"
@@ -212,9 +242,11 @@ class TestVsdWriterCreateObject(object):
         assert new_context.current_object == "new object"
         assert new_context.object_exists is False
 
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     @patch("levistate.vsd_writer.ConfigObject")
-    def test_child__success(self, mock_object):
+    def test_child__success(self, mock_object, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         context = Context()
@@ -230,8 +262,10 @@ class TestVsdWriterCreateObject(object):
         assert new_context.current_object == "new object"
         assert new_context.object_exists is False
 
-    def test__bad_object(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__bad_object(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         with pytest.raises(InvalidObjectError) as e:
@@ -243,35 +277,51 @@ class TestVsdWriterCreateObject(object):
 
 class TestVsdWriterSelectObject(object):
 
-    def test__no_session(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_session(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
 
         with pytest.raises(SessionNotStartedError) as e:
             vsd_writer.select_object("Enterprise", "name", "test_enterprise")
 
         assert "not started" in str(e)
 
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("levistate.vsd_writer.ConfigObject")
     @patch("levistate.vsd_writer.Fetcher")
-    def test_parent__success(self, mock_fetcher):
+    def test_parent__success(self, mock_fetcher, mock_object, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         mock_session = setup_standard_session(vsd_writer)
 
         mock_fetcher.return_value = mock_fetcher
         mock_fetcher.get.return_value = ["selected object"]
+
+        mock_object.return_value = "selected object"
+
         new_context = vsd_writer.select_object("Enterprise", "Name",
                                                "test_enterprise")
 
         mock_fetcher.assert_called_once_with(mock_session.root_object,
                                              vsd_writer.specs['enterprise'])
-        mock_fetcher.get.assert_called_once_with(
-            filter='name is "test_enterprise"')
+
+        if validate_only is True:
+            mock_fetcher.get.assert_not_called()
+        else:
+            mock_fetcher.get.assert_called_once_with(
+                filter='name is "test_enterprise"')
+
         assert new_context.parent_object is None
         assert new_context.current_object == "selected object"
         assert new_context.object_exists is True
 
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("levistate.vsd_writer.ConfigObject")
     @patch("levistate.vsd_writer.Fetcher")
-    def test_child__success(self, mock_fetcher):
+    def test_child__success(self, mock_fetcher, mock_object, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         context = Context()
@@ -283,20 +333,29 @@ class TestVsdWriterSelectObject(object):
 
         mock_fetcher.return_value = mock_fetcher
         mock_fetcher.get.return_value = ["selected object"]
+        mock_object.return_value = "selected object"
+
         new_context = vsd_writer.select_object("Domain", "Name",
                                                "test_domain",
                                                context)
 
         mock_fetcher.assert_called_once_with(mock_parent,
                                              vsd_writer.specs['domain'])
-        mock_fetcher.get.assert_called_once_with(
-            filter='name is "test_domain"')
+
+        if validate_only is True:
+            mock_fetcher.get.assert_not_called()
+        else:
+            mock_fetcher.get.assert_called_once_with(
+                filter='name is "test_domain"')
+
         assert new_context.parent_object == mock_parent
         assert new_context.current_object == "selected object"
         assert new_context.object_exists is True
 
-    def test__bad_object(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__bad_object(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         with pytest.raises(InvalidObjectError) as e:
@@ -305,8 +364,10 @@ class TestVsdWriterSelectObject(object):
         assert "No specification" in str(e)
         assert "Foobar" in str(e)
 
-    def test__bad_child(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__bad_child(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         with pytest.raises(InvalidObjectError) as e:
@@ -374,16 +435,20 @@ class TestVsdWriterSelectObject(object):
 
 class TestVsdWriterDeleteObject(object):
 
-    def test__no_session(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_session(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
 
         with pytest.raises(SessionNotStartedError) as e:
             vsd_writer.delete_object("context")
 
         assert "not started" in str(e)
 
-    def test__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object = MagicMock()
@@ -396,12 +461,18 @@ class TestVsdWriterDeleteObject(object):
 
         new_context = vsd_writer.delete_object(context)
 
-        mock_object.delete.assert_called_once()
+        if validate_only is True:
+            mock_object.delete.assert_not_called()
+        else:
+            mock_object.delete.assert_called_once()
+
         assert new_context.current_object is None
         assert new_context.object_exists is False
 
-    def test__no_object(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_object(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         context = Context()
@@ -425,17 +496,25 @@ class TestVsdWriterDeleteObject(object):
 
 class TestVsdWriterSetValues(object):
 
-    def test__no_session(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_session(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
 
         with pytest.raises(SessionNotStartedError) as e:
             vsd_writer.set_values("context", name="test_enterprise")
 
         assert "not started" in str(e)
 
-    def test_parent_new__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_parent_new__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         mock_session = setup_standard_session(vsd_writer)
+
+        if validate_only is True:
+            mock_session.root_object = MagicMock()
+            mock_session.root_object.spec = vsd_writer.specs['me']
 
         mock_object = MagicMock()
         mock_object.spec = vsd_writer.specs['enterprise']
@@ -458,15 +537,23 @@ class TestVsdWriterSetValues(object):
         assert mock_object.encryptionmanagementmode == 'managed'
         assert mock_object.name == 'test_enterprise'
         mock_object.validate.assert_called_once()
-        mock_session.root_object.current_child_name == "enterprises"
-        mock_session.root_object.create_child.assert_called_once_with(
-            mock_object)
+
+        if validate_only is True:
+            print str(mock_session.root_object)
+            mock_session.root_object.create_child.assert_not_called()
+        else:
+            mock_session.root_object.current_child_name == "enterprises"
+            mock_session.root_object.create_child.assert_called_once_with(
+                mock_object)
+
         assert new_context.parent_object is None
         assert new_context.current_object == mock_object
         assert new_context.object_exists is True
 
-    def test_parent_update__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_parent_update__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object = MagicMock()
@@ -489,13 +576,20 @@ class TestVsdWriterSetValues(object):
         assert mock_object.encryptionmanagementmode == 'managed'
         assert mock_object.name == 'test_enterprise'
         mock_object.validate.assert_called_once()
-        mock_object.save.assert_called_once()
+
+        if validate_only is True:
+            mock_object.save.assert_not_called()
+        else:
+            mock_object.save.assert_called_once()
+
         assert new_context.parent_object is None
         assert new_context.current_object == mock_object
         assert new_context.object_exists is True
 
-    def test_child_new__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_child_new__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object = MagicMock()
@@ -522,14 +616,21 @@ class TestVsdWriterSetValues(object):
         assert mock_object.dpi == 'enabled'
         assert mock_object.name == 'test_domain'
         mock_object.validate.assert_called_once()
-        mock_parent.current_child_name == "domains"
-        mock_parent.create_child.assert_called_once_with(mock_object)
+
+        if validate_only is True:
+            mock_parent.create_child.assert_not_called()
+        else:
+            mock_parent.current_child_name == "domains"
+            mock_parent.create_child.assert_called_once_with(mock_object)
+
         assert new_context.parent_object == mock_parent
         assert new_context.current_object == mock_object
         assert new_context.object_exists is True
 
-    def test_child_update__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_child_update__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object = MagicMock()
@@ -554,13 +655,20 @@ class TestVsdWriterSetValues(object):
         assert mock_object.dpi == 'enabled'
         assert mock_object.name == 'test_domain'
         mock_object.validate.assert_called_once()
-        mock_object.save.assert_called_once()
+
+        if validate_only is True:
+            mock_object.save.assert_not_called()
+        else:
+            mock_object.save.assert_called_once()
+
         assert new_context.parent_object == mock_parent
         assert new_context.current_object == mock_object
         assert new_context.object_exists is True
 
-    def test__no_object(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_object(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         context = Context()
@@ -573,8 +681,10 @@ class TestVsdWriterSetValues(object):
 
         assert "No object" in str(e)
 
-    def test__invalid_attr(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__invalid_attr(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object = MagicMock()
@@ -591,8 +701,10 @@ class TestVsdWriterSetValues(object):
         assert "not define" in str(e)
         assert "FooBar" in str(e)
 
-    def test__bad_child(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__bad_child(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         context = Context()
@@ -621,8 +733,10 @@ class TestVsdWriterSetValues(object):
         assert "Enterprise" in str(e)
         assert "BridgeInterface" in str(e)
 
-    def test__invalid_values(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__invalid_values(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object = MagicMock()
@@ -661,7 +775,8 @@ class TestVsdWriterSetValues(object):
 
 class TestVsdWriterGetValue(object):
 
-    def test__no_session(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_session(self, validate_only):
         vsd_writer = VsdWriter()
 
         with pytest.raises(SessionNotStartedError) as e:
@@ -669,14 +784,22 @@ class TestVsdWriterGetValue(object):
 
         assert "not started" in str(e)
 
-    def test__success(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__success(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
-        mock_object = MagicMock()
+        if validate_only is True:
+            # Anonymous object (does not override getattr like mock does)
+            mock_object = type('', (object,), {})()
+        else:
+            mock_object = MagicMock()
+            mock_object.name = "test_name"
+            mock_object.id = "test_id"
+            mock_object.bgpenabled = True
+
         mock_object.spec = vsd_writer.specs['enterprise']
-        mock_object.name = "test_name"
-        mock_object.id = "test_id"
 
         context = Context()
         context.parent_object = None
@@ -685,12 +808,21 @@ class TestVsdWriterGetValue(object):
 
         name_value = vsd_writer.get_value("Name", context)
         id_value = vsd_writer.get_value("Id", context)
+        bgp_value = vsd_writer.get_value("BGPEnabled", context)
 
-        assert name_value == "test_name"
-        assert id_value == "test_id"
+        if validate_only is True:
+            assert name_value == "ValidatePlaceholder"
+            assert id_value == "ValidatePlaceholder"
+            assert bgp_value is False
+        else:
+            assert name_value == "test_name"
+            assert id_value == "test_id"
+            assert bgp_value is True
 
-    def test__no_object(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_object(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         context = Context()
@@ -711,8 +843,10 @@ class TestVsdWriterGetValue(object):
 
         assert "No object" in str(e)
 
-    def test__invalid_attr(self):
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__invalid_attr(self, validate_only):
         vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
         setup_standard_session(vsd_writer)
 
         mock_object = MagicMock()

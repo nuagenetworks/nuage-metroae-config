@@ -66,6 +66,12 @@ class DeviceWriterBase(object):
         device-specific derived class.
         """
         self.log_entries = list()
+        self.validate_only = False
+
+    def set_validate_only(self, value=True):
+        self.validate_only = value
+        if value is True:
+            self.log_debug("*** Validate ***")
 
     def log(self, log_type, message):
         self.log_entries.append((log_type, message))
