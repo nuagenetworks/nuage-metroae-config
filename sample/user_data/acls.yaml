@@ -16,8 +16,8 @@ children:
           default_install_acl_implicit_rules: True
           description: Test ACL
           entry_priority: 200
-          protocol: 6
-          source_port: 80
+          protocol: "6"
+          source_port: "80"
           destination_port: '*'
           ether_type: '0x0800'
           action: forward
@@ -28,4 +28,3 @@ children:
           stateful: True
           flow_logging_enabled: True
           stats_logging_enabled: True
-

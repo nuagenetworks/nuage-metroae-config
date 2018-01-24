@@ -84,14 +84,6 @@ class Configuration(object):
         """
         return self._set_data(id, None)
 
-    def validate(self, writer):
-        """
-        Validates this configuration against the provided device
-        writer.  Returns True if ok, otherwise an exception is
-        raised.
-        """
-        raise NotImplementedError("Template validation not yet implemented")
-
     def apply(self, writer):
         """
         Applies this configuration to the provided device

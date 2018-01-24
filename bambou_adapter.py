@@ -1,3 +1,5 @@
+import sys
+
 from bambou import NURESTFetcher, NURESTSession, NURESTObject, NURESTRootObject
 from bambou.exceptions import InternalConsitencyError
 
@@ -53,7 +55,7 @@ class ConfigObject(NURESTObject):
             local_name = attribute['name'].lower()
 
             self.expose_attribute(local_name,
-                                  attribute['type'],
+                                  self._get_attribute_type(attribute['type']),
                                   remote_name=attribute['name'],
                                   is_required=attribute['required'],
                                   is_readonly=attribute['read_only'],
@@ -64,8 +66,34 @@ class ConfigObject(NURESTObject):
                                   can_order=attribute['orderable'],
                                   can_search=attribute['filterable'])
 
+            self._attributes[local_name].max_value = (
+                attribute['max_value'] if 'max_value' in attribute else None)
+            self._attributes[local_name].min_value = (
+                attribute['min_value'] if 'min_value' in attribute else None)
+
             if not hasattr(self, local_name):
                 setattr(self, local_name, None)
+
+    def _get_attribute_type(self, label):
+        if label == "string":
+            return str
+        elif label == "enum":
+            return str
+        elif label == "boolean":
+            return bool
+        elif label == "integer":
+            return int
+        elif label == "float":
+            return float
+        elif label == "list":
+            return list
+        elif label == "object":
+            return dict
+        elif label == "time":
+            return float
+        else:
+            raise InternalConsitencyError("Unknown attribute type " +
+                                          str(label))
 
     @property
     def resource_name(self):
@@ -94,6 +122,106 @@ class ConfigObject(NURESTObject):
 
     def fetcher_for_rest_name(self, rest_name):
         return list()
+
+    def validate(self):
+        # Unfortunately, the Bambou validation function is not working
+        # properly. It has the following problems and thus it is being
+        # overridden here in the adapter:
+        #   1) Handling list values as lists
+        #   2) Checking min and max values
+
+        self._attribute_errors = dict()  # Reset validation errors
+
+        for local_name, attribute in self._attributes.items():
+
+            value = getattr(self, local_name, None)
+
+            if attribute.is_required and (value is None or value == ""):
+                self._attribute_errors[local_name] = {
+                    'title': 'Invalid input',
+                    'description': 'This value is mandatory.',
+                    'remote_name': attribute.remote_name}
+                continue
+
+            if value is None:
+                continue  # without error
+
+            if type(value) != attribute.attribute_type:
+                # On python 2, we accept unicode input when attribute_type
+                # is set to str
+                if not (sys.version_info < (3,) and
+                        attribute.attribute_type == str and
+                        type(value) == unicode):
+                    self._attribute_errors[local_name] = {
+                        'title': 'Wrong type',
+                        'description':
+                            'Attribute %s type should be %s but is %s' %
+                            (attribute.remote_name, attribute.attribute_type,
+                             type(value)),
+                        'remote_name': attribute.remote_name}
+                    continue
+
+            if (attribute.min_length is not None and
+                    len(value) < attribute.min_length):
+                self._attribute_errors[local_name] = {
+                    'title': 'Invalid length',
+                    'description':
+                        'Attribute %s minimum length should be %s but is %s' %
+                        (attribute.remote_name, attribute.min_length,
+                         len(value)),
+                    'remote_name': attribute.remote_name}
+                continue
+
+            if (attribute.max_length is not None and
+                    len(value) > attribute.max_length):
+                self._attribute_errors[local_name] = {
+                    'title': 'Invalid length',
+                    'description':
+                        'Attribute %s maximum length should be %s but is %s' %
+                        (attribute.remote_name, attribute.max_length,
+                         len(value)),
+                    'remote_name': attribute.remote_name}
+                continue
+
+            if attribute.attribute_type == list:
+                valid = True
+                for item in value:
+                    if valid is True:
+                        valid = self._validate_value(local_name, attribute,
+                                                     item)
+            else:
+                self._validate_value(local_name, attribute, value)
+
+        return self.is_valid()
+
+    def _validate_value(self, local_name, attribute, value):
+
+        if attribute.min_value is not None and value < attribute.min_value:
+            self._attribute_errors[local_name] = {
+                'title': 'Invalid value',
+                'description':
+                    'Attribute %s minimum value should be %s but is %s' %
+                    (attribute.remote_name, attribute.min_value, value),
+                'remote_name': attribute.remote_name}
+            return False
+
+        if attribute.max_value is not None and value > attribute.max_value:
+            self._attribute_errors[local_name] = {
+                'title': 'Invalid value',
+                'description':
+                    'Attribute %s maximum value should be %s but is %s' %
+                    (attribute.remote_name, attribute.max_value, value),
+                'remote_name': attribute.remote_name}
+            return False
+
+        if attribute.choices and value not in attribute.choices:
+            self._attribute_errors[local_name] = {
+                'title': 'Invalid input',
+                'description': 'Value %s not a valid choice' % value,
+                'remote_name': attribute.remote_name}
+            return False
+
+        return True
 
 
 class Fetcher(NURESTFetcher):

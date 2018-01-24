@@ -2,11 +2,12 @@ import json
 import os
 
 from bambou.exceptions import BambouHTTPError
-from bambou_adapter import ConfigObject, Fetcher, Session
+from bambou_adapter import ConfigObject, Fetcher, Root, Session
 from device_writer_base import (DeviceWriterBase,
                                 DeviceWriterError,
                                 InvalidAttributeError,
                                 InvalidObjectError,
+                                InvalidValueError,
                                 MissingSelectionError,
                                 MultipleSelectionError,
                                 SessionError,
@@ -107,7 +108,13 @@ class VsdWriter(DeviceWriterBase):
             self.session.set_enterprise_spec(self.specs['enterprise'])
 
         try:
-            self.session.start()
+            if self.validate_only is True:
+                self.session._root_object = Root(
+                    self.specs[self.root_spec_name],
+                    self.specs["enterprise"])
+            else:
+                self.session.start()
+
             self.session.root_object.spec = self.specs[self.root_spec_name]
         except BambouHTTPError as e:
             self.session = None
@@ -120,7 +127,8 @@ class VsdWriter(DeviceWriterBase):
         self.log_debug("Session stopping")
 
         if self.session is not None:
-            self.session.reset()
+            if self.validate_only is False:
+                self.session.reset()
             self.session = None
 
     def create_object(self, object_name, context=None):
@@ -168,7 +176,9 @@ class VsdWriter(DeviceWriterBase):
                 not context.object_exists):
             raise SessionError("No object for deletion")
 
-        context.current_object.delete()
+        if self.validate_only is False:
+            context.current_object.delete()
+
         context.current_object = None
         context.object_exists = False
 
@@ -185,10 +195,12 @@ class VsdWriter(DeviceWriterBase):
             raise SessionError("No object for setting values")
 
         self._set_attributes(context.current_object, **kwargs)
+        self._validate_values(context.current_object)
 
         if context.object_exists:
             self.log_debug("Saving [%s]" % context)
-            context.current_object.save()
+            if self.validate_only is False:
+                context.current_object.save()
         else:
             self.log_debug("Creating child [%s]" % context)
             self._add_object(context.current_object, context.parent_object)
@@ -263,10 +275,21 @@ class VsdWriter(DeviceWriterBase):
         if local_name.lower() == "id":
             return "ID"
 
+        spec = self._get_attribute_spec(spec, local_name)
+        return spec['name']
+
+    def _get_attribute_type(self, spec, local_name):
+        if local_name.lower() == "id":
+            return "string"
+
+        spec = self._get_attribute_spec(spec, local_name)
+        return spec['type']
+
+    def _get_attribute_spec(self, spec, local_name):
         for attribute in spec['attributes']:
             remote_name = attribute['name']
             if remote_name.lower() == local_name.lower():
-                return remote_name
+                return attribute
 
         raise InvalidAttributeError("%s spec does not define an attribute %s" %
                                     (spec['model']['entity_name'], local_name))
@@ -317,8 +340,9 @@ class VsdWriter(DeviceWriterBase):
 
         self._check_child_object(parent_object.spec, obj.spec)
 
-        parent_object.current_child_name = obj.__resource_name__
-        parent_object.create_child(obj)
+        if self.validate_only is False:
+            parent_object.current_child_name = obj.__resource_name__
+            parent_object.create_child(obj)
 
     def _select_object(self, object_name, by_field, field_value,
                        parent_object=None):
@@ -326,6 +350,9 @@ class VsdWriter(DeviceWriterBase):
         spec = self._get_specification(object_name)
         fetcher = self._get_fetcher(object_name, parent_object)
         remote_name = self._get_attribute_name(spec, by_field)
+
+        if self.validate_only is True:
+            return self._get_new_config_object(object_name)
 
         selector = '%s is "%s"' % (remote_name, field_value)
         objects = fetcher.get(filter=selector)
@@ -354,11 +381,45 @@ class VsdWriter(DeviceWriterBase):
         self._get_attribute_name(obj.spec, field)
         local_name = field.lower()
 
+        value = None
         if hasattr(obj, local_name):
-            return getattr(obj, local_name)
+            value = getattr(obj, local_name)
+
+        if value is not None:
+            return value
+
+        if self.validate_only is True:
+            attr_type = self._get_attribute_type(obj.spec, field)
+            return self._get_placeholder_validation_value(attr_type)
         else:
             raise SessionError("Missing field %s in %s object" %
                                (field, obj.get_name()))
+
+    def _get_placeholder_validation_value(self, attr_type):
+        # For validation, we don't have a real object to work with, but we
+        # are required to return a value for the "get_value" operations.
+        # The value returned here may be used to set attributes in other
+        # objects later, so we will need to return a placeholder value which
+        # is compatible with the attribute type.
+        if attr_type == "string":
+            return "ValidatePlaceholder"
+        elif attr_type == "boolean":
+            return False
+        elif attr_type == "integer":
+            return 0
+        elif attr_type == "float":
+            return 0.0
+        elif attr_type == "list":
+            return []
+        else:
+            return None
+
+    def _validate_values(self, obj):
+        if not obj.validate():
+            messages = []
+            for attr_name, message in obj.errors.iteritems():
+                messages.append("%s: %s" % (attr_name, message))
+            raise InvalidValueError("Invalid values: " + ', '.join(messages))
 
 
 #

@@ -40,6 +40,13 @@ class InvalidAttributeError(DeviceWriterError):
     pass
 
 
+class InvalidValueError(DeviceWriterError):
+    """
+    Exception class when setting an attribute to an invalid value
+    """
+    pass
+
+
 class InvalidObjectError(DeviceWriterError):
     """
     Exception class when an object or child of an object does not exist
@@ -59,6 +66,12 @@ class DeviceWriterBase(object):
         device-specific derived class.
         """
         self.log_entries = list()
+        self.validate_only = False
+
+    def set_validate_only(self, value=True):
+        self.validate_only = value
+        if value is True:
+            self.log_debug("*** Validate ***")
 
     def log(self, log_type, message):
         self.log_entries.append((log_type, message))
