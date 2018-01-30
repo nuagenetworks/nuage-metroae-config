@@ -1,0 +1,59 @@
+name: Subnet
+description: First template set - Create a Subnet off a Zone
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: enterprise_name
+    type: reference
+  - name: domain_name
+    type: reference
+  - name: zone_name
+    type: reference
+  - name: subnet_name
+    type: string
+  - name: address
+    type: string
+  - name: netmask
+    type: string
+  - name: description
+    type: string
+    optional: true
+  - name: underlay_enabled
+    type: choice
+    choices:
+      - enabled
+      - disabled
+      - inherited
+  - name: address_translation
+    type: choice
+    choices:
+      - enabled
+      - disabled
+      - inherited
+actions:
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+        - select-object:
+            type: Domain
+            by-field: name
+            value: {{ domain_name }}
+            actions:
+              - select-object:
+                  type: Zone
+                  by-field: name
+                  value: {{ zone_name }}
+                  actions:
+                    - create-object:
+                        type: Subnet
+                        actions:
+                          - set-values:
+                              name: {{ subnet_name }}
+                              address: {{ address }}
+                              netmask: {{ netmask }}
+                              description: {{ description }}
+                              underlayEnabled: {{ underlay_enabled | default('disabled') | upper }}
+                              PATEnabled: {{ address_translation | default('disabled') | upper }}

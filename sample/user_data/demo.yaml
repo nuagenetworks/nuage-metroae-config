@@ -1,0 +1,155 @@
+- template: Enterprise
+  values:
+    enterprise_name: demo
+    description: Demonstration deployment
+  children:
+    - group: domain-public
+      values:
+        domain_name: public
+    - template: Domain
+      values:
+        domain_name: public
+        underlay_enabled: disabled
+        address_translation: disabled
+      children:
+        - template: Zone
+          values:
+            zone_name: public-zone1
+          children:
+            - group: public-subnet1
+              values:
+                subnet_name: public-subnet1
+            - template: Subnet
+              values:
+                subnet_name: public-subnet1
+                address: 10.0.0.0
+                netmask: 255.0.0.0
+                underlay_enabled: disabled
+                address_translation: disabled
+    - group: domain-private
+      values:
+        domain_name: private
+    - template: Domain
+      values:
+        domain_name: private
+        underlay_enabled: disabled
+        address_translation: disabled
+      children:
+        - template: Zone
+          values:
+            zone_name: private-zone1
+          children:
+            - group: private-subnet1
+              values:
+                subnet_name: private-subnet1
+            - template: Subnet
+              values:
+                subnet_name: private-subnet1
+                address: 192.168.0.0
+                netmask: 255.255.0.0
+                underlay_enabled: disabled
+                address_translation: disabled
+
+- template: DHCP Pool
+  values:
+    - $group_subnet: public-subnet1
+      min_address: 10.0.0.1
+      max_address: 10.0.0.254
+    - $group_subnet: private-subnet1
+      min_address: 192.168.0.1
+      max_address: 192.168.0.254
+
+- template: Static Route
+  values:
+    - $group_domain: domain-public
+      address: 10.0.1.0
+      netmask: 255.255.255.0
+      next_hop: 10.0.1.1
+    - $group_domain: domain-private
+      address: 192.168.1.0
+      netmask: 255.255.255.0
+      next_hop: 192.168.1.1
+
+- template: Bidirectional Security Policy
+  values:
+    - $group_domain: domain-public
+      security_policy_name: public-secpolicy1
+      default_allow_ip: True
+      default_allow_non_ip: False
+      policy_priority: 100
+      allow_address_spoof: False
+      default_install_acl_implicit_rules: True
+      entry_priority: 200
+      protocol: "6"
+      source_port: "80"
+      destination_port: '*'
+      dscp: '*'
+      ether_type: '0x0800'
+      action: forward
+      location_type: zone
+      location_name: public-zone1
+      network_type: any
+      network_name: ''
+      stateful: True
+      flow_logging_enabled: True
+      stats_logging_enabled: True
+
+    - $group_domain: domain-private
+      security_policy_name: private-secpolicy1
+      default_allow_ip: True
+      default_allow_non_ip: False
+      policy_priority: 100
+      allow_address_spoof: False
+      default_install_acl_implicit_rules: True
+      entry_priority: 200
+      protocol: "6"
+      source_port: "80"
+      destination_port: '*'
+      dscp: '*'
+      ether_type: '0x0800'
+      action: forward
+      location_type: any
+      location_name: ''
+      network_type: subnet
+      network_name: private-subnet1
+      zone_name: private-zone1
+      stateful: True
+      flow_logging_enabled: True
+      stats_logging_enabled: True
+
+- template: Service Chaining Policy
+  values:
+    - $group_domain: domain-public
+      chaining_policy_name: public-fwdpolicy1
+      active: true
+      policy_priority: 100
+      entry_priority: 200
+      protocol: "6"
+      source_port: "80"
+      destination_port: '*'
+      ether_type: '0x0800'
+      action: forward
+      location_type: any
+      location_name: ''
+      network_type: zone
+      network_name: public-zone1
+      flow_logging_enabled: True
+      stats_logging_enabled: True
+
+    - $group_domain: domain-private
+      chaining_policy_name: private-fwdpolicy1
+      active: true
+      policy_priority: 100
+      entry_priority: 200
+      protocol: "6"
+      source_port: "80"
+      destination_port: '*'
+      ether_type: '0x0800'
+      action: forward
+      zone_name: private-zone1
+      location_type: subnet
+      location_name: private-subnet1
+      network_type: any
+      network_name: ''
+      flow_logging_enabled: True
+      stats_logging_enabled: True
