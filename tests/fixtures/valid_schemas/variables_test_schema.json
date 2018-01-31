@@ -31,7 +31,8 @@
     },
     "name": {
       "type": "string",
-      "title": "Name"
+      "title": "Name",
+      "description": "Name field description"
     },
     "string_list": {
       "items": {

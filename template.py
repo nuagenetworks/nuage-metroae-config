@@ -12,6 +12,7 @@ JSON_SCHEMA_TITLE = "Schema validator for Nuage Metro Levistate template "
 VALID_VARIABLE_TYPES = ["string", "reference", "integer", "boolean", "ipv4",
                         "ipv6", "ipv4_or_6", "choice", "list"]
 JSON_SCHEMA_STRING_TYPES = ["string", "reference", "ipv4", "ipv6", "ipv4_or_6"]
+EXAMPLE_COMMENT_SPACING = 40
 
 
 class TemplateError(Exception):
@@ -60,6 +61,7 @@ class Template(object):
         self.filename = "(unknown)"
         self.template_string = None
         self.name = "Unknown"
+        self.description = None
         self.template_version = "1.0"
         self.software_type = None
         self.software_version = None
@@ -94,6 +96,12 @@ class Template(object):
         """
         schema = self._convert_variables_to_schema()
         return json.dumps(schema, indent=2)
+
+    def get_example(self):
+        """
+        Returns example user-data for template variables in YAML format.
+        """
+        return self._convert_variables_to_example()
 
     def validate_template_data(self, **template_data):
         """
@@ -139,6 +147,7 @@ class Template(object):
 
     def _parse_headers(self, template_dict):
         self.name = self._get_required_field(template_dict, "name")
+        self.description = get_dict_field_no_case(template_dict, "description")
         self.software_type = \
             self._get_required_field(template_dict, "software-type")
         self.software_version = \
@@ -196,6 +205,10 @@ class Template(object):
         title = title[0].upper() + title[1:]
         info['title'] = title
 
+        description = get_dict_field_no_case(variable, "description")
+        if description is not None:
+            info['description'] = description
+
         self._validate_variable_type(var_type, name)
 
         if var_type.lower() == "list":
@@ -240,6 +253,68 @@ class Template(object):
             if 'optional' not in variable or variable['optional'] is False:
                 name = self._get_required_field(variable, "name")
                 required.append(name)
+
+    def _convert_variables_to_example(self, indent=2):
+        lines = []
+
+        if self.description is not None:
+            lines.append("# " + self.description)
+        lines.append("- template: " + self.get_name())
+        lines.append("  values:")
+
+        first = True
+        for variable in self.variables:
+            if first is True:
+                first = False
+                prefix = " " * (indent * 2) + "- "
+            else:
+                prefix = " " * ((indent * 2) + 2)
+
+            lines.append(prefix + self._generate_value_example(variable))
+
+        lines.append("")
+
+        return '\n'.join(lines)
+
+    def _generate_value_example(self, variable):
+        name = self._get_required_field(variable, "name")
+        var_type = self._get_required_field(variable, "type").lower()
+        descr = get_dict_field_no_case(variable, "description")
+        optional = get_dict_field_no_case(variable, "optional")
+        type_info = var_type
+
+        if var_type in ["string", "reference"]:
+            value = '""'
+        elif var_type == "integer":
+            value = "0"
+        elif var_type == "boolean":
+            value = "False"
+        elif var_type in ["ipv4", "ipv4_or_6"]:
+            value = "0.0.0.0"
+        elif var_type == "ipv6":
+            value = "0::0"
+        elif var_type == "choice":
+            choices = self._get_required_field(variable, "choices")
+            value = choices[0]
+            type_info = str(choices)
+        elif var_type == "list":
+            item_type = self._get_required_field(variable, "item-type")
+            value = "[]"
+            type_info = "list of " + item_type
+        else:
+            value = "null"
+
+        entry_str = "%s: %s" % (name, value)
+        spacing = EXAMPLE_COMMENT_SPACING - len(entry_str)
+        opt_str = ""
+        if optional is True:
+            opt_str = "opt "
+        descr_str = ""
+        if descr is not None:
+            descr_str = " " + descr
+        comment = "(%s%s)%s" % (opt_str, type_info, descr_str)
+
+        return "%s %s# %s" % (entry_str, " " * spacing, comment)
 
     def _replace_vars_with_kwargs(self, **kwargs):
         try:

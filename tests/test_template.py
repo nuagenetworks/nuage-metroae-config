@@ -205,6 +205,21 @@ class TestTemplateParsing(object):
         actual_schema = json.loads(template.get_schema())
         assert actual_schema == expected_schema
 
+    def test_example__success(self):
+        store = TemplateStore()
+        store.read_templates(os.path.join(INVALID_TEMPLATE_DIRECTORY,
+                                          "variables.yaml"))
+
+        template = store.get_template("Variables Testing")
+
+        with open(os.path.join(VALID_SCHEMA_DIRECTORY,
+                               "variables_example.yaml"), 'r') as file:
+            expected_example = file.read()
+
+        print template.get_example()
+
+        assert template.get_example() == expected_example
+
 
 class TestTemplateSubstitution(object):
 
