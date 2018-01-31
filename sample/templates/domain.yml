@@ -1,15 +1,28 @@
-name: Domain Sample
-description: Creates a domain
+name: Domain
+description: First template set - Create a L3 Domain
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.0.2
 variables:
   - name: enterprise_name
     type: reference
-    required_for_delete: true
   - name: domain_name
     type: string
-    required_for_delete: true
+  - name: description
+    type: string
+    optional: true
+  - name: underlay_enabled
+    type: choice
+    choices:
+      - enabled
+      - disabled
+      - inherited
+  - name: address_translation
+    type: choice
+    choices:
+      - enabled
+      - disabled
+      - inherited
 actions:
   - select-object:
       type: Enterprise
@@ -29,6 +42,9 @@ actions:
             actions:
               - set-values:
                   name: {{ domain_name }}
+                  description: {{ description }}
+                  underlayEnabled: {{ underlay_enabled | default('disabled') | upper }}
+                  PATEnabled: {{ address_translation | default('disabled') | upper }}
               - retrieve-value:
                   from-name: domain_template_id
                   to-field: templateID

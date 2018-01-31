@@ -1,0 +1,45 @@
+name: DHCP Pool
+description: First template set - Create a DHCP pool off a Subnet
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: enterprise_name
+    type: reference
+  - name: domain_name
+    type: reference
+  - name: zone_name
+    type: reference
+  - name: subnet_name
+    type: reference
+  - name: min_address
+    type: string
+  - name: max_address
+    type: string
+actions:
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+        - select-object:
+            type: Domain
+            by-field: name
+            value: {{ domain_name }}
+            actions:
+              - select-object:
+                  type: Zone
+                  by-field: name
+                  value: {{ zone_name }}
+                  actions:
+                    - select-object:
+                        type: Subnet
+                        by-field: name
+                        value: {{ subnet_name }}
+                        actions:
+                          - create-object:
+                              type: AddressRange
+                              actions:
+                                - set-values:
+                                    minAddress: {{ min_address }}
+                                    maxAddress: {{ max_address }}

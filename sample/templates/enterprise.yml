@@ -1,0 +1,31 @@
+name: Enterprise
+description: First template set - Create an Enterprise
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: enterprise_name
+    type: string
+  - name: description
+    type: string
+    optional: true
+actions:
+  - create-object:
+      type: EnterpriseProfile
+      actions:
+        - set-values:
+            name: {% set concat = "profile_" + enterprise_name|default('')|string %}{{ concat }}
+            description: {{ description }}
+            allowedForwardingClasses: ['H']
+        - store-value:
+            as-name: enterprise_profile_id
+            from-field: id
+  - create-object:
+      type: Enterprise
+      actions:
+        - set-values:
+            name: {{ enterprise_name }}
+            description: {{ description }}
+        - retrieve-value:
+            from-name: enterprise_profile_id
+            to-field: enterpriseProfileID
