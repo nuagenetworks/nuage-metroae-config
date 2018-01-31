@@ -1,0 +1,18 @@
+{
+    "name": "Enterprise",
+    "description": "Creates an enterprise",
+    "template-version": "1.0",
+    "software-type": "Nuage Networks VSD",
+    "software-version": "5.0.2",
+    "variables": [{
+        "Name": "enterprise_name",
+        "Type": "reference",
+        "Required-for-delete": true
+    },
+    {
+        "Name": "invalid_choices",
+        "Type": "choice",
+        "choices": "Not a list"
+    }],
+    "actions": []
+}
