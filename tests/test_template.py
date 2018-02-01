@@ -216,8 +216,6 @@ class TestTemplateParsing(object):
                                "variables_example.yaml"), 'r') as file:
             expected_example = file.read()
 
-        print template.get_example()
-
         assert template.get_example() == expected_example
 
 
