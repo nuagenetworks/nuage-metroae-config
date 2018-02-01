@@ -1,8 +1,9 @@
 import argparse
 from configuration import Configuration
+from errors import DeviceWriterError
 from template import TemplateStore
 from user_data_parser import UserDataParser
-from vsd_writer import DeviceWriterError, VsdWriter
+from vsd_writer import VsdWriter
 # import vspk.v5_0 as vspk
 
 DEFAULT_VSD_USERNAME = 'csproot'

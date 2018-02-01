@@ -3,15 +3,15 @@ import os
 
 from bambou.exceptions import BambouHTTPError
 from bambou_adapter import ConfigObject, Fetcher, Root, Session
-from device_writer_base import (DeviceWriterBase,
-                                DeviceWriterError,
-                                InvalidAttributeError,
-                                InvalidObjectError,
-                                InvalidValueError,
-                                MissingSelectionError,
-                                MultipleSelectionError,
-                                SessionError,
-                                SessionNotStartedError)
+from device_writer_base import DeviceWriterBase
+from errors import (DeviceWriterError,
+                    InvalidAttributeError,
+                    InvalidObjectError,
+                    InvalidValueError,
+                    MissingSelectionError,
+                    MultipleSelectionError,
+                    SessionError,
+                    SessionNotStartedError)
 
 SPEC_EXTENSION = ".spec"
 

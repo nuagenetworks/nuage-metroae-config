@@ -1,14 +1,8 @@
 import os
 import yaml
 
+from errors import UserDataParseError
 from util import get_dict_field_no_case
-
-
-class UserDataParseError(Exception):
-    """
-    Exception class for errors parsing user data files
-    """
-    pass
 
 
 class UserDataParser(object):

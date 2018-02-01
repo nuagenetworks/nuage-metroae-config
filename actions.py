@@ -1,23 +1,10 @@
-from device_writer_base import MissingSelectionError
-from template import (TemplateError,
-                      TemplateParseError)
+from errors import (ConflictError,
+                    MissingSelectionError,
+                    TemplateActionError,
+                    TemplateParseError)
 from util import get_dict_field_no_case
 
 DEFAULT_SELECTION_FIELD = 'name'
-
-
-class ConflictError(TemplateError):
-    """
-    Exception class when there is a conflict during template processing
-    """
-    pass
-
-
-class TemplateActionError(TemplateError):
-    """
-    Exception class when there is a problem with an action in a template
-    """
-    pass
 
 
 class Action(object):

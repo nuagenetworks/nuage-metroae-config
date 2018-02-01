@@ -29,13 +29,13 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 STORE_NO_NAME,
                                 STORE_RETRIEVE_DICT,
                                 STORE_SAME_TWICE)
-from levistate.actions import (Action,
-                               ConflictError,
-                               TemplateActionError,
-                               TemplateParseError)
-from levistate.device_writer_base import (InvalidAttributeError,
-                                          InvalidObjectError,
-                                          MissingSelectionError)
+from levistate.actions import Action
+from levistate.errors import (ConflictError,
+                              InvalidAttributeError,
+                              InvalidObjectError,
+                              MissingSelectionError,
+                              TemplateActionError,
+                              TemplateParseError)
 from mock_writer import MockWriter
 from template_test_params import (EXPECTED_ACL_TEMPLATE,
                                   EXPECTED_DOMAIN_TEMPLATE,

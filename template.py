@@ -4,6 +4,10 @@ import json
 import os
 import yaml
 
+from errors import (MissingTemplateError,
+                    TemplateParseError,
+                    UndefinedVariableError,
+                    VariableValueError)
 from util import get_dict_field_no_case
 
 JSON_SCHEMA_URL = "http://json-schema.org/draft-04/schema#"
@@ -13,41 +17,6 @@ VALID_VARIABLE_TYPES = ["string", "reference", "integer", "boolean", "ipv4",
                         "ipv6", "ipv4_or_6", "choice", "list"]
 JSON_SCHEMA_STRING_TYPES = ["string", "reference", "ipv4", "ipv6", "ipv4_or_6"]
 EXAMPLE_COMMENT_SPACING = 40
-
-
-class TemplateError(Exception):
-    """
-    Exception class for all template errors
-    """
-    pass
-
-
-class TemplateParseError(TemplateError):
-    """
-    Exception class for errors parsing a template
-    """
-    pass
-
-
-class MissingTemplateError(TemplateError):
-    """
-    Exception class when a template of specified name is not defined
-    """
-    pass
-
-
-class UndefinedVariableError(TemplateError):
-    """
-    Exception class when a required variable value is not defined
-    """
-    pass
-
-
-class VariableValueError(TemplateError):
-    """
-    Exception class when a variable contains the wrong value
-    """
-    pass
 
 
 class Template(object):
