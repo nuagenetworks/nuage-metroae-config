@@ -3,10 +3,12 @@ class LevistateError(Exception):
     """
     Base exception class for all errors in Levistate module
     """
-    def __init__(self, message):
+    def __init__(self, message, location=None):
         super(LevistateError, self).__init__(message)
         self.locations = list()
         self.add_location(message)
+        if location is not None:
+            self.add_location(message)
 
     def get_display_string(self):
         return "\n".join(self.locations)
@@ -16,6 +18,10 @@ class LevistateError(Exception):
 
     def get_locations(self):
         return self.locations
+
+    def reraise_with_location(self, location):
+        self.add_location(location)
+        raise self
 
 
 #

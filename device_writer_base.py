@@ -1,3 +1,6 @@
+from logger import Logger
+
+
 class DeviceWriterBase(object):
     """
     Base class for writing configurations to devices.  This is an
@@ -9,29 +12,25 @@ class DeviceWriterBase(object):
         Abstract Base Class.  Cannot be instantiated directly. Use
         device-specific derived class.
         """
-        self.log_entries = list()
         self.validate_only = False
+        self.log = Logger()
+        self.log.set_to_stdout("ERROR", enabled=True)
+
+    def set_logger(self, logger):
+        self.log = logger
+
+    def get_logger(self):
+        return self.log
 
     def set_validate_only(self, value=True):
         self.validate_only = value
         if value is True:
-            self.log_debug("*** Validate ***")
+            self.log.debug("*** Validate ***")
+        else:
+            self.log.debug("*** Writing ***")
 
-    def log(self, log_type, message):
-        self.log_entries.append((log_type, message))
-
-    def log_error(self, message):
-        self.log('ERROR', message)
-
-    def log_debug(self, message):
-        self.log('DEBUG', message)
-
-    def get_logs(self):
-        log_output = []
-        for entry in self.log_entries:
-            log_output.append("%s: %s" % entry)
-
-        return '\n'.join(log_output)
+    def is_validate_only(self):
+        return self.validate_only
 
     # Abstract prototype functions
     # All types of device writer classes will need to implement these

@@ -1,6 +1,7 @@
 import argparse
 from configuration import Configuration
-from errors import DeviceWriterError
+from errors import LevistateError
+from logger import Logger
 from template import TemplateStore
 from user_data_parser import UserDataParser
 from vsd_writer import VsdWriter
@@ -88,6 +89,7 @@ class Levistate(object):
     def __init__(self, args):
         self.args = args
         self.template_data = list()
+        self.logger = Logger()
 
     def run(self):
 
@@ -100,12 +102,24 @@ class Levistate(object):
 
         try:
             self.apply_templates()
-        except DeviceWriterError as e:
-            self.writer.log_error(str(e))
-        except Exception as e:
-            self.writer.log_error(str(e))
+        except LevistateError as e:
+            self.logger.error(e.get_display_string())
+            print self.logger.get()
+            print ""
+            print "Error"
+            print "-----"
+            print e.get_display_string()
+            exit(1)
+        # except Exception as e:
+        #     self.writer.log.error(str(e))
+        #     print self.logger.get()
+        #     print ""
+        #     print "Error"
+        #     print "-----"
+        #     print str(e)
+        #     exit(1)
 
-        print self.writer.get_logs()
+        # print self.logger.get()
 
     def parse_extra_vars(self):
         if self.args.data is not None:
@@ -142,9 +156,14 @@ class Levistate(object):
 
     def setup_vsd_writer(self):
         self.writer = VsdWriter()
+        self.writer.set_logger(self.logger)
         for path in self.args.spec_path:
             self.writer.read_api_specifications(path)
-        self.writer.set_session_params(self.args.vsd_url)
+        self.writer.set_session_params(self.args.vsd_url,
+                                       username=self.args.username,
+                                       password=self.args.password,
+                                       enterprise=self.args.enterprise,
+                                       )
 
     def setup_template_store(self):
         self.store = TemplateStore()
@@ -156,10 +175,10 @@ class Levistate(object):
         for path in self.args.data_path:
             parser.read_data(path)
         self.template_data = parser.get_template_name_data_pairs()
-        # print str(self.template_data)
 
     def apply_templates(self):
         config = Configuration(self.store)
+        config.set_logger(self.logger)
         for data in self.template_data:
             template_name = data[0]
             template_data = data[1]
@@ -179,7 +198,7 @@ class Levistate(object):
 
             self.writer.set_validate_only(False)
 
-        print str(config.root_action)
+        # print str(config.root_action)
 
 
 if __name__ == "__main__":

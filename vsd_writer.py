@@ -30,6 +30,21 @@ class InvalidSpecification(DeviceWriterError):
     pass
 
 
+class VsdError(SessionError):
+    """
+    Exception class when there is an error from VSD
+    """
+    def __init__(self, bambou_error, location=None):
+        response = bambou_error.connection.response
+        message = "VSD returned error response: %s %s" % (response.status_code,
+                                                          response.reason)
+
+        super(VsdError, self).__init__(message)
+        self.add_location(str(bambou_error))
+        if location is not None:
+            self.add_location(location)
+
+
 class VsdWriter(DeviceWriterBase):
     """
     Writes configuration to a VSD.  This class is a derived class from
@@ -86,12 +101,14 @@ class VsdWriter(DeviceWriterBase):
         """
         Starts a session with the VSD
         """
+        location = "Session start %s" % str(self.session_params)
+
         if self.session is None:
             if self.session_params is None:
                 raise MissingSessionParamsError(
                     "Cannot start session without parameters")
 
-            self.log_debug("Session start %s" % self.session_params)
+            self.log.debug(location)
 
             if (self.root_spec_name is None or
                     self.root_spec_name not in self.specs):
@@ -118,13 +135,15 @@ class VsdWriter(DeviceWriterBase):
             self.session.root_object.spec = self.specs[self.root_spec_name]
         except BambouHTTPError as e:
             self.session = None
-            raise SessionError(str(e))
+            raise VsdError(e, location)
+        except DeviceWriterBase as e:
+            e.reraise_with_location(location)
 
     def stop_session(self):
         """
         Stops the session with the VSD
         """
-        self.log_debug("Session stopping")
+        self.log.debug("Session stopping")
 
         if self.session is not None:
             if self.validate_only is False:
@@ -135,7 +154,7 @@ class VsdWriter(DeviceWriterBase):
         """
         Creates an object in the current context, object is not saved to VSD
         """
-        self.log_debug("Create object %s [%s]" % (object_name, context))
+        self.log.debug("Create object %s [%s]" % (object_name, context))
         self._check_session()
 
         new_context = self._get_new_child_context(context)
@@ -149,18 +168,25 @@ class VsdWriter(DeviceWriterBase):
         """
         Selects an object in the current context
         """
-        self.log_debug("Select object %s %s = %s [%s]" % (object_name,
-                                                          by_field,
-                                                          value,
-                                                          context))
+        location = "Select object %s %s = %s [%s]" % (object_name,
+                                                      by_field,
+                                                      value,
+                                                      context)
+        self.log.debug(location)
         self._check_session()
 
         new_context = self._get_new_child_context(context)
 
         new_context.current_object = self._get_new_config_object(object_name)
 
-        new_context.current_object = self._select_object(
-            object_name, by_field, value, new_context.parent_object)
+        try:
+            new_context.current_object = self._select_object(
+                object_name, by_field, value, new_context.parent_object)
+        except BambouHTTPError as e:
+            raise VsdError(e, location)
+        except DeviceWriterBase as e:
+            e.reraise_with_location(location)
+
         new_context.object_exists = True
 
         return new_context
@@ -169,15 +195,19 @@ class VsdWriter(DeviceWriterBase):
         """
         Deletes the object selected in the current context
         """
-        self.log_debug("Delete object [%s]" % context)
+        location = "Delete object [%s]" % context
+        self.log.debug(location)
         self._check_session()
 
         if (context is None or context.current_object is None or
                 not context.object_exists):
-            raise SessionError("No object for deletion")
+            raise SessionError("No object for deletion", location)
 
         if self.validate_only is False:
-            context.current_object.delete()
+            try:
+                context.current_object.delete()
+            except BambouHTTPError as e:
+                raise VsdError(e, location)
 
         context.current_object = None
         context.object_exists = False
@@ -188,25 +218,37 @@ class VsdWriter(DeviceWriterBase):
         """
         Sets values in the object selected in the current context and saves it
         """
-        self.log_debug("Set value [%s] = %s" % (context, kwargs))
+        location = "Set value [%s] = %s" % (context, kwargs)
+        self.log.debug(location)
         self._check_session()
 
         if context is None or context.current_object is None:
-            raise SessionError("No object for setting values")
+            raise SessionError("No object for setting values", location)
 
         self._set_attributes(context.current_object, **kwargs)
         self._validate_values(context.current_object)
 
         if context.object_exists:
-            self.log_debug("Saving [%s]" % context)
+            location = "Saving [%s]" % context
+            self.log.debug(location)
             if self.validate_only is False:
-                context.current_object.save()
+                try:
+                    context.current_object.save()
+                except BambouHTTPError as e:
+                    raise VsdError(e, location)
         else:
-            self.log_debug("Creating child [%s]" % context)
-            self._add_object(context.current_object, context.parent_object)
+            location = "Creating child [%s]" % context
+            self.log.debug(location)
+            try:
+                self._add_object(context.current_object, context.parent_object)
+            except BambouHTTPError as e:
+                raise VsdError(e, location)
+            except DeviceWriterBase as e:
+                e.reraise_with_location(location)
+
             context.object_exists = True
 
-        self.log_debug("Saved [%s]" % context)
+        self.log.debug("Saved [%s]" % context)
 
         return context
 
@@ -214,16 +256,22 @@ class VsdWriter(DeviceWriterBase):
         """
         Gets a value from the object selected in the current context
         """
-        self.log_debug("Get value %s [%s]" % (field, context))
+        location = "Get value %s [%s]" % (field, context)
+        self.log.debug(location)
         self._check_session()
 
         if (context is None or context.current_object is None or
                 not context.object_exists):
-            raise SessionError("No object for getting values")
+            raise SessionError("No object for getting values", location)
 
-        value = self._get_attribute(context.current_object, field)
+        try:
+            value = self._get_attribute(context.current_object, field)
+        except BambouHTTPError as e:
+            raise VsdError(e, location)
+        except DeviceWriterBase as e:
+            e.reraise_with_location(location)
 
-        self.log_debug("Value %s = %s" % (field, str(value)))
+        self.log.debug("Value %s = %s" % (field, str(value)))
 
         return value
 

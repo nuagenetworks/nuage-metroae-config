@@ -481,6 +481,9 @@ class TestActionsRead(object):
         assert "'id1'" in str(e)
         assert "template_id" in str(e)
 
+        print e.value.get_display_string()
+        assert False
+
 
 class TestActionsOrdering(object):
 
