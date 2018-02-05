@@ -19,12 +19,15 @@ variables:
   - name: ipv4_address
     type: ipv4
     optional: true
+    default: 10.0.0.1
   - name: ipv6_address
     type: ipv6
     optional: true
+    default: 8000::1
   - name: any_ip_address
     type: ipv4_or_6
     optional: true
+    default: 192.168.0.1
   - name: fruit
     type: choice
     choices:

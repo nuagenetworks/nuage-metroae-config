@@ -209,6 +209,10 @@ class Template(object):
         if description is not None:
             info['description'] = description
 
+        default = get_dict_field_no_case(variable, "default")
+        if default is not None:
+            info['default'] = default
+
         self._validate_variable_type(var_type, name)
 
         if var_type.lower() == "list":

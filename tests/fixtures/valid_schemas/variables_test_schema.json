@@ -16,7 +16,8 @@
   "properties": {
     "ipv6_address": {
       "type": "string",
-      "title": "Ipv6 address"
+      "title": "Ipv6 address",
+      "default": "8000::1"
     },
     "soda_list": {
       "items": {
@@ -58,11 +59,13 @@
     },
     "any_ip_address": {
       "type": "string",
-      "title": "Any ip address"
+      "title": "Any ip address",
+      "default": "192.168.0.1"
     },
     "ipv4_address": {
       "type": "string",
-      "title": "Ipv4 address"
+      "title": "Ipv4 address",
+      "default": "10.0.0.1"
     },
     "true_or_false": {
       "type": "boolean",
