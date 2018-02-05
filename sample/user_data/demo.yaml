@@ -105,8 +105,6 @@
       protocol: "6"
       source_port: "80"
       destination_port: '*'
-      dscp: '*'
-      ether_type: '0x0800'
       action: forward
       location_type: any
       location_name: ''
@@ -122,11 +120,13 @@
     - $group_domain: domain-public
       chaining_policy_name: public-fwdpolicy1
       active: true
+      endpoint_type: l3
       policy_priority: 100
       entry_priority: 200
       protocol: "6"
       source_port: "80"
       destination_port: '*'
+      dscp: '*'
       ether_type: '0x0800'
       action: forward
       location_type: any
@@ -139,12 +139,12 @@
     - $group_domain: domain-private
       chaining_policy_name: private-fwdpolicy1
       active: true
+      endpoint_type: l3
       policy_priority: 100
       entry_priority: 200
       protocol: "6"
       source_port: "80"
       destination_port: '*'
-      ether_type: '0x0800'
       action: forward
       zone_name: private-zone1
       location_type: subnet
