@@ -17,8 +17,13 @@ variables:
   - name: description
     type: string
     optional: true
-
-  # Entry variables
+  - name: endpoint_type
+    type: choice
+    choices:
+      - l3
+      - none
+      - nsg_vnf
+      - virtual_wire
   - name: location_type
     type: choice
     choices:
@@ -49,6 +54,12 @@ variables:
     type: string
   - name: ether_type
     type: string
+    optional: true
+    default: "0x0800"
+  - name: dscp
+    type: string
+    optional: true
+    default: "*"
   - name: action
     type: choice
     choices:
@@ -125,6 +136,13 @@ actions:
               {% endif %}
               {% endif %}
               - create-object:
+                  type: RedirectionTarget
+                  actions:
+                    - set-values:
+                        name: {% set concat = "target_" + chaining_policy_name | default("") %}{{ concat }}
+                        description: {{ description }}
+                        endPointType: {{ endpoint_type | upper }}
+              - create-object:
                   type: IngressAdvFwdTemplate
                   actions:
                     - set-values:
@@ -139,10 +157,14 @@ actions:
                               description: {{ description }}
                               priority: {{ entry_priority }}
                               protocol: {{ protocol }}
+                              {% if dscp is undefined %}
                               DSCP: '*'
+                              {% else %}
+                              DSCP: {{ dscp }}
+                              {% endif %}
                               sourcePort: {{ source_port }}
                               destinationPort: {{ destination_port }}
-                              etherType: {{ ether_type }}
+                              etherType: {{ ether_type | default("0x0800") }}
                               action: {{ action | upper }}
                               flowLoggingEnabled: {{ flow_logging_enabled }}
                               statsLoggingEnabled: {{ stats_logging_enabled }}
