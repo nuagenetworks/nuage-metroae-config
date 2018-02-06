@@ -8,7 +8,7 @@ class LevistateError(Exception):
         self.locations = list()
         self.add_location(message)
         if location is not None:
-            self.add_location(message)
+            self.add_location(location)
 
     def get_display_string(self):
         return "\n".join(self.locations)

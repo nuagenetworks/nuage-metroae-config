@@ -225,15 +225,21 @@ class TestActionsRead(object):
 
         assert "Invalid action" in str(e)
 
+        assert "In Enterprise" in e.value.get_display_string()
+
         with pytest.raises(TemplateParseError) as e:
             root_action.read_children_actions(INVALID_ACTION_2)
 
         assert "Invalid action" in str(e)
 
+        assert "In Enterprise" in e.value.get_display_string()
+
         with pytest.raises(TemplateParseError) as e:
             root_action.read_children_actions(INVALID_ACTION_3)
 
         assert "Invalid action" in str(e)
+
+        assert "In Enterprise" in e.value.get_display_string()
 
     def test_create__success(self):
         root_action = Action(None)
@@ -271,6 +277,8 @@ class TestActionsRead(object):
             root_action.read_children_actions(CREATE_OBJECTS_NO_TYPE)
 
         assert "missing required 'type' field" in str(e)
+
+        assert "In None" in e.value.get_display_string()
 
     def test_select__success(self):
         root_action = Action(None)
@@ -315,15 +323,24 @@ class TestActionsRead(object):
 
         assert "missing required 'type' field" in str(e)
 
+        assert ("In [select None (None of None)]" in
+                e.value.get_display_string())
+
         with pytest.raises(TemplateParseError) as e:
             root_action.read_children_actions(SELECT_OBJECTS_NO_FIELD)
 
         assert "missing required 'by-field' field" in str(e)
 
+        assert ("In [select Enterprise (None of None)]" in
+                e.value.get_display_string())
+
         with pytest.raises(TemplateParseError) as e:
             root_action.read_children_actions(SELECT_OBJECTS_NO_VALUE)
 
         assert "missing required 'value' field" in str(e)
+
+        assert ("In [select Enterprise (name of None)]" in
+                e.value.get_display_string())
 
     def test_set_values__success(self):
         root_action = Action(None)
@@ -357,6 +374,8 @@ class TestActionsRead(object):
 
         assert "No object exists" in str(e)
 
+        assert "In [set values]" in e.value.get_display_string()
+
         with pytest.raises(ConflictError) as e:
             root_action.read_children_actions(SET_VALUES_CONFLICT)
 
@@ -365,6 +384,9 @@ class TestActionsRead(object):
         assert "Enterprise" in str(e)
         assert "'False'" in str(e)
         assert "'True'" in str(e)
+
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In [set values]" in e.value.get_display_string()
 
     def test_store_retrieve__success(self):
         root_action = Action(None)
@@ -417,11 +439,16 @@ class TestActionsRead(object):
 
         assert "No object exists" in str(e)
 
+        assert ("In [store id to name template_id]" in
+                e.value.get_display_string())
+
         root_action.reset_state()
         with pytest.raises(TemplateActionError) as e:
             root_action.read_children_actions(RETRIEVE_NO_OBJECT)
 
         assert "No object exists" in str(e)
+
+        assert "In [set values]" in e.value.get_display_string()
 
         root_action.reset_state()
         with pytest.raises(TemplateParseError) as e:
@@ -429,11 +456,19 @@ class TestActionsRead(object):
 
         assert "missing required 'from-field' field" in str(e)
 
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert "In [store None to name None]" in e.value.get_display_string()
+
         root_action.reset_state()
         with pytest.raises(TemplateParseError) as e:
             root_action.read_children_actions(RETRIEVE_NO_FIELD)
 
         assert "missing required 'to-field' field" in str(e)
+
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert "In [set values]" in e.value.get_display_string()
 
         root_action.reset_state()
         with pytest.raises(TemplateParseError) as e:
@@ -441,11 +476,19 @@ class TestActionsRead(object):
 
         assert "missing required 'as-name' field" in str(e)
 
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert "In [store id to name None]" in e.value.get_display_string()
+
         root_action.reset_state()
         with pytest.raises(TemplateParseError) as e:
             root_action.read_children_actions(RETRIEVE_NO_NAME)
 
         assert "missing required 'from-name' field" in str(e)
+
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert "In [set values]" in e.value.get_display_string()
 
         root_action.reset_state()
         with pytest.raises(TemplateActionError) as e:
@@ -454,12 +497,21 @@ class TestActionsRead(object):
         assert "No value" in str(e)
         assert "template_id" in str(e)
 
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert "In [set values]" in e.value.get_display_string()
+
         root_action.reset_state()
         with pytest.raises(TemplateActionError) as e:
             root_action.read_children_actions(STORE_SAME_TWICE)
 
         assert "already stored" in str(e)
         assert "template_id" in str(e)
+
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert ("In [store templateID to name template_id]" in
+                e.value.get_display_string())
 
         root_action.reset_state()
         with pytest.raises(ConflictError) as e:
@@ -471,6 +523,10 @@ class TestActionsRead(object):
         assert "'id1'" in str(e)
         assert "template_id" in str(e)
 
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert "In [set values]" in e.value.get_display_string()
+
         root_action.reset_state()
         with pytest.raises(ConflictError) as e:
             root_action.read_children_actions(RETRIEVE_CONFLICT_2)
@@ -481,8 +537,9 @@ class TestActionsRead(object):
         assert "'id1'" in str(e)
         assert "template_id" in str(e)
 
-        print e.value.get_display_string()
-        assert False
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
+        assert "In [set values]" in e.value.get_display_string()
 
 
 class TestActionsOrdering(object):
@@ -557,6 +614,8 @@ class TestActionsOrdering(object):
         assert "same object twice" in str(e)
         assert "Level1" in str(e)
 
+        assert "In Level1" in e.value.get_display_string()
+
     @pytest.mark.parametrize("read_order", ATTR_CONFLICT_ORDERING_CASES)
     def test_attribute__conflict(self, read_order):
         root_action = Action(None)
@@ -567,6 +626,10 @@ class TestActionsOrdering(object):
 
         assert "already set" in str(e)
         assert "Level1" in str(e)
+
+        assert ("In [select Level1 (name of L1-O1)]" in
+                e.value.get_display_string())
+        assert "In [set values]" in e.value.get_display_string()
 
     @pytest.mark.parametrize("read_order", STORE_ORDERING_CASES)
     def test_store__success(self, read_order):
@@ -648,8 +711,10 @@ class TestActionsExecute(object):
             root_action.execute(writer)
         writer.stop_session()
 
-        assert e.value == exception
         assert writer.get_recorded_actions() == expected_actions
+        assert e.value == exception
+
+        return e
 
     def test_enterprise__success(self):
 
@@ -789,10 +854,14 @@ class TestActionsExecute(object):
             'create-object Domain [context_4]',
             'stop-session']
 
-        self.run_execute_with_exception(CREATE_OBJECTS_DICT,
-                                        expected_actions,
-                                        InvalidObjectError("test exception"),
-                                        'create-object Domain [context_4]')
+        e = self.run_execute_with_exception(
+            CREATE_OBJECTS_DICT,
+            expected_actions,
+            InvalidObjectError("test exception"),
+            'create-object Domain [context_4]')
+
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In Domain" in e.value.get_display_string()
 
     def test_select__success(self):
 
@@ -842,12 +911,16 @@ class TestActionsExecute(object):
             'select-object Domain test_field_4 = test_value_4 [context_4]',
             'stop-session']
 
-        self.run_execute_with_exception(SELECT_OBJECTS_DICT,
-                                        expected_actions,
-                                        MissingSelectionError(
-                                            "test exception"),
-                                        'select-object Domain test_field_4 '
-                                        '= test_value_4 [context_4]')
+        e = self.run_execute_with_exception(
+            SELECT_OBJECTS_DICT,
+            expected_actions,
+            MissingSelectionError("test exception"),
+            'select-object Domain test_field_4 = test_value_4 [context_4]')
+
+        assert ("In [select Enterprise (name of test_enterprise_2)]" in
+                e.value.get_display_string())
+        assert ("In [select Domain (test_field_4 of test_value_4)]" in
+                e.value.get_display_string())
 
     def test_set_values__success(self):
 
@@ -881,12 +954,14 @@ class TestActionsExecute(object):
             'set-values field1=value1,field2=True,field4=4 [context_1]',
             'stop-session']
 
-        self.run_execute_with_exception(SET_VALUES_DICT,
-                                        expected_actions,
-                                        InvalidAttributeError(
-                                            "test exception"),
-                                        'set-values field1=value1,'
-                                        'field2=True,field4=4 [context_1]')
+        e = self.run_execute_with_exception(
+            SET_VALUES_DICT,
+            expected_actions,
+            InvalidAttributeError("test exception"),
+            'set-values field1=value1,field2=True,field4=4 [context_1]')
+
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "[set values]" in e.value.get_display_string()
 
     def test_store_retrieve__success(self):
 
@@ -934,8 +1009,13 @@ class TestActionsExecute(object):
             'get-value id [context_3]',
             'stop-session']
 
-        self.run_execute_with_exception(STORE_RETRIEVE_DICT,
-                                        expected_actions,
-                                        InvalidAttributeError(
-                                            "test exception"),
-                                        'get-value id [context_3]')
+        e = self.run_execute_with_exception(
+            STORE_RETRIEVE_DICT,
+            expected_actions,
+            InvalidAttributeError("test exception"),
+            'get-value id [context_3]')
+
+        assert "In Enterprise" in e.value.get_display_string()
+        assert "In DomainTemplate" in e.value.get_display_string()
+        assert ("In [store id to name template_id]" in
+                e.value.get_display_string())

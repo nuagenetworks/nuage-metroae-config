@@ -154,13 +154,18 @@ class VsdWriter(DeviceWriterBase):
         """
         Creates an object in the current context, object is not saved to VSD
         """
-        self.log.debug("Create object %s [%s]" % (object_name, context))
+        location = "Create object %s [%s]" % (object_name, context)
+        self.log.debug(location)
         self._check_session()
 
-        new_context = self._get_new_child_context(context)
+        try:
+            new_context = self._get_new_child_context(context)
 
-        new_context.current_object = self._get_new_config_object(object_name)
-        new_context.object_exists = False
+            new_context.current_object = self._get_new_config_object(
+                object_name)
+            new_context.object_exists = False
+        except DeviceWriterError as e:
+            e.reraise_with_location(location)
 
         return new_context
 
@@ -175,16 +180,17 @@ class VsdWriter(DeviceWriterBase):
         self.log.debug(location)
         self._check_session()
 
-        new_context = self._get_new_child_context(context)
-
-        new_context.current_object = self._get_new_config_object(object_name)
-
         try:
+            new_context = self._get_new_child_context(context)
+
+            new_context.current_object = self._get_new_config_object(
+                object_name)
+
             new_context.current_object = self._select_object(
                 object_name, by_field, value, new_context.parent_object)
         except BambouHTTPError as e:
             raise VsdError(e, location)
-        except DeviceWriterBase as e:
+        except DeviceWriterError as e:
             e.reraise_with_location(location)
 
         new_context.object_exists = True
@@ -225,8 +231,11 @@ class VsdWriter(DeviceWriterBase):
         if context is None or context.current_object is None:
             raise SessionError("No object for setting values", location)
 
-        self._set_attributes(context.current_object, **kwargs)
-        self._validate_values(context.current_object)
+        try:
+            self._set_attributes(context.current_object, **kwargs)
+            self._validate_values(context.current_object)
+        except DeviceWriterError as e:
+            e.reraise_with_location(location)
 
         if context.object_exists:
             location = "Saving [%s]" % context
@@ -243,7 +252,7 @@ class VsdWriter(DeviceWriterBase):
                 self._add_object(context.current_object, context.parent_object)
             except BambouHTTPError as e:
                 raise VsdError(e, location)
-            except DeviceWriterBase as e:
+            except DeviceWriterError as e:
                 e.reraise_with_location(location)
 
             context.object_exists = True
@@ -268,7 +277,7 @@ class VsdWriter(DeviceWriterBase):
             value = self._get_attribute(context.current_object, field)
         except BambouHTTPError as e:
             raise VsdError(e, location)
-        except DeviceWriterBase as e:
+        except DeviceWriterError as e:
             e.reraise_with_location(location)
 
         self.log.debug("Value %s = %s" % (field, str(value)))

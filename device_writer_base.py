@@ -23,11 +23,12 @@ class DeviceWriterBase(object):
         return self.log
 
     def set_validate_only(self, value=True):
+        if value != self.validate_only:
+            if value is True:
+                self.log.debug("*** Validate ***")
+            else:
+                self.log.debug("*** Writing ***")
         self.validate_only = value
-        if value is True:
-            self.log.debug("*** Validate ***")
-        else:
-            self.log.debug("*** Writing ***")
 
     def is_validate_only(self):
         return self.validate_only
