@@ -1,0 +1,15 @@
+{
+  "title": "Schema validator for Nuage Metro Levistate template Enterprise",
+  "$id": "urn:nuage-metro:levistate:template:enterprise",
+  "required": [
+    "enterprise_name"
+  ],
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "enterprise_name": {
+      "type": "string",
+      "title": "Enterprise name"
+    }
+  }
+}

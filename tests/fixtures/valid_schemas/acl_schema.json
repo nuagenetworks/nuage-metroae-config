@@ -1,0 +1,133 @@
+{
+  "title": "Schema validator for Nuage Metro Levistate template Bidirectional ACL",
+  "$id": "urn:nuage-metro:levistate:template:bidirectional-acl",
+  "required": [
+    "enterprise_name",
+    "domain_name",
+    "acl_name",
+    "default_allow_ip",
+    "default_allow_non_ip",
+    "policy_priority",
+    "allow_address_spoof",
+    "default_install_acl_implicit_rules",
+    "description",
+    "entry_priority",
+    "protocol",
+    "source_port",
+    "destination_port",
+    "ether_type",
+    "action",
+    "location_type",
+    "location_name",
+    "network_type",
+    "network_name",
+    "stateful",
+    "flow_logging_enabled",
+    "stats_logging_enabled"
+  ],
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "policy_priority": {
+      "type": "integer",
+      "title": "Policy priority"
+    },
+    "protocol": {
+      "type": "string",
+      "title": "Protocol"
+    },
+    "ether_type": {
+      "type": "string",
+      "title": "Ether type"
+    },
+    "entry_priority": {
+      "type": "integer",
+      "title": "Entry priority"
+    },
+    "flow_logging_enabled": {
+      "type": "boolean",
+      "title": "Flow logging enabled"
+    },
+    "default_allow_non_ip": {
+      "type": "boolean",
+      "title": "Default allow non ip"
+    },
+    "location_name": {
+      "type": "string",
+      "title": "Location name"
+    },
+    "network_name": {
+      "type": "string",
+      "title": "Network name"
+    },
+    "domain_name": {
+      "type": "string",
+      "title": "Domain name"
+    },
+    "stats_logging_enabled": {
+      "type": "boolean",
+      "title": "Stats logging enabled"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "acl_name": {
+      "type": "string",
+      "title": "Acl name"
+    },
+    "default_allow_ip": {
+      "type": "boolean",
+      "title": "Default allow ip"
+    },
+    "stateful": {
+      "type": "boolean",
+      "title": "Stateful"
+    },
+    "source_port": {
+      "type": "string",
+      "title": "Source port"
+    },
+    "allow_address_spoof": {
+      "type": "boolean",
+      "title": "Allow address spoof"
+    },
+    "destination_port": {
+      "type": "string",
+      "title": "Destination port"
+    },
+    "location_type": {
+      "enum": [
+        "any",
+        "policygroup",
+        "subnet",
+        "zone"
+      ],
+      "title": "Location type"
+    },
+    "enterprise_name": {
+      "type": "string",
+      "title": "Enterprise name"
+    },
+    "default_install_acl_implicit_rules": {
+      "type": "boolean",
+      "title": "Default install acl implicit rules"
+    },
+    "action": {
+      "enum": [
+        "forward",
+        "drop"
+      ],
+      "title": "Action"
+    },
+    "network_type": {
+      "enum": [
+        "any",
+        "policygroup",
+        "subnet",
+        "zone"
+      ],
+      "title": "Network type"
+    }
+  }
+}

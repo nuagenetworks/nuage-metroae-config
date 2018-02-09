@@ -539,7 +539,6 @@ class TestVsdWriterSetValues(object):
         mock_object.validate.assert_called_once()
 
         if validate_only is True:
-            print str(mock_session.root_object)
             mock_session.root_object.create_child.assert_not_called()
         else:
             mock_session.root_object.current_child_name == "enterprises"

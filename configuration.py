@@ -51,8 +51,8 @@ class Configuration(object):
         attribute/variable name.  The data is validated against the
         corresponding template schema.  An id is returned for reference.
         """
-        self.get_template(template_name)
-        # TODO: verify data with template.get_schema()
+        template = self.get_template(template_name)
+        template.validate_template_data(**template_data)
         return self._append_data(template_name, dict(template_data))
 
     def get_template_data(self, id):
@@ -73,8 +73,8 @@ class Configuration(object):
         validated against the corresponding template schema.  The id comes
         from the corresponding add_template_data call.
         """
-        self.get_template(self._get_template_key(id))
-        # TODO: verify data with template.get_schema()
+        template = self.get_template(self._get_template_key(id))
+        template.validate_template_data(**template_data)
         return self._set_data(id, dict(template_data))
 
     def remove_template_data(self, id):

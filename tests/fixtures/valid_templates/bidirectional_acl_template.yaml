@@ -6,14 +6,14 @@ software-version: 5.0.2
 variables:
   - name: enterprise_name
     type: reference
-    required_for_delete: true
+    required-for-delete: true
   - name: domain_name
     type: reference
-    required_for_delete: true
+    required-for-delete: true
   # General ACL variables
   - name: acl_name
     type: string
-    required_for_delete: true
+    required-for-delete: true
   - name: default_allow_ip
     type: boolean
   - name: default_allow_non_ip
