@@ -13,6 +13,7 @@ from levistate.vsd_writer import (Context,
                                   MultipleSelectionError,
                                   SessionError,
                                   SessionNotStartedError,
+                                  VsdError,
                                   VsdWriter)
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -74,6 +75,13 @@ def setup_standard_session(vsd_writer, mock_patch):
 
     return mock_session
 
+
+def get_mock_bambou_error(status_code, reason):
+    return BambouHTTPError(
+        type('', (object,), {
+            'response': type('', (object,), {'status_code': status_code,
+                                             'reason': reason,
+                                             'errors': reason})()})())
 
 class TestVsdWriterSpecParsing(object):
 
@@ -183,17 +191,17 @@ class TestVsdWriterSession(object):
 
         mock_session = MagicMock()
         mock_patch.return_value = mock_session
-        fake_exception = BambouHTTPError(
-            type('', (object,), {
-                'response': type('', (object,), {'status_code': 403,
-                                                 'reason': 'forbidden',
-                                                 'errors': 'forbidden'})()})())
+        fake_exception = get_mock_bambou_error(403, 'forbidden')
         mock_session.start.side_effect = fake_exception
-        with pytest.raises(SessionError) as e:
+
+        with pytest.raises(VsdError) as e:
             vsd_writer.start_session()
 
         assert "403" in str(e)
         assert "forbidden" in str(e)
+
+        assert "Session start" in e.value.get_display_string()
+        assert "HTTP 403" in e.value.get_display_string()
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test_stop__success(self, validate_only):
@@ -273,6 +281,8 @@ class TestVsdWriterCreateObject(object):
 
         assert "No specification" in str(e)
         assert "Foobar" in str(e)
+
+        assert "Create object Foobar" in e.value.get_display_string()
 
 
 class TestVsdWriterSelectObject(object):
@@ -364,6 +374,9 @@ class TestVsdWriterSelectObject(object):
         assert "No specification" in str(e)
         assert "Foobar" in str(e)
 
+        assert ("Select object Foobar Name = test_enterprise" in
+                e.value.get_display_string())
+
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test__bad_child(self, validate_only):
         vsd_writer = VsdWriter()
@@ -392,6 +405,9 @@ class TestVsdWriterSelectObject(object):
         assert "Enterprise" in str(e)
         assert "BridgeInterface" in str(e)
 
+        assert ("Select object BridgeInterface Name = test_child" in
+                e.value.get_display_string())
+
     @patch("levistate.vsd_writer.Fetcher")
     def test__not_found(self, mock_fetcher):
         vsd_writer = VsdWriter()
@@ -412,6 +428,9 @@ class TestVsdWriterSelectObject(object):
         assert "Name" in str(e)
         assert "test_enterprise" in str(e)
 
+        assert ("Select object Enterprise Name = test_enterprise" in
+                e.value.get_display_string())
+
     @patch("levistate.vsd_writer.Fetcher")
     def test__multiple_found(self, mock_fetcher):
         vsd_writer = VsdWriter()
@@ -431,6 +450,33 @@ class TestVsdWriterSelectObject(object):
         assert "Enterprise" in str(e)
         assert "Name" in str(e)
         assert "test_enterprise" in str(e)
+
+        assert ("Select object Enterprise Name = test_enterprise" in
+                e.value.get_display_string())
+
+    @patch("levistate.vsd_writer.Fetcher")
+    def test__bambou_error(self, mock_fetcher):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_error = get_mock_bambou_error(404, "Not Found")
+        mock_fetcher.get.side_effect = mock_error
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.select_object("Enterprise", "Name", "test_enterprise")
+
+        mock_fetcher.assert_called_once_with(mock_session.root_object,
+                                             vsd_writer.specs['enterprise'])
+        mock_fetcher.get.assert_called_once_with(
+            filter='name is "test_enterprise"')
+
+        assert "404" in str(e)
+        assert "Not Found" in str(e)
+
+        assert ("Select object Enterprise Name = test_enterprise" in
+                e.value.get_display_string())
+        assert "HTTP 404" in e.value.get_display_string()
 
 
 class TestVsdWriterDeleteObject(object):
@@ -485,6 +531,8 @@ class TestVsdWriterDeleteObject(object):
 
         assert "No object" in str(e)
 
+        assert "Delete object" in e.value.get_display_string()
+
         context.current_object = None
         context.object_exists = True
 
@@ -492,6 +540,31 @@ class TestVsdWriterDeleteObject(object):
             vsd_writer.delete_object(context)
 
         assert "No object" in str(e)
+
+        assert "Delete object" in e.value.get_display_string()
+
+    def test__bambou_error(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        fake_exception = get_mock_bambou_error(403, "forbidden")
+        mock_object.delete.side_effect = fake_exception
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.delete_object(context)
+
+        assert "403" in str(e)
+        assert "forbidden" in str(e)
+
+        assert "Delete object" in e.value.get_display_string()
+        assert "HTTP 403" in e.value.get_display_string()
 
 
 class TestVsdWriterSetValues(object):
@@ -680,6 +753,8 @@ class TestVsdWriterSetValues(object):
 
         assert "No object" in str(e)
 
+        assert "Set value" in e.value.get_display_string()
+
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test__invalid_attr(self, validate_only):
         vsd_writer = VsdWriter()
@@ -699,6 +774,8 @@ class TestVsdWriterSetValues(object):
 
         assert "not define" in str(e)
         assert "FooBar" in str(e)
+
+        assert "Set value" in e.value.get_display_string()
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test__bad_child(self, validate_only):
@@ -720,6 +797,8 @@ class TestVsdWriterSetValues(object):
         assert "Me" in str(e)
         assert "BridgeInterface" in str(e)
 
+        assert "Creating child" in e.value.get_display_string()
+
         context.parent_object = None
         mock_object = MagicMock()
         context.parent_object = mock_object
@@ -731,6 +810,8 @@ class TestVsdWriterSetValues(object):
         assert "no child" in str(e)
         assert "Enterprise" in str(e)
         assert "BridgeInterface" in str(e)
+
+        assert "Creating child" in e.value.get_display_string()
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test__invalid_values(self, validate_only):
@@ -770,6 +851,38 @@ class TestVsdWriterSetValues(object):
         assert "Name is invalid" in str(e)
         assert "bgpenabled" in str(e)
         assert "BGPEnabled is invalid" in str(e)
+
+        assert "Set value" in e.value.get_display_string()
+
+    def test_child_update__bambou_error(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['domain']
+        mock_object.validate.return_value = True
+        fake_exception = get_mock_bambou_error(403, "forbidden")
+        mock_object.save.side_effect = fake_exception
+
+        mock_parent = MagicMock()
+
+        context = Context()
+        context.parent_object = mock_parent
+        context.current_object = mock_object
+        context.object_exists = True
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.set_values(context,
+                                  BGPEnabled=True,
+                                  ECMPCount=10,
+                                  DPI='enabled',
+                                  name='test_domain')
+
+        assert "403" in str(e)
+        assert "forbidden" in str(e)
+
+        assert "Saving" in e.value.get_display_string()
+        assert "HTTP 403" in e.value.get_display_string()
 
 
 class TestVsdWriterGetValue(object):
@@ -834,6 +947,8 @@ class TestVsdWriterGetValue(object):
 
         assert "No object" in str(e)
 
+        assert "Get value" in e.value.get_display_string()
+
         context.current_object = None
         context.object_exists = True
 
@@ -841,6 +956,8 @@ class TestVsdWriterGetValue(object):
             vsd_writer.get_value("name", context)
 
         assert "No object" in str(e)
+
+        assert "Get value" in e.value.get_display_string()
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test__invalid_attr(self, validate_only):
@@ -863,3 +980,5 @@ class TestVsdWriterGetValue(object):
 
         assert "not define" in str(e)
         assert "FooBar" in str(e)
+
+        assert "Get value FooBar" in e.value.get_display_string()

@@ -1,57 +1,4 @@
-class DeviceWriterError(Exception):
-    """
-    Exception class for all template writing errors
-    """
-    pass
-
-
-class SessionNotStartedError(DeviceWriterError):
-    """
-    Exception class when session is used when not started.
-    """
-    pass
-
-
-class SessionError(DeviceWriterError):
-    """
-    Exception class when there is an error in the session
-    """
-    pass
-
-
-class MissingSelectionError(DeviceWriterError):
-    """
-    Exception class when an object was not found during selection
-    """
-    pass
-
-
-class MultipleSelectionError(DeviceWriterError):
-    """
-    Exception class when multiple objects were found during selection
-    """
-    pass
-
-
-class InvalidAttributeError(DeviceWriterError):
-    """
-    Exception class when an attribute on an object does not exist
-    """
-    pass
-
-
-class InvalidValueError(DeviceWriterError):
-    """
-    Exception class when setting an attribute to an invalid value
-    """
-    pass
-
-
-class InvalidObjectError(DeviceWriterError):
-    """
-    Exception class when an object or child of an object does not exist
-    """
-    pass
+from logger import Logger
 
 
 class DeviceWriterBase(object):
@@ -65,29 +12,26 @@ class DeviceWriterBase(object):
         Abstract Base Class.  Cannot be instantiated directly. Use
         device-specific derived class.
         """
-        self.log_entries = list()
         self.validate_only = False
+        self.log = Logger()
+        self.log.set_to_stdout("ERROR", enabled=True)
+
+    def set_logger(self, logger):
+        self.log = logger
+
+    def get_logger(self):
+        return self.log
 
     def set_validate_only(self, value=True):
+        if value != self.validate_only:
+            if value is True:
+                self.log.debug("*** Validate ***")
+            else:
+                self.log.debug("*** Writing ***")
         self.validate_only = value
-        if value is True:
-            self.log_debug("*** Validate ***")
 
-    def log(self, log_type, message):
-        self.log_entries.append((log_type, message))
-
-    def log_error(self, message):
-        self.log('ERROR', message)
-
-    def log_debug(self, message):
-        self.log('DEBUG', message)
-
-    def get_logs(self):
-        log_output = []
-        for entry in self.log_entries:
-            log_output.append("%s: %s" % entry)
-
-        return '\n'.join(log_output)
+    def is_validate_only(self):
+        return self.validate_only
 
     # Abstract prototype functions
     # All types of device writer classes will need to implement these
