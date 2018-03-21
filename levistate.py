@@ -69,6 +69,9 @@ def parse_args():
     parser.add_argument('-dr', '--dry-run', dest='dry_run',
                         action='store_true', required=False,
                         help='Perform validation only')
+    parser.add_argument('-l', '--logs', dest='logs',
+                        action='store_true', required=False,
+                        help='Show logs after run')
 
     return parser.parse_args()
 
@@ -86,14 +89,17 @@ class Levistate(object):
         self.parse_user_data()
         self.parse_extra_vars()
 
+        succeeded = False
         try:
             self.apply_templates()
+            succeeded = True
         except DeviceWriterError as e:
             self.writer.log_error(str(e))
         except Exception as e:
             self.writer.log_error(str(e))
 
-        print self.writer.get_logs()
+        if self.args.logs or not succeeded:
+            print self.writer.get_logs()
 
     def parse_extra_vars(self):
         if self.args.data is not None:
@@ -108,7 +114,8 @@ class Levistate(object):
                     value = key_value_pair[1]
                     template_data[key] = value
 
-            self.template_data.append((self.template_name, template_data))
+            self.template_data.append((self.args.template_name, template_data))
+            # print str(template_data)
 
     def setup_vsd_writer(self):
         self.writer = VsdWriter()
@@ -122,11 +129,12 @@ class Levistate(object):
             self.store.read_templates(path)
 
     def parse_user_data(self):
-        parser = UserDataParser()
-        for path in self.args.data_path:
-            parser.read_data(path)
-        self.template_data = parser.get_template_name_data_pairs()
-        # print str(self.template_data)
+        if self.args.data_path is not None:
+            parser = UserDataParser()
+            for path in self.args.data_path:
+                parser.read_data(path)
+            self.template_data = parser.get_template_name_data_pairs()
+            # print str(self.template_data)
 
     def apply_templates(self):
         config = Configuration(self.store)
@@ -151,51 +159,6 @@ class Levistate(object):
 
         print str(config.root_action)
 
-
-    #
-    # Old prototype code
-    #
-
-    # def run(self):
-    #     try:
-    #         self.start_vsd_session()
-
-    #         if self.args.revert:
-    #             self.revert_acl_template(
-    #                 enterprise_name='demo_ent',
-    #                 domain_name='demo_domain_1',
-    #                 policy_name='demo_policy_1')
-    #             self.revert_domain_template(
-    #                 enterprise_name='demo_ent',
-    #                 domain_name='demo_domain_1')
-    #             self.revert_enterprise_template(enterprise_name='demo_ent')
-    #         else:
-    #             self.apply_enterprise_template(enterprise_name='demo_ent',
-    #                                            description='Demo enterprise')
-    #             self.apply_domain_template(
-    #                 enterprise_name='demo_ent',
-    #                 domain_name='demo_domain_1',
-    #                 description='This is a demo domain')
-    #             self.apply_acl_template(
-    #                 enterprise_name='demo_ent',
-    #                 domain_name='demo_domain_1',
-    #                 policy_name='demo_policy_1',
-    #                 description='This is a demo policy',
-    #                 protocol='6',
-    #                 sourcePort='*',
-    #                 destinationPort='80',
-    #                 action='FORWARD',
-    #                 etherType='*')
-
-    #     except DeviceWriterError as e:
-    #         self.vsd_writer.log_error(str(e))
-    #     except Exception as e:
-    #         self.vsd_writer.log_error(str(e))
-
-    #     self.stop_vsd_session()
-    #     print ""
-    #     print self.vsd_writer.get_logs()
-
     def start_vsd_session(self):
         self.vsd_writer.read_api_specifications(self.args.spec_path)
         self.vsd_writer.set_session_params(self.args.vsd_url)
@@ -203,104 +166,6 @@ class Levistate(object):
 
     def stop_vsd_session(self):
         self.vsd_writer.stop_session()
-
-    def apply_enterprise_template(self, **kwargs):
-        print "Applying enterprise template: %s" % kwargs
-        context = self.vsd_writer.create_object("Enterprise")
-        context = self.vsd_writer.set_values(context,
-                                             name=kwargs['enterprise_name'],
-                                             description=kwargs['description'])
-
-    def revert_enterprise_template(self, **kwargs):
-        print "Reverting enterprise template: %s" % kwargs
-        context = self.vsd_writer.select_object("Enterprise", "name",
-                                                kwargs['enterprise_name'])
-        context = self.vsd_writer.delete_object(context)
-
-    def apply_domain_template(self, **kwargs):
-        print "Applying domain template: %s" % kwargs
-        ent_context = self.vsd_writer.select_object("Enterprise", "name",
-                                                    kwargs['enterprise_name'])
-        context = self.vsd_writer.create_object("DomainTemplate", ent_context)
-        template_name = "template-" + kwargs['domain_name']
-        template_descr = "Template for domain " + kwargs['domain_name']
-        context = self.vsd_writer.set_values(context,
-                                             name=template_name,
-                                             description=template_descr)
-        template_id = self.vsd_writer.get_value('id', context)
-        context = self.vsd_writer.create_object("Domain", ent_context)
-        context = self.vsd_writer.set_values(context,
-                                             name=kwargs['domain_name'],
-                                             templateID=template_id,
-                                             description=kwargs['description'])
-
-    def revert_domain_template(self, **kwargs):
-        print "Reverting domain template: %s" % kwargs
-        ent_context = self.vsd_writer.select_object("Enterprise", "name",
-                                                    kwargs['enterprise_name'])
-        context = self.vsd_writer.select_object("Domain", "name",
-                                                kwargs['domain_name'],
-                                                ent_context)
-        context = self.vsd_writer.delete_object(context)
-        template_name = "template-" + kwargs['domain_name']
-        context = self.vsd_writer.select_object("DomainTemplate", "name",
-                                                template_name, ent_context)
-        context = self.vsd_writer.delete_object(context)
-
-    def apply_acl_template(self, **kwargs):
-        print "Applying acl template: %s" % kwargs
-        context = self.vsd_writer.select_object("Enterprise", "name",
-                                                kwargs['enterprise_name'])
-        dom_context = self.vsd_writer.select_object("Domain", "name",
-                                                    kwargs['domain_name'],
-                                                    context)
-
-        context = self.vsd_writer.create_object("IngressACLTemplate",
-                                                dom_context)
-        context = self.vsd_writer.set_values(context,
-                                             name=kwargs['policy_name'],
-                                             description=kwargs['description'])
-        context = self.vsd_writer.create_object("IngressACLEntryTemplate",
-                                                context)
-        context = self.vsd_writer.set_values(context,
-                                             dscp='*',
-                                             # protocol=kwargs['protocol'],
-                                             # sourcePort=kwargs['sourcePort'],
-                                             # destinationPort=kwargs['destinationPort'],
-                                             locationType='ANY',
-                                             action=kwargs['action'],
-                                             etherType=kwargs['etherType'])
-        context = self.vsd_writer.create_object("EgressACLTemplate",
-                                                dom_context)
-        context = self.vsd_writer.set_values(context,
-                                             name=kwargs['policy_name'],
-                                             description=kwargs['description'])
-        context = self.vsd_writer.create_object("EgressACLEntryTemplate",
-                                                context)
-        context = self.vsd_writer.set_values(context,
-                                             dscp='*',
-                                             # protocol=kwargs['protocol'],
-                                             # sourcePort=kwargs['sourcePort'],
-                                             # destinationPort=kwargs['destinationPort'],
-                                             locationType='ANY',
-                                             action=kwargs['action'],
-                                             etherType=kwargs['etherType'])
-
-    def revert_acl_template(self, **kwargs):
-        print "Reverting subnet template: %s" % kwargs
-        context = self.vsd_writer.select_object("Enterprise", "name",
-                                                kwargs['enterprise_name'])
-        dom_context = self.vsd_writer.select_object("Domain", "name",
-                                                    kwargs['domain_name'],
-                                                    context)
-        context = self.vsd_writer.select_object("EgressACLTemplate", "name",
-                                                kwargs['policy_name'],
-                                                dom_context)
-        context = self.vsd_writer.delete_object(context)
-        context = self.vsd_writer.select_object("IngressACLTemplate", "name",
-                                                kwargs['policy_name'],
-                                                dom_context)
-        context = self.vsd_writer.delete_object(context)
 
 
 if __name__ == "__main__":
