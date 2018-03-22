@@ -1,0 +1,83 @@
+{
+  "title": "Schema validator for Nuage Metro Levistate template Variables Testing",
+  "$id": "urn:nuage-metro:levistate:template:variables-testing",
+  "required": [
+    "name",
+    "select_name",
+    "number",
+    "true_or_false",
+    "fruit",
+    "string_list",
+    "int_list",
+    "soda_list"
+  ],
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "ipv6_address": {
+      "type": "string",
+      "title": "Ipv6 address",
+      "default": "8000::1"
+    },
+    "soda_list": {
+      "items": {
+        "enum": [
+          "coke",
+          "pepsi",
+          "sprite"
+        ]
+      },
+      "type": "array",
+      "title": "Soda list"
+    },
+    "name": {
+      "type": "string",
+      "title": "Name",
+      "description": "Name field description"
+    },
+    "string_list": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "title": "String list"
+    },
+    "select_name": {
+      "type": "string",
+      "title": "Select name"
+    },
+    "int_list": {
+      "items": {
+        "type": "integer"
+      },
+      "type": "array",
+      "title": "Int list"
+    },
+    "number": {
+      "type": "integer",
+      "title": "Number"
+    },
+    "any_ip_address": {
+      "type": "string",
+      "title": "Any ip address",
+      "default": "192.168.0.1"
+    },
+    "ipv4_address": {
+      "type": "string",
+      "title": "Ipv4 address",
+      "default": "10.0.0.1"
+    },
+    "true_or_false": {
+      "type": "boolean",
+      "title": "True or false"
+    },
+    "fruit": {
+      "enum": [
+        "apple",
+        "orange",
+        "banana"
+      ],
+      "title": "Fruit"
+    }
+  }
+}

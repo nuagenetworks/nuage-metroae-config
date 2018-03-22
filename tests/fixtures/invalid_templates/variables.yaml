@@ -1,0 +1,51 @@
+name: Variables Testing
+description: For testing variable validation and schemas
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: name
+    type: string
+    required-for-delete: true
+    description: Name field description
+  - name: select_name
+    type: reference
+    required-for-delete: true
+  - name: number
+    type: integer
+  - name: true_or_false
+    type: boolean
+    optional: false
+  - name: ipv4_address
+    type: ipv4
+    optional: true
+    default: 10.0.0.1
+  - name: ipv6_address
+    type: ipv6
+    optional: true
+    default: 8000::1
+  - name: any_ip_address
+    type: ipv4_or_6
+    optional: true
+    default: 192.168.0.1
+  - name: fruit
+    type: choice
+    choices:
+      - apple
+      - orange
+      - banana
+  - name: string_list
+    type: list
+    item-type: string
+    optional: false
+  - name: int_list
+    type: list
+    item-type: integer
+  - name: soda_list
+    type: list
+    item-type: choice
+    choices:
+      - coke
+      - pepsi
+      - sprite
+actions: []

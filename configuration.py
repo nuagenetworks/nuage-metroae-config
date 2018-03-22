@@ -1,6 +1,7 @@
 import collections
 
 from actions import Action
+from logger import Logger
 
 
 class Configuration(object):
@@ -15,6 +16,13 @@ class Configuration(object):
         self.software_version = None
         self.software_type = None
         self.data = collections.OrderedDict()
+        self.log = Logger()
+
+    def set_logger(self, logger):
+        self.log = logger
+
+    def get_logger(self):
+        return self.log
 
     def set_software_version(self, software_version, software_type=None):
         """
@@ -51,8 +59,8 @@ class Configuration(object):
         attribute/variable name.  The data is validated against the
         corresponding template schema.  An id is returned for reference.
         """
-        self.get_template(template_name)
-        # TODO: verify data with template.get_schema()
+        template = self.get_template(template_name)
+        template.validate_template_data(**template_data)
         return self._append_data(template_name, dict(template_data))
 
     def get_template_data(self, id):
@@ -73,8 +81,8 @@ class Configuration(object):
         validated against the corresponding template schema.  The id comes
         from the corresponding add_template_data call.
         """
-        self.get_template(self._get_template_key(id))
-        # TODO: verify data with template.get_schema()
+        template = self.get_template(self._get_template_key(id))
+        template.validate_template_data(**template_data)
         return self._set_data(id, dict(template_data))
 
     def remove_template_data(self, id):
@@ -157,6 +165,7 @@ class Configuration(object):
 
     def _execute_templates(self, writer, is_revert=False):
         self.root_action = Action(None)
+        self.root_action.set_logger(self.log)
         if is_revert is True:
             self._walk_data(self._revert_data)
         else:
@@ -176,10 +185,12 @@ class Configuration(object):
         template_dict = template._parse_with_vars(**data)
         self.root_action.reset_state()
         self.root_action.set_revert(False)
+        self.root_action.set_template_name(template.get_name())
         self.root_action.read_children_actions(template_dict)
 
     def _revert_data(self, template, data):
         template_dict = template._parse_with_vars(**data)
         self.root_action.reset_state()
         self.root_action.set_revert(True)
+        self.root_action.set_template_name(template.get_name())
         self.root_action.read_children_actions(template_dict)

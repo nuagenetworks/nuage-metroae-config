@@ -6,10 +6,10 @@ software-version: 5.0.2
 variables:
   - name: enterprise_name
     type: reference
-    required_for_delete: true
+    required-for-delete: true
   - name: domain_name
     type: string
-    required_for_delete: true
+    required-for-delete: true
 actions:
   - select-object:
       type: Enterprise

@@ -1,23 +1,12 @@
-from device_writer_base import MissingSelectionError
-from template import (TemplateError,
-                      TemplateParseError)
+from errors import (ConflictError,
+                    MissingSelectionError,
+                    LevistateError,
+                    TemplateActionError,
+                    TemplateParseError)
+from logger import Logger
 from util import get_dict_field_no_case
 
 DEFAULT_SELECTION_FIELD = 'name'
-
-
-class ConflictError(TemplateError):
-    """
-    Exception class when there is a conflict during template processing
-    """
-    pass
-
-
-class TemplateActionError(TemplateError):
-    """
-    Exception class when there is a problem with an action in a template
-    """
-    pass
 
 
 class Action(object):
@@ -31,26 +20,52 @@ class Action(object):
             self.state = dict()
         else:
             self.state = state
+
         self.children = list()
         self.reorder_mark = None
+        self.template_name = None
+        if parent is None:
+            self.level = 0
+            self.log = Logger()
+            self.log.set_to_stdout("ERROR", enabled=True)
+        else:
+            self.level = parent.level + 1
+            self.log = parent.log
 
     def __str__(self):
-        return self._to_string(0)
+        return self._to_string_with_children()
 
-    def _to_string(self, indent_level):
-        if indent_level == 0:
-            cur_output = "Configuration\n"
-        else:
-            cur_output = "%s[Unknown action]\n" % Action._indent(indent_level)
+    def _to_string_with_children(self):
+        cur_output = self._to_string(self.level)
+
+        cur_output += "\n"
 
         for child in self.children:
-            cur_output += child._to_string(indent_level + 1)
+            cur_output += child._to_string_with_children()
 
         return cur_output
+
+    def _to_string(self, indent_level):
+        if self.level == 0:
+            cur_output = "Configuration"
+        else:
+            cur_output = "%s[Unknown action]" % Action._indent(indent_level)
+
+        return cur_output
+
+    def _get_location(self, prefix="In "):
+        location = prefix + self._to_string(0)
+        if self.template_name is not None:
+            location = "%s (template: %s)" % (location, self.template_name)
+
+        return location
 
     @staticmethod
     def _indent(level):
         return "    " * level
+
+    def set_logger(self, logger):
+        self.log = logger
 
     @staticmethod
     def get_dict_field(action_dict, field):
@@ -83,7 +98,14 @@ class Action(object):
         else:
             raise TemplateParseError("Invalid action: " + str(action_key))
 
-        new_action.read(action_dict[action_key])
+        if parent is not None:
+            new_action.set_template_name(parent.template_name)
+
+        try:
+            new_action.read(action_dict[action_key])
+        except LevistateError as e:
+            e.reraise_with_location(new_action._get_location())
+
         return new_action
 
     def reset_state(self):
@@ -92,16 +114,27 @@ class Action(object):
     def set_revert(self, is_revert=True):
         self.state['is_revert'] = is_revert
 
+    def set_template_name(self, name):
+        self.template_name = name
+
     def execute(self, writer, context=None):
         self.execute_children(writer, context=None)
 
     def execute_children(self, writer, context=None):
         if self.is_revert() is True:
             for child in reversed(self.children):
-                child.execute(writer, context)
+                try:
+                    child.execute(writer, context)
+                except LevistateError as e:
+                    e.reraise_with_location(child._get_location())
         else:
             for child in self.children:
-                child.execute(writer, context)
+                if not writer.is_validate_only():
+                    child.log.output(child._to_string(child.level))
+                try:
+                    child.execute(writer, context)
+                except LevistateError as e:
+                    e.reraise_with_location(child._get_location())
 
     def is_set_values(self):
         return False
@@ -140,23 +173,27 @@ class Action(object):
             self.add_child_action_sorted(new_action)
 
     def add_child_action_sorted(self, new_action):
-        if len(self.children) > 0 and new_action.is_set_values():
-            # A single set values action must always be at position 0
-            if self.children[0].is_set_values():
-                self.children[0].combine(new_action)
+        try:
+            if len(self.children) > 0 and new_action.is_set_values():
+                # A single set values action must always be at position 0
+                if self.children[0].is_set_values():
+                    self.children[0].combine(new_action)
+                else:
+                    self.children.insert(0, new_action)
             else:
-                self.children.insert(0, new_action)
-        else:
-            match_indicies = self.find_same_object_indicies_in_children(
-                new_action)
-            if len(match_indicies) > 0:
-                self.combine_same_objects(match_indicies[0], new_action)
-                self.combine_children_indicies(match_indicies[0],
-                                               match_indicies[1:])
-            else:
-                self.children.append(new_action)
+                match_indicies = self.find_same_object_indicies_in_children(
+                    new_action)
+                if len(match_indicies) > 0:
+                    self.combine_same_objects(match_indicies[0], new_action)
+                    self.combine_children_indicies(match_indicies[0],
+                                                   match_indicies[1:])
+                else:
+                    self.children.append(new_action)
 
-        self.reorder_retrieve(new_action)
+            self.reorder_retrieve(new_action)
+
+        except LevistateError as e:
+            e.reraise_with_location(new_action._get_location())
 
     def find_same_object_indicies_in_children(self, new_action):
         indicies = []
@@ -236,6 +273,8 @@ class CreateObjectAction(Action):
         if field is not None:
             self.select_by_field = field
 
+        self.log.debug(self._get_location("Reading "))
+
         self.read_children_actions(create_dict)
 
     def execute(self, writer, context=None):
@@ -256,6 +295,10 @@ class CreateObjectAction(Action):
 
                 # Always delete children first
                 self.execute_children(writer, new_context)
+
+                if not writer.is_validate_only():
+                    self.log.output(self._get_location("Revert "))
+
                 writer.delete_object(new_context)
             except MissingSelectionError:
                 # Skip deletion if object is not present (not created)
@@ -294,15 +337,9 @@ class CreateObjectAction(Action):
             self.add_child_action_sorted(child)
 
     def _to_string(self, indent_level):
-        cur_output = ""
         indent = Action._indent(indent_level)
 
-        cur_output = "%s%s\n" % (indent, str(self.object_type))
-
-        for child in self.children:
-            cur_output += child._to_string(indent_level + 1)
-
-        return cur_output
+        return indent + str(self.object_type)
 
 
 class SelectObjectAction(Action):
@@ -328,6 +365,8 @@ class SelectObjectAction(Action):
         if self.value is None:
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
+
+        self.log.debug(self._get_location("Reading "))
 
         self.read_children_actions(select_dict)
 
@@ -368,16 +407,12 @@ class SelectObjectAction(Action):
             self.add_child_action_sorted(child)
 
     def _to_string(self, indent_level):
-        cur_output = ""
         indent = Action._indent(indent_level)
 
-        cur_output = "%s[select %s (%s of %s)]\n" % (indent,
-                                                     str(self.object_type),
-                                                     str(self.field),
-                                                     str(self.value))
-
-        for child in self.children:
-            cur_output += child._to_string(indent_level + 1)
+        cur_output = "%s[select %s (%s of %s)]" % (indent,
+                                                   str(self.object_type),
+                                                   str(self.field),
+                                                   str(self.value))
 
         return cur_output
 
@@ -397,6 +432,8 @@ class SetValuesAction(Action):
 
         if self.parent is None or self.parent.parent is None:
             raise TemplateActionError("No object exists for setting values")
+
+        self.log.debug(self._get_location("Reading "))
 
         for key, value in set_values_dict.iteritems():
             self.add_attribute(key, value)
@@ -452,7 +489,14 @@ class SetValuesAction(Action):
 
             cur_output += "%s%s = %s\n" % (indent, str(field), str(value))
 
-        return cur_output
+        return cur_output.rstrip()
+
+    def _get_location(self, prefix="In "):
+        location = prefix + "[set values]"
+        if self.template_name is not None:
+            location = "%s (template: %s)" % (location, self.template_name)
+
+        return location
 
 
 class StoreValueAction(Action):
@@ -473,6 +517,8 @@ class StoreValueAction(Action):
         if self.as_name is None:
             raise TemplateParseError(
                 "Store value action missing required 'as-name' field")
+
+        self.log.debug(self._get_location("Reading "))
 
         if self.parent is None or self.parent.parent is None:
             raise TemplateActionError("No object exists for storing values")
@@ -501,12 +547,11 @@ class StoreValueAction(Action):
             self.stored_value = writer.get_value(self.from_field, context)
 
     def _to_string(self, indent_level):
-        cur_output = ""
         indent = Action._indent(indent_level)
 
-        cur_output += "%s[store %s to name %s]\n" % (indent,
-                                                     str(self.from_field),
-                                                     str(self.as_name))
+        cur_output = "%s[store %s to name %s]" % (indent,
+                                                  str(self.from_field),
+                                                  str(self.as_name))
         return cur_output
 
     def _get_reference_string(self):
@@ -536,6 +581,8 @@ class RetrieveValueAction(SetValuesAction):
         if self.from_name is None:
             raise TemplateParseError(
                 "Retrieve value action missing required 'from-name' field")
+
+        self.log.debug(self._get_location("Reading "))
 
         if self.parent is None or self.parent.parent is None:
             raise TemplateActionError("No object exists for retrieving values")

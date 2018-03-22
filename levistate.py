@@ -1,8 +1,10 @@
 import argparse
 from configuration import Configuration
+from errors import LevistateError
+from logger import Logger
 from template import TemplateStore
 from user_data_parser import UserDataParser
-from vsd_writer import DeviceWriterError, VsdWriter
+from vsd_writer import VsdWriter
 # import vspk.v5_0 as vspk
 
 DEFAULT_VSD_USERNAME = 'csproot'
@@ -72,6 +74,15 @@ def parse_args():
     parser.add_argument('-l', '--logs', dest='logs',
                         action='store_true', required=False,
                         help='Show logs after run')
+    parser.add_argument('-l', '--list', dest='list',
+                        action='store_true', required=False,
+                        help='Lists loaded templates')
+    parser.add_argument('-s', '--schema', dest='schema',
+                        action='store_true', required=False,
+                        help='Displays template schema')
+    parser.add_argument('-x', '--example', dest='example',
+                        action='store_true', required=False,
+                        help='Displays template user data example')
 
     return parser.parse_args()
 
@@ -81,25 +92,31 @@ class Levistate(object):
     def __init__(self, args):
         self.args = args
         self.template_data = list()
+        self.logger = Logger()
 
     def run(self):
 
-        self.setup_vsd_writer()
         self.setup_template_store()
+        if self.list_info():
+            return
+        self.setup_vsd_writer()
         self.parse_user_data()
         self.parse_extra_vars()
 
         succeeded = False
         try:
             self.apply_templates()
-            succeeded = True
-        except DeviceWriterError as e:
-            self.writer.log_error(str(e))
-        except Exception as e:
-            self.writer.log_error(str(e))
+        except LevistateError as e:
+            self.logger.error(e.get_display_string())
+            print self.logger.get()
+            print ""
+            print "Error"
+            print "-----"
+            print e.get_display_string()
+            exit(1)
 
-        if self.args.logs or not succeeded:
-            print self.writer.get_logs()
+        if self.args.logs:
+            print self.logger.get()
 
     def parse_extra_vars(self):
         if self.args.data is not None:
@@ -117,11 +134,34 @@ class Levistate(object):
             self.template_data.append((self.args.template_name, template_data))
             # print str(template_data)
 
+    def list_info(self):
+        if self.args.list:
+            template_names = self.store.get_template_names()
+            print "\n".join(template_names)
+            return True
+
+        if self.args.schema:
+            template = self.store.get_template(self.args.template_name)
+            print template.get_schema()
+            return True
+
+        if self.args.example:
+            template = self.store.get_template(self.args.template_name)
+            print template.get_example()
+            return True
+
+        return False
+
     def setup_vsd_writer(self):
         self.writer = VsdWriter()
+        self.writer.set_logger(self.logger)
         for path in self.args.spec_path:
             self.writer.read_api_specifications(path)
-        self.writer.set_session_params(self.args.vsd_url)
+        self.writer.set_session_params(self.args.vsd_url,
+                                       username=self.args.username,
+                                       password=self.args.password,
+                                       enterprise=self.args.enterprise,
+                                       )
 
     def setup_template_store(self):
         self.store = TemplateStore()
@@ -138,6 +178,7 @@ class Levistate(object):
 
     def apply_templates(self):
         config = Configuration(self.store)
+        config.set_logger(self.logger)
         for data in self.template_data:
             template_name = data[0]
             template_data = data[1]
@@ -156,16 +197,6 @@ class Levistate(object):
                 config.apply(self.writer)
 
             self.writer.set_validate_only(False)
-
-        print str(config.root_action)
-
-    def start_vsd_session(self):
-        self.vsd_writer.read_api_specifications(self.args.spec_path)
-        self.vsd_writer.set_session_params(self.args.vsd_url)
-        self.vsd_writer.start_session()
-
-    def stop_vsd_session(self):
-        self.vsd_writer.stop_session()
 
 
 if __name__ == "__main__":
