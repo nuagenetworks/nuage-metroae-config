@@ -33,6 +33,12 @@ class MockWriter(object):
         self.current_get_value_index += 1
         return "value_" + str(self.current_get_value_index)
 
+    def set_validate_only(self, value=True):
+        pass
+
+    def is_validate_only(self):
+        return False
+
     #
     # Implement all required Abstract Base Class prototype functions.
     #
