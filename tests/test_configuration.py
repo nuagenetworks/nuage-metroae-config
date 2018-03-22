@@ -5,7 +5,8 @@ import pytest
 from levistate.actions import TemplateActionError
 from levistate.configuration import Configuration
 from levistate.template import (MissingTemplateError,
-                                TemplateStore)
+                                TemplateStore,
+                                VariableValueError)
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
 VALID_TEMPLATE_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
@@ -70,6 +71,13 @@ class TestConfigurationData(object):
         assert "No template" in str(e)
         assert "Foobar" in str(e)
 
+        bad_data = {"enterprise_name": 9999}
+
+        with pytest.raises(VariableValueError) as e:
+            config.add_template_data("Enterprise", **bad_data)
+
+        assert "not a string" in str(e)
+
     def test_get__invalid(self):
         config = load_standard_configuration()
 
@@ -121,7 +129,8 @@ class TestConfigurationData(object):
     def test_update__invalid(self):
         config = load_standard_configuration()
 
-        data1 = {"enterprise_name": "enterprise1"}
+        data1 = {"enterprise_name": "enterprise1",
+                 "domain_name": "domain1"}
 
         id1 = config.add_template_data("Enterprise", **data1)
         bad_template_id = dict(id1)
@@ -146,6 +155,13 @@ class TestConfigurationData(object):
             config.update_template_data(bad_index_id, **data1)
 
         assert "Invalid template data id" in str(e)
+
+        bad_data = {"enterprise_name": 9999}
+
+        with pytest.raises(VariableValueError) as e:
+            config.update_template_data(id1, **bad_data)
+
+        assert "not a string" in str(e)
 
     def test_remove__success(self):
         config = load_standard_configuration()
