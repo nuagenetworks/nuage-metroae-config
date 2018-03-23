@@ -1,0 +1,25 @@
+name: CosRemarkingPolicy
+description: QoS template set - Create an CoS Remarking Policy
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: enterprise_name
+    type: reference
+  - name: description
+    type: string
+    optional: true
+  - name: cos_remarking_policy_name
+    type: reference
+actions:
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+        - create-object:
+            type: COSRemarkingPolicyTable
+            actions:
+              - set-values:
+                  name: {{ cos_remarking_policy_name }}
+                  description: {{ description | default("CoS remarking policy " + egress_qos_policy_name | default("")) }}

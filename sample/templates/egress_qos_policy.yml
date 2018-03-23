@@ -1,0 +1,175 @@
+name: EgressQosPolicy
+description: QoS template set - Create an Egress QoS Policy
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.0.2
+variables:
+  - name: enterprise_name
+    type: reference
+  - name: description
+    type: string
+    optional: true
+  - name: egress_qos_policy_name
+    type: reference
+  - name: parent_rate_limiter_name
+    type: reference
+  - name: priority_queue_1_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: priority_queue_1_rate_limiter_name
+    type: reference
+    optional: true
+  - name: wrr_queue_2_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: wrr_queue_2_rate_limiter_name
+    type: reference
+    optional: true
+  - name: wrr_queue_3_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: wrr_queue_3_rate_limiter_name
+    type: reference
+    optional: true
+  - name: wrr_queue_4_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: wrr_queue_4_rate_limiter_name
+    type: reference
+    optional: true
+  - name: default_service_class
+    type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: cos_remarking_policy_name
+    type: reference
+    optional: true
+  - name: dscp_remarking_policy_name
+    type: reference
+    optional: true
+actions:
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+        - select-object:
+            type: RateLimiter
+            by-field: name
+            value: {{ parent_rate_limiter_name }}
+            actions:
+              - store-value:
+                  as-name: parent_rate_limiter_id
+                  from-field: id
+        {% if priority_queue_1_rate_limiter_name is defined %}
+        - select-object:
+            type: RateLimiter
+            by-field: name
+            value: {{ priority_queue_1_rate_limiter_name }}
+            actions:
+              - store-value:
+                  as-name: priority_queue_1_rate_limiter_id
+                  from-field: id
+        {% endif %}
+        {% if wrr_queue_2_rate_limiter_name is defined %}
+        - select-object:
+            type: RateLimiter
+            by-field: name
+            value: {{ wrr_queue_2_rate_limiter_name }}
+            actions:
+              - store-value:
+                  as-name: wrr_queue_2_rate_limiter_id
+                  from-field: id
+        {% endif %}
+        {% if wrr_queue_3_rate_limiter_name is defined %}
+        - select-object:
+            type: RateLimiter
+            by-field: name
+            value: {{ wrr_queue_3_rate_limiter_name }}
+            actions:
+              - store-value:
+                  as-name: wrr_queue_3_rate_limiter_id
+                  from-field: id
+        {% endif %}
+        {% if wrr_queue_4_rate_limiter_name is defined %}
+        - select-object:
+            type: RateLimiter
+            by-field: name
+            value: {{ wrr_queue_4_rate_limiter_name }}
+            actions:
+              - store-value:
+                  as-name: wrr_queue_4_rate_limiter_id
+                  from-field: id
+        {% endif %}
+        {% if cos_remarking_policy_name is defined %}
+        - select-object:
+            type: COSRemarkingPolicyTable
+            by-field: name
+            value: {{ cos_remarking_policy_name }}
+            actions:
+              - store-value:
+                  as-name: remarking_cos_policy_id
+                  from-field: id
+        {% endif %}
+        {% if dscp_remarking_policy_name is defined %}
+        - select-object:
+            type: DSCPRemarkingPolicyTable
+            by-field: name
+            value: {{ dscp_remarking_policy_name }}
+            actions:
+              - store-value:
+                  as-name: remarking_dscp_policy_id
+                  from-field: id
+        {% endif %}
+        - create-object:
+            type: EgressQOSPolicy
+            actions:
+              - set-values:
+                  name: {{ egress_qos_policy_name }}
+                  description: {{ description | default("egress QoS policy " + egress_qos_policy_name | default("")) }}
+                  queue1ForwardingClasses: {{ priority_queue_1_classes | default(None) }}
+                  queue2ForwardingClasses: {{ wrr_queue_2_classes | default(None) }}
+                  queue3ForwardingClasses: {{ wrr_queue_3_classes | default(None) }}
+                  queue4ForwardingClasses: {{ wrr_queue_4_classes | default(None) }}
+                  defaultServiceClass: {{ default_service_class | default(None) }}
+              - retrieve-value:
+                  from-name: parent_rate_limiter_id
+                  to-field: parentQueueAssociatedRateLimiterID
+              {% if priority_queue_1_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: priority_queue_1_rate_limiter_id
+                  to-field: queue1AssociatedRateLimiterID
+              {% endif %}
+              {% if wrr_queue_2_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: wrr_queue_2_rate_limiter_id
+                  to-field: queue2AssociatedRateLimiterID
+              {% endif %}
+              {% if wrr_queue_3_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: wrr_queue_3_rate_limiter_id
+                  to-field: queue3AssociatedRateLimiterID
+              {% endif %}
+              {% if wrr_queue_4_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: wrr_queue_4_rate_limiter_id
+                  to-field: queue4AssociatedRateLimiterID
+              {% endif %}
+              {% if cos_remarking_policy_name is defined %}
+              - retrieve-value:
+                  from-name: remarking_cos_policy_id
+                  to-field: associatedCOSRemarkingPolicyTableID
+              {% endif %}
+              {% if dscp_remarking_policy_name is defined %}
+              - retrieve-value:
+                  from-name: remarking_dscp_policy_id
+                  to-field: associatedDSCPRemarkingPolicyTableID
+              {% endif %}

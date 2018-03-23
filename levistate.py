@@ -71,7 +71,7 @@ def parse_args():
     parser.add_argument('-dr', '--dry-run', dest='dry_run',
                         action='store_true', required=False,
                         help='Perform validation only')
-    parser.add_argument('-l', '--logs', dest='logs',
+    parser.add_argument('-lg', '--logs', dest='logs',
                         action='store_true', required=False,
                         help='Show logs after run')
     parser.add_argument('-l', '--list', dest='list',
@@ -103,7 +103,6 @@ class Levistate(object):
         self.parse_user_data()
         self.parse_extra_vars()
 
-        succeeded = False
         try:
             self.apply_templates()
         except LevistateError as e:
@@ -128,11 +127,23 @@ class Levistate(object):
                         raise Exception("Invalid extra-vars argument, must "
                                         "be key=value format: " + var)
                     key = key_value_pair[0]
-                    value = key_value_pair[1]
+                    value = self.parse_var_value(key_value_pair[1])
                     template_data[key] = value
 
             self.template_data.append((self.args.template_name, template_data))
             # print str(template_data)
+
+    def parse_var_value(self, value):
+        if value.lower() == "true":
+            return True
+        if value.lower() == "false":
+            return False
+        try:
+            return int(value)
+        except ValueError:
+            pass
+
+        return value
 
     def list_info(self):
         if self.args.list:

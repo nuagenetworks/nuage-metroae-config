@@ -29,6 +29,6 @@ actions:
               - set-values:
                   name: {{ rate_limiter_name }}
                   description: {{ description | default("rate limiter " + rate_limiter_name | default("")) }}
-                  committedInformationRate: {{ committed_information_rate }}
-                  peakBurstSize: {{ peak_burst_size }}
-                  peakInformationRate: {{ peak_information_rate }}
+                  committedInformationRate: {{ committed_information_rate | string }}
+                  peakBurstSize: {{ peak_burst_size | string }}
+                  peakInformationRate: {{ peak_information_rate | string }}
