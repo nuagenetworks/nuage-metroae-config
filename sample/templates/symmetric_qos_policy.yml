@@ -1,5 +1,5 @@
-name: EgressQosPolicy
-description: QoS template set - Create an Egress QoS Policy
+name: SymmetricQosPolicy
+description: QoS template set - Create a matching symmetric Ingress and Egress QoS Policy
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.1.1
@@ -9,7 +9,7 @@ variables:
   - name: description
     type: string
     optional: true
-  - name: egress_qos_policy_name
+  - name: symmetric_qos_policy_name
     type: reference
   - name: parent_rate_limiter_name
     type: reference
@@ -130,11 +130,44 @@ actions:
                   from-field: id
         {% endif %}
         - create-object:
+            type: IngressQOSPolicy
+            actions:
+              - set-values:
+                  name: {{ symmetric_qos_policy_name }}
+                  description: {{ description | default("symmetric QoS policy " + symmetric_qos_policy_name | default("")) }}
+                  queue1ForwardingClasses: {{ priority_queue_1_classes | default(None) }}
+                  queue2ForwardingClasses: {{ wrr_queue_2_classes | default(None) }}
+                  queue3ForwardingClasses: {{ wrr_queue_3_classes | default(None) }}
+                  queue4ForwardingClasses: {{ wrr_queue_4_classes | default(None) }}
+              - retrieve-value:
+                  from-name: parent_rate_limiter_id
+                  to-field: parentQueueAssociatedRateLimiterID
+              {% if priority_queue_1_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: priority_queue_1_rate_limiter_id
+                  to-field: queue1AssociatedRateLimiterID
+              {% endif %}
+              {% if wrr_queue_2_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: wrr_queue_2_rate_limiter_id
+                  to-field: queue2AssociatedRateLimiterID
+              {% endif %}
+              {% if wrr_queue_3_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: wrr_queue_3_rate_limiter_id
+                  to-field: queue3AssociatedRateLimiterID
+              {% endif %}
+              {% if wrr_queue_4_rate_limiter_name is defined %}
+              - retrieve-value:
+                  from-name: wrr_queue_4_rate_limiter_id
+                  to-field: queue4AssociatedRateLimiterID
+              {% endif %}
+        - create-object:
             type: EgressQOSPolicy
             actions:
               - set-values:
-                  name: {{ egress_qos_policy_name }}
-                  description: {{ description | default("egress QoS policy " + egress_qos_policy_name | default("")) }}
+                  name: {{ symmetric_qos_policy_name }}
+                  description: {{ description | default("symmetric QoS policy " + symmetric_qos_policy_name | default("")) }}
                   queue1ForwardingClasses: {{ priority_queue_1_classes | default(None) }}
                   queue2ForwardingClasses: {{ wrr_queue_2_classes | default(None) }}
                   queue3ForwardingClasses: {{ wrr_queue_3_classes | default(None) }}

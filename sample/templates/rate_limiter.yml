@@ -2,7 +2,7 @@ name: RateLimiter
 description: QoS template set - Create a Rate Limiter
 template-version: 1.0
 software-type: Nuage Networks VSD
-software-version: 5.0.2
+software-version: 5.1.1
 variables:
   - name: enterprise_name
     type: reference

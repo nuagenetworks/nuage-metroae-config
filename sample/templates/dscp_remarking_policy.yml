@@ -1,5 +1,5 @@
-name: CosRemarkingPolicy
-description: QoS template set - Create an CoS Remarking Policy
+name: DscpRemarkingPolicy
+description: QoS template set - Create an DSCP Remarking Policy
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.1.1
@@ -9,7 +9,7 @@ variables:
   - name: description
     type: string
     optional: true
-  - name: cos_remarking_policy_name
+  - name: dscp_remarking_policy_name
     type: reference
 actions:
   - select-object:
@@ -18,8 +18,8 @@ actions:
       value: {{ enterprise_name }}
       actions:
         - create-object:
-            type: COSRemarkingPolicyTable
+            type: DSCPRemarkingPolicyTable
             actions:
               - set-values:
-                  name: {{ cos_remarking_policy_name }}
-                  description: {{ description | default("CoS remarking policy " + cos_remarking_policy_name | default("")) }}
+                  name: {{ dscp_remarking_policy_name }}
+                  description: {{ description | default("DSCP remarking policy " + dscp_remarking_policy_name | default("")) }}

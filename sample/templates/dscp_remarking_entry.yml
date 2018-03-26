@@ -1,12 +1,12 @@
-name: CosRemarkingEntry
-description: QoS template set - Create an CoS Remarking Entry
+name: DscpRemarkingEntry
+description: QoS template set - Create an DSCP Remarking Entry
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.1.1
 variables:
   - name: enterprise_name
     type: reference
-  - name: cos_remarking_policy_name
+  - name: dscp_remarking_policy_name
     type: reference
   - name: forwarding_class
     type: choice
@@ -20,12 +20,12 @@ actions:
       value: {{ enterprise_name }}
       actions:
         - select-object:
-            type: COSRemarkingPolicyTable
+            type: DSCPRemarkingPolicyTable
             by-field: name
-            value: {{ cos_remarking_policy_name }}
+            value: {{ dscp_remarking_policy_name }}
             actions:
             - create-object:
-                type: COSRemarkingPolicy
+                type: DSCPRemarkingPolicy
                 actions:
                   - set-values:
                       DSCP: {{ dscp }}

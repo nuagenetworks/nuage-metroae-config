@@ -25,7 +25,18 @@
             - forwarding_class: A
               dscp: "0"
             - forwarding_class: B
-              dscp: "*"
+              dscp: "1"
+
+    - template: DscpRemarkingPolicy
+      values:
+        - dscp_remarking_policy_name: dscp1
+      children:
+        - template: DscpRemarkingEntry
+          values:
+            - forwarding_class: A
+              dscp: "2"
+            - forwarding_class: B
+              dscp: "3"
 
     - template: IngressQosPolicy
       values:
@@ -58,7 +69,8 @@
           wrr_queue_2_classes: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
           wrr_queue_2_rate_limiter_name: rate2
           default_service_class: A
-          # cos_remarking_policy_name: cos1
+          cos_remarking_policy_name: cos1
+          dscp_remarking_policy_name: dscp1
 
         - egress_qos_policy_name: egress-qos3
           parent_rate_limiter_name: rate1
@@ -67,3 +79,31 @@
           wrr_queue_4_classes: ['B', 'D', 'F', 'H']
           wrr_queue_4_rate_limiter_name: rate2
           default_service_class: B
+
+    - template: SymmetricQosPolicy
+      values:
+        - symmetric_qos_policy_name: sym-qos1
+          parent_rate_limiter_name: rate1
+          wrr_queue_2_classes: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+          wrr_queue_2_rate_limiter_name: rate2
+          default_service_class: A
+          cos_remarking_policy_name: cos1
+          dscp_remarking_policy_name: dscp1
+
+    - group: AlternateSymmetricQosPolicy
+      values:
+        - parent_rate_limiter_name: rate1
+          wrr_queue_2_classes: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+          wrr_queue_2_rate_limiter_name: rate2
+          default_service_class: A
+          cos_remarking_policy_name: cos1
+          dscp_remarking_policy_name: dscp1
+      children:
+
+        - template: IngressQosPolicy
+          values:
+            - ingress_qos_policy_name: alt-sym-qos2
+
+        - template: EgressQosPolicy
+          values:
+            - egress_qos_policy_name: alt-sym-qos2
