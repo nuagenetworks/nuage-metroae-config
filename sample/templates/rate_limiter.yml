@@ -8,15 +8,15 @@ variables:
     type: reference
   - name: rate_limiter_name
     type: string
+  - name: description
+    type: string
+    optional: true
   - name: committed_information_rate
     type: integer
   - name: peak_information_rate
     type: integer
   - name: peak_burst_size
     type: integer
-  - name: description
-    type: string
-    optional: true
 actions:
   - select-object:
       type: Enterprise

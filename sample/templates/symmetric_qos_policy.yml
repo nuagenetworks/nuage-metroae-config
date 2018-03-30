@@ -6,128 +6,217 @@ software-version: 5.1.1
 variables:
   - name: enterprise_name
     type: reference
-  - name: description
-    type: string
     optional: true
   - name: symmetric_qos_policy_name
-    type: reference
-  - name: parent_rate_limiter_name
-    type: reference
-  - name: priority_queue_1_classes
-    type: list
-    item-type: choice
-    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    optional: true
-  - name: priority_queue_1_rate_limiter_name
-    type: reference
-    optional: true
-  - name: wrr_queue_2_classes
-    type: list
-    item-type: choice
-    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    optional: true
-  - name: wrr_queue_2_rate_limiter_name
-    type: reference
-    optional: true
-  - name: wrr_queue_3_classes
-    type: list
-    item-type: choice
-    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    optional: true
-  - name: wrr_queue_3_rate_limiter_name
-    type: reference
-    optional: true
-  - name: wrr_queue_4_classes
-    type: list
-    item-type: choice
-    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    optional: true
-  - name: wrr_queue_4_rate_limiter_name
-    type: reference
+    type: string
+
+  - name: description
+    type: string
     optional: true
   - name: default_service_class
     type: choice
     choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
     optional: true
-  - name: cos_remarking_policy_name
-    type: reference
+
+  - name: parent_committed_information_rate
+    type: integer
+  - name: parent_peak_information_rate
+    type: integer
+  - name: parent_peak_burst_size
+    type: integer
+
+  - name: priority_queue_1_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
     optional: true
-  - name: dscp_remarking_policy_name
-    type: reference
+  - name: priority_queue_1_committed_information_rate
+    type: integer
     optional: true
+  - name: priority_queue_1_peak_information_rate
+    type: integer
+    optional: true
+  - name: priority_queue_1_peak_burst_size
+    type: integer
+    optional: true
+
+  - name: wrr_queue_2_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: wrr_queue_2_committed_information_rate
+    type: integer
+    optional: true
+  - name: wrr_queue_2_peak_information_rate
+    type: integer
+    optional: true
+  - name: wrr_queue_2_peak_burst_size
+    type: integer
+    optional: true
+
+  - name: wrr_queue_3_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: wrr_queue_3_committed_information_rate
+    type: integer
+    optional: true
+  - name: wrr_queue_3_peak_information_rate
+    type: integer
+    optional: true
+  - name: wrr_queue_3_peak_burst_size
+    type: integer
+    optional: true
+
+  - name: wrr_queue_4_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: wrr_queue_4_committed_information_rate
+    type: integer
+    optional: true
+  - name: wrr_queue_4_peak_information_rate
+    type: integer
+    optional: true
+  - name: wrr_queue_4_peak_burst_size
+    type: integer
+    optional: true
+
+  - name: cos_remarking_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: cos_remarking_dscp
+    type: list
+    item-type: string
+    optional: true
+  - name: dscp_remarking_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: dscp_remarking_dscp
+    type: list
+    item-type: string
+    optional: true
+
 actions:
+  {% if enterprise_name is defined %}
   - select-object:
       type: Enterprise
       by-field: name
       value: {{ enterprise_name }}
       actions:
-        - select-object:
+  {% endif %}
+        - create-object:
             type: RateLimiter
-            by-field: name
-            value: {{ parent_rate_limiter_name }}
             actions:
+              - set-values:
+                  name: {% set concat = "parent_rate_limiter_" + symmetric_qos_policy_name | default("") %}{{ concat }}
+                  description: {{ description | default("parent rate limiter " + symmetric_qos_policy_name | default("")) }}
+                  committedInformationRate: {{ parent_committed_information_rate | string }}
+                  peakBurstSize: {{ parent_peak_burst_size | string }}
+                  peakInformationRate: {{ parent_peak_information_rate | string }}
               - store-value:
                   as-name: parent_rate_limiter_id
                   from-field: id
-        {% if priority_queue_1_rate_limiter_name is defined %}
-        - select-object:
+        {% if priority_queue_1_classes | default([]) | length > 0 %}
+        - create-object:
             type: RateLimiter
-            by-field: name
-            value: {{ priority_queue_1_rate_limiter_name }}
             actions:
+              - set-values:
+                  name: {% set concat = "priority_queue_1_rate_limiter_" + symmetric_qos_policy_name %}{{ concat }}
+                  description: {{ description | default("priority queue 1 rate limiter " + symmetric_qos_policy_name | default("")) }}
+                  committedInformationRate: {{ priority_queue_1_committed_information_rate | string }}
+                  peakBurstSize: {{ priority_queue_1_peak_burst_size | string }}
+                  peakInformationRate: {{ priority_queue_1_peak_information_rate | string }}
               - store-value:
                   as-name: priority_queue_1_rate_limiter_id
                   from-field: id
         {% endif %}
-        {% if wrr_queue_2_rate_limiter_name is defined %}
-        - select-object:
+        {% if wrr_queue_2_classes | default([]) | length > 0 %}
+        - create-object:
             type: RateLimiter
-            by-field: name
-            value: {{ wrr_queue_2_rate_limiter_name }}
             actions:
+              - set-values:
+                  name: {% set concat = "wrr_queue_2_rate_limiter_" + symmetric_qos_policy_name %}{{ concat }}
+                  description: {{ description | default("weighted RR queue 2 rate limiter " + symmetric_qos_policy_name | default("")) }}
+                  committedInformationRate: {{ wrr_queue_2_committed_information_rate | string }}
+                  peakBurstSize: {{ wrr_queue_2_peak_burst_size | string }}
+                  peakInformationRate: {{ wrr_queue_2_peak_information_rate | string }}
               - store-value:
                   as-name: wrr_queue_2_rate_limiter_id
                   from-field: id
         {% endif %}
-        {% if wrr_queue_3_rate_limiter_name is defined %}
-        - select-object:
+        {% if wrr_queue_3_classes | default([]) | length > 0 %}
+        - create-object:
             type: RateLimiter
-            by-field: name
-            value: {{ wrr_queue_3_rate_limiter_name }}
             actions:
+              - set-values:
+                  name: {% set concat = "wrr_queue_3_rate_limiter_" + symmetric_qos_policy_name %}{{ concat }}
+                  description: {{ description | default("weighted RR queue 3 rate limiter " + symmetric_qos_policy_name | default("")) }}
+                  committedInformationRate: {{ wrr_queue_3_committed_information_rate | string }}
+                  peakBurstSize: {{ wrr_queue_3_peak_burst_size | string }}
+                  peakInformationRate: {{ wrr_queue_3_peak_information_rate | string }}
               - store-value:
                   as-name: wrr_queue_3_rate_limiter_id
                   from-field: id
         {% endif %}
-        {% if wrr_queue_4_rate_limiter_name is defined %}
-        - select-object:
+        {% if wrr_queue_4_classes | default([]) | length > 0 %}
+        - create-object:
             type: RateLimiter
-            by-field: name
-            value: {{ wrr_queue_4_rate_limiter_name }}
             actions:
+              - set-values:
+                  name: {% set concat = "wrr_queue_4_rate_limiter_" + symmetric_qos_policy_name %}{{ concat }}
+                  description: {{ description | default("weighted RR queue 4 rate limiter " + symmetric_qos_policy_name | default("")) }}
+                  committedInformationRate: {{ wrr_queue_4_committed_information_rate | string }}
+                  peakBurstSize: {{ wrr_queue_4_peak_burst_size | string }}
+                  peakInformationRate: {{ wrr_queue_4_peak_information_rate | string }}
               - store-value:
                   as-name: wrr_queue_4_rate_limiter_id
                   from-field: id
         {% endif %}
-        {% if cos_remarking_policy_name is defined %}
-        - select-object:
+        {% if cos_remarking_classes | default([]) | length > 0 %}
+        - create-object:
             type: COSRemarkingPolicyTable
-            by-field: name
-            value: {{ cos_remarking_policy_name }}
             actions:
+              - set-values:
+                  name: {% set concat = "cos_" + symmetric_qos_policy_name %}{{ concat }}
+                  description: {{ description | default("CoS policy " + symmetric_qos_policy_name | default("")) }}
               - store-value:
                   as-name: remarking_cos_policy_id
                   from-field: id
+              {% for class in cos_remarking_classes %}
+              - create-object:
+                  type: COSRemarkingPolicy
+                  actions:
+                    - set-values:
+                        DSCP: {{ cos_remarking_dscp[loop.index - 1] }}
+                        forwardingClass: {{ class }}
+              {% endfor %}
         {% endif %}
-        {% if dscp_remarking_policy_name is defined %}
-        - select-object:
+        {% if dscp_remarking_classes | default([]) | length > 0 %}
+        - create-object:
             type: DSCPRemarkingPolicyTable
-            by-field: name
-            value: {{ dscp_remarking_policy_name }}
             actions:
+              - set-values:
+                  name: {% set concat = "dscp_" + symmetric_qos_policy_name %}{{ concat }}
+                  description: {{ description | default("DSCP policy " + symmetric_qos_policy_name | default("")) }}
               - store-value:
                   as-name: remarking_dscp_policy_id
                   from-field: id
+              {% for class in dscp_remarking_classes %}
+              - create-object:
+                  type: DSCPRemarkingPolicy
+                  actions:
+                    - set-values:
+                        DSCP: {{ dscp_remarking_dscp[loop.index - 1] }}
+                        forwardingClass: {{ class }}
+              {% endfor %}
         {% endif %}
         - create-object:
             type: IngressQOSPolicy
@@ -142,22 +231,22 @@ actions:
               - retrieve-value:
                   from-name: parent_rate_limiter_id
                   to-field: parentQueueAssociatedRateLimiterID
-              {% if priority_queue_1_rate_limiter_name is defined %}
+              {% if priority_queue_1_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: priority_queue_1_rate_limiter_id
                   to-field: queue1AssociatedRateLimiterID
               {% endif %}
-              {% if wrr_queue_2_rate_limiter_name is defined %}
+              {% if wrr_queue_2_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: wrr_queue_2_rate_limiter_id
                   to-field: queue2AssociatedRateLimiterID
               {% endif %}
-              {% if wrr_queue_3_rate_limiter_name is defined %}
+              {% if wrr_queue_3_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: wrr_queue_3_rate_limiter_id
                   to-field: queue3AssociatedRateLimiterID
               {% endif %}
-              {% if wrr_queue_4_rate_limiter_name is defined %}
+              {% if wrr_queue_4_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: wrr_queue_4_rate_limiter_id
                   to-field: queue4AssociatedRateLimiterID
@@ -176,32 +265,32 @@ actions:
               - retrieve-value:
                   from-name: parent_rate_limiter_id
                   to-field: parentQueueAssociatedRateLimiterID
-              {% if priority_queue_1_rate_limiter_name is defined %}
+              {% if priority_queue_1_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: priority_queue_1_rate_limiter_id
                   to-field: queue1AssociatedRateLimiterID
               {% endif %}
-              {% if wrr_queue_2_rate_limiter_name is defined %}
+              {% if wrr_queue_2_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: wrr_queue_2_rate_limiter_id
                   to-field: queue2AssociatedRateLimiterID
               {% endif %}
-              {% if wrr_queue_3_rate_limiter_name is defined %}
+              {% if wrr_queue_3_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: wrr_queue_3_rate_limiter_id
                   to-field: queue3AssociatedRateLimiterID
               {% endif %}
-              {% if wrr_queue_4_rate_limiter_name is defined %}
+              {% if wrr_queue_4_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: wrr_queue_4_rate_limiter_id
                   to-field: queue4AssociatedRateLimiterID
               {% endif %}
-              {% if cos_remarking_policy_name is defined %}
+              {% if cos_remarking_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: remarking_cos_policy_id
                   to-field: associatedCOSRemarkingPolicyTableID
               {% endif %}
-              {% if dscp_remarking_policy_name is defined %}
+              {% if dscp_remarking_classes | default([]) | length > 0 %}
               - retrieve-value:
                   from-name: remarking_dscp_policy_id
                   to-field: associatedDSCPRemarkingPolicyTableID
