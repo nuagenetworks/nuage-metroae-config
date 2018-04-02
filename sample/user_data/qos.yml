@@ -89,7 +89,6 @@
           parent_peak_information_rate: 1000
           parent_peak_burst_size: 1000
           wrr_queue_2_classes: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-          wrr_queue_2_rate_limiter_name: rate2
           wrr_queue_2_committed_information_rate: 200
           wrr_queue_2_peak_information_rate: 200
           wrr_queue_2_peak_burst_size: 200
