@@ -6,6 +6,7 @@ software-version: 5.1.1
 variables:
   - name: enterprise_name
     type: reference
+    optional: true
   - name: rate_limiter_name
     type: string
   - name: description
@@ -18,11 +19,13 @@ variables:
   - name: peak_burst_size
     type: integer
 actions:
+  {% if enterprise_name is defined %}
   - select-object:
       type: Enterprise
       by-field: name
       value: {{ enterprise_name }}
       actions:
+  {% endif %}
         - create-object:
             type: RateLimiter
             actions:

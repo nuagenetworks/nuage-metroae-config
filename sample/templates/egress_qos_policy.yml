@@ -6,6 +6,7 @@ software-version: 5.1.1
 variables:
   - name: enterprise_name
     type: reference
+    optional: true
   - name: description
     type: string
     optional: true
@@ -56,11 +57,13 @@ variables:
     type: reference
     optional: true
 actions:
+  {% if enterprise_name is defined %}
   - select-object:
       type: Enterprise
       by-field: name
       value: {{ enterprise_name }}
       actions:
+  {% endif %}
         - select-object:
             type: RateLimiter
             by-field: name
