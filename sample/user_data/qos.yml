@@ -21,24 +21,14 @@
     - template: CosRemarkingPolicy
       values:
         - cos_remarking_policy_name: cos1
-      children:
-        - template: CosRemarkingEntry
-          values:
-            - forwarding_class: A
-              dscp: "0"
-            - forwarding_class: B
-              dscp: "1"
+          forwarding_classes: ['A', 'B']
+          remarking_cos_list: ['0', '1']
 
     - template: DscpRemarkingPolicy
       values:
         - dscp_remarking_policy_name: dscp1
-      children:
-        - template: DscpRemarkingEntry
-          values:
-            - forwarding_class: A
-              dscp: "2"
-            - forwarding_class: B
-              dscp: "3"
+          forwarding_classes: ['A', 'B']
+          remarking_dscp_list: ['2', '3']
 
     - template: IngressQosPolicy
       values:
@@ -94,9 +84,9 @@
           wrr_queue_2_peak_burst_size: 200
           default_service_class: A
           cos_remarking_classes: ['A', 'H']
-          cos_remarking_dscp: ['0', '7']
-          cos_remarking_classes: ['B', 'G']
-          cos_remarking_dscp: ['1', '6']
+          cos_remarking_cos_list: ['0', '7']
+          dscp_remarking_classes: ['B', 'G']
+          dscp_remarking_dscp_list: ['1', '6']
 
     # Another way to provide a symmetric QoS policy, sharing most data
     #

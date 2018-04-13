@@ -11,7 +11,17 @@ variables:
     type: string
     optional: true
   - name: dscp_remarking_policy_name
-    type: reference
+    type: string
+  - name: forwarding_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: dscp_list
+    type: list
+    item-type: string
+    optional: true
+
 actions:
   {% if enterprise_name is defined %}
   - select-object:
@@ -26,3 +36,11 @@ actions:
               - set-values:
                   name: {{ dscp_remarking_policy_name }}
                   description: {{ description | default("DSCP remarking policy " + dscp_remarking_policy_name | default("")) }}
+              {% for class in forwarding_classes | default([]) %}
+              - create-object:
+                  type: DSCPRemarkingPolicy
+                  actions:
+                    - set-values:
+                        DSCP: {{ remarking_dscp_list[loop.index - 1] }}
+                        forwardingClass: {{ class }}
+              {% endfor %}

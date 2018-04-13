@@ -90,7 +90,7 @@ variables:
     item-type: choice
     choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
     optional: true
-  - name: cos_remarking_dscp
+  - name: cos_remarking_cos_list
     type: list
     item-type: string
     optional: true
@@ -99,7 +99,7 @@ variables:
     item-type: choice
     choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
     optional: true
-  - name: dscp_remarking_dscp
+  - name: dscp_remarking_dscp_list
     type: list
     item-type: string
     optional: true
@@ -195,7 +195,7 @@ actions:
                   type: COSRemarkingPolicy
                   actions:
                     - set-values:
-                        DSCP: {{ cos_remarking_dscp[loop.index - 1] }}
+                        DSCP: {{ cos_remarking_cos_list[loop.index - 1] }}
                         forwardingClass: {{ class }}
               {% endfor %}
         {% endif %}
@@ -214,7 +214,7 @@ actions:
                   type: DSCPRemarkingPolicy
                   actions:
                     - set-values:
-                        DSCP: {{ dscp_remarking_dscp[loop.index - 1] }}
+                        DSCP: {{ dscp_remarking_dscp_list[loop.index - 1] }}
                         forwardingClass: {{ class }}
               {% endfor %}
         {% endif %}
