@@ -5,6 +5,7 @@
     "name",
     "select_name",
     "number",
+    "floating_point",
     "true_or_false",
     "fruit",
     "string_list",
@@ -22,9 +23,9 @@
     "soda_list": {
       "items": {
         "enum": [
-          "coke",
+          "COKE",
           "pepsi",
-          "sprite"
+          "Sprite"
         ]
       },
       "type": "array",
@@ -57,6 +58,10 @@
       "type": "integer",
       "title": "Number"
     },
+    "floating_point": {
+      "type": "float",
+      "title": "Floating point"
+    },
     "any_ip_address": {
       "type": "string",
       "title": "Any ip address",
@@ -73,8 +78,8 @@
     },
     "fruit": {
       "enum": [
-        "apple",
-        "orange",
+        "APPLE",
+        "Orange",
         "banana"
       ],
       "title": "Fruit"

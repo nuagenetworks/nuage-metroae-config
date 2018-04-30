@@ -4,11 +4,12 @@
     - name: ""                                 # (string) Name field description
       select_name: ""                          # (reference)
       number: 0                                # (integer)
+      floating_point: 0.0                      # (float)
       true_or_false: False                     # (boolean)
       ipv4_address: 0.0.0.0                    # (opt ipv4)
       ipv6_address: 0::0                       # (opt ipv6)
       any_ip_address: 0.0.0.0                  # (opt ipv4_or_6)
-      fruit: apple                             # (['apple', 'orange', 'banana'])
+      fruit: APPLE                             # (['APPLE', 'Orange', 'banana'])
       string_list: []                          # (list of string)
       int_list: []                             # (list of integer)
       soda_list: []                            # (list of choice)

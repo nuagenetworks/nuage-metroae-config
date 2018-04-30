@@ -1,0 +1,61 @@
+name: NSGateway
+description: NSG template set - Create an NSGateway
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.1.1
+variables:
+  - name: nsg_name
+    type: string
+  - name: infrastructure_gateway_profile_name
+    type: reference
+  - name: description
+    type: string
+    optional: true
+  - name: infrastructure_access_profile_name
+    type: reference
+    optional: true
+  - name: ssh_service
+    type: choice
+    choices: ["DISABLED", "ENABLED"]
+    optional: true
+  - name: instance_ssh_override
+    type: choice
+    choices: ["ALLOWED", "DISALLOWED"]
+    optional: true
+
+actions:
+  - select-object:
+      type: InfrastructureGatewayProfile
+      by-field: name
+      value: {{ infrastructure_gateway_profile_name }}
+      actions:
+        - store-value:
+            as-name: infrastructure_gateway_profile_id
+            from-field: id
+  {% if infrastructure_access_profile_name is defined %}
+  - select-object:
+      type: InfrastructureAccessProfile
+      by-field: name
+      value: {{ infrastructure_access_profile_name }}
+      actions:
+        - store-value:
+            as-name: infrastructure_access_profile_id
+            from-field: id
+  {% endif %}
+  - create-object:
+      type: NSGatewayTemplate
+      actions:
+        - set-values:
+            name: {{ nsg_name }}
+            description: {{ description | default("NSGateway " + nsg_name | default("")) }}
+            SSHService: {{ ssh_service | default("ENABLED") | upper }}
+            instanceSSHOverride: {{ instance_ssh_override | default("DISALLOWED") | upper }}
+        - retrieve-value:
+            from-name: infrastructure_gateway_profile_id
+            to-field: infrastructureProfileID
+        {% if infrastructure_access_profile_name is defined %}
+        - retrieve-value:
+            from-name: infrastructure_access_profile_id
+            to-field: infrastructureAccessProfileID
+        {% endif %}
+

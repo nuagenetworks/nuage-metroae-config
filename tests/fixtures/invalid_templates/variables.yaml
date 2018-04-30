@@ -13,6 +13,8 @@ variables:
     required-for-delete: true
   - name: number
     type: integer
+  - name: floating_point
+    type: float
   - name: true_or_false
     type: boolean
     optional: false
@@ -31,8 +33,8 @@ variables:
   - name: fruit
     type: choice
     choices:
-      - apple
-      - orange
+      - APPLE
+      - Orange
       - banana
   - name: string_list
     type: list
@@ -45,7 +47,7 @@ variables:
     type: list
     item-type: choice
     choices:
-      - coke
+      - COKE
       - pepsi
-      - sprite
+      - Sprite
 actions: []

@@ -13,8 +13,8 @@ from util import get_dict_field_no_case
 JSON_SCHEMA_URL = "http://json-schema.org/draft-04/schema#"
 JSON_SCHEMA_ID_PREFIX = "urn:nuage-metro:levistate:template:"
 JSON_SCHEMA_TITLE = "Schema validator for Nuage Metro Levistate template "
-VALID_VARIABLE_TYPES = ["string", "reference", "integer", "boolean", "ipv4",
-                        "ipv6", "ipv4_or_6", "choice", "list"]
+VALID_VARIABLE_TYPES = ["string", "reference", "integer", "float", "boolean",
+                        "ipv4", "ipv6", "ipv4_or_6", "choice", "list"]
 JSON_SCHEMA_STRING_TYPES = ["string", "reference", "ipv4", "ipv6", "ipv4_or_6"]
 EXAMPLE_COMMENT_SPACING = 40
 
@@ -260,6 +260,8 @@ class Template(object):
             value = '""'
         elif var_type == "integer":
             value = "0"
+        elif var_type == "float":
+            value = "0.0"
         elif var_type == "boolean":
             value = "False"
         elif var_type in ["ipv4", "ipv4_or_6"]:
@@ -368,6 +370,11 @@ class Template(object):
                 return True
             else:
                 self._raise_value_error(var_name, "is not an integer")
+        elif var_type == "float":
+            if type(value) == int or type(value) == float:
+                return True
+            else:
+                self._raise_value_error(var_name, "is not a float")
         elif var_type == "boolean":
             if value is True or value is False:
                 return True
@@ -375,7 +382,8 @@ class Template(object):
                 self._raise_value_error(var_name, "is not a boolean")
         elif var_type == "choice":
             choices = self._get_required_field(var_schema, "choices")
-            if value in choices:
+            upper_choices = [x.upper() for x in choices]
+            if value.upper() in upper_choices:
                 return True
             else:
                 self._raise_value_error(var_name, "is not a valid choice")

@@ -1,0 +1,19 @@
+name: Underlay
+description: NSG template set - Create an Underlay
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.1.1
+variables:
+  - name: underlay_name
+    type: string
+  - name: description
+    type: string
+    optional: true
+
+actions:
+  - create-object:
+      type: Underlay
+      actions:
+        - set-values:
+            name: {{ underlay_name }}
+            description: {{ description | default("Underlay " + underlay_name | default("")) }}
