@@ -2,7 +2,7 @@ name: NetworkPort
 description: NSG template set - Create a network port
 template-version: 1.0
 software-type: Nuage Networks VSD
-software-version: 5.1.1
+software-version: 5.2.2
 variables:
   - name: nsg_name
     type: reference

@@ -97,5 +97,4 @@
         - access_port_name: access_port1
           physical_name: access_port1
           vlan_value_list: [2, 3, 4]
-          ingress_qos_policy_names: ['', 'ingress-qos1', 'ingress-qos1']
           egress_qos_policy_names: ['', 'egress-qos1', 'egress-qos1']

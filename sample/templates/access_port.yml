@@ -2,7 +2,7 @@ name: AccessPort
 description: NSG template set - Create an access port
 template-version: 1.0
 software-type: Nuage Networks VSD
-software-version: 5.1.1
+software-version: 5.2.2
 variables:
   - name: nsg_name
     type: reference
@@ -27,10 +27,6 @@ variables:
     type: list
     item-type: integer
     optional: true
-  - name: ingress_qos_policy_names
-    type: list
-    item-type: reference
-    optional: true
   - name: egress_qos_policy_names
     type: list
     item-type: reference
@@ -39,16 +35,6 @@ variables:
 actions:
   {% if egress_qos_policy_names | default([]) | length > 0 %}
   {% for vlan_value in vlan_value_list %}
-  {% if ingress_qos_policy_names[loop.index - 1] != '' %}
-  - select-object:
-      type: IngressQOSPolicy
-      by-field: name
-      value: {{ ingress_qos_policy_names[loop.index - 1] }}
-      actions:
-        - store-value:
-            as-name: {% set concat = "ingress_qos_policy_id_" + loop.index | string %}{{ concat }}
-            from-field: id
-  {% endif %}
   {% if egress_qos_policy_names[loop.index - 1] != '' %}
   - select-object:
       type: EgressQOSPolicy
@@ -85,11 +71,6 @@ actions:
                     - set-values:
                         description: {{ description | default("Access Port " + access_port_name | default("")) }}
                         value: {{ vlan_value }}
-                    {% if ingress_qos_policy_names[loop.index - 1] != '' %}
-                    - retrieve-value:
-                        from-name: {% set concat = "ingress_qos_policy_id_" + loop.index | string %}{{ concat }}
-                        to-field: associatedIngressQOSPolicyID
-                    {% endif %}
                     {% if egress_qos_policy_names[loop.index - 1] != '' %}
                     - retrieve-value:
                         from-name: {% set concat = "egress_qos_policy_id_" + loop.index | string %}{{ concat }}
