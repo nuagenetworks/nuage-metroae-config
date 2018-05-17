@@ -1,32 +1,41 @@
-name: Bidirectional ACL Sample
-description: Creates a set of ingress and egress ACLs
+name: Bidirectional Security Policy Entry
+description: First template set - Create a Bidirectional Security Policy on a Domain
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.0.2
 variables:
   - name: enterprise_name
     type: reference
-    required_for_delete: true
   - name: domain_name
     type: reference
-    required_for_delete: true
-  # General ACL variables
-  - name: acl_name
+  - name: security_policy_name
+    type: reference
+  - name: acl_entry_name
     type: string
-    required_for_delete: true
-  - name: default_allow_ip
-    type: boolean
-  - name: default_allow_non_ip
-    type: boolean
-  - name: policy_priority
-    type: integer
-  - name: allow_address_spoof
-    type: boolean
-  - name: default_install_acl_implicit_rules
-    type: boolean
-  # ACL entry variables
   - name: description
     type: string
+    optional: true
+  # Entry variables
+  - name: location_type
+    type: choice
+    choices:
+      - any
+      - subnet
+      - zone
+  - name: location_name
+    type: reference
+    optional: true
+  - name: zone_name
+    type: reference
+    optional: true
+  - name: network_type
+    type: choice
+    choices:
+      - any
+      - subnet
+      - zone
+  - name: network_name
+    type: reference
   - name: entry_priority
     type: integer
   - name: protocol
@@ -37,35 +46,24 @@ variables:
     type: string
   - name: ether_type
     type: string
+    optional: true
+    default: "0x0800"
+  - name: dscp
+    type: string
+    optional: true
+    default: '*'
   - name: action
     type: choice
     choices:
       - forward
       - drop
-  - name: location_type
-    type: choice
-    choices:
-      - any
-      - policygroup
-      - subnet
-      - zone
-  - name: location_name
-    type: string
-  - name: network_type
-    type: choice
-    choices:
-      - any
-      - policygroup
-      - subnet
-      - zone
-  - name: network_name
-    type: string
   - name: stateful
     type: boolean
   - name: flow_logging_enabled
     type: boolean
   - name: stats_logging_enabled
     type: boolean
+
 actions:
   - select-object:
       type: Enterprise
@@ -78,16 +76,9 @@ actions:
             value: {{ domain_name }}
             actions:
               {% if location_type != 'any' %}
+              {% if location_type == 'zone' %}
               - select-object:
-                  {% if location_type == 'policygroup' %}
-                  type: Policy Group
-                  {% endif %}
-                  {% if location_type == 'subnet' %}
-                  type: Subnet
-                  {% endif %}
-                  {% if location_type == 'zone' %}
                   type: Zone
-                  {% endif %}
                   by-field: name
                   value: {{ location_name }}
                   actions:
@@ -95,17 +86,26 @@ actions:
                         as-name: location_id
                         from-field: id
               {% endif %}
-              {% if network_type != 'any' %}
+              {% if location_type == 'subnet' %}
               - select-object:
-                  {% if network_type == 'policygroup' %}
-                  type: Policy Group
-                  {% endif %}
-                  {% if network_type == 'subnet' %}
-                  type: Subnet
-                  {% endif %}
-                  {% if network_type == 'zone' %}
                   type: Zone
-                  {% endif %}
+                  by-field: name
+                  value: {{ zone_name }}
+                  actions:
+                    - select-object:
+                        type: Subnet
+                        by-field: name
+                        value: {{ location_name }}
+                        actions:
+                          - store-value:
+                              as-name: location_id
+                              from-field: id
+              {% endif %}
+              {% endif %}
+              {% if network_type != 'any' %}
+              {% if network_type == 'zone' %}
+              - select-object:
+                  type: Zone
                   by-field: name
                   value: {{ network_name }}
                   actions:
@@ -113,26 +113,42 @@ actions:
                         as-name: network_id
                         from-field: id
               {% endif %}
-              - create-object:
-                  type: IngressACLTemplate
+              {% if network_type == 'subnet' %}
+              - select-object:
+                  type: Zone
+                  by-field: name
+                  value: {{ zone_name }}
                   actions:
-                    - set-values:
-                        name: {{ acl_name }}
-                        defaultAllowIP: {{ default_allow_ip }}
-                        defaultAllowNonIP: {{ default_allow_non_ip }}
-                        priority: {{ policy_priority }}
-                        allowAddressSpoof: {{ allow_address_spoof }}
+                    - select-object:
+                        type: Subnet
+                        by-field: name
+                        value: {{ network_name }}
+                        actions:
+                          - store-value:
+                              as-name: network_id
+                              from-field: id
+              {% endif %}
+              {% endif %}
+              - select-object:
+                  type: IngressACLTemplate
+                  by-field: name
+                  value: {{ security_policy_name }}
+                  actions:
                     - create-object:
                         type: IngressACLEntryTemplate
                         actions:
                           - set-values:
-                              description: {{ description }}
+                              description: {{ acl_entry_name }}
                               priority: {{ entry_priority }}
                               protocol: {{ protocol }}
+                              {% if dscp is undefined %}
                               DSCP: '*'
+                              {% else %}
+                              DSCP: {{ dscp }}
+                              {% endif %}
                               sourcePort: {{ source_port }}
                               destinationPort: {{ destination_port }}
-                              etherType: {{ ether_type }}
+                              etherType: {{ ether_type | default("0x0800") }}
                               action: {{ action | upper }}
                               stateful: {{ stateful }}
                               flowLoggingEnabled: {{ flow_logging_enabled }}
@@ -155,26 +171,27 @@ actions:
                               from-name: network_id
                               to-field: networkID
                           {% endif %}
-              - create-object:
+              - select-object:
                   type: EgressACLTemplate
+                  by-field: name
+                  value: {{ security_policy_name }}
                   actions:
-                    - set-values:
-                        name: {{ acl_name }}
-                        defaultAllowIP: {{ default_allow_ip }}
-                        defaultAllowNonIP: {{ default_allow_non_ip }}
-                        priority: {{ policy_priority }}
-                        defaultInstallACLImplicitRules: {{ default_install_acl_implicit_rules }}
                     - create-object:
                         type: EgressACLEntryTemplate
                         actions:
                           - set-values:
-                              description: {{ description }}
+                              description: {{ acl_entry_name }}
                               priority: {{ entry_priority }}
                               protocol: {{ protocol }}
+                              {% if dscp is undefined %}
                               DSCP: '*'
-                              sourcePort: {{ source_port }}
-                              destinationPort: {{ destination_port }}
-                              etherType: {{ ether_type }}
+                              {% else %}
+                              DSCP: {{ dscp }}
+                              {% endif %}
+                              # Note: source and dest ports are flipped from ingress entry
+                              sourcePort: {{ destination_port }}
+                              destinationPort: {{ source_port }}
+                              etherType: {{ ether_type | default("0x0800") }}
                               action: {{ action | upper }}
                               stateful: {{ stateful }}
                               flowLoggingEnabled: {{ flow_logging_enabled }}
