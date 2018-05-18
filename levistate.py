@@ -71,6 +71,9 @@ def parse_args():
     parser.add_argument('-dr', '--dry-run', dest='dry_run',
                         action='store_true', required=False,
                         help='Perform validation only')
+    parser.add_argument('-lg', '--logs', dest='logs',
+                        action='store_true', required=False,
+                        help='Show logs after run')
     parser.add_argument('-l', '--list', dest='list',
                         action='store_true', required=False,
                         help='Lists loaded templates')
@@ -110,16 +113,9 @@ class Levistate(object):
             print "-----"
             print e.get_display_string()
             exit(1)
-        # except Exception as e:
-        #     self.writer.log.error(str(e))
-        #     print self.logger.get()
-        #     print ""
-        #     print "Error"
-        #     print "-----"
-        #     print str(e)
-        #     exit(1)
 
-        # print self.logger.get()
+        if self.args.logs:
+            print self.logger.get()
 
     def parse_extra_vars(self):
         if self.args.data is not None:
@@ -131,10 +127,23 @@ class Levistate(object):
                         raise Exception("Invalid extra-vars argument, must "
                                         "be key=value format: " + var)
                     key = key_value_pair[0]
-                    value = key_value_pair[1]
+                    value = self.parse_var_value(key_value_pair[1])
                     template_data[key] = value
 
-            self.template_data.append((self.template_name, template_data))
+            self.template_data.append((self.args.template_name, template_data))
+            # print str(template_data)
+
+    def parse_var_value(self, value):
+        if value.lower() == "true":
+            return True
+        if value.lower() == "false":
+            return False
+        try:
+            return int(value)
+        except ValueError:
+            pass
+
+        return value
 
     def list_info(self):
         if self.args.list:
@@ -171,10 +180,12 @@ class Levistate(object):
             self.store.read_templates(path)
 
     def parse_user_data(self):
-        parser = UserDataParser()
-        for path in self.args.data_path:
-            parser.read_data(path)
-        self.template_data = parser.get_template_name_data_pairs()
+        if self.args.data_path is not None:
+            parser = UserDataParser()
+            for path in self.args.data_path:
+                parser.read_data(path)
+            self.template_data = parser.get_template_name_data_pairs()
+            # print str(self.template_data)
 
     def apply_templates(self):
         config = Configuration(self.store)
@@ -197,8 +208,6 @@ class Levistate(object):
                 config.apply(self.writer)
 
             self.writer.set_validate_only(False)
-
-        # print str(config.root_action)
 
 
 if __name__ == "__main__":

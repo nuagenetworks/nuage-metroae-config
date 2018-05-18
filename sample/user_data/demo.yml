@@ -2,6 +2,14 @@
   values:
     enterprise_name: demo
     description: Demonstration deployment
+    dhcp_lease_interval: 40
+    vnf_management_enabled: True
+    allow_advanced_qos_configuration: True
+    allow_gateway_management: True
+    allow_trusted_forwarding_class: True
+    enable_application_performance_management: True
+    encryption_management_mode: managed
+    floating_ips_quota: 25000
   children:
     - group: domain-public
       values:
@@ -49,15 +57,25 @@
                 netmask: 255.255.0.0
                 underlay_enabled: disabled
                 address_translation: disabled
+                
+- template: Enterprise
+  values:
+    enterprise_name: demo2
+    enterprise_profile_name: profile_demo
+    description: Demonstration deployment        
 
 - template: DHCP Pool
   values:
     - $group_subnet: public-subnet1
       min_address: 10.0.0.1
       max_address: 10.0.0.254
+      dhcp_pool_type: host
+      iptype: ipv4
     - $group_subnet: private-subnet1
       min_address: 192.168.0.1
       max_address: 192.168.0.254
+      dhcp_pool_type: host
+      iptype: ipv4
 
 - template: Static Route
   values:
@@ -79,21 +97,43 @@
       policy_priority: 100
       allow_address_spoof: False
       default_install_acl_implicit_rules: True
-      entry_priority: 200
-      protocol: "6"
-      source_port: "80"
-      destination_port: '*'
-      dscp: '*'
-      ether_type: '0x0800'
-      action: forward
-      location_type: zone
-      location_name: public-zone1
-      network_type: any
-      network_name: ''
-      stateful: True
-      flow_logging_enabled: True
-      stats_logging_enabled: True
+      active: False
+  children:
+    - template: Bidirectional Security Policy Entry
+      values:
+        - entry_priority: 200
+          protocol: "6"
+          source_port: "80"
+          destination_port: '*'
+          dscp: '*'
+          ether_type: '0x0800'
+          action: forward
+          location_type: zone
+          location_name: public-zone1
+          network_type: any
+          network_name: ''
+          stateful: True
+          flow_logging_enabled: True
+          stats_logging_enabled: True
+          acl_entry_name: acl name 1
+        - entry_priority: 300
+          protocol: "6"
+          source_port: "80"
+          destination_port: '*'
+          dscp: '*'
+          ether_type: '0x0800'
+          action: forward
+          location_type: zone
+          location_name: public-zone1
+          network_type: any
+          network_name: ''
+          stateful: True
+          flow_logging_enabled: True
+          stats_logging_enabled: True
+          acl_entry_name: acl name 2
 
+- template: Bidirectional Security Policy
+  values:
     - $group_domain: domain-private
       security_policy_name: private-secpolicy1
       default_allow_ip: True
@@ -101,20 +141,41 @@
       policy_priority: 100
       allow_address_spoof: False
       default_install_acl_implicit_rules: True
-      entry_priority: 200
-      protocol: "6"
-      source_port: "80"
-      destination_port: '*'
-      action: forward
-      location_type: any
-      location_name: ''
-      network_type: subnet
-      network_name: private-subnet1
-      zone_name: private-zone1
-      stateful: True
-      flow_logging_enabled: True
-      stats_logging_enabled: True
-
+      active: False
+  children:
+    - template: Bidirectional Security Policy Entry
+      values:
+        - entry_priority: 200
+          protocol: "6"
+          source_port: "80"
+          destination_port: '*'
+          dscp: '*'
+          action: forward
+          location_type: any
+          location_name: ''
+          network_type: subnet
+          network_name: private-subnet1
+          zone_name: private-zone1
+          stateful: True
+          flow_logging_enabled: True
+          stats_logging_enabled: True
+          acl_entry_name: acl name 1
+        - entry_priority: 300
+          protocol: "6"
+          source_port: "80"
+          destination_port: '*'
+          dscp: '*'
+          action: forward
+          location_type: any
+          location_name: ''
+          network_type: subnet
+          network_name: private-subnet1
+          zone_name: private-zone1
+          stateful: True
+          flow_logging_enabled: True
+          stats_logging_enabled: True
+          acl_entry_name: acl name 2
+      
 - template: Service Chaining Policy
   values:
     - $group_domain: domain-public

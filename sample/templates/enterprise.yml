@@ -9,14 +9,85 @@ variables:
   - name: description
     type: string
     optional: true
-actions:
+  - name: enterprise_profile_name
+    type: reference
+    optional: true
+  - name: forwarding_classes
+    type: list
+    item-type: choice
+    choices: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    optional: true
+  - name: bgp_enabled
+    type: boolean
+    optional: true
+  - name: dhcp_lease_interval
+    type: integer
+    optional: true
+  - name: vnf_management_enabled
+    type: boolean
+    optional: true
+  - name: allow_advanced_qos_configuration
+    type: boolean
+    optional: true
+  - name: allow_gateway_management
+    type: boolean
+    optional: true
+  - name: allow_trusted_forwarding_classes
+    type: boolean
+    optional: true
+  - name: enable_application_performance_management
+    type: boolean
+    optional: true
+  - name: encryption_management_mode
+    type: choice
+    choices: 
+      - disabled
+      - managed
+    optional: true
+  - name: floating_ips_quota
+    type: integer
+    optional: true
+    
+actions: 
+  {% if enterprise_profile_name is defined %}
+  - select-object:
+      type: EnterpriseProfile
+      by-field: name
+      value: {{ enterprise_profile_name }}
+      actions:
+  {% else %}
   - create-object:
       type: EnterpriseProfile
       actions:
         - set-values:
             name: {% set concat = "profile_" + enterprise_name|default('')|string %}{{ concat }}
-            description: {{ description }}
-            allowedForwardingClasses: ['H']
+            description: {{ description | default("profile for " + enterprise_name | default("")) }}
+            allowedForwardingClasses: {{ forwarding_classes | default(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']) }}
+            {% if bgp_enabled is defined %}
+            BGPEnabled: {{ bgp_enabled }}
+            {% endif %}
+            {% if dhcp_lease_interval is defined %}
+            DHCPLeaseInterval: {{ dhcp_lease_interval }}
+            {% endif %}
+            VNFManagementEnabled: {{ vnf_management_enabled | default(False) }}
+            {% if allow_advanced_qos_configuration is defined %}
+            allowAdvancedQOSConfiguration: {{ allow_advanced_qos_configuration }}
+            {% endif %}
+            {% if allow_gateway_management is defined %}
+            allowGatewayManagement: {{ allow_gateway_management }}
+            {% endif %}
+            {% if allow_trusted_forwarding_class is defined %}
+            allowTrustedForwardingClass: {{ allow_trusted_forwarding_class }}
+            {% endif %}
+            enableApplicationPerformanceManagement: {{ enable_application_performance_management | default(False) }}
+            {% if encryption_management_mode is defined %}
+            encryptionManagementMode: {{ encryption_management_mode | upper }}
+            {% endif %}
+            {% if floating_ips_quota is defined %}
+            floatingIPsQuota: {{ floating_ips_quota }}
+            {% endif %}
+            
+  {% endif %}
         - store-value:
             as-name: enterprise_profile_id
             from-field: id
@@ -25,7 +96,7 @@ actions:
       actions:
         - set-values:
             name: {{ enterprise_name }}
-            description: {{ description }}
+            description: {{ description | default("enterprise " + enterprise_name | default("")) }}
         - retrieve-value:
             from-name: enterprise_profile_id
             to-field: enterpriseProfileID

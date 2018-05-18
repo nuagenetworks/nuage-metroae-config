@@ -83,6 +83,8 @@ class ConfigObject(NURESTObject):
             return bool
         elif label == "integer":
             return int
+        elif label == "long":
+            return int
         elif label == "float":
             return float
         elif label == "list":

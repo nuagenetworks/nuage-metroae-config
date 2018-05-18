@@ -1,0 +1,136 @@
+name: NetworkPort
+description: NSG template set - Create a network port
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: nsg_name
+    type: reference
+  - name: network_port_name
+    type: string
+  - name: description
+    type: string
+    optional: true
+  - name: physical_name
+    type: string
+  - name: speed
+    type: choice
+    choices: ["AUTONEGOTIATE", "BASET10", "BASET1000", "BASETX100", "BASEX10G"]
+    optional: true
+  - name: mtu
+    type: integer
+    optional: true
+  - name: vlan_range
+    type: string
+    optional: true
+  - name: vlan_value
+    type: integer
+  - name: infrastructure_vsc_profile_name
+    type: reference
+  - name: ingress_qos_policy_name
+    type: reference
+    optional: true
+  - name: egress_qos_policy_name
+    type: reference
+    optional: true
+  - name: underlay_name
+    type: reference
+  - name: uplink_role
+    type: choice
+    choices: ["NONE", "PRIMARY", "SECONDARY", "TERTIARY", "UNKNOWN"]
+    optional: true
+  - name: download_rate_limit
+    type: float
+    optional: true
+  - name: nat_enabled
+    type: boolean
+    optional: true
+  - name: route_to_underlay
+    type: boolean
+    optional: true
+
+actions:
+  - select-object:
+      type: InfrastructureVscProfile
+      by-field: name
+      value: {{ infrastructure_vsc_profile_name }}
+      actions:
+        - store-value:
+            as-name: infrastructure_vsc_profile_id
+            from-field: id
+  - select-object:
+      type: Underlay
+      by-field: name
+      value: {{ underlay_name }}
+      actions:
+        - store-value:
+            as-name: underlay_id
+            from-field: id
+  {% if ingress_qos_policy_name is defined %}
+  - select-object:
+      type: IngressQOSPolicy
+      by-field: name
+      value: {{ ingress_qos_policy_name }}
+      actions:
+        - store-value:
+            as-name: ingress_qos_policy_id
+            from-field: id
+  {% endif %}
+  {% if egress_qos_policy_name is defined %}
+  - select-object:
+      type: EgressQOSPolicy
+      by-field: name
+      value: {{ egress_qos_policy_name }}
+      actions:
+        - store-value:
+            as-name: egress_qos_policy_id
+            from-field: id
+  {% endif %}
+  - select-object:
+      type: NSGatewayTemplate
+      by-field: name
+      value: {{ nsg_name }}
+      actions:
+        - create-object:
+            type: NSPortTemplate
+            actions:
+              - set-values:
+                  name: {{ network_port_name }}
+                  description: {{ description | default("Network Port " + network_port_name | default("")) }}
+                  portType: NETWORK
+                  physicalName: {{ physical_name }}
+                  speed: {{ speed | default("AUTONEGOTIATE") | upper }}
+                  mtu: {{ mtu | default(1500) }}
+                  VLANRange: {{ vlan_range | default("0-4094") }}
+              - create-object:
+                  type: VlanTemplate
+                  actions:
+                    - set-values:
+                        description: {{ description | default("Network Port " + network_port_name | default("")) }}
+                        value: {{ vlan_value }}
+                        isUplink: True
+                    - retrieve-value:
+                        from-name: infrastructure_vsc_profile_id
+                        to-field: associatedVSCProfileID
+                    {% if ingress_qos_policy_name is defined %}
+                    - retrieve-value:
+                        from-name: ingress_qos_policy_id
+                        to-field: associatedIngressQOSPolicyID
+                    {% endif %}
+                    {% if egress_qos_policy_name is defined %}
+                    - retrieve-value:
+                        from-name: egress_qos_policy_id
+                        to-field: associatedEgressQOSPolicyID
+                    {% endif %}
+                    - create-object:
+                        type: UplinkConnection
+                        actions:
+                          - set-values:
+                              role: {{ uplink_role | upper | default("PRIMARY") }}
+                              mode: Dynamic
+                              downloadRateLimit: {{ download_rate_limit }}
+                              PATEnabled: {{ nat_enabled | default(True) }}
+                              underlayEnabled: {{ route_to_underlay | default(True) }}
+                          - retrieve-value:
+                              from-name: underlay_id
+                              to-field: assocUnderlayID

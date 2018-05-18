@@ -1,0 +1,37 @@
+name: RateLimiter
+description: QoS template set - Create a Rate Limiter
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.1.1
+variables:
+  - name: enterprise_name
+    type: reference
+    optional: true
+  - name: rate_limiter_name
+    type: string
+  - name: description
+    type: string
+    optional: true
+  - name: committed_information_rate
+    type: integer
+  - name: peak_information_rate
+    type: integer
+  - name: peak_burst_size
+    type: integer
+actions:
+  {% if enterprise_name is defined %}
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+  {% endif %}
+        - create-object:
+            type: RateLimiter
+            actions:
+              - set-values:
+                  name: {{ rate_limiter_name }}
+                  description: {{ description | default("rate limiter " + rate_limiter_name | default("")) }}
+                  committedInformationRate: {{ committed_information_rate | string }}
+                  peakBurstSize: {{ peak_burst_size | string }}
+                  peakInformationRate: {{ peak_information_rate | string }}

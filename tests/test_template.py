@@ -377,14 +377,15 @@ class TestTemplateVariableValidation(object):
         all_vars = {"name": "test_name",
                     "select_name": "test_select",
                     "number": 10,
+                    "floating_point": 1.2,
                     "true_or_false": True,
                     "ipv4_address": "192.168.0.1",
                     "ipv6_address": "8000::0001",
                     "any_ip_address": "10.0.0.0",
-                    "fruit": "apple",
+                    "fruit": "Apple",
                     "string_list": ["a", "b", "c"],
                     "int_list": [1, 2],
-                    "soda_list": ["coke", "pepsi", "sprite"]}
+                    "soda_list": ["coke", "Pepsi", "SPRITE"]}
 
         assert template.validate_template_data(**all_vars) is True
 
@@ -405,6 +406,7 @@ class TestTemplateVariableValidation(object):
         min_vars = {"name": "another_name",
                     "select_name": "another_select",
                     "number": 100000,
+                    "floating_point": 1,
                     "true_or_false": False,
                     "fruit": "orange",
                     "string_list": ["a", "b", "c"],
@@ -418,6 +420,7 @@ class TestTemplateVariableValidation(object):
 
         missing_vars = {"select_name": "another_select",
                         "number": 100000,
+                        "floating_point": 1.2,
                         "true_or_false": False,
                         "fruit": "orange",
                         "string_list": ["a", "b", "c"],
@@ -440,6 +443,7 @@ class TestTemplateVariableValidation(object):
         assert "name" in str(e)
         assert "select_name" in str(e)
         assert "number" in str(e)
+        assert "floating_point" in str(e)
         assert "true_or_false" in str(e)
         assert "fruit" in str(e)
         assert "string_list" in str(e)

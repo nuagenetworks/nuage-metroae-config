@@ -16,6 +16,17 @@ variables:
     type: string
   - name: max_address
     type: string
+  - name: dhcp_pool_type
+    type: choice
+    choices:
+      - bridge
+      - host
+  - name: iptype
+    type: choice
+    choices:
+      - dualstack
+      - ipv4
+      - ipv6
 actions:
   - select-object:
       type: Enterprise
@@ -39,7 +50,10 @@ actions:
                         actions:
                           - create-object:
                               type: AddressRange
+                              select-by-field: minAddress
                               actions:
                                 - set-values:
                                     minAddress: {{ min_address }}
                                     maxAddress: {{ max_address }}
+                                    DHCPPoolType: {{ dhcp_pool_type | upper }}
+                                    IPType: {{ iptype | upper }}
