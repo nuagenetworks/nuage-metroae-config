@@ -87,6 +87,14 @@
       address: 192.168.1.0
       netmask: 255.255.255.0
       next_hop: 192.168.1.1
+      
+- group: traffic_path1
+  values:
+    location_type: zone
+    location_name: public-zone1
+    network_type: any
+    network_name: ''    
+  
 
 - template: Bidirectional Security Policy
   values:
@@ -97,7 +105,7 @@
       policy_priority: 100
       allow_address_spoof: False
       default_install_acl_implicit_rules: True
-      active: False
+      active: True
   children:
     - template: Bidirectional Security Policy Entry
       values:
@@ -108,10 +116,7 @@
           dscp: '*'
           ether_type: '0x0800'
           action: forward
-          location_type: zone
-          location_name: public-zone1
-          network_type: any
-          network_name: ''
+          $group_path: traffic_path1
           stateful: True
           flow_logging_enabled: True
           stats_logging_enabled: True
@@ -123,10 +128,7 @@
           dscp: '*'
           ether_type: '0x0800'
           action: forward
-          location_type: zone
-          location_name: public-zone1
-          network_type: any
-          network_name: ''
+          $group_path: traffic_path1
           stateful: True
           flow_logging_enabled: True
           stats_logging_enabled: True
@@ -141,7 +143,7 @@
       policy_priority: 100
       allow_address_spoof: False
       default_install_acl_implicit_rules: True
-      active: False
+      active: True
   children:
     - template: Bidirectional Security Policy Entry
       values:
@@ -214,3 +216,56 @@
       network_name: ''
       flow_logging_enabled: True
       stats_logging_enabled: True
+
+- template: Gateway
+  values:
+    gateway: testGateway
+    personality: vrsg     
+    system_id: test
+
+- template: Port
+  values:
+    gateway: testGateway
+    port_name: port1
+    vlan_range: "0-4095"
+    physical_name: eth1
+     
+- template: Vlan
+  values:
+    - gateway: testGateway
+      port_name: port1
+      access_vlan_number: 10
+    - gateway: testGateway
+      port_name: port1
+      access_vlan_number: 20
+
+- template: Enterprise Permission
+  values:
+    - enterprise_name: demo
+      gateway: testGateway
+      port_name: port1
+      access_vlan_number: 10
+      permitted_action: use
+    - enterprise_name: demo
+      gateway: testGateway
+      port_name: port1
+      access_vlan_number: 20
+      permitted_action: use
+
+- template: Bridge Port
+  values:
+    - domain_name: public
+      zone_name: public-zone1
+      subnet_name: public-subnet1
+      access_vlan_number: 10
+      vport_name: vport1
+      gateway_name: testGateway
+      port_name: port1
+    - domain_name: private
+      zone_name: private-zone1
+      subnet_name: private-subnet1
+      access_vlan_number: 20
+      vport_name: vport1
+      gateway_name: testGateway
+      port_name: port1
+        

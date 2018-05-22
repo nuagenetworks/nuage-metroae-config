@@ -1,0 +1,44 @@
+name: Port
+description: Firt template set - Create Access Ports
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: gateway
+    type: reference
+  - name: port_name
+    type: string
+  - name: description
+    type: string
+    optional: True
+  - name: vlan_range
+    type: string
+  - name: physical_name
+    type: string
+  - name: associated_egress_qos_policy_id
+    type: string
+    optional: True
+actions: 
+  - select-object:
+      type: gatewaytemplate
+      by-field: name
+      value: {{ gateway }}
+      actions: 
+        - create-object:
+            type: porttemplate
+            actions:
+              - set-values:
+                  name: {{ port_name }}
+                  {% if description is defined %}
+                  description: {{ description }}
+                  {% endif %}
+                  VLANRange: {{ vlan_range }}
+                  physicalName: {{ physical_name }}
+                  portType: ACCESS
+                  {% if associated_egress_qos_policy_id is defined %}
+                  associatedEgressQOSPolicyID: {{ associated_egress_qos_policy_id }}
+                  {% endif %}
+              - store-value:
+                  as-name: port_template_id
+                  from-field: id
+    

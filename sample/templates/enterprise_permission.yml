@@ -1,0 +1,62 @@
+name: Enterprise Permission
+description: First template set - Create an Enterprise Permission
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: enterprise_name
+    type: reference
+  - name: gateway
+    type: reference
+  - name: port_name
+    type: reference
+  - name: access_vlan_number
+    type: integer
+  - name: permitted_action
+    type: choice
+    choices:
+      - all
+      - deploy
+      - extend
+      - instantiate
+      - read
+      - use
+    optional: True
+  - name: description
+    type: string
+    optional: True 
+    
+actions: 
+  - select-object:
+      type: enterprise
+      by-field: name
+      value: {{ enterprise_name }}
+      actions:
+      - store-value:
+          as-name: enterprise_id
+          from-field: id
+  - select-object:
+      type: gateway
+      by-field: name
+      value: {{ gateway }}
+      actions: 
+        - select-object: 
+            type: port
+            by-field: name
+            value: {{ port_name }}
+            actions: 
+              - select-object:
+                  type: vlan
+                  by-field: value
+                  value: {{ access_vlan_number }}
+                  actions: 
+                    - create-object: 
+                        type: enterprisepermission
+                        actions:
+                          - set-values: 
+                              permittedEntityName: {{ enterprise_name }}
+                              permittedAction: {{ permitted_action | upper }}
+                              permittedEntityDescription: {{ description | default("") }}
+                          - retrieve-value:
+                              from-name: enterprise_id
+                              to-field: permittedEntityID

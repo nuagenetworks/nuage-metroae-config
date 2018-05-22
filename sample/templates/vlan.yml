@@ -1,0 +1,37 @@
+name: Vlan 
+description: Firt template set - Create VLAN on Access Ports
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: gateway
+    type: reference
+  - name: port_name
+    type: reference
+  - name: access_vlan_number
+    type: integer
+  - name: description
+    type: string
+    optional: True
+    
+actions:
+  - select-object:
+      type: gatewaytemplate
+      by-field: name
+      value: {{ gateway }}
+      actions: 
+        - select-object: 
+            type: porttemplate
+            by-field: name
+            value: {{ port_name }}
+            actions: 
+              - create-object:
+                  type: vlantemplate
+                  select-by-field: value
+                  actions:
+                    - set-values:
+                        value: {{ access_vlan_number }}
+                        description: {{ description | default("")}}
+                    - store-value:
+                        as-name: vlan_template_id
+                        from-field: id

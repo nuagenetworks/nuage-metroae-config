@@ -1,0 +1,55 @@
+name: Gateway
+description: Firt template set - Create gateway template and gateway
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: gateway
+    type: string
+  - name: description
+    type: string
+    optional: True
+  - name: personality
+    type: choice
+    choices:
+      - dc7x50
+      - hardware_vtep
+      - nsg
+      - nuage_210_wbx_32
+      - nuage_210_wbx_48_s
+      - other
+      - vrsb
+      - vrsg
+      - vsa
+      - vsg
+    optional: True
+  - name: system_id
+    type: string
+
+actions: 
+  - create-object:
+      type: gatewaytemplate
+      actions:
+        - set-values:
+            name: {{ gateway }}
+            {% if description is defined %}
+            description: {{ description }}
+            {% endif %}
+            {% if personality is defined %}
+            personality: {{ personality | upper }}
+            {% endif %}
+        - store-value:
+            as-name: gateway_template_id
+            from-field: id
+  - create-object:
+      type: gateway
+      actions:
+        - set-values:
+            name: {{ gateway }}
+            {% if description is defined %}
+            description: {{ description }}
+            {% endif %}
+            systemID: {{ system_id }}
+        - retrieve-value: 
+            from-name: gateway_template_id
+            to-field: templateID
