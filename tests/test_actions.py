@@ -11,6 +11,8 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 ORDER_STORE_1,
                                 ORDER_STORE_2,
                                 ORDER_STORE_3,
+                                ORDER_STORE_4,
+                                ORDER_STORE_5,
                                 RETRIEVE_CONFLICT_1,
                                 RETRIEVE_CONFLICT_2,
                                 RETRIEVE_BEFORE_STORE,
@@ -682,6 +684,40 @@ class TestActionsOrdering(object):
         current_action = root_action.children[1].children[1].children[0]
         assert current_action.attributes == {'name': 'L2-O1',
                                              'field1': store_action_2}
+
+    def test_store_combine_reorder__success(self):
+        root_action = Action(None)
+
+        root_action.reset_state()
+        root_action.read_children_actions(ORDER_STORE_4)
+
+        root_action.reset_state()
+        root_action.read_children_actions(ORDER_STORE_5)
+
+        print str(root_action)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Level1"
+        assert current_action.field == "name"
+        assert current_action.value == "L1-O2"
+
+        current_action = root_action.children[0].children[0]
+        store_action = current_action
+        assert current_action.as_name == 'store_1'
+        assert current_action.from_field == 'field1'
+
+        current_action = root_action.children[1]
+        assert current_action.object_type == "Level1"
+
+        current_action = root_action.children[1].children[0]
+        assert current_action.attributes == {'name': 'L1-O1'}
+
+        current_action = root_action.children[1].children[1]
+        assert current_action.object_type == "Level2"
+
+        current_action = root_action.children[1].children[1].children[0]
+        assert current_action.attributes == {'name': 'L2-O1',
+                                             'field1': store_action}
 
 
 class TestActionsExecute(object):
