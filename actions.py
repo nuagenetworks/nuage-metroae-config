@@ -22,7 +22,8 @@ class Action(object):
             self.state = state
 
         self.children = list()
-        self.reorder_mark = None
+        self.store_marks = set()
+        self.retrieve_marks = set()
         self.template_name = None
         if parent is None:
             self.level = 0
@@ -190,7 +191,7 @@ class Action(object):
                 else:
                     self.children.append(new_action)
 
-            self.reorder_retrieve(new_action)
+            self.reorder_retrieve()
 
         except LevistateError as e:
             e.reraise_with_location(new_action._get_location())
@@ -217,20 +218,23 @@ class Action(object):
         for remaining_index in reversed(remaining_indicies):
             del self.children[remaining_index]
 
-    def mark_ancestors_for_reorder(self, mark):
+    def mark_ancestors_for_reorder(self, mark, is_store):
         if self.parent is not None:
-            self.parent.reorder_mark = mark
-            self.parent.mark_ancestors_for_reorder(mark)
+            if is_store is True:
+                self.parent.store_marks.add(mark)
+            else:
+                self.parent.retrieve_marks.add(mark)
+            self.parent.mark_ancestors_for_reorder(mark, is_store)
 
-    def reorder_retrieve(self, new_action):
-        if new_action.is_retrieve():
-            new_action.mark_for_reorder()
-            self.reorder_ancestors()
-            new_action.clear_reorder_marks()
+    def reorder_retrieve(self):
+        for mark in self.retrieve_marks:
+            self.reorder_ancestors(mark)
 
-    def reorder_ancestors(self):
-        store_indicies = self.find_marked_indicies_in_children("store")
-        retrieve_indicies = self.find_marked_indicies_in_children("retrieve")
+    def reorder_ancestors(self, mark):
+        store_indicies = self.find_marked_indicies_in_children(
+            mark, is_store=True)
+        retrieve_indicies = self.find_marked_indicies_in_children(
+            mark, is_store=False)
 
         if len(store_indicies) > 0 and len(retrieve_indicies) > 0:
             first_retrieve_index = retrieve_indicies[0]
@@ -243,13 +247,18 @@ class Action(object):
                     self.children.insert(first_retrieve_index, store_action)
 
         if self.parent is not None:
-            self.parent.reorder_ancestors()
+            self.parent.reorder_ancestors(mark)
 
-    def find_marked_indicies_in_children(self, mark):
+    def find_marked_indicies_in_children(self, mark, is_store):
         indicies = []
         for i, child in enumerate(self.children):
-            if child.reorder_mark == mark:
-                indicies.append(i)
+            if is_store is True:
+                if mark in child.store_marks:
+                    indicies.append(i)
+            else:
+                if mark in child.retrieve_marks:
+                    indicies.append(i)
+
         return indicies
 
 
@@ -332,6 +341,9 @@ class CreateObjectAction(Action):
                                 (self.object_type, self.select_by_field,
                                  str(select_value)))
 
+        self.store_marks.update(other_action.store_marks)
+        self.retrieve_marks.update(other_action.retrieve_marks)
+
         for child in other_action.children:
             child.parent = self
             self.add_child_action_sorted(child)
@@ -402,6 +414,9 @@ class SelectObjectAction(Action):
                 other_selector['value'] == self.value)
 
     def combine(self, other_action):
+        self.store_marks.update(other_action.store_marks)
+        self.retrieve_marks.update(other_action.retrieve_marks)
+
         for child in other_action.children:
             child.parent = self
             self.add_child_action_sorted(child)
@@ -535,6 +550,8 @@ class StoreValueAction(Action):
             raise TemplateActionError(
                 'Value of name %s already stored' % self.as_name)
 
+        self.mark_ancestors_for_reorder(self.as_name, is_store=True)
+
     def get_stored_value(self):
         if self.stored_value is not None:
             return self.stored_value
@@ -595,15 +612,4 @@ class RetrieveValueAction(SetValuesAction):
 
         stored_action = self.state['stored_values'][self.from_name]
         self.add_attribute(self.to_field, stored_action)
-
-    def mark_for_reorder(self):
-        # Important: Mark retrieve before store so common ancestors have a
-        # store value and don't get reordered
-        stored_action = self.state['stored_values'][self.from_name]
-        self.mark_ancestors_for_reorder("retrieve")
-        stored_action.mark_ancestors_for_reorder("store")
-
-    def clear_reorder_marks(self):
-        stored_action = self.state['stored_values'][self.from_name]
-        self.mark_ancestors_for_reorder(None)
-        stored_action.mark_ancestors_for_reorder(None)
+        self.mark_ancestors_for_reorder(self.from_name, is_store=False)

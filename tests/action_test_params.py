@@ -471,3 +471,35 @@ ORDER_STORE_3 = {"actions": [
                       {"Retrieve-value":
                           {"To-field": "field1",
                            "From-name": "store_1"}}]}}]}}]}
+
+
+ORDER_STORE_4 = {"actions": [
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O1"}}]}}]}
+
+
+ORDER_STORE_5 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "name",
+         "Value": "L1-O2",
+         "Actions": [
+             {"Store-value":
+                 {"from-field": "field1",
+                  "As-name": "store_1"}}]}},
+    {"select-object":
+        {"Type": "Level1",
+         "By-field": "name",
+         "Value": "L1-O1",
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}},
+                      {"Retrieve-value":
+                          {"To-field": "field1",
+                           "From-name": "store_1"}}]}}]}}]}
