@@ -94,3 +94,8 @@ actions:
                           - retrieve-value:
                               from-name: vlanid
                               to-field: VLANID  
+                          - create-object:
+                              type: bridgeinterface
+                              actions:
+                                - set-values:
+                                    name: {% set concat = "interface-" + vport_name |string %}{{ concat }} 

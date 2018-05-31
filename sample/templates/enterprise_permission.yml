@@ -55,7 +55,7 @@ actions:
                         actions:
                           - set-values: 
                               permittedEntityName: {{ enterprise_name }}
-                              permittedAction: {{ permitted_action | upper }}
+                              permittedAction: {{ permitted_action| default("use") | upper }}
                               permittedEntityDescription: {{ description | default("") }}
                           - retrieve-value:
                               from-name: enterprise_id

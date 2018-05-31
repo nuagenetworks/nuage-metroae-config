@@ -222,6 +222,8 @@
     gateway: testGateway
     personality: vrsg     
     system_id: test
+    enterprise_name: demo
+    
 
 - template: Port
   values:
@@ -229,6 +231,7 @@
     port_name: port1
     vlan_range: "0-4095"
     physical_name: eth1
+    
      
 - template: Vlan
   values:
@@ -239,18 +242,6 @@
       port_name: port1
       access_vlan_number: 20
 
-- template: Enterprise Permission
-  values:
-    - enterprise_name: demo
-      gateway: testGateway
-      port_name: port1
-      access_vlan_number: 10
-      permitted_action: use
-    - enterprise_name: demo
-      gateway: testGateway
-      port_name: port1
-      access_vlan_number: 20
-      permitted_action: use
 
 - template: Bridge Port
   values:
@@ -268,4 +259,3 @@
       vport_name: vport1
       gateway_name: testGateway
       port_name: port1
-        
