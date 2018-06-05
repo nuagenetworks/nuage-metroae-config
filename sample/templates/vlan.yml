@@ -1,4 +1,4 @@
-name: Vlan 
+name: Vlan
 description: Firt template set - Create VLAN on Access Ports
 template-version: 1.0
 software-type: Nuage Networks VSD
@@ -8,19 +8,19 @@ variables:
     type: reference
   - name: port_name
     type: reference
-  - name: access_vlan_number
-    type: integer
+  - name: access_vlan_numbers
+    type: string
   - name: description
     type: string
     optional: True
   - name: enterprise_name
     type: reference
     optional: True
-    
+
 actions:
 {% if enterprise_name is defined %}
   - select-object:
-      type: enterprise
+      type: Enterprise
       by-field: name
       value: {{ enterprise_name }}
       actions:
@@ -29,30 +29,38 @@ actions:
           from-field: id
 {% endif %}
   - select-object:
-      type: gateway
+      type: Gateway
       by-field: name
       value: {{ gateway }}
-      actions: 
-        - select-object: 
-            type: port
+      actions:
+        - select-object:
+            type: Port
             by-field: name
             value: {{ port_name }}
-            actions: 
+            actions:
+              {% set stripped_vlans = access_vlan_numbers | replace(" ", "") %}
+              {% set vlan_list = stripped_vlans.split(",") %}
+              {% for vlan in vlan_list %}
+              {% if "-" in vlan %}
+                {% set vlan_start = vlan.split("-")[0] | int %}
+                {% set vlan_end = vlan.split("-")[1] | int %}
+              {% else %}
+                {% set vlan_start = vlan | int %}
+                {% set vlan_end = vlan | int + 1 %}
+              {% endif %}
+              {% for vlan_num in range(vlan_start, vlan_end + 1) %}
               - create-object:
-                  type: vlan
+                  type: Vlan
                   select-by-field: value
                   actions:
                     - set-values:
-                        value: {{ access_vlan_number }}
+                        value: {{ vlan_num }}
                         description: {{ description | default("")}}
-                    - store-value:
-                        as-name: vlan_template_id
-                        from-field: id
                     {% if enterprise_name is defined %}
-                    - create-object: 
-                        type: enterprisepermission
+                    - create-object:
+                        type: EnterprisePermission
                         actions:
-                          - set-values: 
+                          - set-values:
                               name: {{ enterprise_name }}
                               permittedEntityName: {{ enterprise_name }}
                               permittedAction: USE
@@ -61,3 +69,5 @@ actions:
                               from-name: enterprise_id
                               to-field: permittedEntityID
                      {% endif %}
+              {% endfor %}
+              {% endfor %}

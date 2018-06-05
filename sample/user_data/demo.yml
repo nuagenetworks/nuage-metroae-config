@@ -57,12 +57,12 @@
                 netmask: 255.255.0.0
                 underlay_enabled: disabled
                 address_translation: disabled
-                
+
 - template: Enterprise
   values:
     enterprise_name: demo2
     enterprise_profile_name: profile_demo
-    description: Demonstration deployment        
+    description: Demonstration deployment
 
 - template: DHCP Pool
   values:
@@ -87,14 +87,14 @@
       address: 192.168.1.0
       netmask: 255.255.255.0
       next_hop: 192.168.1.1
-      
+
 - group: traffic_path1
   values:
     location_type: zone
     location_name: public-zone1
     network_type: any
-    network_name: ''    
-  
+    network_name: ''
+
 
 - template: Bidirectional Security Policy
   values:
@@ -177,7 +177,7 @@
           flow_logging_enabled: True
           stats_logging_enabled: True
           acl_entry_name: acl name 2
-      
+
 - template: Service Chaining Policy
   values:
     - $group_domain: domain-public
@@ -220,10 +220,10 @@
 - template: Gateway
   values:
     gateway: testGateway
-    personality: vrsg     
+    personality: vrsg
     system_id: test
     enterprise_name: demo
-    
+
 
 - template: Port
   values:
@@ -231,16 +231,16 @@
     port_name: port1
     vlan_range: "0-4095"
     physical_name: eth1
-    
-     
+
+
 - template: Vlan
   values:
     - gateway: testGateway
       port_name: port1
-      access_vlan_number: 10
+      access_vlan_numbers: "10, 12, 30 - 40"
     - gateway: testGateway
       port_name: port1
-      access_vlan_number: 20
+      access_vlan_numbers: "20"
 
 
 - template: Bridge Port

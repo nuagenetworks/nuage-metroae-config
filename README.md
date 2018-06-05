@@ -1,50 +1,50 @@
 # Levistate
+
 Levistate configuration template engine.
 
-Work in progress.
+Version 0.0.0
 
-This prototype is able to read JSON or Yaml files of templates and user-data to
+This tool reads JSON or Yaml files of templates and user-data to
 write a configuration to a VSD or to revert (remove) said configuration.
 
-## TODO
+## Overview
 
-* Unit-test for Actions class
-* Unit-test for UserDataParser class
-* Action ordering
-* Variable validation
-* VSD validation
-* Configuration update
-* User data improvements (groups, list format)
-* Better error handling and logging
+Levistate is a Python-based engine which can apply configuration to VSDs
+via templates.  The templates provide an abstraction around the VSD
+configuration model simplifying and validating the required data.  Data is
+provided by the user in the form of Yaml or JSON files and is transformed and
+applied to the VSD through the tool's templates.  The required data and proper
+format for each template is defined by standardized JSON schema specifications.
 
 ## Requirements
 
 Packages required for Levistate engine
 * bambou
-* collections
-* jinja2
-* json
-* os
-* yaml
-
-Additional packages for Levistate command-line tool
-* argparse
+* Jinja2
+* PyYAML
 
 Additional packages for unit-test
 * mock
 * pytest
 * requests
-* requests_mock
+* requests-mock
 
-## Usage
+The VSD API specifications must also be available.  These can be downloaded
+from github:
+
+    https://github.com/nuagenetworks/vsd-api-specifications
+
+## Parameters
 
 Levistate command-line tool usage:
 
-    usage: levistate.py [-h] [-tp TEMPLATE_PATH] [-sp SPEC_PATH] [-dp DATA_PATH]
-                        [-t TEMPLATE_NAME] [-d DATA] [-v VSD_URL] [-u USERNAME]
-                        [-p PASSWORD] [-e ENTERPRISE] [-r]
+    usage: levistate.py [-h] -tp TEMPLATE_PATH [-sp SPEC_PATH] [-dp DATA_PATH]
+                        [-t TEMPLATE_NAME] [-d DATA] [-r] [-v VSD_URL]
+                        [-u USERNAME] [-p PASSWORD] [-e ENTERPRISE] [-dr] [-lg]
+                        [-l] [-s] [-x]
 
-    Command-line tool for running template commands
+    This prototype is able to read JSON or Yaml files of templates and user-data
+    to write a configuration to a VSD or to revert (remove) said configuration.
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -56,7 +56,8 @@ Levistate command-line tool usage:
                             Path containing user data
       -t TEMPLATE_NAME, --template TEMPLATE_NAME
                             Template name
-      -d DATA, --data DATA  Specify extra variable as key=value
+      -d DATA, --data DATA  Specify user data as key=value
+      -r, --revert          Revert (delete) templates instead of applying
       -v VSD_URL, --vsd-url VSD_URL
                             URL to VSD REST API
       -u USERNAME, --username USERNAME
@@ -65,45 +66,27 @@ Levistate command-line tool usage:
                             Password for VSD
       -e ENTERPRISE, --enterprise ENTERPRISE
                             Enterprise for VSD
-      -r, --revert          Revert (delete) templates instead of applying
+      -dr, --dry-run        Perform validation only
+      -lg, --logs           Show logs after run
+      -l, --list            Lists loaded templates
+      -s, --schema          Displays template schema
+      -x, --example         Displays template user data example
 
-## File Descriptions
+## Example Usage
 
-* *levistate.py*: Command-line tool for issuing template commands. (work in
-progress)
-* *device_writer_base.py*: Base class for all template writers.  Not to be used
-on its own, use a derived class writer.
-* *vsd_writer.py*: Writes templates to a VSD using common APIs from base class.
-* *bambou_adapter.py*: A set of wrapper classes around the Bambou library to
-make it work generically for any configuration object based on specifications.
-* *template.py*: Reads Yaml or JSON template files and parses them.
-* *configuration.py*: Gathers together template user-data and applies it to a
-device using a writer.
-* *actions.py*: Reads actions from parsed templates and executes them to the
-specified writer.
-* *tests/*: Unit-tests for Levistate classes.
-* *sample/templates*: Some basic templates to use as examples.
-* *sample/user_data*: Some basic user data to use as examples.
+Apply enterprise, domain and ACLs to VSD.
 
-## Levistate Example
-
-Apply enterprise, domain and ACLs to VSD (hard-coded).  Needs
-vsd-api-specifications for operation
-
-    levistate$ python levistate.py -tp sample/templates -sp ~/vsd-api-specifications -dp sample/user_data/acls.yaml
+    levistate$ python levistate.py -tp sample/templates -sp ~/vsd-api-specifications -dp sample/user_data/acls.yaml -v https://localhost:8443
 
     Configuration
         Enterprise
             name = 'test_enterprise'
-        [select Enterprise (name of test_enterprise)]
             DomainTemplate
                 name = 'template_public'
                 [store id to name domain_template_id]
             Domain
                 name = 'public'
                 templateID = [retrieve domain_template_id (DomainTemplate:id)]
-        [select Enterprise (name of test_enterprise)]
-            [select Domain (name of public)]
                 IngressACLTemplate
                     priority = 100
                     defaultAllowNonIP = False
@@ -149,204 +132,238 @@ vsd-api-specifications for operation
                         networkType = 'ANY'
                         flowLoggingEnabled = True
 
-Revert (delete) objects configured during application, use -r option
+Revert (remove) objects configured during application, use -r option
 
     levistate$ python levistate.py -tp sample/templates -sp ~/vsd-api-specifications -dp sample/user_data/acls.yaml -r
 
-    Configuration
-        Enterprise
-            name = 'test_enterprise'
-        [select Enterprise (name of test_enterprise)]
-            DomainTemplate
-                name = 'template_public'
-                [store id to name domain_template_id]
-            Domain
-                name = 'public'
-                templateID = [retrieve domain_template_id (DomainTemplate:id)]
-        [select Enterprise (name of test_enterprise)]
-            [select Domain (name of public)]
-                IngressACLTemplate
-                    priority = 100
-                    defaultAllowNonIP = False
-                    allowAddressSpoof = False
-                    name = 'test_acl'
-                    defaultAllowIP = True
-                    IngressACLEntryTemplate
-                        networkID = ''
-                        stateful = True
-                        protocol = 6
-                        description = 'Test ACL'
-                        etherType = '0x0800'
-                        statsLoggingEnabled = True
-                        DSCP = '*'
-                        priority = 200
-                        action = 'FORWARD'
-                        locationID = ''
-                        destinationPort = '*'
-                        locationType = 'ANY'
-                        sourcePort = 80
-                        networkType = 'ANY'
-                        flowLoggingEnabled = True
-                EgressACLTemplate
-                    priority = 100
-                    defaultInstallACLImplicitRules = True
-                    defaultAllowNonIP = False
-                    name = 'test_acl'
-                    defaultAllowIP = True
-                    EgressACLEntryTemplate
-                        networkID = ''
-                        stateful = True
-                        protocol = 6
-                        description = 'Test ACL'
-                        etherType = '0x0800'
-                        statsLoggingEnabled = True
-                        DSCP = '*'
-                        priority = 200
-                        action = 'FORWARD'
-                        locationID = ''
-                        destinationPort = '*'
-                        locationType = 'ANY'
-                        sourcePort = 80
-                        networkType = 'ANY'
-                        flowLoggingEnabled = True
+## User Data
 
-## Unit-tests
+The templates within the Levistate tool are applied using data provided by the
+user.  Each set of data values provided allows the creation of an instance of
+configuration on the VSD.  The required format for the data of each template is
+defined by a JSON schema describing the required fields, types and other
+constraints on the data.
 
-Unit-tests can be run using 'pytest'.  Bambou adapter, VSD writer, Template
-and Configuration tests are complete.  The Actions and UserDataParser tests are
-in progress
+### File Format
 
-    levistate$ pytest -v
-    ============================================================================================== test session starts ===============================================================================================
-    platform darwin -- Python 2.7.10, pytest-3.2.5, py-1.5.2, pluggy-0.4.0 -- /Users/mpiecuch/virtualenvs/metro/bin/python
-    cachedir: .cache
-    rootdir: /Users/mpiecuch/levistate, inifile:
-    collected 125 items
+The user data for Levistate can be in either Yaml or JSON format.  Each entry
+in the file defines a template and the value sets to use against that template
+to instantiate configuration.
 
-    tests/test_bambou_adapter.py::TestSession::test_start__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestSession::test_start__invalid_pass <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_delete_child__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_save_parent__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_save_child__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_delete_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_new_object__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_save_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_save_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_create_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_create_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_delete_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_create_child__conflict <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_delete_parent__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestConfigObject::test_create_parent__conflict <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestFetcher::test_find_child__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestFetcher::test_find_child__invalid_parent <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestFetcher::test_find_parent__multiple <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestFetcher::test_find_child__multiple <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestFetcher::test_find_child__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestFetcher::test_find_parent__not_found <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_bambou_adapter.py::TestFetcher::test_find_parent__success <- ../virtualenvs/metro/lib/python2.7/site-packages/requests_mock/mocker.py PASSED
-    tests/test_configuration.py::TestConfigurationTemplates::test__success PASSED
-    tests/test_configuration.py::TestConfigurationTemplates::test__missing PASSED
-    tests/test_configuration.py::TestConfigurationData::test_add_get__success PASSED
-    tests/test_configuration.py::TestConfigurationData::test_add__invalid PASSED
-    tests/test_configuration.py::TestConfigurationData::test_get__invalid PASSED
-    tests/test_configuration.py::TestConfigurationData::test_update__success PASSED
-    tests/test_configuration.py::TestConfigurationData::test_update__invalid PASSED
-    tests/test_configuration.py::TestConfigurationData::test_remove__success PASSED
-    tests/test_configuration.py::TestConfigurationData::test_remove__invalid PASSED
-    tests/test_configuration.py::TestConfigurationApplyRevert::test_apply__success PASSED
-    tests/test_configuration.py::TestConfigurationApplyRevert::test_apply__action_error PASSED
-    tests/test_configuration.py::TestConfigurationApplyRevert::test_revert__success PASSED
-    tests/test_configuration.py::TestConfigurationApplyRevert::test_revert__action_error PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_dir__success PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__success PASSED
-    tests/test_template.py::TestTemplateParsing::test_add_by_string__success PASSED
-    tests/test_template.py::TestTemplateParsing::test_get_template__missing PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[no_exist.json-not found] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[not_json.json-name missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[not_yaml.yaml-name missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_name.json-name missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_name.yaml-name missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_software_type.json-software-type missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_software_type.yaml-software-type missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_software_version.json-software-version missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_software_version.yaml-software-version missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_variables.json-variables missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_variables.yaml-variables missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_actions.json-actions missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[missing_actions.yaml-actions missing] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[invalid_json.json-Syntax error] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[invalid_yaml.yaml-Syntax error] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[invalid_jinja.json-Syntax error] PASSED
-    tests/test_template.py::TestTemplateParsing::test_read_files__invalid[invalid_jinja.yaml-Syntax error] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[string] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[True] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[False] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[00] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[1.0] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[01] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[true] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[false] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[yes] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[no] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[on] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[off] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[*] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[None] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[null] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[with"dquote] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[with'squote] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[with'"both] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[> test] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[| test] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[* test] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[test | test] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[test > test] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[test * test] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__valid[:] PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__missing_var PASSED
-    tests/test_template.py::TestTemplateSubstitution::test__conditionals PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_dir__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[noexist.spec-not found] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[notjson.spec-Error parsing] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[nomodel.spec-'model' missing] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[noattributes.spec-'attributes' missing] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[nochildren.spec-'children' missing] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[noentityname.spec-'entity_name' missing] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[noresourcename.spec-'resource_name' missing] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSpecParsing::test_read_files__invalid[norestname.spec-'rest_name' missing] PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSession::test_start__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSession::test_start__no_params PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSession::test_start__no_root_spec PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSession::test_start__no_enterprise_spec PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSession::test_start__bambou_error PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSession::test_stop__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterCreateObject::test__no_session PASSED
-    tests/test_vsd_writer.py::TestVsdWriterCreateObject::test_parent__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterCreateObject::test_child__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterCreateObject::test__bad_object PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSelectObject::test__no_session PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSelectObject::test_parent__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSelectObject::test_child__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSelectObject::test__bad_object PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSelectObject::test__bad_child PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSelectObject::test__not_found PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSelectObject::test__multiple_found PASSED
-    tests/test_vsd_writer.py::TestVsdWriterDeleteObject::test__no_session PASSED
-    tests/test_vsd_writer.py::TestVsdWriterDeleteObject::test__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterDeleteObject::test__no_object PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test__no_session PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test_parent_new__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test_parent_update__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test_child_new__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test_child_update__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test__no_object PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test__invalid_attr PASSED
-    tests/test_vsd_writer.py::TestVsdWriterSetValues::test__bad_child PASSED
-    tests/test_vsd_writer.py::TestVsdWriterGetValue::test__no_session PASSED
-    tests/test_vsd_writer.py::TestVsdWriterGetValue::test__success PASSED
-    tests/test_vsd_writer.py::TestVsdWriterGetValue::test__no_object PASSED
-    tests/test_vsd_writer.py::TestVsdWriterGetValue::test__invalid_attr PASSED
+    - template: Enterprise
+      values:
+        - enterprise_name: my_first_enterprise
+          description: The first
 
-    =========================================================================================== 125 passed in 4.57 seconds ===========================================================================================
+        - enterprise_name: my_second_enterprise
+          description: The second
+
+In this example, two data sets are provided for the Enterprise template and the
+result will be that the two enterprises will be created on the VSD.  Only the
+enterprise_name is required, but description can be provided optionally.  The
+JSON schema for the Enterprise template defines the data format.
+
+### Children
+
+Let's now add domains to the enterprise objects.  In the Domain template, note
+that in addition to a domain_name, it also needs the enterprise_name to be
+specified so that the domain can be associated with the correct enterprise.  We
+could define our user data as follows:
+
+    - template: Enterprise
+      values:
+        - enterprise_name: my_first_enterprise
+          description: The first
+
+        - enterprise_name: my_second_enterprise
+          description: The second
+
+    - template: Domain
+      values:
+        - enterprise_name: my_first_enterprise
+          description: The first
+          domain_name: my_first_domain
+
+        - enterprise_name: my_second_enterprise
+          description: The second
+          domain_name: my_second_domain
+
+This user data is fully valid and will create two enterprises each with one
+domain.  However, we are duplicating the enterprise names and it would be
+tedious and error prone if the names needed to change.  In order to simplify
+nested data, children can be utilized as follows:
+
+    - template: Enterprise
+      values:
+        - enterprise_name: my_first_enterprise
+          description: The first
+      children:
+        - template: Domain
+          values:
+            - domain_name: my_first_domain
+
+    - template: Enterprise
+      values:
+        - enterprise_name: my_second_enterprise
+          description: The second
+      children:
+        - template: Domain
+          values:
+            - domain_name: my_second_domain
+              description: Overriden description
+
+In this case, each Domain is a child of a parent Enterprise.  As such, all of
+the values from the parent are inherited in the children.  The children
+domains automatically inherit the enterprise_name of the parent.  This also
+applies for the description.
+
+Note that values can be overriden if necessary as with the description of the second
+domain.  The most specific value takes precendence.  To prevent ambiguity, any
+template with child templates can only define one set of values.
+
+### Groups
+
+Another mechanism for reducing duplication in data is by using groups.  A group
+entry is very similar to a template, except that no actual template is
+instantiated.  Thus, the group defines a stand-alone data set.  Groups are
+useful when common data sets need to be defined and referenced elsewhere.
+
+    - group: first
+      values:
+        - enterprise_name: my_first_enterprise
+          domain_name: my_first_domain
+
+    - group: second
+      values:
+        - enterprise_name: my_second_enterprise
+          domain_name: my_second_domain
+
+    - group: ssh
+      values:
+        - protocol: tcp
+          port: 22
+
+    - group: html
+      values:
+        - protocol: tcp
+          port: 80
+
+    - template: Acl
+      values:
+        - acl_name: http_acl
+          $group_domain: first
+          $group_traffic: http
+          action: permit
+
+        - acl_name: ssh_acl
+          $group_domain: second
+          $group_traffic: ssh
+          action: deny
+
+In the above example, data sets for domains and traffic types are defined as
+groups.  These are being applied to the http_acl and ssh_acl templates using
+$group fields and referencing by group name.  The template will inherit all of
+the values from any group that is referenced.  The result in this case is that
+http_acl is created in the first domain and permits http traffic (tcp port 80)
+and the ssh_acl is created in the second domain and denies ssh traffic (tcp
+port 22).
+
+Group definitions can be children or have children.  However, they should only
+define one set of values.  The field name for group references must start with
+the string "$group", but can have any suffix following it.  The purpose of the
+suffix is to allow multiple group references without name collision.  Although
+any suffix can be specified, it is recommended to choose one that is
+descriptive of the reference meaning.
+
+### Field and Value Lists
+
+An alternative way of specifying values is by using a field list and set of value
+lists.  This format is similar to Comma Separated Values (CSV) data and
+can efficiently specify a large amount of data.
+
+    - template: Acl
+      fields: ['acl_name', '$group_domain', 'protocol', 'port', 'action']
+      values:
+          -   ['acl1',     'first',         'tcp',      22,     'deny']
+          -   ['acl2',     'first',         'udp',      5000,   'permit']
+          -   ['acl3',     'second',        'tcp',      80,     'deny']
+          -   ['acl4',     'second',        'udp',      5002,   'permit']
+
+A fields list must be specified to define the field name for each position of
+the value lists.  The values data sets must be specified as lists with the same
+length as the fields list.
+
+## Listing Templates
+
+The templates that have been loaded into the Levistate tool can be listed with the following:
+
+    levistate$ python levistate.py -tp sample/templates --list
+
+    Domain
+    Enterprise
+    Subnet
+    Zone
+
+## Generating User Data Examples
+
+An example of user data for any template can be provided using the following:
+
+    python levistate.py -tp sample/templates --example --template Domain
+
+    # First template set - Create a L3 Domain
+    - template: Domain
+      values:
+        - enterprise_name: ""                      # (reference)
+          domain_name: ""                          # (string)
+          description: ""                          # (opt string)
+          underlay_enabled: enabled                # (['enabled', 'disabled', 'inherited'])
+          address_translation: enabled             # (['enabled', 'disabled', 'inherited'])
+
+## Generating JSON Schemas
+
+A JSON schema can be generated for the user data required for any template.  These schemas conform to the json-schema.org standard specification:
+
+    python levistate.py -tp sample/templates --schema --template Domain
+
+    {
+      "title": "Schema validator for Nuage Metro Levistate template Domain",
+      "$id": "urn:nuage-metro:levistate:template:domain",
+      "required": [
+        "enterprise_name",
+        "domain_name",
+        "underlay_enabled",
+        "address_translation"
+      ],
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "type": "object",
+      "properties": {
+        "underlay_enabled": {
+          "enum": [
+            "enabled",
+            "disabled",
+            "inherited"
+          ],
+          "title": "Underlay enabled"
+        },
+        "address_translation": {
+          "enum": [
+            "enabled",
+            "disabled",
+            "inherited"
+          ],
+          "title": "Address translation"
+        },
+        "domain_name": {
+          "type": "string",
+          "title": "Domain name"
+        },
+        "enterprise_name": {
+          "type": "string",
+          "title": "Enterprise name"
+        },
+        "description": {
+          "type": "string",
+          "title": "Description"
+        }
+      }
+    }

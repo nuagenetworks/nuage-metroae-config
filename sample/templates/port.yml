@@ -21,10 +21,10 @@ variables:
   - name: enterprise_name
     type: reference
     optional: True
-actions: 
+actions:
 {% if enterprise_name is defined %}
   - select-object:
-      type: enterprise
+      type: Enterprise
       by-field: name
       value: {{ enterprise_name }}
       actions:
@@ -33,12 +33,12 @@ actions:
           from-field: id
 {% endif %}
   - select-object:
-      type: gateway
+      type: Gateway
       by-field: name
       value: {{ gateway }}
-      actions: 
+      actions:
         - create-object:
-            type: port
+            type: Port
             actions:
               - set-values:
                   name: {{ port_name }}
@@ -56,10 +56,10 @@ actions:
                   from-field: id
 
             {% if enterprise_name is defined %}
-              - create-object: 
-                  type: enterprisepermission
+              - create-object:
+                  type: EnterprisePermission
                   actions:
-                    - set-values: 
+                    - set-values:
                         name: {{ enterprise_name }}
                         permittedEntityName: {{ enterprise_name }}
                         permittedAction: USE
