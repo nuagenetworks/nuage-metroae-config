@@ -13,16 +13,16 @@ variables:
   - name: description
     type: string
     optional: True
-  - name: enterprise_name
+  - name: vlan_enterprise_name
     type: reference
     optional: True
 
 actions:
-{% if enterprise_name is defined %}
+{% if vlan_enterprise_name is defined %}
   - select-object:
       type: Enterprise
       by-field: name
-      value: {{ enterprise_name }}
+      value: {{ vlan_enterprise_name }}
       actions:
       - store-value:
           as-name: enterprise_id
@@ -56,13 +56,13 @@ actions:
                     - set-values:
                         value: {{ vlan_num }}
                         description: {{ description | default("")}}
-                    {% if enterprise_name is defined %}
+                    {% if vlan_enterprise_name is defined %}
                     - create-object:
                         type: EnterprisePermission
                         actions:
                           - set-values:
-                              name: {{ enterprise_name }}
-                              permittedEntityName: {{ enterprise_name }}
+                              name: {{ vlan_enterprise_name }}
+                              permittedEntityName: {{ vlan_enterprise_name }}
                               permittedAction: USE
                               permittedEntityDescription: {{ description | default("") }}
                           - retrieve-value:

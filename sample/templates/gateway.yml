@@ -25,7 +25,7 @@ variables:
     optional: True
   - name: system_id
     type: string
-  - name: enterprise_name
+  - name: gateway_enterprise_name
     type: reference
     optional: True
 
@@ -42,11 +42,11 @@ variables:
     optional: True
 
 actions:
-{% if enterprise_name is defined %}
+{% if gateway_enterprise_name is defined %}
   - select-object:
       type: Enterprise
       by-field: name
-      value: {{ enterprise_name }}
+      value: {{ gateway_enterprise_name }}
       actions:
         - store-value:
             as-name: enterprise_id
@@ -79,13 +79,13 @@ actions:
             from-name: gateway_template_id
             to-field: templateID
 
-{% if enterprise_name is defined %}
+{% if gateway_enterprise_name is defined %}
         - create-object:
             type: EnterprisePermission
             actions:
               - set-values:
-                  name: {{ enterprise_name }}
-                  permittedEntityName: {{ enterprise_name }}
+                  name: {{ gateway_enterprise_name }}
+                  permittedEntityName: {{ gateway_enterprise_name }}
                   permittedAction: USE
                   permittedEntityDescription: {{ description | default("") }}
               - retrieve-value:

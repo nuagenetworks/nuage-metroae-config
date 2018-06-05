@@ -18,15 +18,15 @@ variables:
   - name: associated_egress_qos_policy_id
     type: string
     optional: True
-  - name: enterprise_name
+  - name: port_enterprise_name
     type: reference
     optional: True
 actions:
-{% if enterprise_name is defined %}
+{% if port_enterprise_name is defined %}
   - select-object:
       type: Enterprise
       by-field: name
-      value: {{ enterprise_name }}
+      value: {{ port_enterprise_name }}
       actions:
       - store-value:
           as-name: enterprise_id
@@ -55,13 +55,13 @@ actions:
                   as-name: port_template_id
                   from-field: id
 
-            {% if enterprise_name is defined %}
+            {% if port_enterprise_name is defined %}
               - create-object:
                   type: EnterprisePermission
                   actions:
                     - set-values:
-                        name: {{ enterprise_name }}
-                        permittedEntityName: {{ enterprise_name }}
+                        name: {{ port_enterprise_name }}
+                        permittedEntityName: {{ port_enterprise_name }}
                         permittedAction: USE
                         permittedEntityDescription: {{ description | default("") }}
                     - retrieve-value:

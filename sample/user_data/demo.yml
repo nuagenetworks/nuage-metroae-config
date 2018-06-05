@@ -222,24 +222,28 @@
     gateway: testGateway
     personality: vrsg
     system_id: test
-    enterprise_name: demo
+    gateway_enterprise_name: demo
 
 
 - template: Port
   values:
-    gateway: testGateway
-    port_name: port1
-    vlan_range: "0-4095"
-    physical_name: eth1
+    - gateway: testGateway
+      port_name: port1
+      vlan_range: "0-4095"
+      physical_name: eth1
+    - gateway: testGateway
+      port_name: port2
+      vlan_range: "0-4095"
+      physical_name: eth2
 
 
 - template: Vlan
   values:
     - gateway: testGateway
       port_name: port1
-      access_vlan_numbers: "10, 12, 30 - 40"
+      access_vlan_numbers: "10, 12, 30-40"
     - gateway: testGateway
-      port_name: port1
+      port_name: port2
       access_vlan_numbers: "20"
 
 
