@@ -46,7 +46,7 @@ actions:
                 {% set vlan_end = vlan.split("-")[1] | int %}
               {% else %}
                 {% set vlan_start = vlan | int %}
-                {% set vlan_end = vlan | int + 1 %}
+                {% set vlan_end = vlan | int %}
               {% endif %}
               {% for vlan_num in range(vlan_start, vlan_end + 1) %}
               - create-object:
