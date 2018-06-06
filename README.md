@@ -16,23 +16,131 @@ provided by the user in the form of Yaml or JSON files and is transformed and
 applied to the VSD through the tool's templates.  The required data and proper
 format for each template is defined by standardized JSON schema specifications.
 
-## Requirements
+## Installation of Levistate
 
-Packages required for Levistate engine
-* bambou
-* Jinja2
-* PyYAML
+
+The primary requirements for running Levistate are:
+1. Installation of Python and the necessary packages.
+2. Installation of the Levistate engine python libraries
+3. Access to the Configuration templates
+4. Access to the VSD API Specification
+
+#### Installation of Python and required packages.
+
+Most linux distributions come with python bundled into the operating system. To verify that python is available we can do the following:
+
+*Ubuntu*
+
+```
+root@ubuntu:~# python --version
+Python 2.7.6
+```
+
+*RHEL/Centos*
+
+```
+[root@rhel]# python --version
+Python 2.7.5
+```
+
+To manage the python package installation we will use PIP. PIP can be installed Levistate
+
+*Ubuntu*
+
+```
+root@ubuntu:~# apt-get install python-pip
+...
+```
+
+*RHEL/Centos*
+
+```
+[root@rhel]# yum install python-pip
+...
+```
+
+Most packages required by Levistate are available as part of the base python functionality. However we will need to install the following:
+
+- Bambou
+- Jinja2 (min version 2.10)
+- PyYAML
 
 Additional packages for unit-test
-* mock
-* pytest
-* requests
-* requests-mock
 
-The VSD API specifications must also be available.  These can be downloaded
-from github:
+    mock
+    pytest
+    requests
+    requests-mock
 
-    https://github.com/nuagenetworks/vsd-api-specifications
+The following packages are installed via the same method on both Ubuntu and RHEL/Centos.
+
+*Ubuntu and RHEL/Centos*
+
+```
+[root@rhel]# pip install Bambou
+...
+[root@rhel]# pip install Jinja2
+...
+[root@rhel]# pip install PyYAML
+...
+```
+
+### Installation of Levistate engine
+
+Currently Levistate is available on github and will be installed via git clone. Check the levistate home page for latest master branch location.
+
+First we need to install git.
+
+*Ubuntu*
+
+```
+root@ubuntu:~# apt-get install git
+```
+
+*RHEL/Centos*
+
+```
+[root@rhel]# yum install git
+```
+
+Depending on the authentication method with github, ie. SSH Key, or Username/Password the git clone command line may change.
+
+
+For username/password authentication
+
+*Ubuntu and RHEL/Centos*
+
+```
+[root@rhel]# export GIT_SSL_NO_VERIFY=false
+[root@rhel]# git clone  https://github.mv.usa.alcatel.com/CASO/levistate.git
+Cloning into 'levistate'...
+Username for 'https://github.mv.usa.alcatel.com': sfiddian
+Password for 'https://sfiddian@github.mv.usa.alcatel.com':
+remote: Counting objects: 619, done.
+remote: Compressing objects: 100% (9/9), done.
+remote: Total 619 (delta 1), reused 0 (delta 0), pack-reused 610
+Receiving objects: 100% (619/619), 178.01 KiB | 0 bytes/s, done.
+Resolving deltas: 100% (398/398), done.
+```
+
+
+### Installation of the VSD API Specifications
+
+Levistate requires a description of the VSD API to create, read, update and delete the template contents into the VSD. We do this via reading the published VSD API Specification. This specificaiton is opensourced and is available on the public Nuage Networks github repository.
+
+
+
+*Ubuntu and RHEL/Centos*
+
+```
+[root@rhel]# git clone https://github.com/nuagenetworks/vsd-api-specifications.git
+Cloning into 'vsd-api-specifications'...
+remote: Counting objects: 23428, done.
+remote: Total 23428 (delta 0), reused 0 (delta 0), pack-reused 23428
+Receiving objects: 100% (23428/23428), 4.98 MiB | 1013.00 KiB/s, done.
+Resolving deltas: 100% (18163/18163), done.
+```
+
 
 ## Parameters
 

@@ -32,16 +32,12 @@
                 subnet_name: public-subnet1
                 address: 10.0.0.0
                 netmask: 255.0.0.0
-                underlay_enabled: disabled
-                address_translation: disabled
     - group: domain-private
       values:
         domain_name: private
     - template: Domain
       values:
         domain_name: private
-        underlay_enabled: disabled
-        address_translation: disabled
       children:
         - template: Zone
           values:
@@ -222,7 +218,6 @@
     gateway_name: testGateway
     personality: vrsg     
     system_id: test
-    gateway_enterprise_name: demo
 
 
 - template: Port
@@ -243,8 +238,8 @@
       port_name: port1
       access_vlan_numbers: "10, 12, 30-40"
     - gateway_name: testGateway
+      access_vlan_numbers: "10, 12, 20, 30-40"
       port_name: port2
-      access_vlan_numbers: "20"
 
 - template: Bridge Port
   values:
@@ -262,3 +257,10 @@
       vport_name: vport1
       gateway_name: testGateway
       port_name: port1
+
+
+- template: Enterprise Permission
+  values:
+    - permision_enterprise_name: demo
+      gateway: testGateway
+

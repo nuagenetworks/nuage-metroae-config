@@ -25,12 +25,14 @@ variables:
       - enabled
       - disabled
       - inherited
+    optional: true
   - name: address_translation
     type: choice
     choices:
       - enabled
       - disabled
       - inherited
+    optional: true
 actions:
   - select-object:
       type: Enterprise
