@@ -54,6 +54,6 @@ actions:
                               name: {{ subnet_name }}
                               address: {{ address }}
                               netmask: {{ netmask }}
-                              description: {{ description }}
+                              description: {{ description  | default("Subnet " + subnet_name | default("")) }}
                               underlayEnabled: {{ underlay_enabled | default('disabled') | upper }}
                               PATEnabled: {{ address_translation | default('disabled') | upper }}

@@ -90,7 +90,7 @@ actions:
                               hasAttachedInterfaces: {{ has_attached_interfaces | default(True) }}
                               type: BRIDGE
                               multicast: {{ multicast | default("INHERITED") | upper }}
-                              description: {{ description | default("") }}
+                              description: {{ description | default("Vport " + vport_name | default("")) }}
                           - retrieve-value:
                               from-name: vlanid
                               to-field: VLANID

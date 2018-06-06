@@ -1,10 +1,10 @@
 name: Port
-description: Firt template set - Create Access Ports
+description: First template set - Create Access Ports
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.2.2
 variables:
-  - name: gateway
+  - name: gateway_name
     type: reference
   - name: port_name
     type: string
@@ -35,16 +35,14 @@ actions:
   - select-object:
       type: Gateway
       by-field: name
-      value: {{ gateway }}
-      actions:
+      value: {{ gateway_name }}
+      actions: 
         - create-object:
             type: Port
             actions:
               - set-values:
                   name: {{ port_name }}
-                  {% if description is defined %}
-                  description: {{ description }}
-                  {% endif %}
+                  description: {{ description | default("Port " + port_name | default("")) }}
                   VLANRange: {{ vlan_range }}
                   physicalName: {{ physical_name }}
                   portType: ACCESS
@@ -63,7 +61,7 @@ actions:
                         name: {{ port_enterprise_name }}
                         permittedEntityName: {{ port_enterprise_name }}
                         permittedAction: USE
-                        permittedEntityDescription: {{ description | default("") }}
+                        permittedEntityDescription: {{ description | default("Enterprise permission " + enterprise_name | default("")) }}
                     - retrieve-value:
                         from-name: enterprise_id
                         to-field: permittedEntityID

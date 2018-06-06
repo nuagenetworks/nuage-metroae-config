@@ -1,10 +1,10 @@
 name: Gateway
-description: Firt template set - Create gateway template and gateway
+description: First template set - Create gateway template and gateway
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.2.2
 variables:
-  - name: gateway
+  - name: gateway_name
     type: string
   - name: description
     type: string
@@ -56,10 +56,8 @@ actions:
       type: GatewayTemplate
       actions:
         - set-values:
-            name: {{ gateway }}
-            {% if description is defined %}
-            description: {{ description }}
-            {% endif %}
+            name: {{ gateway_name }}
+            description: {{ description | default("Gateway " + gateway_name | default("")) }}
             {% if personality is defined %}
             personality: {{ personality | upper }}
             {% endif %}
@@ -70,10 +68,8 @@ actions:
       type: Gateway
       actions:
         - set-values:
-            name: {{ gateway }}
-            {% if description is defined %}
-            description: {{ description }}
-            {% endif %}
+            name: {{ gateway_name }}
+            description: {{ description | default("Gateway " + gateway_name | default("")) }}
             systemID: {{ system_id }}
         - retrieve-value:
             from-name: gateway_template_id
@@ -87,7 +83,7 @@ actions:
                   name: {{ gateway_enterprise_name }}
                   permittedEntityName: {{ gateway_enterprise_name }}
                   permittedAction: USE
-                  permittedEntityDescription: {{ description | default("") }}
+                  permittedEntityDescription: {{ description | default("EnterprisePermission " + gateway_enterprise_name | default("")) }}
               - retrieve-value:
                   from-name: enterprise_id
                   to-field: permittedEntityID

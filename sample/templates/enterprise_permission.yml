@@ -62,7 +62,7 @@ actions:
                           - set-values:
                               permittedEntityName: {{ permision_enterprise_name }}
                               permittedAction: {{ permitted_action| default("use") | upper }}
-                              permittedEntityDescription: {{ description | default("") }}
+                              permittedEntityDescription: {{ description | default("EnterprisePermission " + permission_enterprise_name | default("")) }}
                           - retrieve-value:
                               from-name: enterprise_id
                               to-field: permittedEntityID

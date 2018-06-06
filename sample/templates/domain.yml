@@ -42,7 +42,7 @@ actions:
             actions:
               - set-values:
                   name: {{ domain_name }}
-                  description: {{ description }}
+                  description: {{ description | default("Domain " + domain_name | default("")) }}
                   underlayEnabled: {{ underlay_enabled | default('disabled') | upper }}
                   PATEnabled: {{ address_translation | default('disabled') | upper }}
               - retrieve-value:

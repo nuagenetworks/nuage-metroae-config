@@ -1,10 +1,10 @@
-name: Vlan
-description: Firt template set - Create VLAN on Access Ports
+name: Vlan 
+description: First template set - Create VLAN on Access Ports
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.2.2
 variables:
-  - name: gateway
+  - name: gateway_name
     type: reference
   - name: port_name
     type: reference
@@ -31,9 +31,9 @@ actions:
   - select-object:
       type: Gateway
       by-field: name
-      value: {{ gateway }}
-      actions:
-        - select-object:
+      value: {{ gateway_name }}
+      actions: 
+        - select-object: 
             type: Port
             by-field: name
             value: {{ port_name }}
@@ -55,7 +55,7 @@ actions:
                   actions:
                     - set-values:
                         value: {{ vlan_num }}
-                        description: {{ description | default("")}}
+                        description: {{ description | default("Vlan " + ( vlan_num | string | default()))}}
                     {% if vlan_enterprise_name is defined %}
                     - create-object:
                         type: EnterprisePermission
@@ -64,10 +64,11 @@ actions:
                               name: {{ vlan_enterprise_name }}
                               permittedEntityName: {{ vlan_enterprise_name }}
                               permittedAction: USE
-                              permittedEntityDescription: {{ description | default("") }}
+                              permittedEntityDescription: {{ description | default("Enterprise permission " + enterprise_name | default("")) }}
                           - retrieve-value:
                               from-name: enterprise_id
                               to-field: permittedEntityID
                      {% endif %}
               {% endfor %}
               {% endfor %}
+               
