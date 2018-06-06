@@ -42,8 +42,10 @@ variables:
     type: string
   - name: source_port
     type: string
+    optional: true
   - name: destination_port
     type: string
+    optional: true
   - name: ether_type
     type: string
     optional: true
@@ -136,6 +138,7 @@ actions:
                   actions:
                     - create-object:
                         type: IngressACLEntryTemplate
+                        select-by-field: priority
                         actions:
                           - set-values:
                               description: {{ acl_entry_name }}
@@ -146,8 +149,12 @@ actions:
                               {% else %}
                               DSCP: {{ dscp }}
                               {% endif %}
+                              {% if source_port is defined %}
                               sourcePort: {{ source_port }}
+                              {% endif %}
+                              {% if destination_port is defined %}
                               destinationPort: {{ destination_port }}
+                              {% endif %}
                               etherType: {{ ether_type | default("0x0800") }}
                               action: {{ action | upper }}
                               stateful: {{ stateful }}
@@ -178,6 +185,7 @@ actions:
                   actions:
                     - create-object:
                         type: EgressACLEntryTemplate
+                        select-by-field: priority
                         actions:
                           - set-values:
                               description: {{ acl_entry_name }}
@@ -189,8 +197,12 @@ actions:
                               DSCP: {{ dscp }}
                               {% endif %}
                               # Note: source and dest ports are flipped from ingress entry
+                              {% if destination_port is defined %}
                               sourcePort: {{ destination_port }}
+                              {% endif %}
+                              {% if source_port is defined %}
                               destinationPort: {{ source_port }}
+                              {% endif %}
                               etherType: {{ ether_type | default("0x0800") }}
                               action: {{ action | upper }}
                               stateful: {{ stateful }}
