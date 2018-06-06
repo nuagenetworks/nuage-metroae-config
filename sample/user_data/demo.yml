@@ -222,7 +222,6 @@
     gateway: testGateway
     personality: vrsg
     system_id: test
-    gateway_enterprise_name: demo
 
 
 - template: Port
@@ -241,7 +240,7 @@
   values:
     - gateway: testGateway
       port_name: port1
-      access_vlan_numbers: "10, 12, 30-40"
+      access_vlan_numbers: "10, 12, 20, 30-40"
     - gateway: testGateway
       port_name: port2
       access_vlan_numbers: "20"
@@ -263,3 +262,10 @@
       vport_name: vport1
       gateway_name: testGateway
       port_name: port1
+
+
+- template: Enterprise Permission
+  values:
+    - permision_enterprise_name: demo
+      gateway: testGateway
+
