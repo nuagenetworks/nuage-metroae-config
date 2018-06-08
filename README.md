@@ -27,13 +27,15 @@ The primary requirements for running Levistate are:
 
 #### Installation of Python and required packages.
 
-Most linux distributions come with python bundled into the operating system. To verify that python is available we can do the following:
+Most linux distributions come with python bundled into the operating system. Python 2.7 is required. Currently Python 3.0 is not supported.
+
+To verify that python is available we can do the following:
 
 *Ubuntu*
 
 ```
 root@ubuntu:~# python --version
-Python 2.7.6
+Python 2.7.5
 ```
 
 *RHEL/Centos*
@@ -43,7 +45,7 @@ Python 2.7.6
 Python 2.7.5
 ```
 
-To manage the python package installation we will use PIP. PIP can be installed Levistate
+To manage the python package installation we will use PIP. Install PIP via apt-get or yum:
 
 *Ubuntu*
 
@@ -67,10 +69,10 @@ Most packages required by Levistate are available as part of the base python fun
 
 Additional packages for unit-test
 
-    mock
-    pytest
-    requests
-    requests-mock
+- mock
+- pytest
+- requests
+- requests-mock
 
 The following packages are installed via the same method on both Ubuntu and RHEL/Centos.
 
