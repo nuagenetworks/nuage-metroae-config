@@ -4,9 +4,9 @@ template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.2.2
 variables:
-  - name: permision_enterprise_name
+  - name: permission_enterprise_name
     type: reference
-  - name: gateway
+  - name: gateway_name
     type: reference
   - name: port_name
     type: reference
@@ -32,7 +32,7 @@ actions:
   - select-object:
       type: Enterprise
       by-field: name
-      value: {{ permision_enterprise_name }}
+      value: {{ permission_enterprise_name }}
       actions:
       - store-value:
           as-name: enterprise_id
@@ -40,7 +40,7 @@ actions:
   - select-object:
       type: Gateway
       by-field: name
-      value: {{ gateway }}
+      value: {{ gateway_name }}
       actions:
         {% if port_name is defined %}
         - select-object:
@@ -60,7 +60,7 @@ actions:
                         type: EnterprisePermission
                         actions:
                           - set-values:
-                              permittedEntityName: {{ permision_enterprise_name }}
+                              permittedEntityName: {{ permission_enterprise_name }}
                               permittedAction: {{ permitted_action| default("use") | upper }}
                               permittedEntityDescription: {{ description | default("EnterprisePermission " + permission_enterprise_name | default("")) }}
                           - retrieve-value:

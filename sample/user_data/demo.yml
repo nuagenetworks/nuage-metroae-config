@@ -261,6 +261,6 @@
 
 - template: Enterprise Permission
   values:
-    - permision_enterprise_name: demo
-      gateway: testGateway
+    - permission_enterprise_name: demo
+      gateway_name: testGateway
 
