@@ -140,7 +140,7 @@ actions:
                   actions:
                     - set-values:
                         name: {% set concat = "target_" + chaining_policy_name | default("") %}{{ concat }}
-                        description: {{ description }}
+                        description: {{ description | default("RedirectionTarget target_" + chaining_policy_name | default("")) }}
                         endPointType: {{ endpoint_type | upper }}
               - create-object:
                   type: IngressAdvFwdTemplate
@@ -149,12 +149,12 @@ actions:
                         name: {{ chaining_policy_name }}
                         active: {{ active }}
                         priority: {{ policy_priority }}
-                        description: {{ description }}
+                        description: {{ description | default("IngressAdvFwdTemplate " + chaining_policy_name | default("")) }}
                     - create-object:
                         type: IngressAdvFwdEntryTemplate
                         actions:
                           - set-values:
-                              description: {{ description }}
+                              description: {{ description  | default("IngressAdvFwdEntryTemplate Entry_" + chaining_policy_name | default("")) }}
                               priority: {{ entry_priority }}
                               protocol: {{ protocol }}
                               {% if dscp is undefined %}

@@ -1,0 +1,90 @@
+name: Gateway
+description: First template set - Create gateway template and gateway
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: gateway_name
+    type: string
+  - name: description
+    type: string
+    optional: True
+  - name: personality
+    type: choice
+    choices:
+      - dc7x50
+      - hardware_vtep
+      - nsg
+      - nuage_210_wbx_32
+      - nuage_210_wbx_48_s
+      - other
+      - vrsb
+      - vrsg
+      - vsa
+      - vsg
+    optional: True
+  - name: system_id
+    type: string
+  - name: gateway_enterprise_name
+    type: reference
+    optional: True
+
+  #Enterprise permission data
+  - name: permitted_action
+    type: choice
+    choices:
+      - all
+      - deploy
+      - extend
+      - instantiate
+      - read
+      - use
+    optional: True
+
+actions:
+{% if gateway_enterprise_name is defined %}
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ gateway_enterprise_name }}
+      actions:
+        - store-value:
+            as-name: enterprise_id
+            from-field: id
+{% endif %}
+  - create-object:
+      type: GatewayTemplate
+      actions:
+        - set-values:
+            name: {{ gateway_name }}
+            description: {{ description | default("Gateway " + gateway_name | default("")) }}
+            {% if personality is defined %}
+            personality: {{ personality | upper }}
+            {% endif %}
+        - store-value:
+            as-name: gateway_template_id
+            from-field: id
+  - create-object:
+      type: Gateway
+      actions:
+        - set-values:
+            name: {{ gateway_name }}
+            description: {{ description | default("Gateway " + gateway_name | default("")) }}
+            systemID: {{ system_id }}
+        - retrieve-value:
+            from-name: gateway_template_id
+            to-field: templateID
+
+{% if gateway_enterprise_name is defined %}
+        - create-object:
+            type: EnterprisePermission
+            actions:
+              - set-values:
+                  name: {{ gateway_enterprise_name }}
+                  permittedEntityName: {{ gateway_enterprise_name }}
+                  permittedAction: USE
+                  permittedEntityDescription: {{ description | default("EnterprisePermission " + gateway_enterprise_name | default("")) }}
+              - retrieve-value:
+                  from-name: enterprise_id
+                  to-field: permittedEntityID
+{% endif %}

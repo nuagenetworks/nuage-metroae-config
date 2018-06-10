@@ -1,0 +1,74 @@
+name: Vlan 
+description: First template set - Create VLAN on Access Ports
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: gateway_name
+    type: reference
+  - name: port_name
+    type: reference
+  - name: access_vlan_numbers
+    type: string
+  - name: description
+    type: string
+    optional: True
+  - name: vlan_enterprise_name
+    type: reference
+    optional: True
+
+actions:
+{% if vlan_enterprise_name is defined %}
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ vlan_enterprise_name }}
+      actions:
+      - store-value:
+          as-name: enterprise_id
+          from-field: id
+{% endif %}
+  - select-object:
+      type: Gateway
+      by-field: name
+      value: {{ gateway_name }}
+      actions: 
+        - select-object: 
+            type: Port
+            by-field: name
+            value: {{ port_name }}
+            actions:
+              {% set stripped_vlans = access_vlan_numbers | replace(" ", "") %}
+              {% set vlan_list = stripped_vlans.split(",") %}
+              {% for vlan in vlan_list %}
+              {% if "-" in vlan %}
+                {% set vlan_start = vlan.split("-")[0] | int %}
+                {% set vlan_end = vlan.split("-")[1] | int %}
+              {% else %}
+                {% set vlan_start = vlan | int %}
+                {% set vlan_end = vlan | int %}
+              {% endif %}
+              {% for vlan_num in range(vlan_start, vlan_end + 1) %}
+              - create-object:
+                  type: Vlan
+                  select-by-field: value
+                  actions:
+                    - set-values:
+                        value: {{ vlan_num }}
+                        description: {{ description | default("Vlan " + ( vlan_num | string | default()))}}
+                    {% if vlan_enterprise_name is defined %}
+                    - create-object:
+                        type: EnterprisePermission
+                        actions:
+                          - set-values:
+                              name: {{ vlan_enterprise_name }}
+                              permittedEntityName: {{ vlan_enterprise_name }}
+                              permittedAction: USE
+                              permittedEntityDescription: {{ description | default("Enterprise permission " + enterprise_name | default("")) }}
+                          - retrieve-value:
+                              from-name: enterprise_id
+                              to-field: permittedEntityID
+                     {% endif %}
+              {% endfor %}
+              {% endfor %}
+               

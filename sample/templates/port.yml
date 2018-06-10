@@ -1,0 +1,68 @@
+name: Port
+description: First template set - Create Access Ports
+template-version: 1.0
+software-type: Nuage Networks VSD
+software-version: 5.2.2
+variables:
+  - name: gateway_name
+    type: reference
+  - name: port_name
+    type: string
+  - name: description
+    type: string
+    optional: True
+  - name: vlan_range
+    type: string
+  - name: physical_name
+    type: string
+  - name: associated_egress_qos_policy_id
+    type: string
+    optional: True
+  - name: port_enterprise_name
+    type: reference
+    optional: True
+actions:
+{% if port_enterprise_name is defined %}
+  - select-object:
+      type: Enterprise
+      by-field: name
+      value: {{ port_enterprise_name }}
+      actions:
+      - store-value:
+          as-name: enterprise_id
+          from-field: id
+{% endif %}
+  - select-object:
+      type: Gateway
+      by-field: name
+      value: {{ gateway_name }}
+      actions: 
+        - create-object:
+            type: Port
+            actions:
+              - set-values:
+                  name: {{ port_name }}
+                  description: {{ description | default("Port " + port_name | default("")) }}
+                  VLANRange: {{ vlan_range }}
+                  physicalName: {{ physical_name }}
+                  portType: ACCESS
+                  {% if associated_egress_qos_policy_id is defined %}
+                  associatedEgressQOSPolicyID: {{ associated_egress_qos_policy_id }}
+                  {% endif %}
+              - store-value:
+                  as-name: port_template_id
+                  from-field: id
+
+            {% if port_enterprise_name is defined %}
+              - create-object:
+                  type: EnterprisePermission
+                  actions:
+                    - set-values:
+                        name: {{ port_enterprise_name }}
+                        permittedEntityName: {{ port_enterprise_name }}
+                        permittedAction: USE
+                        permittedEntityDescription: {{ description | default("Enterprise permission " + enterprise_name | default("")) }}
+                    - retrieve-value:
+                        from-name: enterprise_id
+                        to-field: permittedEntityID
+            {% endif %}

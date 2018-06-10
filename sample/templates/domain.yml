@@ -17,12 +17,14 @@ variables:
       - enabled
       - disabled
       - inherited
+    optional: true
   - name: address_translation
     type: choice
     choices:
       - enabled
       - disabled
       - inherited
+    optional: true
 actions:
   - select-object:
       type: Enterprise
@@ -42,7 +44,7 @@ actions:
             actions:
               - set-values:
                   name: {{ domain_name }}
-                  description: {{ description }}
+                  description: {{ description | default("Domain " + domain_name | default("")) }}
                   underlayEnabled: {{ underlay_enabled | default('disabled') | upper }}
                   PATEnabled: {{ address_translation | default('disabled') | upper }}
               - retrieve-value:
