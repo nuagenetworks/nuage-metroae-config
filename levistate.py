@@ -5,27 +5,18 @@ from logger import Logger
 from template import TemplateStore
 from user_data_parser import UserDataParser
 from vsd_writer import VsdWriter
-# import vspk.v5_0 as vspk
 
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
 DEFAULT_URL = 'https://localhost:8080'
 
-DESCRIPTION = """Command-line tool for running template commands.
-    See README.md for more."""
+DESCRIPTION = """This tool reads JSON or Yaml files of templates
+and user-data to write a configuration to a VSD or to revert (remove) said
+configuration.  See README.md for more."""
 
 
 def main():
-    # For debugging vspk:
-    #
-    # session = vspk.NUVSDSession(username='csproot',
-    #                             password='csproot',
-    #                             enterprise='csp',
-    #                             api_url='https://localhost:8080')
-    # session.start()
-    # root = session.user
-
     args = parse_args()
     levistate = Levistate(args)
     levistate.run()
@@ -152,13 +143,19 @@ class Levistate(object):
             return True
 
         if self.args.schema:
-            template = self.store.get_template(self.args.template_name)
-            print template.get_schema()
+            if self.args.template_name is None:
+                print "Requires template to be specified with -t"
+            else:
+                template = self.store.get_template(self.args.template_name)
+                print template.get_schema()
             return True
 
         if self.args.example:
-            template = self.store.get_template(self.args.template_name)
-            print template.get_example()
+            if self.args.template_name is None:
+                print "Requires template to be specified with -t"
+            else:
+                template = self.store.get_template(self.args.template_name)
+                print template.get_example()
             return True
 
         return False
@@ -185,6 +182,7 @@ class Levistate(object):
             for path in self.args.data_path:
                 parser.read_data(path)
             self.template_data = parser.get_template_name_data_pairs()
+            # For debugging user data
             # print str(self.template_data)
 
     def apply_templates(self):
@@ -208,6 +206,9 @@ class Levistate(object):
                 config.apply(self.writer)
 
             self.writer.set_validate_only(False)
+
+            if self.args.dry_run is True:
+                print str(config.root_action)
 
 
 if __name__ == "__main__":

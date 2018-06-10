@@ -43,7 +43,7 @@ actions:
                   actions:
                     - set-values:
                         name: {{ security_policy_name }}
-                        description: {{ description | default("") }}
+                        description: {{ description | default("Ingress ACL template " + security_policy_name | default("")) }}
                         defaultAllowIP: {{ default_allow_ip }}
                         defaultAllowNonIP: {{ default_allow_non_ip }}
                         priority: {{ policy_priority }}
@@ -55,7 +55,7 @@ actions:
                   actions:
                     - set-values:
                         name: {{ security_policy_name }}
-                        description: {{ description | default("") }}
+                        description: {{ description | default("Egress ACL template " + security_policy_name | default("")) }}
                         defaultAllowIP: {{ default_allow_ip }}
                         defaultAllowNonIP: {{ default_allow_non_ip }}
                         priority: {{ policy_priority }}

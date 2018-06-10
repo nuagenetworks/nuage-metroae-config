@@ -15,7 +15,7 @@ variables:
   - name: port_name
     type: reference
   - name: access_vlan_number
-    type: integer 
+    type: integer
   - name: vport_name
     type: string
   - name: description
@@ -23,7 +23,7 @@ variables:
     optional: true
   - name: dpi
     type: choice
-    choices: 
+    choices:
       - disabled
       - enabled
       - inherited
@@ -41,24 +41,24 @@ variables:
       - disabled
       - enabled
       - inherited
-    optional: True  
-  - name: has_attached_interfaces
-    type: boolean 
     optional: True
-    
+  - name: has_attached_interfaces
+    type: boolean
+    optional: True
+
 actions:
   - select-object:
-      type: gateway
+      type: Gateway
       by-field: name
       value: {{ gateway_name }}
       actions:
         - select-object:
-            type: port
+            type: Port
             by-field: name
             value: {{ port_name }}
             actions:
               - select-object:
-                  type: vlan
+                  type: Vlan
                   by-field: value
                   value: {{ access_vlan_number }}
                   actions:
@@ -66,23 +66,23 @@ actions:
                         as-name: vlanid
                         from-field: id
   - select-object:
-      type: domain
+      type: Domain
       by-field: name
       value: {{ domain_name }}
       actions:
         - select-object:
-            type: zone
+            type: Zone
             by-field: name
             value: {{ zone_name }}
             actions:
               - select-object:
-                  type: subnet
+                  type: Subnet
                   by-field: name
                   value: {{ subnet_name }}
                   actions:
                     - create-object:
-                        type: vport
-                        actions: 
+                        type: Vport
+                        actions:
                           - set-values:
                               name: {{ vport_name }}
                               DPI: {{ dpi | default("inherited") | upper }}
@@ -90,12 +90,12 @@ actions:
                               hasAttachedInterfaces: {{ has_attached_interfaces | default(True) }}
                               type: BRIDGE
                               multicast: {{ multicast | default("INHERITED") | upper }}
-                              description: {{ description | default("") }}
+                              description: {{ description | default("Vport " + vport_name | default("")) }}
                           - retrieve-value:
                               from-name: vlanid
-                              to-field: VLANID  
+                              to-field: VLANID
                           - create-object:
-                              type: bridgeinterface
+                              type: BridgeInterface
                               actions:
                                 - set-values:
-                                    name: {% set concat = "interface-" + vport_name |string %}{{ concat }} 
+                                    name: {% set concat = "interface-" + vport_name |string %}{{ concat }}

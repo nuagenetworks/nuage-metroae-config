@@ -4,14 +4,16 @@ template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.2.2
 variables:
-  - name: enterprise_name
+  - name: permission_enterprise_name
     type: reference
-  - name: gateway
+  - name: gateway_name
     type: reference
   - name: port_name
     type: reference
+    optional: true
   - name: access_vlan_number
     type: integer
+    optional: true
   - name: permitted_action
     type: choice
     choices:
@@ -24,39 +26,43 @@ variables:
     optional: True
   - name: description
     type: string
-    optional: True 
-    
-actions: 
+    optional: True
+
+actions:
   - select-object:
-      type: enterprise
+      type: Enterprise
       by-field: name
-      value: {{ enterprise_name }}
+      value: {{ permission_enterprise_name }}
       actions:
       - store-value:
           as-name: enterprise_id
           from-field: id
   - select-object:
-      type: gateway
+      type: Gateway
       by-field: name
-      value: {{ gateway }}
-      actions: 
-        - select-object: 
-            type: port
+      value: {{ gateway_name }}
+      actions:
+        {% if port_name is defined %}
+        - select-object:
+            type: Port
             by-field: name
             value: {{ port_name }}
-            actions: 
+            actions:
+              {% if access_vlan_number is defined %}
               - select-object:
-                  type: vlan
+                  type: Vlan
                   by-field: value
                   value: {{ access_vlan_number }}
-                  actions: 
-                    - create-object: 
-                        type: enterprisepermission
+                  actions:
+              {% endif %}
+        {% endif %}
+                    - create-object:
+                        type: EnterprisePermission
                         actions:
-                          - set-values: 
-                              permittedEntityName: {{ enterprise_name }}
+                          - set-values:
+                              permittedEntityName: {{ permission_enterprise_name }}
                               permittedAction: {{ permitted_action| default("use") | upper }}
-                              permittedEntityDescription: {{ description | default("") }}
+                              permittedEntityDescription: {{ description | default("EnterprisePermission " + permission_enterprise_name | default("")) }}
                           - retrieve-value:
                               from-name: enterprise_id
                               to-field: permittedEntityID

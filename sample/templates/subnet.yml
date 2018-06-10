@@ -25,12 +25,14 @@ variables:
       - enabled
       - disabled
       - inherited
+    optional: true
   - name: address_translation
     type: choice
     choices:
       - enabled
       - disabled
       - inherited
+    optional: true
 actions:
   - select-object:
       type: Enterprise
@@ -54,6 +56,6 @@ actions:
                               name: {{ subnet_name }}
                               address: {{ address }}
                               netmask: {{ netmask }}
-                              description: {{ description }}
+                              description: {{ description  | default("Subnet " + subnet_name | default("")) }}
                               underlayEnabled: {{ underlay_enabled | default('disabled') | upper }}
                               PATEnabled: {{ address_translation | default('disabled') | upper }}
