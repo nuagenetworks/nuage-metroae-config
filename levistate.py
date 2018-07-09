@@ -105,7 +105,7 @@ def add_template_path_parser_argument(parser):
     parser.add_argument('-tp', '--template-path', dest='template_path',
                         action='append', required=False,
                         default=None,
-                        help='Path containing template files')
+                        help='Path containing template files. Can also set using environment variable %s' % (ENV_TEMPLATE))
 
 def add_template_parser_arguements(parser):
     add_template_path_parser_argument(parser)
@@ -119,30 +119,30 @@ def add_parser_arguments(parser):
     add_template_path_parser_argument(parser)
     parser.add_argument('-sp', '--spec-path', dest='spec_path',
                         action='append', required=False,
-                        help='Path containing object specifications')
+                        help='Path containing object specifications. Can also set using environment variable %s' % (ENV_VSD_SPECIFICATIONS))
     parser.add_argument('-dp', '--data-path', dest='data_path',
                         action='append', required=False,
                         default=None,
-                        help='Path containing user data')
+                        help='Path containing user data. Can also set using environment variable %s' % (ENV_USER_DATA))
     parser.add_argument('-d', '--data', dest='data',
                         action='append', required=False,
                         help='Specify user data as key=value')
     parser.add_argument('-v', '--vsd-url', dest='vsd_url',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_URL, DEFAULT_URL),
-                        help='URL to VSD REST API')
+                        help='URL to VSD REST API. Can also set using environment variable %s' % (ENV_VSD_URL))
     parser.add_argument('-u', '--username', dest='username',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_USERNAME, DEFAULT_VSD_USERNAME),
-                        help='Username for VSD')
+                        help='Username for VSD. Can also set using environment variable %s' % (ENV_VSD_USERNAME))
     parser.add_argument('-p', '--password', dest='password',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_PASSWORD, DEFAULT_VSD_PASSWORD),
-                        help='Password for VSD')
+                        help='Password for VSD. Can also set using environment variable %s' % (ENV_VSD_PASSWORD))
     parser.add_argument('-e', '--enterprise', dest='enterprise',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_ENTERPRISE, DEFAULT_VSD_ENTERPRISE),
-                        help='Enterprise for VSD')
+                        help='Enterprise for VSD. Can also set using environment variable %s' % (ENV_VSD_ENTERPRISE))
     parser.add_argument('-lg', '--logs', dest='logs',
                         action='store_true', required=False,
                         help='Show logs after run')
