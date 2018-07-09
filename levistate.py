@@ -72,7 +72,7 @@ def main():
         if args.template_path is None:
             print "Please specify template path using --tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
-            
+     
     levistate = Levistate(args, args.action)
     levistate.run()
     
@@ -94,10 +94,10 @@ def parse_args():
     add_template_path_parser_argument(list_parser)
     
     schema_parser = sub_parser.add_parser(SCHEMA_ACTION)
-    add_schema_or_example_parser_arguments(schema_parser)
+    add_template_parser_arguements(schema_parser)
     
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
-    add_schema_or_example_parser_arguments(example_parser)
+    add_template_parser_arguements(example_parser)
     
     return parser.parse_args()
 
@@ -107,7 +107,7 @@ def add_template_path_parser_argument(parser):
                         default=None,
                         help='Path containing template files')
 
-def add_schema_or_example_parser_arguments(parser):
+def add_template_parser_arguements(parser):
     add_template_path_parser_argument(parser)
     
     parser.add_argument('-t', '--template', dest='template_name',
@@ -124,9 +124,6 @@ def add_parser_arguments(parser):
                         action='append', required=False,
                         default=None,
                         help='Path containing user data')
-    parser.add_argument('-t', '--template', dest='template_name',
-                        action='store', required=False,
-                        help='Template name')
     parser.add_argument('-d', '--data', dest='data',
                         action='append', required=False,
                         help='Specify user data as key=value')
@@ -167,7 +164,7 @@ class Levistate(object):
         self.setup_vsd_writer()
         self.parse_user_data()
         self.parse_extra_vars()
-
+        
         try:
             self.apply_templates()
         except LevistateError as e:
@@ -211,6 +208,7 @@ class Levistate(object):
         return value
 
     def list_info(self):
+        
         if self.action == LIST_ACTION:
             template_names = self.store.get_template_names()
             print "\n".join(template_names)
@@ -224,7 +222,7 @@ class Levistate(object):
         if self.action == EXAMPLE_ACTION:
             template = self.store.get_template(self.args.template_name)
             print template.get_example()
-        return True
+            return True
 
         return False
 
