@@ -42,9 +42,9 @@ def main():
     #Check to make sure we have template path and data path set
     if args.template_path is None or args.data_path is None or args.spec_path is None:
         print """Template path or Data path or VSD specification path are not provided.
-                 Please specify template path using --tp on command line or set an environment variable TEMPLATE_PATH
-                 Please specify user data path using --dp on command line or set an environment variable USER_DATA_PATH
-                 Please specify VSD specification path using --sp on command line or set an environment variable VSD_SPECIFICATION_PATH"""
+        Please specify template path using --tp on command line or set an environment variable TEMPLATE_PATH
+        Please specify user data path using --dp on command line or set an environment variable USER_DATA_PATH
+        Please specify VSD specification path using --sp on command line or set an environment variable VSD_SPECIFICATION_PATH"""
     else:
         levistate = Levistate(args, args.action)
         levistate.run()
