@@ -19,6 +19,9 @@ ENV_VSD_PASSWORD = 'VSD_PASSWORD'
 ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+VALIDATE_ACTION = 'validate'
+CREATE_ACTION = 'create'
+REVERT_ACTION = 'revert'
 
 DESCRIPTION = """This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
@@ -51,9 +54,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     sub_parser = parser.add_subparsers(dest='action')
-    create_parser = sub_parser.add_parser('create')
-    revert_parser = sub_parser.add_parser('revert')
-    validate_parser = sub_parser.add_parser('validate')
+    create_parser = sub_parser.add_parser(CREATE_ACTION)
+    revert_parser = sub_parser.add_parser(REVERT_ACTION)
+    validate_parser = sub_parser.add_parser(VALIDATE_ACTION)
     
     add_parser_arguments(create_parser)
     add_parser_arguments(revert_parser)
@@ -225,21 +228,21 @@ class Levistate(object):
             template_data = data[1]
             config.add_template_data(template_name, **template_data)
 
-        if self.action == 'validate':
+        if self.action == VALIDATE_ACTION:
             validate_actions = [True]
         else:
             validate_actions = [True, False]
 
         for validate_only in validate_actions:
             self.writer.set_validate_only(validate_only)
-            if self.action == 'revert':
+            if self.action == REVERT_ACTION:
                 config.revert(self.writer)
             else:
                 config.apply(self.writer)
 
             self.writer.set_validate_only(False)
 
-            if self.action == 'validate':
+            if self.action == VALIDATE_ACTION:
                 print str(config.root_action)
 
 
