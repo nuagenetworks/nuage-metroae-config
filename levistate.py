@@ -30,25 +30,24 @@ configuration.  See README.md for more."""
 
 def main():
     args = parse_args()
-    if args.template_path is None:
-        args.template_path = []
-        args.template_path.append(os.getenv(ENV_TEMPLATE, None))
+    if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
+        args.template_path = os.getenv(ENV_TEMPLATE).split()
         
-    if args.data_path is None:
-        args.data_path = []
-        args.data_path.append(os.getenv(ENV_USER_DATA, None))
+    if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
+        args.data_path = os.getenv(ENV_USER_DATA).split()
 
-    if args.spec_path is None:
-        args.spec_path = []
-        args.spec_path.append(os.getenv(ENV_VSD_SPECIFICATIONS, None))
+    if args.spec_path is None and os.getenv(ENV_VSD_SPECIFICATIONS) is not None:
+        args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
     
     #Check to make sure we have template path and data path set
-    if args.template_path is None or args.data_path is None:
-        print "Template path or Data path is not provided."
-        print "Please specify the template path using --tp on command line or set an environment variable TEMPLATE_PATH"
-        print "Please specify the user data path using --dp on command line or set an environment variable USER_DATA_PATH"
-    levistate = Levistate(args, args.action)
-    levistate.run()
+    if args.template_path is None or args.data_path is None or args.spec_path is None:
+        print """Template path or Data path or VSD specification path are not provided.
+                 Please specify template path using --tp on command line or set an environment variable TEMPLATE_PATH
+                 Please specify user data path using --dp on command line or set an environment variable USER_DATA_PATH
+                 Please specify VSD specification path using --sp on command line or set an environment variable VSD_SPECIFICATION_PATH"""
+    else:
+        levistate = Levistate(args, args.action)
+        levistate.run()
     
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
