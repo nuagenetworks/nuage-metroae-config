@@ -22,53 +22,101 @@ ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
 VALIDATE_ACTION = 'validate'
 CREATE_ACTION = 'create'
 REVERT_ACTION = 'revert'
+LIST_ACTION = 'list'
+SCHEMA_ACTION = 'schema'
+EXAMPLE_ACTION = 'example'
 
 DESCRIPTION = """This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
 configuration.  See README.md for more."""
 
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
-Please specify template path using --tp on command line or set an environment variable TEMPLATE_PATH
-Please specify user data path using --dp on command line or set an environment variable USER_DATA_PATH
-Please specify VSD specification path using --sp on command line or set an environment variable VSD_SPECIFICATION_PATH"""
+Please specify template path using --tp on command line or set an environment variable %s
+Please specify user data path using --dp on command line or set an environment variable %s
+Please specify VSD specification path using --sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS) 
 
 def main():
     args = parse_args()
-    if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
-        args.template_path = os.getenv(ENV_TEMPLATE).split()
-        
-    if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
-        args.data_path = os.getenv(ENV_USER_DATA).split()
-
-    if args.spec_path is None and os.getenv(ENV_VSD_SPECIFICATIONS) is not None:
-        args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
     
-    #Check to make sure we have template path and data path set
-    if args.template_path is None or args.data_path is None or args.spec_path is None:
-        print REQUIRED_FIELDS_ERROR 
-    else:
-        levistate = Levistate(args, args.action)
-        levistate.run()
+    if args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION: 
+        if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
+            args.template_path = os.getenv(ENV_TEMPLATE).split()
+            
+        if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
+            args.data_path = os.getenv(ENV_USER_DATA).split()
+    
+        if args.spec_path is None and os.getenv(ENV_VSD_SPECIFICATIONS) is not None:
+            args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
+        
+        #Check to make sure we have template path and data path set
+        if args.template_path is None or args.data_path is None or args.spec_path is None:
+            print REQUIRED_FIELDS_ERROR 
+            exit(1)
+            
+    elif args.action == LIST_ACTION:
+        if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
+            args.template_path = os.getenv(ENV_TEMPLATE).split()
+        
+        if args.template_path is None:
+            print "Please specify template path using --tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
+            exit(1)
+            
+    elif args.action == SCHEMA_ACTION or args.action == EXAMPLE_ACTION:
+        if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
+            args.template_path = os.getenv(ENV_TEMPLATE).split()
+            
+        if args.template_name is None:
+            print "Please specify template name using --t on command line"
+            exit(1)
+        
+        if args.template_path is None:
+            print "Please specify template path using --tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
+            exit(1)
+            
+    levistate = Levistate(args, args.action)
+    levistate.run()
     
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     sub_parser = parser.add_subparsers(dest='action')
-    create_parser = sub_parser.add_parser(CREATE_ACTION)
-    revert_parser = sub_parser.add_parser(REVERT_ACTION)
-    validate_parser = sub_parser.add_parser(VALIDATE_ACTION)
     
+    create_parser = sub_parser.add_parser(CREATE_ACTION)
     add_parser_arguments(create_parser)
+    
+    revert_parser = sub_parser.add_parser(REVERT_ACTION)
     add_parser_arguments(revert_parser)
+    
+    validate_parser = sub_parser.add_parser(VALIDATE_ACTION)
     add_parser_arguments(validate_parser)
+    
+    list_parser = sub_parser.add_parser(LIST_ACTION)
+    add_template_path_parser_argument(list_parser)
+    
+    schema_parser = sub_parser.add_parser(SCHEMA_ACTION)
+    add_schema_or_example_parser_arguments(schema_parser)
+    
+    example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
+    add_schema_or_example_parser_arguments(example_parser)
     
     return parser.parse_args()
 
-def add_parser_arguments(parser):
+def add_template_path_parser_argument(parser):
     parser.add_argument('-tp', '--template-path', dest='template_path',
                         action='append', required=False,
                         default=None,
                         help='Path containing template files')
+
+def add_schema_or_example_parser_arguments(parser):
+    add_template_path_parser_argument(parser)
+    
+    parser.add_argument('-t', '--template', dest='template_name',
+                        action='store', required=False,
+                        help='Template name')
+    
+
+def add_parser_arguments(parser):
+    add_template_path_parser_argument(parser)
     parser.add_argument('-sp', '--spec-path', dest='spec_path',
                         action='append', required=False,
                         help='Path containing object specifications')
@@ -101,15 +149,7 @@ def add_parser_arguments(parser):
     parser.add_argument('-lg', '--logs', dest='logs',
                         action='store_true', required=False,
                         help='Show logs after run')
-    parser.add_argument('-l', '--list', dest='list',
-                        action='store_true', required=False,
-                        help='Lists loaded templates')
-    parser.add_argument('-s', '--schema', dest='schema',
-                        action='store_true', required=False,
-                        help='Displays template schema')
-    parser.add_argument('-x', '--example', dest='example',
-                        action='store_true', required=False,
-                        help='Displays template user data example')
+
 
 class Levistate(object):
 
@@ -120,7 +160,7 @@ class Levistate(object):
         self.action = action
 
     def run(self):
-
+        
         self.setup_template_store()
         if self.list_info():
             return
@@ -171,26 +211,20 @@ class Levistate(object):
         return value
 
     def list_info(self):
-        if self.args.list:
+        if self.action == LIST_ACTION:
             template_names = self.store.get_template_names()
             print "\n".join(template_names)
             return True
 
-        if self.args.schema:
-            if self.args.template_name is None:
-                print "Requires template to be specified with -t"
-            else:
-                template = self.store.get_template(self.args.template_name)
-                print template.get_schema()
+        if self.action == SCHEMA_ACTION:
+            template = self.store.get_template(self.args.template_name)
+            print template.get_schema()
             return True
 
-        if self.args.example:
-            if self.args.template_name is None:
-                print "Requires template to be specified with -t"
-            else:
-                template = self.store.get_template(self.args.template_name)
-                print template.get_example()
-            return True
+        if self.action == EXAMPLE_ACTION:
+            template = self.store.get_template(self.args.template_name)
+            print template.get_example()
+        return True
 
         return False
 
