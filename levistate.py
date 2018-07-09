@@ -1,12 +1,12 @@
-
 import argparse
+import os
+
 from configuration import Configuration
 from errors import LevistateError
 from logger import Logger
 from template import TemplateStore
 from user_data_parser import UserDataParser
 from vsd_writer import VsdWriter
-import os
 
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
