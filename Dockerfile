@@ -12,5 +12,8 @@ WORKDIR /source
 #Define date volume for templates and user data
 VOLUME /data
 
+# install git on the docker
+RUN yum -y install git
+
 # install python requirements
 RUN pip install -r requirements.txt

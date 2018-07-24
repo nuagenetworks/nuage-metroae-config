@@ -3,7 +3,7 @@
 getContainerID() { 
 	containerId=`docker ps -a | grep metroae | awk '{ print $1}'`
 	
-	echo $containerId
+	echo $containerId 
 }
 
 getRunningContainerID() { 
@@ -39,15 +39,22 @@ run() {
 	if [ -z $imageID ] 
 	then
 		setup
-		if [ $? -ne 0 ]
+		status=$?
+		if [ $status -ne 0 ]
 		then
 			echo "Unable to setup metroae container"
-			return status
+			return $status 
 		fi
 	else 
+		containerID=$(getContainerID)
 		
-	    while read -r line; do declare $line; done < ~/.metroae
-	    docker run -t -d --network host -v $mountPoint:/data registry.mv.nuagenetworks.net:5000/metroae 2> /dev/null
+		if [ -z $containerID ]
+		then
+			while read -r line; do declare $line; done < ~/.metroae
+		    docker run -t -d --network host -v $mountPoint:/data registry.mv.nuagenetworks.net:5000/metroae 2> /dev/null
+		else 
+			docker start $containerID
+		fi
 	    
 	    status=$?
 		if [ $status -ne 0 ] 
@@ -118,7 +125,7 @@ setup() {
 	return $status
 }
 
-upgradeDokcer() { 
+upgradeDocker() { 
 	destroy 
 	if [ $? -ne 0 ]
 	then
@@ -142,31 +149,63 @@ dockerExec() {
 }
 
 help() { 
-	echo "help"
+	echo "usage: supported commands are help, pull, setup, stop, destroy, upgrade "
+	echo "additionally supports commands that can be executed in the docker container" 
+	
 }
 
 # main functionality
 
-if [ $# -eq 0 ] || [ $1 == "help" ] || [ $1 == "-h" ] || [ $1 == "--h" ] 
+if [ $# -eq 0 ] 
 then
 	help
 fi
 
-if [ $1 == "pull" ] 
+
+POSITIONAL=()
+exec=false
+while [ $# -gt 0 ]
+do
+key=$1
+
+	case $key in
+		help)
+		help
+		shift
+		;;
+		pull)
+		pull
+		shift
+		;;
+		setup)
+		setup
+		shift
+		;;
+		stop)
+		stop
+		shift
+		;;
+		destroy)
+		destroy
+		shift
+		;;
+		upgrade)
+		if [ $2 == "engine" ] || [ $2 == "Engine" ]
+		then
+			upgradeDocker 
+		fi
+		shift
+		shift
+		;;
+		*)
+		POSITIONAL+=($1)
+		exec=true
+		shift
+		;;
+	esac
+done
+
+if ($exec == true)
 then
-	pull
-elif [ $1 == "setup" ]
-then
-	setup 
-elif [ $1 == "stop" ]
-then
-	stop
-elif [ $1 == "destroy" ]
-then
-	destroy
-elif [ $1 == "upgrade" ] && [ $# -gt 2 ] 
-then
-	upgradeDocker
-else
-	dockerExec $@
+	dockerExec $POSITIONAL
 fi
