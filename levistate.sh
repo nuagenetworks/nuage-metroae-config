@@ -144,8 +144,14 @@ dockerExec() {
 		run
 		containerID=$(getRunningContainerID)
 	fi
-	
-	docker exec -e env $containerID python levistate.py $@
+
+	environment=""
+	for env in `env`
+	do
+		environment="$environment -e $env"
+	done
+
+	docker exec $environment $containerID python levistate.py $@
 }
 
 help() { 
