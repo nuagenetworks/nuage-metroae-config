@@ -1,5 +1,6 @@
 import argparse
 import os
+import git
 
 from configuration import Configuration
 from errors import LevistateError
@@ -25,6 +26,7 @@ REVERT_ACTION = 'revert'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
+UPGRADE_TEMPLATE_ACTION = 'upgrade-templates'
 
 DESCRIPTION = """This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
@@ -99,6 +101,8 @@ def parse_args():
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguements(example_parser)
     
+    upgrade_templates = sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
+    
     return parser.parse_args()
 
 def add_template_path_parser_argument(parser):
@@ -114,7 +118,6 @@ def add_template_parser_arguements(parser):
                         action='store', required=False,
                         help='Template name')
     
-
 def add_parser_arguments(parser):
     add_template_path_parser_argument(parser)
     parser.add_argument('-sp', '--spec-path', dest='spec_path',
@@ -249,8 +252,7 @@ class Levistate(object):
             for path in self.args.data_path:
                 parser.read_data(path)
             self.template_data = parser.get_template_name_data_pairs()
-            # For debugging user data
-            # print str(self.template_data)
+            
 
     def apply_templates(self):
         config = Configuration(self.store)
@@ -276,7 +278,20 @@ class Levistate(object):
 
             if self.action == VALIDATE_ACTION:
                 print str(config.root_action)
-
-
+                
+    def upgrade_templates(self):
+        if self.action == UPGRADE_TEMPLATE_ACTION:
+            dirName = "/data/standard-templates"
+            url = "https://github.mv.usa.alcatel.com/CASO/levistate-templates.git"
+            if not os.path.isdir(dirName):
+                os.mkdir(dirName)
+                repo = git.Repo.init(dirName)
+                repo.clone(url)    
+            else:
+                repo = git.Repo.init(dirName)
+                origin = repo.create_remote('origin/master', url)
+                origin.fetch()
+                origin.pull(origin.refs[0].remote_head())
+    
 if __name__ == "__main__":
     main()

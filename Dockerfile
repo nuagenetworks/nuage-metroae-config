@@ -1,5 +1,9 @@
 #Libraries
-FROM centos
+FROM centos:centos7.4.1708
+
+# install git on the docker
+RUN yum install -y git
+
 FROM python:2.7.10-slim
 
 #User Info
@@ -11,9 +15,6 @@ WORKDIR /source
 
 #Define date volume for templates and user data
 VOLUME /data
-
-# install git on the docker
-RUN yum -y install git
 
 # install python requirements
 RUN pip install -r requirements.txt
