@@ -161,6 +161,10 @@ class Levistate(object):
 
     def run(self):
         
+        if self.action == UPGRADE_TEMPLATE_ACTION:
+            self.upgrade_templates()
+            return
+        
         self.setup_template_store()
         if self.list_info():
             return
