@@ -1,13 +1,10 @@
-#Libraries
-FROM centos:centos7.4.1708
-
-# install git on the docker
-RUN yum install -y git
-
 FROM python:2.7.10-slim
 
 #User Info
 MAINTAINER Eswar Chennareddygari (eswar.chennareddygari@nokia.com)
+
+# install git on the docker
+RUN apt-get install -y git
 
 #Copy source files into /source directory
 COPY ./ /source
