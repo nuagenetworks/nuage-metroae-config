@@ -284,21 +284,25 @@ class Levistate(object):
             if self.action == VALIDATE_ACTION:
                 print str(config.root_action)
                 
+    def download_and_extract(self, url, dirName):
+        if not os.path.isdir(dirName):
+            os.mkdir(dirName)
+        os.chdir(dirName)
+        
+        filename = wget.download(url)
+        tfile = tarfile.TarFile(filename)
+        tfile.extractall()    
+        os.remove(tfile.name)
+                
     def upgrade_templates(self):
         if self.action == UPGRADE_TEMPLATE_ACTION:
             dirName = "/data/standard-templates"
-	    if not os.path.isdir(dirName):
-		os.mkdir(dirName)
-	    os.chdir(dirName)
-            
-	    url = "https://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
-	    filename = wget.download(url)
-	    
-	    tfile = tarfile.TarFile(filename)
-	    tfile.extractall()	
-	    
-	    os.remove(tfile.name)	
-
+            url = "https://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
+            self.download_and_extract(url, dirName)
+        
+            dirName = "/data/vsd-api-specifications"
+            url = "https://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
+            self.download_and_extract(url, dirName)
 
 if __name__ == "__main__":
     main()
