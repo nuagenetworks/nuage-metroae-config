@@ -1,4 +1,4 @@
 bambou
 Jinja2
 PyYAML
-GitPython
+wget

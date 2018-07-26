@@ -1,6 +1,7 @@
 import argparse
 import os
-import git
+import wget
+import tarfile
 
 from configuration import Configuration
 from errors import LevistateError
@@ -286,16 +287,18 @@ class Levistate(object):
     def upgrade_templates(self):
         if self.action == UPGRADE_TEMPLATE_ACTION:
             dirName = "/data/standard-templates"
-            url = "https://github.mv.usa.alcatel.com/CASO/levistate-templates.git"
-            if not os.path.isdir(dirName):
-                os.mkdir(dirName)
-                repo = git.Repo.init(dirName)
-                repo.clone(url)    
-            else:
-                repo = git.Repo.init(dirName)
-                origin = repo.create_remote('origin/master', url)
-                origin.fetch()
-                origin.pull(origin.refs[0].remote_head())
-    
+	    if not os.path.isdir(dirName):
+		os.mkdir(dirName)
+	    os.chdir(dirName)
+            
+	    url = "https://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
+	    filename = wget.download(url)
+	    
+	    tfile = tarfile.TarFile(filename)
+	    tfile.extractall()	
+	    
+	    os.remove(tfile.name)	
+
+
 if __name__ == "__main__":
     main()
