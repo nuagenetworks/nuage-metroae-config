@@ -2,6 +2,7 @@ from vsd_writer import VsdWriter
 import yaml
 
 
+RESOLVE_REFERENCES = True
 VSD_API_SPECS = "/Users/mpiecuch/vsd-api-specifications"
 VSD_USERNAME = "csproot"
 VSD_PASSWORD = "csproot"
@@ -78,6 +79,35 @@ def get_child_names(vsd_writer, spec):
     # return []
 
 
+def get_guid_map(children, guid_map=None):
+    if guid_map is None:
+        guid_map = dict()
+
+    for child in children:
+        for obj_type, obj in child.items():
+            if 'id' in obj['attributes']:
+                guid = obj['attributes']['id']
+                if 'name' in obj['attributes']:
+                    name = obj['attributes']['name']
+                else:
+                    name = "????"
+                guid_map[guid] = "$(%s,name,%s)" % (obj_type, name)
+
+            get_guid_map(obj['children'], guid_map)
+
+    return guid_map
+
+
+def resolve_references(children, guid_map):
+    for child in children:
+        for obj_type, obj in child.items():
+            for attr_name, attr_value in obj['attributes'].items():
+                if attr_name != 'id' and str(attr_value) in guid_map:
+                    obj['attributes'][attr_name] = guid_map[attr_value]
+
+            resolve_references(obj['children'], guid_map)
+
+
 def main():
     vsd_writer = VsdWriter()
     vsd_writer.read_api_specifications(VSD_API_SPECS)
@@ -88,6 +118,12 @@ def main():
     vsd_writer.start_session()
 
     children = walk_object_children(vsd_writer, ROOT_OBJECT_NAME)
+
+    if RESOLVE_REFERENCES is True:
+        guid_map = get_guid_map(children)
+        resolve_references(children, guid_map)
+        # print str(guid_map)
+
     print yaml.safe_dump(children, default_flow_style=False, default_style='')
 
 
