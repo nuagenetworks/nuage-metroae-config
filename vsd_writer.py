@@ -216,6 +216,8 @@ class VsdWriter(DeviceWriterBase):
 
                 new_context.current_object = current_object
 
+                new_context.object_exists = True
+
                 contexts.append(new_context)
 
         except BambouHTTPError as e:
@@ -457,7 +459,7 @@ class VsdWriter(DeviceWriterBase):
         fetcher = self._get_fetcher(object_name, parent_object)
 
         if self.validate_only is True:
-            return self._get_new_config_object(object_name)
+            return list()
 
         objects = fetcher.get()
 

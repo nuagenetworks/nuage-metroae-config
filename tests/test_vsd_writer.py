@@ -479,6 +479,190 @@ class TestVsdWriterSelectObject(object):
         assert "HTTP 404" in e.value.get_display_string()
 
 
+class TestVsdWriterGetObjectList(object):
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_session(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(SessionNotStartedError) as e:
+            vsd_writer.get_object_list("Enterprise")
+
+        assert "not started" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("levistate.vsd_writer.ConfigObject")
+    @patch("levistate.vsd_writer.Fetcher")
+    def test_parent__success(self, mock_fetcher, mock_object, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = ["selected object"]
+
+        mock_object.return_value = "selected object"
+
+        objects = vsd_writer.get_object_list("Enterprise")
+
+        mock_fetcher.assert_called_once_with(mock_session.root_object,
+                                             vsd_writer.specs['enterprise'])
+
+        if validate_only is True:
+            mock_fetcher.get.assert_not_called()
+            assert len(objects) == 0
+        else:
+            mock_fetcher.get.assert_called_once_with()
+
+            assert len(objects) == 1
+            assert objects[0].parent_object is None
+            assert objects[0].current_object == "selected object"
+            assert objects[0].object_exists is True
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("levistate.vsd_writer.ConfigObject")
+    @patch("levistate.vsd_writer.Fetcher")
+    def test_child__success(self, mock_fetcher, mock_object, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        setup_standard_session(vsd_writer)
+
+        context = Context()
+        context.parent_object = "grandparent object"
+        mock_parent = MagicMock()
+        context.current_object = mock_parent
+        context.current_object.spec = vsd_writer.specs['enterprise']
+        context.object_exists = True
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = ["selected object"]
+        mock_object.return_value = "selected object"
+
+        objects = vsd_writer.get_object_list("Domain", context)
+
+        mock_fetcher.assert_called_once_with(mock_parent,
+                                             vsd_writer.specs['domain'])
+
+        if validate_only is True:
+            mock_fetcher.get.assert_not_called()
+            assert len(objects) == 0
+        else:
+            mock_fetcher.get.assert_called_once_with()
+
+            assert len(objects) == 1
+            assert objects[0].parent_object == mock_parent
+            assert objects[0].current_object == "selected object"
+            assert objects[0].object_exists is True
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__bad_object(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        setup_standard_session(vsd_writer)
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.get_object_list("Foobar")
+
+        assert "No specification" in str(e)
+        assert "Foobar" in str(e)
+
+        assert ("Get object list Foobar" in
+                e.value.get_display_string())
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__bad_child(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        setup_standard_session(vsd_writer)
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.get_object_list("BridgeInterface")
+
+        assert "no child" in str(e)
+        assert "Me" in str(e)
+        assert "BridgeInterface" in str(e)
+
+        context = Context()
+        context.parent_object = "grandparent object"
+        mock_parent = MagicMock()
+        context.current_object = mock_parent
+        context.current_object.spec = vsd_writer.specs['enterprise']
+        context.object_exists = True
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.get_object_list("BridgeInterface", context)
+
+        assert "no child" in str(e)
+        assert "Enterprise" in str(e)
+        assert "BridgeInterface" in str(e)
+
+        assert ("Get object list BridgeInterface" in
+                e.value.get_display_string())
+
+    @patch("levistate.vsd_writer.Fetcher")
+    def test__not_found(self, mock_fetcher):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = []
+
+        objects = vsd_writer.get_object_list("Enterprise")
+
+        mock_fetcher.assert_called_once_with(mock_session.root_object,
+                                             vsd_writer.specs['enterprise'])
+        mock_fetcher.get.assert_called_once_with()
+
+        assert len(objects) == 0
+
+    @patch("levistate.vsd_writer.Fetcher")
+    def test__multiple_found(self, mock_fetcher):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = ["enterprise_1", "enterprise_2"]
+
+        objects = vsd_writer.get_object_list("Enterprise")
+
+        mock_fetcher.assert_called_once_with(mock_session.root_object,
+                                             vsd_writer.specs['enterprise'])
+        mock_fetcher.get.assert_called_once_with()
+
+        assert len(objects) == 2
+        assert objects[0].parent_object is None
+        assert objects[0].current_object == "enterprise_1"
+        assert objects[0].object_exists is True
+
+        assert objects[1].parent_object is None
+        assert objects[1].current_object == "enterprise_2"
+        assert objects[1].object_exists is True
+
+    @patch("levistate.vsd_writer.Fetcher")
+    def test__bambou_error(self, mock_fetcher):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_error = get_mock_bambou_error(404, "Not Found")
+        mock_fetcher.get.side_effect = mock_error
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.get_object_list("Enterprise")
+
+        mock_fetcher.assert_called_once_with(mock_session.root_object,
+                                             vsd_writer.specs['enterprise'])
+        mock_fetcher.get.assert_called_once_with()
+
+        assert "404" in str(e)
+        assert "Not Found" in str(e)
+
+        assert ("Get object list Enterprise" in
+                e.value.get_display_string())
+        assert "HTTP 404" in e.value.get_display_string()
+
+
 class TestVsdWriterDeleteObject(object):
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
