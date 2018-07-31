@@ -1,25 +1,22 @@
 #!/bin/bash
+containerID=''
+runningContainerID=''
+imageID=''
 
 getContainerID() { 
-	containerId=`docker ps -a | grep metroae | awk '{ print $1}'`
-	
-	echo $containerId 
+	containerID=`docker ps -a | grep metroae | awk '{ print $1}'`
 }
 
 getRunningContainerID() { 
-	containerId=`docker ps | grep metroae | awk '{ print $1}'`
-	
-	echo $containerId
+	runningContainerID=`docker ps | grep metroae | awk '{ print $1}'`
 }
 
 getImageID() { 
 	imageID=`docker images | grep metroae | awk '{ print $3}'`
-	
-	echo $imageID
 }
 
 stop() {
-	containerID=$(getContainerID)
+	getContainerID
 	docker stop $containerID 2> /dev/null
 	status=$?
 	if [ $status -ne 0 ]
@@ -34,7 +31,7 @@ stop() {
 
 run() { 
 
-	imageID=$(getImageID)
+	getImageID
 	
 	if [ -z $imageID ] 
 	then
@@ -46,7 +43,7 @@ run() {
 			return $status 
 		fi
 	else 
-		containerID=$(getContainerID)
+		getContainerID
 		
 		if [ -z $containerID ]
 		then
@@ -73,7 +70,7 @@ destroy() {
 		return 1
 	fi
 	
-	containerID=$(getContainerID)
+	getContainerID
 	docker rm $containerID 2> /dev/null
 	
 	if [ $? -ne 0 ]
@@ -82,8 +79,7 @@ destroy() {
 		return 1
 	fi
 	
-	imageID=$(getImageID)
-	echo $imageID
+	getImageID
 	docker rmi $imageID  2> /dev/null
 	
 	if [ $? -ne 0 ]
@@ -115,7 +111,12 @@ setup() {
 		return 1
 	fi
 	
-	read -p "Specify the full path to mount the docker volume: " path
+	if [ -z $1 ]
+	then
+		read -p "Specify the full path to mount the docker volume: " path
+	else 
+		path=$1
+	fi
 	rm -f ~/.metroae
 	echo mountPoint=$path >> ~/.metroae
 	
@@ -137,12 +138,12 @@ upgradeDocker() {
 }
 
 dockerExec() { 
-	containerID=$(getRunningContainerID)
+	getRunningContainerID
 	
-	if [ -z $containerID ]
+	if [ -z $runningContainerID ]
 	then
 		run
-		containerID=$(getRunningContainerID)
+		getRunningContainerID
 	fi
 
 	environment=""
@@ -151,7 +152,7 @@ dockerExec() {
 		environment="$environment -e $env"
 	done
 
-	docker exec $environment $containerID python levistate.py $@
+	docker exec $environment $runningContainerID python levistate.py $@
 }
 
 help() { 
@@ -184,7 +185,13 @@ key=$1
 		shift
 		;;
 		setup)
-		setup
+		if [ -z $2 ]
+		then
+			setup
+		else 
+			setup $2
+			shift
+		fi
 		shift
 		;;
 		stop)
