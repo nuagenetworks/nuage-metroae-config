@@ -1,8 +1,11 @@
-from vsd_writer import VsdWriter
+import argparse
 import yaml
+
+from vsd_writer import VsdWriter
 
 
 RESOLVE_REFERENCES = True
+COMPARE_FILE = "/Users/mpiecuch/Downloads/expected_subset.yml"
 VSD_API_SPECS = "/Users/mpiecuch/vsd-api-specifications"
 VSD_USERNAME = "csproot"
 VSD_PASSWORD = "csproot"
@@ -14,6 +17,10 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'vrsaddressrange', 'job', 'containerresync',
                   'ingressexternalservicetemplate',
                   'nsgateway']
+
+
+class MissingSubset(Exception):
+    pass
 
 
 def print_object(obj):
@@ -108,7 +115,45 @@ def resolve_references(children, guid_map):
             resolve_references(obj['children'], guid_map)
 
 
+def read_configuration(filename):
+    with open(filename, 'r') as file:
+        return yaml.safe_load(file.read())
+
+
+def compare_tree(superset, subset):
+
+    for child_subset in subset:
+        found = False
+        for subset_obj_type, subset_obj in child_subset.items():
+            for child_superset in superset:
+                for superset_obj_type, superset_obj in child_superset.items():
+                    if (superset_obj_type == subset_obj_type and
+                            compare_objects(superset_obj, subset_obj)):
+                        try:
+                            compare_tree(superset_obj['children'],
+                                         subset_obj['children'])
+                            found = True
+                        except MissingSubset:
+                            pass
+
+        if not found:
+            missing_yaml = yaml.safe_dump(child_subset,
+                                          default_flow_style=False,
+                                          default_style='')
+            raise MissingSubset("\n\n" + missing_yaml)
+
+
+def compare_objects(superset_obj, subset_obj):
+    for subset_name, subset_value in subset_obj['attributes'].items():
+        if (subset_name not in superset_obj['attributes'] or
+                superset_obj['attributes'][subset_name] != subset_value):
+            return False
+
+    return True
+
+
 def main():
+
     vsd_writer = VsdWriter()
     vsd_writer.read_api_specifications(VSD_API_SPECS)
     vsd_writer.set_session_params(VSD_URL,
@@ -117,14 +162,18 @@ def main():
                                   enterprise=VSD_ENTERPRISE)
     vsd_writer.start_session()
 
-    children = walk_object_children(vsd_writer, ROOT_OBJECT_NAME)
+    config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME)
 
     if RESOLVE_REFERENCES is True:
-        guid_map = get_guid_map(children)
-        resolve_references(children, guid_map)
+        guid_map = get_guid_map(config)
+        resolve_references(config, guid_map)
         # print str(guid_map)
 
-    print yaml.safe_dump(children, default_flow_style=False, default_style='')
+    print yaml.safe_dump(config, default_flow_style=False, default_style='')
+
+    if COMPARE_FILE is not None:
+        subset_config = read_configuration(COMPARE_FILE)
+        compare_tree(config, subset_config)
 
 
 if __name__ == "__main__":
