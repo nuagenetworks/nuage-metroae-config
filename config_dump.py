@@ -1,16 +1,22 @@
 import argparse
+import os
 import yaml
 
 from vsd_writer import VsdWriter
 
 
-RESOLVE_REFERENCES = True
-COMPARE_FILE = "/Users/mpiecuch/Downloads/expected_subset.yml"
-VSD_API_SPECS = "/Users/mpiecuch/vsd-api-specifications"
-VSD_USERNAME = "csproot"
-VSD_PASSWORD = "csproot"
-VSD_ENTERPRISE = "csp"
-VSD_URL = "https://localhost:8080"
+DESCRIPTION = """This tool dumps the configuration from a VSD as Yaml."""
+
+DEFAULT_VSD_USERNAME = 'csproot'
+DEFAULT_VSD_PASSWORD = 'csproot'
+DEFAULT_VSD_ENTERPRISE = 'csp'
+DEFAULT_URL = 'https://localhost:8080'
+ENV_VSD_USERNAME = 'VSD_USERNAME'
+ENV_VSD_PASSWORD = 'VSD_PASSWORD'
+ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
+ENV_VSD_URL = 'VSD_URL'
+ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+
 ROOT_OBJECT_NAME = "me"
 FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'l7applicationsignature', 'vrsredeploymentpolicy',
@@ -152,27 +158,84 @@ def compare_objects(superset_obj, subset_obj):
     return True
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+
+    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+                        action='store', required=False,
+                        help=('Path containing object specifications. Can also'
+                              ' set using environment variable %s') % (
+                                  ENV_VSD_SPECIFICATIONS))
+
+    parser.add_argument('-v', '--vsd-url', dest='vsd_url',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_URL, DEFAULT_URL),
+                        help=('URL to VSD REST API. Can also set using '
+                              'environment variable %s') % (ENV_VSD_URL))
+
+    parser.add_argument('-u', '--username', dest='username',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_USERNAME,
+                                          DEFAULT_VSD_USERNAME),
+                        help=('Username for VSD. Can also set using '
+                              'environment variable %s') % (ENV_VSD_USERNAME))
+
+    parser.add_argument('-p', '--password', dest='password',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_PASSWORD,
+                                          DEFAULT_VSD_PASSWORD),
+                        help=('Password for VSD. Can also set using '
+                              'environment variable %s') % (ENV_VSD_PASSWORD))
+
+    parser.add_argument('-e', '--enterprise', dest='enterprise',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_ENTERPRISE,
+                                          DEFAULT_VSD_ENTERPRISE),
+                        help=('Enterprise for VSD. Can also set using '
+                              'environment variable %s') % (
+                                  ENV_VSD_ENTERPRISE))
+
+    parser.add_argument('-c', '--compare-file', dest='compare_file',
+                        action='store', required=False, default=None,
+                        help=('Compare configuration against a provided Yaml '
+                              'file. All given objects must be contained on '
+                              'the VSD.'))
+
+    parser.add_argument('-rr', '--resolve-references',
+                        dest='resolve_references',
+                        action='store_true', required=False, default=False,
+                        help=('Resolve any ID references in the config to'
+                              ' name based tokens'))
+
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+
+    if args.spec_path is None:
+        print "Specifications path -sp is required"
+        exit(1)
 
     vsd_writer = VsdWriter()
-    vsd_writer.read_api_specifications(VSD_API_SPECS)
-    vsd_writer.set_session_params(VSD_URL,
-                                  username=VSD_USERNAME,
-                                  password=VSD_PASSWORD,
-                                  enterprise=VSD_ENTERPRISE)
+    vsd_writer.read_api_specifications(args.spec_path)
+    vsd_writer.set_session_params(args.vsd_url,
+                                  username=args.username,
+                                  password=args.password,
+                                  enterprise=args.enterprise)
     vsd_writer.start_session()
 
     config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME)
 
-    if RESOLVE_REFERENCES is True:
+    if args.resolve_references is True or args.compare_file is not None:
         guid_map = get_guid_map(config)
         resolve_references(config, guid_map)
         # print str(guid_map)
 
     print yaml.safe_dump(config, default_flow_style=False, default_style='')
 
-    if COMPARE_FILE is not None:
-        subset_config = read_configuration(COMPARE_FILE)
+    if args.compare_file is not None:
+        subset_config = read_configuration(args.compare_file)
         compare_tree(config, subset_config)
 
 
