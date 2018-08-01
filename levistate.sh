@@ -25,17 +25,17 @@ getMaxContainerVersion() {
 
 getContainerID() { 
 	#getMaxContainerVersion
-	containerID=`docker ps -a | grep metroae:$maxContainerVersion | awk '{ print $1}'`
+	containerID=`docker ps -a | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getRunningContainerID() {
 	#getMaxContainerVersion 
-	runningContainerID=`docker ps | grep metroae:$maxContainerVersion | awk '{ print $1}'`
+	runningContainerID=`docker ps | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getImageID() { 
 	#getMaxContainerVersion 
-	imageID=`docker images | grep metroae:$maxContainerVersion | awk '{ print $3}'`
+	imageID=`docker images | grep metroae | grep $maxContainerVersion | awk '{ print $3}'`
 }
 
 
@@ -88,7 +88,39 @@ run() {
 	fi
 }
 
+deleteContainerID() {
+	getContainerID
+	docker rm $containerID 2> /dev/null
+	
+	if [ $? -ne 0 ]
+	then
+		echo "Remove of metroae container failed" 
+		return 1
+	fi
+}
+
+confirmAction() { 
+	confirmation=''
+	while [ -z $confirmation ]|| [ $confirmation != "yes" ] || [ $confirmation  != "no" ]
+	do
+		read -p $1 confirmation
+	done 
+	
+	if [ $confirmation == "yes" ]
+	then
+		return 0
+	fi
+	
+	return 1
+}
+
 destroy() { 
+	confirmAction "Do you really want to destroy the container (yes/no): "
+	if [ $? -ne 0 ]
+	then
+		echo "Operation Cancelled"
+		return 1
+	fi
 	
 	stop
 	if [ $? -ne 0 ]
@@ -96,12 +128,9 @@ destroy() {
 		return 1
 	fi
 	
-	getContainerID
-	docker rm $containerID 2> /dev/null
-	
+	deleteContainerID 
 	if [ $? -ne 0 ]
 	then
-		echo "Remove of metroae container failed" 
 		return 1
 	fi
 	
@@ -145,6 +174,10 @@ setup() {
 	fi
 	rm -f ~/.metroae
 	echo mountPoint=$path >> ~/.metroae
+	
+	#stop and remove existing container if any
+	stop
+	deleteContainerID 
 	
 	run
 	
