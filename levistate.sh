@@ -101,8 +101,8 @@ deleteContainerID() {
 }
 
 confirmAction() { 
-	confirmation=''
-	while [ -z $confirmation ]|| [ $confirmation != "yes" ] || [ $confirmation  != "no" ]
+	confirmation="init"
+	while [ $confirmation != "yes" ] && [ $confirmation  != "no" ]
 	do
 		read -p $confirmationMessage confirmation
 	done 
@@ -115,12 +115,16 @@ confirmAction() {
 	return 1
 }
 
-destroy() { 
-	confirmationMessage="Do you really want to destroy the container (yes/no): "
-	confirmAction 
-	if [ $? -ne 0 ]
+destroy() {
+	confirmation="init"
+	while [ $confirmation != "yes" ] && [ $confirmation  != "no" ]
+	do
+		read -p "Do you really want to destroy the container: " confirmation
+	done 
+	
+	if [ $confirmation != "yes" ]
 	then
-		echo "Operation Cancelled"
+		echo "Destroy Cancelled by user"
 		return 1
 	fi
 	
