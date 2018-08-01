@@ -182,8 +182,12 @@ setup() {
 	echo mountPoint=$path >> ~/.metroae
 	
 	#stop and remove existing container if any
-	stop
-	deleteContainerID 
+	getRunningContainerID 
+	if [ ! -z $runningContainerID ]
+	then
+		stop
+		deleteContainerID
+	fi 
 	
 	run
 	
