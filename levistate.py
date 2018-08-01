@@ -28,6 +28,7 @@ LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
 UPGRADE_TEMPLATE_ACTION = 'upgrade-templates'
+HELP_ACTION = 'help'
 
 DESCRIPTION = """This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
@@ -39,9 +40,13 @@ Please specify user data path using --dp on command line or set an environment v
 Please specify VSD specification path using --sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS) 
 
 def main():
-    args = parse_args()
+    parser = get_parser()
+    args = parser.parse_args()
     
-    if args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION: 
+    if args.action == HELP_ACTION:
+        print parser.print_help()
+        exit(0)
+    elif args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION: 
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
             
@@ -79,7 +84,7 @@ def main():
     levistate = Levistate(args, args.action)
     levistate.run()
     
-def parse_args():
+def get_parser():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     sub_parser = parser.add_subparsers(dest='action')
@@ -102,9 +107,11 @@ def parse_args():
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguements(example_parser)
     
-    upgrade_templates = sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
+    upgrade_templates_parser = sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
     
-    return parser.parse_args()
+    help_parser = sub_parser.add_parser(HELP_ACTION)
+    
+    return parser
 
 def add_template_path_parser_argument(parser):
     parser.add_argument('-tp', '--template-path', dest='template_path',

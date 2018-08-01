@@ -232,6 +232,8 @@ help() {
 	echo "usage: supported commands are help, pull, setup, stop, destroy, upgrade "
 	echo "additionally supports commands that can be executed in the docker container" 
 	
+	dockerExec help
+	
 }
 
 # main functionality
