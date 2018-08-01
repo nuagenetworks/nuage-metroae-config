@@ -2,22 +2,47 @@
 containerID=''
 runningContainerID=''
 imageID=''
+maxContainerVersion='current'
 
-getContainerID() { 
-	containerID=`docker ps -a | grep metroae | awk '{ print $1}'`
+getMaxContainerVersion() { 
+	versions=`docker images | grep registry.mv.nuagenetworks.net:5000/metroae | awk '{ print $2 }'`
+	
+	maxContainerVersion=''
+	for version in $versions
+	do
+	        if [ -z $maxContainerVersion ]
+	        then
+	                maxContainerVersion=$version
+	        fi
+	
+	        if [ $maxContainerVersion \< $version ]
+	        then
+	                maxContainerVersion=$version
+	        fi
+	done
+	
 }
 
-getRunningContainerID() { 
-	runningContainerID=`docker ps | grep metroae | awk '{ print $1}'`
+getContainerID() { 
+	#getMaxContainerVersion
+	containerID=`docker ps -a | grep metroae:$maxContainerVersion | awk '{ print $1}'`
+}
+
+getRunningContainerID() {
+	#getMaxContainerVersion 
+	runningContainerID=`docker ps | grep metroae:$maxContainerVersion | awk '{ print $1}'`
 }
 
 getImageID() { 
-	imageID=`docker images | grep metroae | awk '{ print $3}'`
+	#getMaxContainerVersion 
+	imageID=`docker images | grep metroae:$maxContainerVersion | awk '{ print $3}'`
 }
+
+
 
 stop() {
 	getContainerID
-	docker stop $containerID 2> /dev/null
+	docker stop $containerID 
 	status=$?
 	if [ $status -ne 0 ]
 	then
@@ -48,7 +73,7 @@ run() {
 		if [ -z $containerID ]
 		then
 			while read -r line; do declare $line; done < ~/.metroae
-		    docker run -t -d --network host -v $mountPoint:/data registry.mv.nuagenetworks.net:5000/metroae 2> /dev/null
+		    docker run -t -d --network host -v $mountPoint:/data registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
 		else 
 			docker start $containerID
 		fi
@@ -64,6 +89,7 @@ run() {
 }
 
 destroy() { 
+	
 	stop
 	if [ $? -ne 0 ]
 	then
@@ -92,7 +118,7 @@ destroy() {
 }
 
 pull() { 
-	docker pull registry.mv.nuagenetworks.net:5000/metroae:latest 2> /dev/null
+	docker pull registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
 	
 	status=$?
 	if [ $status -ne 0 ] 
@@ -121,7 +147,15 @@ setup() {
 	echo mountPoint=$path >> ~/.metroae
 	
 	run
-	status=$?
+	
+	if [ $? -ne 0 ]
+	then
+		return 1
+	else 
+		
+		#download the templates and sample user data
+		dockerExec upgrade-templates
+	fi
 	
 	return $status
 }
