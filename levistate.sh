@@ -3,6 +3,7 @@ containerID=''
 runningContainerID=''
 imageID=''
 maxContainerVersion='current'
+confirmationMessage=''
 
 getMaxContainerVersion() { 
 	versions=`docker images | grep registry.mv.nuagenetworks.net:5000/metroae | awk '{ print $2 }'`
@@ -103,7 +104,7 @@ confirmAction() {
 	confirmation=''
 	while [ -z $confirmation ]|| [ $confirmation != "yes" ] || [ $confirmation  != "no" ]
 	do
-		read -p $1 confirmation
+		read -p $confirmationMessage confirmation
 	done 
 	
 	if [ $confirmation == "yes" ]
@@ -115,7 +116,8 @@ confirmAction() {
 }
 
 destroy() { 
-	confirmAction "Do you really want to destroy the container (yes/no): "
+	confirmationMessage="Do you really want to destroy the container (yes/no): "
+	confirmAction 
 	if [ $? -ne 0 ]
 	then
 		echo "Operation Cancelled"
