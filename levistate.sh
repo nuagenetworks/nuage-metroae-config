@@ -263,7 +263,7 @@ dockerExec() {
 		environment="$environment -e $env"
 	done
 
-	sudo docker exec $environment $runningContainerID levistate.py $@
+	sudo docker exec $environment $runningContainerID /usr/local/bin/python levistate.py $@
 }
 
 help() { 
