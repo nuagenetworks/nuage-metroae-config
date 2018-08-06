@@ -286,16 +286,10 @@ POSITIONAL=()
 exec=false
 while [ $# -gt 0 ]
 do
-key=$1
-
+	key=$1
 	case $key in
 		help)
-		if [ ${#POSITIONAL[@]} > 0 ]
-		then
-			POSITIONAL+=key
-		else
-			help
-		fi
+		help
 		shift
 		;;
 		pull)
@@ -335,7 +329,7 @@ key=$1
 		shift
 		;;
 		*)
-		POSITIONAL+=($1)
+		POSITIONAL+=("$1")
 		exec=true
 		shift
 		;;
@@ -344,5 +338,5 @@ done
 
 if ($exec == true)
 then
-	dockerExec $POSITIONAL
+	dockerExec ${POSITIONAL[@]}
 fi
