@@ -290,7 +290,12 @@ key=$1
 
 	case $key in
 		help)
-		help
+		if [ ${#POSITIONAL[@]} > 0 ]
+		then
+			POSITIONAL+=key
+		else
+			help
+		fi
 		shift
 		;;
 		pull)
