@@ -44,7 +44,7 @@ getImageID() {
 stop() {
 	getContainerID
 	
-	if [ -z $imageID ]
+	if [ -z $containerID  ]
 	then
 		echo "No Container to stop"
 		return 0
@@ -191,8 +191,13 @@ pull() {
 	return $status	
 }
 
-setup() { 
-	pull
+setup() {
+	getImageID 
+	
+	if [ -z $imageID ]
+	then 
+		pull
+	fi
 	
 	if [ $? -ne 0 ] 
 	then
