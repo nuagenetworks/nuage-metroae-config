@@ -43,6 +43,13 @@ getImageID() {
 
 stop() {
 	getContainerID
+	
+	if [ -z $imageID ]
+	then
+		echo "No Container to stop"
+		return 0
+	fi
+	
 	docker stop $containerID 
 	status=$?
 	if [ $status -ne 0 ]
@@ -91,6 +98,12 @@ run() {
 
 deleteContainerID() {
 	getContainerID
+	if [ -z $containerID ]
+	then
+		echo "No container to remove" 
+		return 0
+	fi
+	
 	docker rm $containerID 2> /dev/null
 	
 	if [ $? -ne 0 ]
@@ -116,11 +129,19 @@ confirmAction() {
 }
 
 destroy() {
-	confirmation="init"
+	echo $1
+	if [ -z $1 ]
+	then
+		confirmation="init"
+	else 
+		confirmation=$1
+	fi
+	
 	while [ $confirmation != "yes" ] && [ $confirmation  != "no" ]
 	do
-		read -p "Do you really want to destroy the container: " confirmation
-	done 
+		read -p "Do you really want to destroy the container (yes/no): " confirmation
+	done
+ 
 	
 	if [ $confirmation != "yes" ]
 	then
@@ -141,6 +162,12 @@ destroy() {
 	fi
 	
 	getImageID
+	if [ -z $imageID ]
+	then
+		echo "No Image to remove"
+		return 0
+	fi
+	
 	docker rmi $imageID  2> /dev/null
 	
 	if [ $? -ne 0 ]
@@ -278,7 +305,13 @@ key=$1
 		shift
 		;;
 		destroy)
-		destroy
+		if [ -z $2 ]
+		then
+			destroy
+		else 
+			destroy $2
+			shift
+		fi
 		shift
 		;;
 		upgrade)
