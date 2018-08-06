@@ -6,7 +6,7 @@ maxContainerVersion='current'
 confirmationMessage=''
 
 getMaxContainerVersion() { 
-	versions=`docker images | grep registry.mv.nuagenetworks.net:5000/metroae | awk '{ print $2 }'`
+	versions=`sudo docker images | grep registry.mv.nuagenetworks.net:5000/metroae | awk '{ print $2 }'`
 	
 	maxContainerVersion=''
 	for version in $versions
@@ -26,17 +26,17 @@ getMaxContainerVersion() {
 
 getContainerID() { 
 	#getMaxContainerVersion
-	containerID=`docker ps -a | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
+	containerID=`sudo docker ps -a | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getRunningContainerID() {
 	#getMaxContainerVersion 
-	runningContainerID=`docker ps | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
+	runningContainerID=`sudo docker ps | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getImageID() { 
 	#getMaxContainerVersion 
-	imageID=`docker images | grep metroae | grep $maxContainerVersion | awk '{ print $3}'`
+	imageID=`sudo docker images | grep metroae | grep $maxContainerVersion | awk '{ print $3}'`
 }
 
 
@@ -50,7 +50,7 @@ stop() {
 		return 0
 	fi
 	
-	docker stop $containerID 
+	sudo docker stop $containerID 
 	status=$?
 	if [ $status -ne 0 ]
 	then
@@ -81,9 +81,9 @@ run() {
 		if [ -z $containerID ]
 		then
 			while read -r line; do declare $line; done < ~/.metroae
-		    docker run -t -d --network host -v $mountPoint:/data registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
+		    sudo docker run -t -d --network host -v $mountPoint:/data registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
 		else 
-			docker start $containerID
+			sudo docker start $containerID
 		fi
 	    
 	    status=$?
@@ -104,7 +104,7 @@ deleteContainerID() {
 		return 0
 	fi
 	
-	docker rm $containerID 2> /dev/null
+	sudo docker rm $containerID 2> /dev/null
 	
 	if [ $? -ne 0 ]
 	then
@@ -168,7 +168,7 @@ destroy() {
 		return 0
 	fi
 	
-	docker rmi $imageID  2> /dev/null
+	sudo docker rmi $imageID  2> /dev/null
 	
 	if [ $? -ne 0 ]
 	then
@@ -180,7 +180,7 @@ destroy() {
 }
 
 pull() { 
-	docker pull registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
+	sudo docker pull registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
 	
 	status=$?
 	if [ $status -ne 0 ] 
@@ -223,6 +223,7 @@ setup() {
 	
 	run
 	
+	status=0
 	if [ $? -ne 0 ]
 	then
 		return 1
@@ -230,6 +231,7 @@ setup() {
 		
 		#download the templates and sample user data
 		dockerExec upgrade-templates
+		status=$?
 	fi
 	
 	return $status
@@ -261,7 +263,7 @@ dockerExec() {
 		environment="$environment -e $env"
 	done
 
-	docker exec $environment $runningContainerID python levistate.py $@
+	sudo docker exec $environment $runningContainerID python levistate.py $@
 }
 
 help() { 
