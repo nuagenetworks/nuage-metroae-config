@@ -114,21 +114,6 @@ deleteContainerID() {
 	fi
 }
 
-confirmAction() { 
-	confirmation="init"
-	while [ $confirmation != "yes" ] && [ $confirmation  != "no" ]
-	do
-		read -p $confirmationMessage confirmation
-	done 
-	
-	if [ $confirmation == "yes" ]
-	then
-		return 0
-	fi
-	
-	return 1
-}
-
 destroy() {
 	echo $1
 	if [ -z $1 ]

@@ -2,7 +2,7 @@
 FROM python:2.7.10-slim
 
 #User Info
-MAINTAINER Eswar Chennareddygari (eswar.chennareddygari@nokia.com)
+MAINTAINER Nuage Networks Devops (deveops@nuagenetworks.net)
 
 #Copy source files into /source directory
 COPY ./ /source
