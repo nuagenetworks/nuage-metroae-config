@@ -4,9 +4,10 @@ runningContainerID=''
 imageID=''
 maxContainerVersion='current'
 confirmationMessage=''
+metroAEImage='registry.mv.nuagenetworks.net:5000/metroae'
 
 getMaxContainerVersion() { 
-	versions=`sudo docker images | grep registry.mv.nuagenetworks.net:5000/metroae | awk '{ print $2 }'`
+	versions=`sudo docker images | grep $metroAEImage | awk '{ print $2 }'`
 	
 	maxContainerVersion=''
 	for version in $versions
@@ -81,7 +82,7 @@ run() {
 		if [ -z $containerID ]
 		then
 			while read -r line; do declare $line; done < ~/.metroae
-		    sudo docker run -t -d --network host -v $mountPoint:/data registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
+		    sudo docker run -t -d --network host -v $METROAE_MOUNT_POINT:/data $metroAEImage:$maxContainerVersion 2> /dev/null
 		else 
 			sudo docker start $containerID
 		fi
@@ -137,13 +138,13 @@ destroy() {
 		confirmation=$1
 	fi
 	
-	while [ $confirmation != "yes" ] && [ $confirmation  != "no" ]
+	while [ $confirmation != "yes" ] && [ $confirmation  != "no" ] && [ $confirmation  != "y" ] && [ $confirmation != "n" ]
 	do
 		read -p "Do you really want to destroy the container (yes/no): " confirmation
 	done
  
 	
-	if [ $confirmation != "yes" ]
+	if [ $confirmation != "yes" ] || [ $confirmation != "y" ]
 	then
 		echo "Destroy Cancelled by user"
 		return 1
@@ -180,7 +181,7 @@ destroy() {
 }
 
 pull() { 
-	sudo docker pull registry.mv.nuagenetworks.net:5000/metroae:$maxContainerVersion 2> /dev/null
+	sudo docker pull $metroAEImage:$maxContainerVersion 2> /dev/null
 	
 	status=$?
 	if [ $status -ne 0 ] 
@@ -206,12 +207,12 @@ setup() {
 	
 	if [ -z $1 ]
 	then
-		read -p "Specify the full path to mount the docker volume: " path
+		read -p "Specify the full path to store user data on the host system: " path
 	else 
 		path=$1
 	fi
-	rm -f ~/.metroae
-	echo mountPoint=$path >> ~/.metroae
+	
+	echo LEVISTATE_MOUNT_POINT=$path >> ~/.metroae
 	
 	#stop and remove existing container if any
 	getRunningContainerID 
