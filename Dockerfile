@@ -2,7 +2,7 @@
 FROM python:2.7.10-slim
 
 #User Info
-MAINTAINER Nuage Networks Devops (deveops@nuagenetworks.net)
+MAINTAINER Nuage Networks Devops (devops@nuagenetworks.net)
 
 #Copy source files into /source directory
 COPY ./ /source
