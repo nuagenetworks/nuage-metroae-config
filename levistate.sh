@@ -82,7 +82,7 @@ run() {
 		if [ -z $containerID ]
 		then
 			while read -r line; do declare $line; done < ~/.metroae
-		    sudo docker run -t -d --network host -v $METROAE_MOUNT_POINT:/data $metroAEImage:$maxContainerVersion 2> /dev/null
+		    sudo docker run -t -d --network host -v $LEVISTATE_MOUNT_POINT:/data $metroAEImage:$maxContainerVersion 2> /dev/null
 		else 
 			sudo docker start $containerID
 		fi
