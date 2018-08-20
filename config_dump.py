@@ -1,9 +1,12 @@
 import argparse
 import os
+import urllib3
 import yaml
 
 from vsd_writer import VsdWriter
 
+# Disables annoying SSL certificate validation warnings
+urllib3.disable_warnings()
 
 DESCRIPTION = """This tool dumps the configuration from a VSD as Yaml."""
 
@@ -21,8 +24,9 @@ ROOT_OBJECT_NAME = "me"
 FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'l7applicationsignature', 'vrsredeploymentpolicy',
                   'vrsaddressrange', 'job', 'containerresync',
-                  'ingressexternalservicetemplate',
-                  'nsgateway', 'applicationperformancemanagement']
+                  'ingressexternalservicetemplate', 'nsgateway',
+                  'applicationperformancemanagement', 'l4service',
+                  'ltestatistics', 'eventlog']
 
 
 class MissingSubset(Exception):
@@ -64,7 +68,8 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
             for context in contexts:
                 # print "%s vs %s" % (context.current_object.parent_id,
                 #                     parent_id)
-                if context.current_object.parent_id == parent_id:
+                if (context.current_object.parent_id == parent_id or
+                        parent_id is None):
                     # print_object(context.current_object)
                     child = walk_object_children(
                         vsd_writer,
@@ -243,6 +248,8 @@ def main():
                                   password=args.password,
                                   enterprise=args.enterprise)
     vsd_writer.start_session()
+
+    # print vsd_writer.session.root_object.id
 
     config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME)
 

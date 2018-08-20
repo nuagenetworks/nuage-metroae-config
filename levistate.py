@@ -1,5 +1,6 @@
 import argparse
 import os
+import urllib3
 
 from configuration import Configuration
 from errors import LevistateError
@@ -7,6 +8,9 @@ from logger import Logger
 from template import TemplateStore
 from user_data_parser import UserDataParser
 from vsd_writer import VsdWriter
+
+# Disables annoying SSL certificate validation warnings
+urllib3.disable_warnings()
 
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
@@ -33,73 +37,76 @@ configuration.  See README.md for more."""
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
 Please specify template path using --tp on command line or set an environment variable %s
 Please specify user data path using --dp on command line or set an environment variable %s
-Please specify VSD specification path using --sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS) 
+Please specify VSD specification path using --sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS)
+
 
 def main():
     args = parse_args()
-    
-    if args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION: 
+
+    if args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
-            
+
         if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
             args.data_path = os.getenv(ENV_USER_DATA).split()
-    
+
         if args.spec_path is None and os.getenv(ENV_VSD_SPECIFICATIONS) is not None:
             args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
-        
+
         #Check to make sure we have template path and data path set
         if args.template_path is None or args.data_path is None or args.spec_path is None:
-            print REQUIRED_FIELDS_ERROR 
+            print REQUIRED_FIELDS_ERROR
             exit(1)
-            
+
     elif args.action == LIST_ACTION:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
-        
+
         if args.template_path is None:
             print "Please specify template path using --tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
-            
+
     elif args.action == SCHEMA_ACTION or args.action == EXAMPLE_ACTION:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
-            
+
         if args.template_name is None:
             print "Please specify template name using --t on command line"
             exit(1)
-        
+
         if args.template_path is None:
             print "Please specify template path using --tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
-     
+
     levistate = Levistate(args, args.action)
     levistate.run()
-    
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     sub_parser = parser.add_subparsers(dest='action')
-    
+
     create_parser = sub_parser.add_parser(CREATE_ACTION)
     add_parser_arguments(create_parser)
-    
+
     revert_parser = sub_parser.add_parser(REVERT_ACTION)
     add_parser_arguments(revert_parser)
-    
+
     validate_parser = sub_parser.add_parser(VALIDATE_ACTION)
     add_parser_arguments(validate_parser)
-    
+
     list_parser = sub_parser.add_parser(LIST_ACTION)
     add_template_path_parser_argument(list_parser)
-    
+
     schema_parser = sub_parser.add_parser(SCHEMA_ACTION)
     add_template_parser_arguements(schema_parser)
-    
+
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguements(example_parser)
-    
+
     return parser.parse_args()
+
 
 def add_template_path_parser_argument(parser):
     parser.add_argument('-tp', '--template-path', dest='template_path',
@@ -107,13 +114,14 @@ def add_template_path_parser_argument(parser):
                         default=None,
                         help='Path containing template files. Can also set using environment variable %s' % (ENV_TEMPLATE))
 
+
 def add_template_parser_arguements(parser):
     add_template_path_parser_argument(parser)
-    
+
     parser.add_argument('-t', '--template', dest='template_name',
                         action='store', required=False,
                         help='Template name')
-    
+
 
 def add_parser_arguments(parser):
     add_template_path_parser_argument(parser)
@@ -157,14 +165,14 @@ class Levistate(object):
         self.action = action
 
     def run(self):
-        
+
         self.setup_template_store()
         if self.list_info():
             return
         self.setup_vsd_writer()
         self.parse_user_data()
         self.parse_extra_vars()
-        
+
         try:
             self.apply_templates()
         except LevistateError as e:
@@ -208,7 +216,7 @@ class Levistate(object):
         return value
 
     def list_info(self):
-        
+
         if self.action == LIST_ACTION:
             template_names = self.store.get_template_names()
             print "\n".join(template_names)
@@ -239,7 +247,7 @@ class Levistate(object):
 
     def setup_template_store(self):
         self.store = TemplateStore()
-        
+
         for path in self.args.template_path:
             self.store.read_templates(path)
 
