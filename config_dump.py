@@ -22,10 +22,14 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'l7applicationsignature', 'vrsredeploymentpolicy',
                   'vrsaddressrange', 'job', 'containerresync',
                   'ingressexternalservicetemplate',
-                  'nsgateway']
+                  'nsgateway', 'applicationperformancemanagement']
 
 
 class MissingSubset(Exception):
+    pass
+
+
+class ChildError(Exception):
     pass
 
 
@@ -54,17 +58,26 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
     children = list()
     for object_name in children_names:
         # print object_name
-        contexts = vsd_writer.get_object_list(object_name.lower(),
-                                              parent_context)
-        for context in contexts:
-            # print "%s vs %s" % (context.current_object.parent_id, parent_id)
-            if context.current_object.parent_id == parent_id:
-                # print_object(context.current_object)
-                child = walk_object_children(vsd_writer,
-                                             context.current_object.get_name(),
-                                             context.current_object.id,
-                                             context)
-                children.append(child)
+        try:
+            contexts = vsd_writer.get_object_list(object_name.lower(),
+                                                  parent_context)
+            for context in contexts:
+                # print "%s vs %s" % (context.current_object.parent_id,
+                #                     parent_id)
+                if context.current_object.parent_id == parent_id:
+                    # print_object(context.current_object)
+                    child = walk_object_children(
+                        vsd_writer,
+                        context.current_object.get_name(),
+                        context.current_object.id,
+                        context)
+                    children.append(child)
+        except ChildError as e:
+            raise e
+        except Exception as e:
+            print "# ERROR in %s: %s" % (object_name, str(e))
+            if not args.ignore_errors:
+                raise ChildError()
 
     if parent_context is None:
         return children
@@ -207,10 +220,16 @@ def parse_args():
                         help=('Resolve any ID references in the config to'
                               ' name based tokens'))
 
+    parser.add_argument('-i', '--ignore-errors',
+                        dest='ignore_errors',
+                        action='store_true', required=False, default=False,
+                        help=('Ignore any errors found'))
+
     return parser.parse_args()
 
 
 def main():
+    global args
     args = parse_args()
 
     if args.spec_path is None:
