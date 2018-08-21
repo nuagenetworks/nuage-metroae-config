@@ -33,6 +33,10 @@ class MissingSubset(Exception):
     pass
 
 
+class NotRemoved(Exception):
+    pass
+
+
 class ChildError(Exception):
     pass
 
@@ -159,12 +163,20 @@ def compare_tree(superset, subset):
                             found = True
                         except MissingSubset:
                             pass
+                        except NotRemoved:
+                            pass
 
-        if not found:
+        if not args.expect_removed and not found:
             missing_yaml = yaml.safe_dump(child_subset,
                                           default_flow_style=False,
                                           default_style='')
             raise MissingSubset("\n\n" + missing_yaml)
+
+        if args.expect_removed and found:
+            extra_yaml = yaml.safe_dump(child_subset,
+                                        default_flow_style=False,
+                                        default_style='')
+            raise NotRemoved("\n\n" + extra_yaml)
 
 
 def compare_objects(superset_obj, subset_obj):
@@ -229,6 +241,11 @@ def parse_args():
                         dest='ignore_errors',
                         action='store_true', required=False, default=False,
                         help=('Ignore any errors found'))
+
+    parser.add_argument('-er', '--expect-removed',
+                        dest='expect_removed',
+                        action='store_true', required=False, default=False,
+                        help=('Verify that expected config was removed'))
 
     return parser.parse_args()
 
