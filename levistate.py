@@ -278,7 +278,7 @@ class Levistate(object):
                 for datafile in self.args.datafiles:
                     if datafile is not None:
                         if not os.path.exists(datafile):
-                            datafile = os.path.join(self.args.data_path, datafile)
+                            datafile = os.path.join(self.args.data_path[0], datafile)
                             if not os.path.exists(datafile):
                                 self.logger.error("""Could not find user data file %s
                                 if using the docker container please make sure
