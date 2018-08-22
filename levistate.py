@@ -43,7 +43,8 @@ configuration.  See README.md for more."""
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
 Please specify template path using -tp on command line or set an environment variable %s
 Please specify user data path using -dp on command line or set an environment variable %s
-Please specify VSD specification path using -sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS) 
+Please specify VSD specification path using -sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS)
+
 
 def main():
     parser = get_parser()
@@ -52,7 +53,7 @@ def main():
     if args.action == HELP_ACTION:
         print parser.print_help()
         exit(0)
-    elif args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION: 
+    elif args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
@@ -62,9 +63,9 @@ def main():
         if args.spec_path is None and os.getenv(ENV_VSD_SPECIFICATIONS) is not None:
             args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
 
-        #Check to make sure we have template path and data path set
+        # Check to make sure we have template path and data path set
         if args.template_path is None or args.data_path is None or args.spec_path is None:
-            print REQUIRED_FIELDS_ERROR 
+            print REQUIRED_FIELDS_ERROR
             exit(1)
 
     elif args.action == LIST_ACTION:
@@ -86,6 +87,7 @@ def main():
         if args.template_path is None:
             print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
+    print(args)
 
     levistate = Levistate(args, args.action)
     levistate.run()
@@ -167,6 +169,9 @@ def add_parser_arguments(parser):
     parser.add_argument('-lg', '--logs', dest='logs',
                         action='store_true', required=False,
                         help='Show logs after run')
+    parser.add_argument('datafile', help="Optional datafile",
+                         nargs='?', default=None,
+                         action='append')
 
 
 class Levistate(object):
@@ -271,10 +276,16 @@ class Levistate(object):
     def parse_user_data(self):
         if self.args.data_path is not None:
             parser = UserDataParser()
-            for path in self.args.data_path:
-                parser.read_data(path)
+            if self.args.datafiles is not None:
+                for datafile in self.args.datafiles:
+                    if datafile is not None:
+                        if not os.path.exists(datafile):
+                            self.args.datafile = "%/%s" % (self.args.data_path, self.args.datafile)
+                        parser.read_data(self.args.datafile)
+            else:
+                for path in self.args.data_path:
+                    parser.read_data(path)
             self.template_data = parser.get_template_name_data_pairs()
-
 
     def apply_templates(self):
         config = Configuration(self.store)
@@ -320,6 +331,7 @@ class Levistate(object):
             dirName = SPECIFICATION_DIR
             url = VSD_SPECIFICAIONS_LOCATION
             self.download_and_extract(url, dirName)
+
 
 if __name__ == "__main__":
     main()
