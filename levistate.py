@@ -283,6 +283,7 @@ class Levistate(object):
                                 self.logger.error("""Could not find user data file %s
                                 if using the docker container please make sure
                                 it is accessible to the docker""" % (datafile))
+                                exit(1)
                         parser.read_data(datafile)
             else:
                 for path in self.args.data_path:
