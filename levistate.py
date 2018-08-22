@@ -280,7 +280,7 @@ class Levistate(object):
                 for datafile in self.args.datafiles:
                     if datafile is not None:
                         if not os.path.exists(datafile):
-                            datafile = "%/%s" % (self.args.data_path, datafile)
+                            datafile = "%s/%s" % (self.args.data_path, datafile)
                         parser.read_data(datafile)
             else:
                 for path in self.args.data_path:
