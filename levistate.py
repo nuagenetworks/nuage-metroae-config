@@ -169,7 +169,7 @@ def add_parser_arguments(parser):
                         action='store_true', required=False,
                         help='Show logs after run')
     parser.add_argument('datafiles', help="Optional datafile",
-                         nargs='+', default=None)
+                         nargs='*', default=None)
 
 
 class Levistate(object):
