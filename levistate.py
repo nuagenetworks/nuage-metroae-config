@@ -281,8 +281,7 @@ class Levistate(object):
                             datafile = os.path.join(self.args.data_path[0], datafile)
                             if not os.path.exists(datafile):
                                 print("""Could not find user data file %s
-                                if using the docker container please make sure
-                                it is accessible to the docker""" % (datafile))
+if using the docker container please make sure it is accessible to the docker""" % (datafile))
                                 exit(1)
                         parser.read_data(datafile)
             else:
