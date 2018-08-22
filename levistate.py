@@ -87,7 +87,6 @@ def main():
         if args.template_path is None:
             print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
-    print(args)
 
     levistate = Levistate(args, args.action)
     levistate.run()
