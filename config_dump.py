@@ -20,6 +20,7 @@ ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
 
+VSD_CSP_ENTERPRISE_GUID = "76046673-d0ea-4a67-b6af-2829952f0812"
 ROOT_OBJECT_NAME = "me"
 FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'l7applicationsignature', 'vrsredeploymentpolicy',
@@ -73,7 +74,7 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
                 # print "%s vs %s" % (context.current_object.parent_id,
                 #                     parent_id)
                 if (context.current_object.parent_id == parent_id or
-                        parent_id is None):
+                        context.current_object.parent_id is None):
                     # print_object(context.current_object)
                     child = walk_object_children(
                         vsd_writer,
@@ -268,7 +269,8 @@ def main():
 
     # print vsd_writer.session.root_object.id
 
-    config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME)
+    config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME,
+                                  VSD_CSP_ENTERPRISE_GUID)
 
     if args.resolve_references is True or args.compare_file is not None:
         guid_map = get_guid_map(config)
