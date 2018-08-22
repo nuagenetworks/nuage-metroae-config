@@ -278,7 +278,11 @@ class Levistate(object):
                 for datafile in self.args.datafiles:
                     if datafile is not None:
                         if not os.path.exists(datafile):
-                            datafile = "%s/%s" % (self.args.data_path[0], datafile)
+                            datafile = os.path.join(self.args.data_path, datafile)
+                            if not os.path.exists(datafile):
+                                self.logger.error("""Could not find user data file %s
+                                if using the docker container please make sure
+                                it is accessible to the docker""" % (datafile))
                         parser.read_data(datafile)
             else:
                 for path in self.args.data_path:
