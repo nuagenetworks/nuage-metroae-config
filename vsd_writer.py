@@ -197,6 +197,36 @@ class VsdWriter(DeviceWriterBase):
 
         return new_context
 
+    def get_object_list(self, object_name, context=None):
+        """
+        Gets a list of objects of specified type in the current context
+        """
+        location = "Get object list %s [%s]" % (object_name, context)
+        self.log.debug(location)
+        self._check_session()
+
+        contexts = list()
+
+        try:
+            new_context = self._get_new_child_context(context)
+            objects = self._get_object_list(object_name,
+                                            new_context.parent_object)
+            for current_object in objects:
+                new_context = self._get_new_child_context(context)
+
+                new_context.current_object = current_object
+
+                new_context.object_exists = True
+
+                contexts.append(new_context)
+
+        except BambouHTTPError as e:
+            raise VsdError(e, location)
+        except DeviceWriterError as e:
+            e.reraise_with_location(location)
+
+        return contexts
+
     def delete_object(self, context):
         """
         Deletes the object selected in the current context
@@ -422,6 +452,18 @@ class VsdWriter(DeviceWriterBase):
                 (object_name, by_field, field_value))
 
         return objects[0]
+
+    def _get_object_list(self, object_name, parent_object=None):
+
+        self._get_specification(object_name)
+        fetcher = self._get_fetcher(object_name, parent_object)
+
+        if self.validate_only is True:
+            return list()
+
+        objects = fetcher.get()
+
+        return objects
 
     def _set_attributes(self, obj, **kwargs):
         for field, value in kwargs.iteritems():

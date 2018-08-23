@@ -2,8 +2,9 @@
 
 import argparse
 import os
-import wget
 import tarfile
+import urllib3
+import wget
 
 from configuration import Configuration
 from errors import LevistateError
@@ -11,6 +12,9 @@ from logger import Logger
 from template import TemplateStore
 from user_data_parser import UserDataParser
 from vsd_writer import VsdWriter
+
+# Disables annoying SSL certificate validation warnings
+urllib3.disable_warnings()
 
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
@@ -31,7 +35,7 @@ SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
 UPGRADE_TEMPLATE_ACTION = 'upgrade-templates'
 HELP_ACTION = 'help'
-TEMPALTE_TAR_LOCATION = "https://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
+TEMPLATE_TAR_LOCATION = "https://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
 VSD_SPECIFICAIONS_LOCATION = "https://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
 TEMPALTE_DIR = "/data/standard-templates"
 SPECIFICATION_DIR = "/data/vsd-api-specifications"
@@ -42,8 +46,7 @@ configuration.  See README.md for more."""
 
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
 Please specify template path using -tp on command line or set an environment variable %s
-Please specify user data path using -dp on command line or set an environment variable %s
-Please specify VSD specification path using -sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS)
+Please specify VSD specification path using -sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_VSD_SPECIFICATIONS)
 
 
 def main():
@@ -53,18 +56,22 @@ def main():
     if args.action == HELP_ACTION:
         print parser.print_help()
         exit(0)
-    elif args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION:
+    elif (args.action == VALIDATE_ACTION or
+          args.action == CREATE_ACTION or
+          args.action == REVERT_ACTION):
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
         if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
             args.data_path = os.getenv(ENV_USER_DATA).split()
 
-        if args.spec_path is None and os.getenv(ENV_VSD_SPECIFICATIONS) is not None:
+        if (args.spec_path is None and
+                os.getenv(ENV_VSD_SPECIFICATIONS) is not None):
             args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
 
         # Check to make sure we have template path and data path set
-        if args.template_path is None or args.data_path is None or args.spec_path is None:
+        if (args.template_path is None or
+                args.spec_path is None):
             print REQUIRED_FIELDS_ERROR
             exit(1)
 
@@ -115,9 +122,9 @@ def get_parser():
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguements(example_parser)
 
-    upgrade_templates_parser = sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
+    sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
 
-    help_parser = sub_parser.add_parser(HELP_ACTION)
+    sub_parser.add_parser(HELP_ACTION)
 
     return parser
 
@@ -169,7 +176,7 @@ def add_parser_arguments(parser):
                         action='store_true', required=False,
                         help='Show logs after run')
     parser.add_argument('datafiles', help="Optional datafile",
-                         nargs='*', default=None)
+                        nargs='*', default=None)
 
 
 class Levistate(object):
@@ -272,22 +279,28 @@ class Levistate(object):
             self.store.read_templates(path)
 
     def parse_user_data(self):
-        if self.args.data_path is not None:
-            parser = UserDataParser()
-            if self.args.datafiles is not None:
-                for datafile in self.args.datafiles:
-                    if datafile is not None:
+        parser = UserDataParser()
+        if self.args.datafiles is not None and len(self.args.datafiles) > 0:
+            for datafile in self.args.datafiles:
+                if datafile is not None:
+                    if not os.path.exists(datafile):
+                        if self.args.data_path is not None:
+                            datafile = os.path.join(self.args.data_path[0],
+                                                    datafile)
                         if not os.path.exists(datafile):
-                            datafile = os.path.join(self.args.data_path[0], datafile)
-                            if not os.path.exists(datafile):
-                                print("""Could not find user data file %s
-if using the docker container please make sure it is accessible to the docker""" % (datafile))
-                                exit(1)
-                        parser.read_data(datafile)
-            else:
-                for path in self.args.data_path:
-                    parser.read_data(path)
-            self.template_data = parser.get_template_name_data_pairs()
+                            print("Could not find user data file %s if "
+                                  "using the docker container please make "
+                                  "sure it is accessible to the docker" %
+                                  (datafile))
+                            exit(1)
+                    parser.read_data(datafile)
+        else:
+            if self.args.data_path is None or len(self.args.data_path) == 0:
+                print("Please specify a user data file or path")
+                exit(1)
+            for path in self.args.data_path:
+                parser.read_data(path)
+        self.template_data = parser.get_template_name_data_pairs()
 
     def apply_templates(self):
         config = Configuration(self.store)
@@ -327,7 +340,7 @@ if using the docker container please make sure it is accessible to the docker"""
     def upgrade_templates(self):
         if self.action == UPGRADE_TEMPLATE_ACTION:
             dirName = TEMPALTE_DIR
-            url = TEMPALTE_TAR_LOCATION
+            url = TEMPLATE_TAR_LOCATION
             self.download_and_extract(url, dirName)
 
             dirName = SPECIFICATION_DIR
