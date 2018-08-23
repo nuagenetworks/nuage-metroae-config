@@ -8,6 +8,8 @@ from vsd_writer import VsdWriter
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
 
+DEBUG = False
+
 DESCRIPTION = """This tool dumps the configuration from a VSD as Yaml."""
 
 DEFAULT_VSD_USERNAME = 'csproot'
@@ -66,16 +68,19 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
         object_name.lower()])
     children = list()
     for object_name in children_names:
-        # print object_name
+        if DEBUG:
+            print object_name
         try:
             contexts = vsd_writer.get_object_list(object_name.lower(),
                                                   parent_context)
             for context in contexts:
-                # print "%s vs %s" % (context.current_object.parent_id,
-                #                     parent_id)
+                if DEBUG:
+                    print "%s vs %s" % (context.current_object.parent_id,
+                                        parent_id)
                 if (context.current_object.parent_id == parent_id or
                         context.current_object.parent_id is None):
-                    # print_object(context.current_object)
+                    if DEBUG:
+                        print_object(context.current_object)
                     child = walk_object_children(
                         vsd_writer,
                         context.current_object.get_name(),
@@ -108,11 +113,6 @@ def get_child_names(vsd_writer, spec):
             child_object_names.append(spec['model']['entity_name'])
 
     return child_object_names
-    # if 'Enterprise' in child_object_names:
-    #     return ['Enterprise']
-    # if 'Domain' in child_object_names:
-    #     return ['Domain']
-    # return []
 
 
 def get_guid_map(children, guid_map=None):
@@ -267,15 +267,12 @@ def main():
                                   enterprise=args.enterprise)
     vsd_writer.start_session()
 
-    # print vsd_writer.session.root_object.id
-
     config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME,
                                   VSD_CSP_ENTERPRISE_GUID)
 
     if args.resolve_references is True or args.compare_file is not None:
         guid_map = get_guid_map(config)
         resolve_references(config, guid_map)
-        # print str(guid_map)
 
     print yaml.safe_dump(config, default_flow_style=False, default_style='')
 
