@@ -46,8 +46,7 @@ configuration.  See README.md for more."""
 
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
 Please specify template path using -tp on command line or set an environment variable %s
-Please specify user data path using -dp on command line or set an environment variable %s
-Please specify VSD specification path using -sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS)
+Please specify VSD specification path using -sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_VSD_SPECIFICATIONS)
 
 
 def main():
@@ -72,7 +71,6 @@ def main():
 
         # Check to make sure we have template path and data path set
         if (args.template_path is None or
-                args.data_path is None or
                 args.spec_path is None):
             print REQUIRED_FIELDS_ERROR
             exit(1)
@@ -281,25 +279,28 @@ class Levistate(object):
             self.store.read_templates(path)
 
     def parse_user_data(self):
-        if self.args.data_path is not None:
-            parser = UserDataParser()
-            if self.args.datafiles is not None:
-                for datafile in self.args.datafiles:
-                    if datafile is not None:
-                        if not os.path.exists(datafile):
+        parser = UserDataParser()
+        if self.args.datafiles is not None and len(self.args.datafiles) > 0:
+            for datafile in self.args.datafiles:
+                if datafile is not None:
+                    if not os.path.exists(datafile):
+                        if self.args.data_path is not None:
                             datafile = os.path.join(self.args.data_path[0],
                                                     datafile)
-                            if not os.path.exists(datafile):
-                                print("Could not find user data file %s if "
-                                      "using the docker container please make "
-                                      "sure it is accessible to the docker" %
-                                      (datafile))
-                                exit(1)
-                        parser.read_data(datafile)
-            else:
-                for path in self.args.data_path:
-                    parser.read_data(path)
-            self.template_data = parser.get_template_name_data_pairs()
+                        if not os.path.exists(datafile):
+                            print("Could not find user data file %s if "
+                                  "using the docker container please make "
+                                  "sure it is accessible to the docker" %
+                                  (datafile))
+                            exit(1)
+                    parser.read_data(datafile)
+        else:
+            if self.args.data_path is None or len(self.args.data_path) == 0:
+                print("Please specify a user data file or path")
+                exit(1)
+            for path in self.args.data_path:
+                parser.read_data(path)
+        self.template_data = parser.get_template_name_data_pairs()
 
     def apply_templates(self):
         config = Configuration(self.store)
