@@ -1,3 +1,6 @@
 bambou
 Jinja2
 PyYAML
+wget
+
+

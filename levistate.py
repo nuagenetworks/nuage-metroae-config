@@ -1,6 +1,10 @@
+#!/usr/bin/python
+
 import argparse
 import os
+import tarfile
 import urllib3
+import wget
 
 from configuration import Configuration
 from errors import LevistateError
@@ -15,7 +19,7 @@ urllib3.disable_warnings()
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
-DEFAULT_URL = 'https://localhost:8080'
+DEFAULT_URL = 'https://127.0.0.1:8080'
 ENV_TEMPLATE = 'TEMPLATE_PATH'
 ENV_USER_DATA = 'USER_DATA_PATH'
 ENV_VSD_USERNAME = 'VSD_USERNAME'
@@ -29,32 +33,47 @@ REVERT_ACTION = 'revert'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
+UPGRADE_TEMPLATE_ACTION = 'upgrade-templates'
+HELP_ACTION = 'help'
+TEMPLATE_TAR_LOCATION = "https://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
+VSD_SPECIFICAIONS_LOCATION = "https://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
+TEMPALTE_DIR = "/data/standard-templates"
+SPECIFICATION_DIR = "/data/vsd-api-specifications"
 
 DESCRIPTION = """This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
 configuration.  See README.md for more."""
 
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
-Please specify template path using --tp on command line or set an environment variable %s
-Please specify user data path using --dp on command line or set an environment variable %s
-Please specify VSD specification path using --sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS)
+Please specify template path using -tp on command line or set an environment variable %s
+Please specify user data path using -dp on command line or set an environment variable %s
+Please specify VSD specification path using -sp on command line or set an environment variable %s""" % (ENV_TEMPLATE, ENV_USER_DATA, ENV_VSD_SPECIFICATIONS)
 
 
 def main():
-    args = parse_args()
+    parser = get_parser()
+    args = parser.parse_args()
 
-    if args.action == VALIDATE_ACTION or args.action == CREATE_ACTION or args.action == REVERT_ACTION:
+    if args.action == HELP_ACTION:
+        print parser.print_help()
+        exit(0)
+    elif (args.action == VALIDATE_ACTION or
+          args.action == CREATE_ACTION or
+          args.action == REVERT_ACTION):
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
         if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
             args.data_path = os.getenv(ENV_USER_DATA).split()
 
-        if args.spec_path is None and os.getenv(ENV_VSD_SPECIFICATIONS) is not None:
+        if (args.spec_path is None and
+                os.getenv(ENV_VSD_SPECIFICATIONS) is not None):
             args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
 
-        #Check to make sure we have template path and data path set
-        if args.template_path is None or args.data_path is None or args.spec_path is None:
+        # Check to make sure we have template path and data path set
+        if (args.template_path is None or
+                args.data_path is None or
+                args.spec_path is None):
             print REQUIRED_FIELDS_ERROR
             exit(1)
 
@@ -63,7 +82,7 @@ def main():
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
         if args.template_path is None:
-            print "Please specify template path using --tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
+            print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
 
     elif args.action == SCHEMA_ACTION or args.action == EXAMPLE_ACTION:
@@ -71,18 +90,18 @@ def main():
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
         if args.template_name is None:
-            print "Please specify template name using --t on command line"
+            print "Please specify template name using -t on command line"
             exit(1)
 
         if args.template_path is None:
-            print "Please specify template path using --tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
+            print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
 
     levistate = Levistate(args, args.action)
     levistate.run()
 
 
-def parse_args():
+def get_parser():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
     sub_parser = parser.add_subparsers(dest='action')
@@ -105,7 +124,11 @@ def parse_args():
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguements(example_parser)
 
-    return parser.parse_args()
+    sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
+
+    sub_parser.add_parser(HELP_ACTION)
+
+    return parser
 
 
 def add_template_path_parser_argument(parser):
@@ -154,6 +177,8 @@ def add_parser_arguments(parser):
     parser.add_argument('-lg', '--logs', dest='logs',
                         action='store_true', required=False,
                         help='Show logs after run')
+    parser.add_argument('datafiles', help="Optional datafile",
+                        nargs='*', default=None)
 
 
 class Levistate(object):
@@ -165,6 +190,10 @@ class Levistate(object):
         self.action = action
 
     def run(self):
+
+        if self.action == UPGRADE_TEMPLATE_ACTION:
+            self.upgrade_templates()
+            return
 
         self.setup_template_store()
         if self.list_info():
@@ -254,11 +283,23 @@ class Levistate(object):
     def parse_user_data(self):
         if self.args.data_path is not None:
             parser = UserDataParser()
-            for path in self.args.data_path:
-                parser.read_data(path)
+            if self.args.datafiles is not None:
+                for datafile in self.args.datafiles:
+                    if datafile is not None:
+                        if not os.path.exists(datafile):
+                            datafile = os.path.join(self.args.data_path[0],
+                                                    datafile)
+                            if not os.path.exists(datafile):
+                                print("Could not find user data file %s if "
+                                      "using the docker container please make "
+                                      "sure it is accessible to the docker" %
+                                      (datafile))
+                                exit(1)
+                        parser.read_data(datafile)
+            else:
+                for path in self.args.data_path:
+                    parser.read_data(path)
             self.template_data = parser.get_template_name_data_pairs()
-            # For debugging user data
-            # print str(self.template_data)
 
     def apply_templates(self):
         config = Configuration(self.store)
@@ -284,6 +325,26 @@ class Levistate(object):
 
             if self.action == VALIDATE_ACTION:
                 print str(config.root_action)
+
+    def download_and_extract(self, url, dirName):
+        if not os.path.isdir(dirName):
+            os.mkdir(dirName)
+        os.chdir(dirName)
+
+        filename = wget.download(url)
+        tfile = tarfile.TarFile(filename)
+        tfile.extractall()
+        os.remove(tfile.name)
+
+    def upgrade_templates(self):
+        if self.action == UPGRADE_TEMPLATE_ACTION:
+            dirName = TEMPALTE_DIR
+            url = TEMPLATE_TAR_LOCATION
+            self.download_and_extract(url, dirName)
+
+            dirName = SPECIFICATION_DIR
+            url = VSD_SPECIFICAIONS_LOCATION
+            self.download_and_extract(url, dirName)
 
 
 if __name__ == "__main__":
