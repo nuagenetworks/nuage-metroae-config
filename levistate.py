@@ -35,8 +35,8 @@ SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
 UPGRADE_TEMPLATE_ACTION = 'upgrade-templates'
 HELP_ACTION = 'help'
-TEMPLATE_TAR_LOCATION = "https://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
-VSD_SPECIFICAIONS_LOCATION = "https://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
+TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
+VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
 TEMPALTE_DIR = "/data/standard-templates"
 SPECIFICATION_DIR = "/data/vsd-api-specifications"
 
