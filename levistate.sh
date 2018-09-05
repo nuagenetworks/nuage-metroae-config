@@ -268,7 +268,7 @@ dockerExec() {
 }
 
 help() {
-	echo "usage: supported commands are help, pull, setup, stop, destroy, upgrade "
+	echo "usage: supported commands are help, pull, setup, stop, destroy, upgrade-engine "
 	echo "additionally supports commands that can be executed in the docker container"
 
 	dockerExec help
@@ -323,12 +323,8 @@ do
 		fi
 		shift
 		;;
-		upgrade)
-		if [ $2 == "engine" ] || [ $2 == "Engine" ]
-		then
-			upgradeDocker
-		fi
-		shift
+		upgrade-engine)
+		upgradeDocker
 		shift
 		;;
 		*)

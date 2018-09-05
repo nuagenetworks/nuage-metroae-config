@@ -339,6 +339,7 @@ class Levistate(object):
 
     def upgrade_templates(self):
         if self.action == UPGRADE_TEMPLATE_ACTION:
+            print("Upgrading templates...")
             dirName = TEMPALTE_DIR
             url = TEMPLATE_TAR_LOCATION
             self.download_and_extract(url, dirName)
