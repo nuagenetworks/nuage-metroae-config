@@ -16,6 +16,8 @@ from vsd_writer import VsdWriter
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
 
+LEVISTATE_VERSION = "1.0"
+
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
@@ -34,15 +36,18 @@ LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
 UPGRADE_TEMPLATE_ACTION = 'upgrade-templates'
+VERSION_ACTION = 'version'
 HELP_ACTION = 'help'
 TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
 VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
 TEMPALTE_DIR = "/data/standard-templates"
 SPECIFICATION_DIR = "/data/vsd-api-specifications"
 
-DESCRIPTION = """This tool reads JSON or Yaml files of templates
+DESCRIPTION = """Version %s - This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
-configuration.  See README.md for more."""
+configuration.  See README.md for more.""" % LEVISTATE_VERSION
+
+VERSION_OUTPUT = "Levistate Engine version %s" % LEVISTATE_VERSION
 
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
 Please specify template path using -tp on command line or set an environment variable %s
@@ -55,6 +60,9 @@ def main():
 
     if args.action == HELP_ACTION:
         print parser.print_help()
+        exit(0)
+    elif args.action == VERSION_ACTION or args.version:
+        print VERSION_OUTPUT
         exit(0)
     elif (args.action == VALIDATE_ACTION or
           args.action == CREATE_ACTION or
@@ -87,8 +95,8 @@ def main():
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
-        if args.template_name is None:
-            print "Please specify template name using -t on command line"
+        if len(args.template_names) == 0:
+            print "Please specify template names on command line"
             exit(1)
 
         if args.template_path is None:
@@ -117,12 +125,14 @@ def get_parser():
     add_template_path_parser_argument(list_parser)
 
     schema_parser = sub_parser.add_parser(SCHEMA_ACTION)
-    add_template_parser_arguements(schema_parser)
+    add_template_parser_arguments(schema_parser)
 
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
-    add_template_parser_arguements(example_parser)
+    add_template_parser_arguments(example_parser)
 
     sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
+
+    sub_parser.add_parser(VERSION_ACTION)
 
     sub_parser.add_parser(HELP_ACTION)
 
@@ -134,14 +144,17 @@ def add_template_path_parser_argument(parser):
                         action='append', required=False,
                         default=None,
                         help='Path containing template files. Can also set using environment variable %s' % (ENV_TEMPLATE))
+    parser.add_argument('--version', dest='version',
+                        action='store_true', required=False,
+                        help='Displays version information')
 
 
-def add_template_parser_arguements(parser):
+def add_template_parser_arguments(parser):
     add_template_path_parser_argument(parser)
 
-    parser.add_argument('-t', '--template', dest='template_name',
-                        action='store', required=False,
-                        help='Template name')
+    parser.add_argument('template_names',
+                        nargs="*",
+                        help='Template names')
 
 
 def add_parser_arguments(parser):
@@ -250,13 +263,15 @@ class Levistate(object):
             return True
 
         if self.action == SCHEMA_ACTION:
-            template = self.store.get_template(self.args.template_name)
-            print template.get_schema()
+            for template_name in self.args.template_names:
+                template = self.store.get_template(template_name)
+                print template.get_schema()
             return True
 
         if self.action == EXAMPLE_ACTION:
-            template = self.store.get_template(self.args.template_name)
-            print template.get_example()
+            for template_name in self.args.template_names:
+                template = self.store.get_template(template_name)
+                print template.get_example()
             return True
 
         return False
