@@ -268,11 +268,15 @@ dockerExec() {
 }
 
 help() {
-	echo "usage: supported commands are help, pull, setup, stop, destroy, upgrade-engine "
+	echo "usage: supported commands are help, version, pull, setup, stop, destroy, upgrade-engine "
 	echo "additionally supports commands that can be executed in the docker container"
 
 	dockerExec help
 
+}
+
+showVersion() {
+	dockerExec version
 }
 
 # main functionality
@@ -293,6 +297,10 @@ do
 	case $key in
 		help)
 		help
+		shift
+		;;
+		version)
+		showVersion
 		shift
 		;;
 		pull)
