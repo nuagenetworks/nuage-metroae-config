@@ -275,10 +275,6 @@ help() {
 
 }
 
-showVersion() {
-	dockerExec version
-}
-
 # main functionality
 
 checkDocker
@@ -297,10 +293,6 @@ do
 	case $key in
 		help)
 		help
-		shift
-		;;
-		version)
-		showVersion
 		shift
 		;;
 		pull)
