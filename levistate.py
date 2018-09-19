@@ -61,7 +61,8 @@ def main():
     if args.action == HELP_ACTION:
         print parser.print_help()
         exit(0)
-    elif args.action == VERSION_ACTION or args.version:
+    elif args.action == VERSION_ACTION or (hasattr(args, "version") and
+                                           args.version):
         print VERSION_OUTPUT
         exit(0)
     elif (args.action == VALIDATE_ACTION or
