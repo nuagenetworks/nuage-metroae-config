@@ -191,8 +191,6 @@ class Action(object):
                 else:
                     self.children.append(new_action)
 
-            self.reorder_retrieve()
-
         except LevistateError as e:
             e.reraise_with_location(new_action._get_location())
 
@@ -227,14 +225,25 @@ class Action(object):
             self.parent.mark_ancestors_for_reorder(mark, is_store)
 
     def reorder_retrieve(self):
-        for mark in self.retrieve_marks:
-            self.reorder_ancestors(mark)
+        complete = False
 
-    def reorder_ancestors(self, mark):
+        for i in range(len(self.retrieve_marks)):
+            if not complete:
+                complete = True
+                for mark in self.retrieve_marks:
+                    if self.reorder_children(mark):
+                        complete = False
+
+        for child in self.children:
+            child.reorder_retrieve()
+
+    def reorder_children(self, mark):
         store_indicies = self.find_marked_indicies_in_children(
             mark, is_store=True)
         retrieve_indicies = self.find_marked_indicies_in_children(
             mark, is_store=False)
+
+        did_move = False
 
         if len(store_indicies) > 0 and len(retrieve_indicies) > 0:
             first_retrieve_index = retrieve_indicies[0]
@@ -245,9 +254,9 @@ class Action(object):
                     store_action = self.children[store_index]
                     del self.children[store_index]
                     self.children.insert(first_retrieve_index, store_action)
+                    did_move = True
 
-        if self.parent is not None:
-            self.parent.reorder_ancestors(mark)
+        return did_move
 
     def find_marked_indicies_in_children(self, mark, is_store):
         indicies = []

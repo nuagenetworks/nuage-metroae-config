@@ -170,6 +170,7 @@ class Configuration(object):
             self._walk_data(self._revert_data)
         else:
             self._walk_data(self._apply_data)
+        self.root_action.reorder_retrieve()
         writer.start_session()
         self.root_action.execute(writer)
         writer.stop_session()

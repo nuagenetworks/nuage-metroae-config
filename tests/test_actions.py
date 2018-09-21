@@ -553,6 +553,8 @@ class TestActionsOrdering(object):
         for template in read_order:
             root_action.read_children_actions(template)
 
+        root_action.reorder_retrieve()
+
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
         assert current_action.select_by_field == "name"
@@ -613,6 +615,8 @@ class TestActionsOrdering(object):
             for template in read_order:
                 root_action.read_children_actions(template)
 
+        root_action.reorder_retrieve()
+
         assert "same object twice" in str(e)
         assert "Level1" in str(e)
 
@@ -625,6 +629,8 @@ class TestActionsOrdering(object):
         with pytest.raises(ConflictError) as e:
             for template in read_order:
                 root_action.read_children_actions(template)
+
+        root_action.reorder_retrieve()
 
         assert "already set" in str(e)
         assert "Level1" in str(e)
@@ -640,6 +646,8 @@ class TestActionsOrdering(object):
         for template in read_order:
             root_action.reset_state()
             root_action.read_children_actions(template)
+
+        root_action.reorder_retrieve()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -694,7 +702,7 @@ class TestActionsOrdering(object):
         root_action.reset_state()
         root_action.read_children_actions(ORDER_STORE_5)
 
-        print str(root_action)
+        root_action.reorder_retrieve()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
