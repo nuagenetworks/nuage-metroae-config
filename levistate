@@ -4,7 +4,7 @@ runningContainerID=''
 imageID=''
 maxContainerVersion='current'
 confirmationMessage=''
-metroAEImage='registry.mv.nuagenetworks.net:5000/demometroae'
+metroAEImage='registry.mv.nuagenetworks.net:5000/metroae'
 
 checkDocker() {
 	docker --version > /dev/null 2> /dev/null
@@ -14,17 +14,6 @@ checkDocker() {
 		echo "MetroAE container requires Docker.  Please install at https://docs.docker.com"
 		exit 1
 	fi
-}
-
-getHostOperatingSystem() {
-
-	stat /etc/os-release > /dev/null 2> /dev/null
-    
-    if [ $? -ne 0 ] 
-    then
-		osRelease=$NON_LINUX
-	fi 
-		
 }
 
 getMaxContainerVersion() {
@@ -62,12 +51,6 @@ getImageID() {
 }
 
 checkSelinuxEnforceStatus() { 
-	getHostOperatingSystem 
-	if [ $osRelease -eq $NON_LINUX ]
-	then
-		return 0
-	fi
-	
 	enforcement=`getenforce`
 	
 	if [ $enforcement == "Enforcing" ]
@@ -279,31 +262,21 @@ upgradeDocker() {
 }
 
 dockerExec() {
-	runContainerIfNotRunning
-	
+	getRunningContainerID
+
+	if [ -z $runningContainerID ]
+	then
+		run
+		getRunningContainerID
+	fi
+
 	environment=""
 	for env in `env`
 	do
 		environment="$environment -e $env"
 	done
 
-	sudo docker exec $environment $runningContainerID /usr/bin/python levistate.py $@
-}
-
-runContainerIfNotRunning() { 
-	getRunningContainerID
-	
-	if [ -z $runningContainerID ]
-	then
-		run
-		getRunningContainerID
-	fi
-}
-
-interactive() { 
-	runContainerIfNotRunning
-	docker exec -it $runningContainerID /bin/bash
-
+	sudo docker exec $environment $runningContainerID /usr/local/bin/python levistate.py $@
 }
 
 
@@ -372,10 +345,6 @@ do
 		;;
 		upgrade-engine)
 		upgradeDocker
-		shift
-		;;
-		interactive)
-		interactive
 		shift
 		;;
 		*)
