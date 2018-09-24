@@ -21,6 +21,8 @@ class Action(object):
         else:
             self.state = state
 
+        self.disable_combine = False
+
         self.children = list()
         self.store_marks = set()
         self.retrieve_marks = set()
@@ -332,6 +334,9 @@ class CreateObjectAction(Action):
                 'value': select_value}
 
     def is_same_object(self, other_action):
+        if other_action.disable_combine is True:
+            return False
+
         other_selector = other_action.get_object_selector()
         if other_selector is None:
             return False
@@ -387,6 +392,10 @@ class SelectObjectAction(Action):
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
 
+        disable_combine = Action.get_dict_field(select_dict, 'disable-combine')
+        if disable_combine is True:
+            self.disable_combine = True
+
         self.log.debug(self._get_location("Reading "))
 
         self.read_children_actions(select_dict)
@@ -408,6 +417,12 @@ class SelectObjectAction(Action):
                 'value': self.value}
 
     def is_same_object(self, other_action):
+        if self.disable_combine is True:
+            return False
+
+        if other_action.disable_combine is True:
+            return False
+
         other_selector = other_action.get_object_selector()
         if other_selector is None:
             return False
