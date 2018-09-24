@@ -300,7 +300,7 @@ dockerExec() {
 		environment="$environment -e $env"
 	done
 
-	docker exec $environment $runningContainerID /usr/bin/python levistate.py $@
+	docker exec $environment $runningContainerID /usr/bin/python /source/levistate/levistate.py $@
 }
 
 interactive() { 
