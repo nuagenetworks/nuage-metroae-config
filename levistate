@@ -313,7 +313,12 @@ help() {
 	echo "usage: supported commands are help, version, pull, setup, stop, destroy, upgrade-engine "
 	echo "additionally supports commands that can be executed in the docker container"
 
-	dockerExec help
+	getRunningContainerID 
+	
+	if [ ! -z $runningContainerID ]
+	then
+		dockerExec help
+	fi
 
 }
 
