@@ -7,7 +7,8 @@ runningContainerID=''
 imageID=''
 maxContainerVersion='current'
 confirmationMessage=''
-metroAEImage='registry.mv.nuagenetworks.net:5000/dempmetroae'
+metroAEImage='registry.mv.nuagenetworks.net:5000/demometroae'
+osRelease=$LINUX
 
 checkDocker() {
 	docker --version > /dev/null 2> /dev/null
