@@ -17,7 +17,7 @@ checkDocker() {
 }
 
 getMaxContainerVersion() {
-	versions=`docker images | grep $metroAEImage | awk '{ print $2 }'`
+	versions=`sudo docker images | grep $metroAEImage | awk '{ print $2 }'`
 
 	maxContainerVersion=''
 	for version in $versions
@@ -37,27 +37,17 @@ getMaxContainerVersion() {
 
 getContainerID() {
 	#getMaxContainerVersion
-	containerID=`docker ps -a | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
+	containerID=`sudo docker ps -a | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getRunningContainerID() {
-	#getMaxContainerVersion 
-	runningContainerID=`docker ps | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
+	#getMaxContainerVersion
+	runningContainerID=`sudo docker ps | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
-getImageID() { 
-	#getMaxContainerVersion 
-	imageID=`docker images | grep metroae | grep $maxContainerVersion | awk '{ print $3}'`
-}
-
-checkSelinuxEnforceStatus() { 
-	enforcement=`getenforce`
-	
-	if [ $enforcement == "Enforcing" ]
-	then
-		echo "Selinux enforcing has to be turned off for MetroAE container to work properly"
-		return 1
-	fi
+getImageID() {
+	#getMaxContainerVersion
+	imageID=`sudo docker images | grep metroae | grep $maxContainerVersion | awk '{ print $3}'`
 }
 
 stop() {
@@ -102,7 +92,7 @@ run() {
 		if [ -z $containerID ]
 		then
 			while read -r line; do declare $line; done < ~/.metroae
-		    sudo docker run -t -d --network host -v $LEVISTATE_MOUNT_POINT:/data --name levistate $metroAEImage:$maxContainerVersion  2> /dev/null
+		    sudo docker run -t -d --network host -v $LEVISTATE_MOUNT_POINT:/data $metroAEImage:$maxContainerVersion 2> /dev/null
 		else
 			sudo docker start $containerID
 		fi
@@ -132,8 +122,6 @@ deleteContainerID() {
 		echo "Remove of MetroAE container failed"
 		return 1
 	fi
-	
-	echo "MetroAE container removed successfully" 
 }
 
 destroy() {
@@ -279,18 +267,12 @@ dockerExec() {
 	sudo docker exec $environment $runningContainerID /usr/local/bin/python levistate.py $@
 }
 
+help() {
+	echo "usage: supported commands are help, version, pull, setup, stop, destroy, upgrade-engine "
+	echo "additionally supports commands that can be executed in the docker container"
 
-help() { 
-	echo "usage: supported commands are help, pull, setup, stop, destroy, upgrade "
-	echo "additionally supports commands that can be executed in the docker container" 
-	echo "Note: script requires sudo access to be enabled for the user running the script"
-	
-	getRunningContainerID 
-	
-	if [ ! -z $runningContainerID ]
-	then
-		dockerExec help
-	fi
+	dockerExec help
+
 }
 
 # main functionality
@@ -301,8 +283,6 @@ if [ $# -eq 0 ]
 then
 	help
 fi
-
-checkSelinuxEnforceStatus 
 
 
 POSITIONAL=()
