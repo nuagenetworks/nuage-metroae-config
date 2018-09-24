@@ -2,7 +2,7 @@
 
 Levistate configuration template engine.
 
-Version 0.0.0
+Version 1.0
 
 This tool reads JSON or Yaml files of templates and user-data to
 write a configuration to a VSD or to revert (remove) said configuration.
@@ -148,45 +148,63 @@ Resolving deltas: 100% (18163/18163), done.
 
 Levistate command-line tool usage:
 
-    usage: levistate.py [-h] -tp TEMPLATE_PATH [-sp SPEC_PATH] [-dp DATA_PATH]
-                        [-t TEMPLATE_NAME] [-d DATA] [-r] [-v VSD_URL]
-                        [-u USERNAME] [-p PASSWORD] [-e ENTERPRISE] [-dr] [-lg]
-                        [-l] [-s] [-x]
+    usage: levistate.py [-h]
+                        {create,revert,validate,list,schema,example,upgrade-templates,version,help}
+                        ...
 
-    This prototype is able to read JSON or Yaml files of templates and user-data
-    to write a configuration to a VSD or to revert (remove) said configuration.
+    Version 1.0 - This tool reads JSON or Yaml files of templates and user-data to
+    write a configuration to a VSD or to revert (remove) said configuration. See
+    README.md for more.
+
+    positional arguments:
+      {create,revert,validate,list,schema,example,upgrade-templates,version,help}
+
+    optional arguments:
+      -h, --help            show this help message and exit
+
+
+    usage: levistate.py create [-h] [-tp TEMPLATE_PATH] [--version]
+                               [-sp SPEC_PATH] [-dp DATA_PATH] [-d DATA]
+                               [-v VSD_URL] [-u USERNAME] [-p PASSWORD]
+                               [-e ENTERPRISE] [-lg]
+                               [datafiles [datafiles ...]]
+
+    positional arguments:
+      datafiles             Optional datafile
 
     optional arguments:
       -h, --help            show this help message and exit
       -tp TEMPLATE_PATH, --template-path TEMPLATE_PATH
-                            Path containing template files
+                            Path containing template files. Can also set using
+                            environment variable TEMPLATE_PATH
+      --version             Displays version information
       -sp SPEC_PATH, --spec-path SPEC_PATH
-                            Path containing object specifications
+                            Path containing object specifications. Can also set
+                            using environment variable VSD_SPECIFICATIONS_PATH
       -dp DATA_PATH, --data-path DATA_PATH
-                            Path containing user data
-      -t TEMPLATE_NAME, --template TEMPLATE_NAME
-                            Template name
+                            Path containing user data. Can also set using
+                            environment variable USER_DATA_PATH
       -d DATA, --data DATA  Specify user data as key=value
-      -r, --revert          Revert (delete) templates instead of applying
       -v VSD_URL, --vsd-url VSD_URL
-                            URL to VSD REST API
+                            URL to VSD REST API. Can also set using environment
+                            variable VSD_URL
       -u USERNAME, --username USERNAME
-                            Username for VSD
+                            Username for VSD. Can also set using environment
+                            variable VSD_USERNAME
       -p PASSWORD, --password PASSWORD
-                            Password for VSD
+                            Password for VSD. Can also set using environment
+                            variable VSD_PASSWORD
       -e ENTERPRISE, --enterprise ENTERPRISE
-                            Enterprise for VSD
-      -dr, --dry-run        Perform validation only
+                            Enterprise for VSD. Can also set using environment
+                            variable VSD_ENTERPRISE
       -lg, --logs           Show logs after run
-      -l, --list            Lists loaded templates
-      -s, --schema          Displays template schema
-      -x, --example         Displays template user data example
+
 
 ## Example Usage
 
 Apply enterprise, domain and ACLs to VSD.
 
-    levistate$ python levistate.py -tp sample/templates -sp ~/vsd-api-specifications -dp sample/user_data/acls.yaml -v https://localhost:8443
+    levistate$ python levistate.py create -tp sample/templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
 
     Configuration
         Enterprise
@@ -244,7 +262,7 @@ Apply enterprise, domain and ACLs to VSD.
 
 Revert (remove) objects configured during application, use -r option
 
-    levistate$ python levistate.py -tp sample/templates -sp ~/vsd-api-specifications -dp sample/user_data/acls.yaml -r
+    levistate$ python levistate.py revert -tp sample/templates -sp ~/vsd-api-specifications sample/user_data/acls.yaml
 
 ## User Data
 
@@ -418,7 +436,7 @@ The templates that have been loaded into the Levistate tool can be listed with t
 
 An example of user data for any template can be provided using the following:
 
-    python levistate.py -tp sample/templates --example --template Domain
+    python levistate.py example -tp sample/templates Domain
 
     # First template set - Create a L3 Domain
     - template: Domain
@@ -433,7 +451,7 @@ An example of user data for any template can be provided using the following:
 
 A JSON schema can be generated for the user data required for any template.  These schemas conform to the json-schema.org standard specification:
 
-    python levistate.py -tp sample/templates --schema --template Domain
+    python levistate.py schema -tp sample/templates Domain
 
     {
       "title": "Schema validator for Nuage Metro Levistate template Domain",

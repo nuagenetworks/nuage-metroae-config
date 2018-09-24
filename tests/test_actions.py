@@ -6,6 +6,8 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 INVALID_ACTION_2,
                                 INVALID_ACTION_3,
                                 ORDER_CREATE,
+                                ORDER_DISABLE_COMBINE_1,
+                                ORDER_DISABLE_COMBINE_2,
                                 ORDER_SELECT_1,
                                 ORDER_SELECT_2,
                                 ORDER_STORE_1,
@@ -553,6 +555,8 @@ class TestActionsOrdering(object):
         for template in read_order:
             root_action.read_children_actions(template)
 
+        root_action.reorder_retrieve()
+
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
         assert current_action.select_by_field == "name"
@@ -613,6 +617,8 @@ class TestActionsOrdering(object):
             for template in read_order:
                 root_action.read_children_actions(template)
 
+        root_action.reorder_retrieve()
+
         assert "same object twice" in str(e)
         assert "Level1" in str(e)
 
@@ -625,6 +631,8 @@ class TestActionsOrdering(object):
         with pytest.raises(ConflictError) as e:
             for template in read_order:
                 root_action.read_children_actions(template)
+
+        root_action.reorder_retrieve()
 
         assert "already set" in str(e)
         assert "Level1" in str(e)
@@ -640,6 +648,8 @@ class TestActionsOrdering(object):
         for template in read_order:
             root_action.reset_state()
             root_action.read_children_actions(template)
+
+        root_action.reorder_retrieve()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -694,7 +704,7 @@ class TestActionsOrdering(object):
         root_action.reset_state()
         root_action.read_children_actions(ORDER_STORE_5)
 
-        print str(root_action)
+        root_action.reorder_retrieve()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -718,6 +728,35 @@ class TestActionsOrdering(object):
         current_action = root_action.children[1].children[1].children[0]
         assert current_action.attributes == {'name': 'L2-O1',
                                              'field1': store_action}
+
+    def test_disable_combine__success(self):
+        root_action = Action(None)
+
+        root_action.reset_state()
+        root_action.read_children_actions(ORDER_DISABLE_COMBINE_1)
+
+        root_action.read_children_actions(ORDER_DISABLE_COMBINE_2)
+
+        root_action.reorder_retrieve()
+
+        print str(root_action)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Level1"
+
+        current_action = root_action.children[0].children[0]
+        assert current_action.attributes == {'name': 'L1-O1'}
+
+        current_action = root_action.children[1]
+        assert current_action.object_type == "Level1"
+
+        current_action = root_action.children[1].children[0]
+        assert current_action.attributes == {'name': 'L1-O2'}
+
+        current_action = root_action.children[2]
+        assert current_action.object_type == "Level1"
+        assert current_action.field == "name"
+        assert current_action.value == "L1-O1"
 
 
 class TestActionsExecute(object):

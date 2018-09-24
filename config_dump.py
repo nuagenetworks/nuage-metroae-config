@@ -27,7 +27,7 @@ ROOT_OBJECT_NAME = "me"
 FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'l7applicationsignature', 'vrsredeploymentpolicy',
                   'vrsaddressrange', 'job', 'containerresync',
-                  'ingressexternalservicetemplate', 'nsgateway',
+                  'ingressexternalservicetemplate',
                   'applicationperformancemanagement', 'l4service',
                   'ltestatistics', 'eventlog']
 

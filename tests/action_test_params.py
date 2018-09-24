@@ -503,3 +503,52 @@ ORDER_STORE_5 = {"actions": [
                       {"Retrieve-value":
                           {"To-field": "field1",
                            "From-name": "store_1"}}]}}]}}]}
+
+
+ORDER_DISABLE_COMBINE_1 = {"actions": [
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O1"}},
+             {"Store-value":
+                 {"from-field": "name",
+                  "As-name": "store_1"}}]}},
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O2"}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}},
+                      {"Store-value":
+                          {"From-field": "field1",
+                           "As-name": "store_2"}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O2"}},
+                      {"Retrieve-value":
+                          {"To-field": "field1",
+                           "From-name": "store_1"}}]}}]}}]}
+
+
+ORDER_DISABLE_COMBINE_2 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "name",
+         "Value": "L1-O1",
+         "Disable-combine": True,
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O3"}},
+                      {"Retrieve-value":
+                          {"To-field": "field1",
+                           "From-name": "store_2"}}]}}]}}]}

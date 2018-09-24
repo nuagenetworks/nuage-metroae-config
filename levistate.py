@@ -21,7 +21,7 @@ LEVISTATE_VERSION = "1.0"
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
-DEFAULT_URL = 'https://127.0.0.1:8080'
+DEFAULT_URL = 'https://127.0.0.1:8443'
 ENV_TEMPLATE = 'TEMPLATE_PATH'
 ENV_USER_DATA = 'USER_DATA_PATH'
 ENV_VSD_USERNAME = 'VSD_USERNAME'
@@ -61,7 +61,8 @@ def main():
     if args.action == HELP_ACTION:
         print parser.print_help()
         exit(0)
-    elif args.action == VERSION_ACTION or args.version:
+    elif args.action == VERSION_ACTION or (hasattr(args, "version") and
+                                           args.version):
         print VERSION_OUTPUT
         exit(0)
     elif (args.action == VALIDATE_ACTION or

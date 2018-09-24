@@ -337,5 +337,5 @@ done
 
 if ($exec == true)
 then
-	dockerExec ${POSITIONAL[@]}
+	dockerExec "${POSITIONAL[@]}"
 fi
