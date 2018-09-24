@@ -47,21 +47,20 @@ getMaxContainerVersion() {
 	                maxContainerVersion=$version
 	        fi
 	done
-
 }
 
 getContainerID() {
-	#getMaxContainerVersion
+	getMaxContainerVersion
 	containerID=`docker ps -a | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getRunningContainerID() {
-	#getMaxContainerVersion
+	getMaxContainerVersion
 	runningContainerID=`docker ps | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getImageID() {
-	#getMaxContainerVersion
+	getMaxContainerVersion
 	imageID=`docker images | grep metroae | grep $maxContainerVersion | awk '{ print $3}'`
 }
 
@@ -153,6 +152,8 @@ deleteContainerID() {
 		echo "Remove of MetroAE container failed"
 		return 1
 	fi
+	
+	echo "MetroAE container removed successfully"
 }
 
 destroy() {
@@ -300,7 +301,7 @@ dockerExec() {
 		environment="$environment -e $env"
 	done
 
-	docker exec $environment $runningContainerID /usr/bin/python /source/levistate/levistate.py $@
+	docker exec $environment $runningContainerID /usr/bin/python /source/levistate/levistate.py "$@"
 }
 
 interactive() { 
