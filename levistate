@@ -5,7 +5,7 @@ NON_LINUX=1
 containerID=''
 runningContainerID=''
 imageID=''
-maxContainerVersion='current'
+maxContainerVersion=''
 confirmationMessage=''
 metroAEImage='registry.mv.nuagenetworks.net:5000/demometroae'
 osRelease=$LINUX
@@ -47,6 +47,11 @@ getMaxContainerVersion() {
 	                maxContainerVersion=$version
 	        fi
 	done
+	
+	if [ -z $maxContainerVersion ]
+	then
+		maxContainerVersion='current'
+	fi
 }
 
 getContainerID() {
