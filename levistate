@@ -268,7 +268,7 @@ setup() {
 	else
 
 		#download the templates and sample user data
-		dockerExec upgrade-templates
+		dockerExec templates update
 		status=$?
 	fi
 

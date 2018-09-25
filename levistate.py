@@ -35,7 +35,8 @@ REVERT_ACTION = 'revert'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
-UPGRADE_TEMPLATE_ACTION = 'upgrade-templates'
+TEMPLATE_ACTION = 'templates'
+UPGRADE_TEMPLATE_ACTION = 'update'
 VERSION_ACTION = 'version'
 HELP_ACTION = 'help'
 TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
@@ -45,7 +46,7 @@ SPECIFICATION_DIR = "/data/vsd-api-specifications"
 
 DESCRIPTION = """Version %s - This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
-configuration.  See README.md for more.""" % LEVISTATE_VERSION
+configuration.""" % LEVISTATE_VERSION
 
 VERSION_OUTPUT = "Levistate Engine version %s" % LEVISTATE_VERSION
 
@@ -84,7 +85,7 @@ def main():
             print REQUIRED_FIELDS_ERROR
             exit(1)
 
-    elif args.action == LIST_ACTION:
+    elif args.action == TEMPLATE_ACTION and args.templateAction == LIST_ACTION:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
@@ -122,16 +123,18 @@ def get_parser():
     validate_parser = sub_parser.add_parser(VALIDATE_ACTION)
     add_parser_arguments(validate_parser)
 
-    list_parser = sub_parser.add_parser(LIST_ACTION)
+    template_parser = sub_parser.add_parser(TEMPLATE_ACTION)
+    template_sub_parser = template_parser.add_subparsers(dest='templateAction')
+    list_parser = template_sub_parser.add_parser(LIST_ACTION)
     add_template_path_parser_argument(list_parser)
+
+    template_sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
 
     schema_parser = sub_parser.add_parser(SCHEMA_ACTION)
     add_template_parser_arguments(schema_parser)
 
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguments(example_parser)
-
-    sub_parser.add_parser(UPGRADE_TEMPLATE_ACTION)
 
     sub_parser.add_parser(VERSION_ACTION)
 
@@ -203,7 +206,7 @@ class Levistate(object):
 
     def run(self):
 
-        if self.action == UPGRADE_TEMPLATE_ACTION:
+        if self.action == TEMPLATE_ACTION and self.args.templateAction == UPGRADE_TEMPLATE_ACTION:
             self.upgrade_templates()
             return
 
@@ -258,7 +261,7 @@ class Levistate(object):
 
     def list_info(self):
 
-        if self.action == LIST_ACTION:
+        if self.action == TEMPLATE_ACTION and self.args.templateAction == LIST_ACTION:
             template_names = self.store.get_template_names()
             print "\n".join(template_names)
             return True
@@ -354,7 +357,7 @@ class Levistate(object):
         os.remove(tfile.name)
 
     def upgrade_templates(self):
-        if self.action == UPGRADE_TEMPLATE_ACTION:
+        if self.action == TEMPLATE_ACTION and self.args.templateAction == UPGRADE_TEMPLATE_ACTION:
             print("Upgrading templates...")
             dirName = TEMPALTE_DIR
             url = TEMPLATE_TAR_LOCATION
