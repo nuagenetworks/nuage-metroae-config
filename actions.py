@@ -488,6 +488,7 @@ class SetValuesAction(Action):
     def __init__(self, parent, state):
         super(SetValuesAction, self).__init__(parent, state)
         self.attributes = dict()
+        self.as_list = False
 
     def is_set_values(self):
         return True
@@ -517,9 +518,32 @@ class SetValuesAction(Action):
 
             self.attributes[field] = value
 
+    def append_list_attribute(self, field, value):
+        if value is not None:
+            existing_value = Action.get_dict_field(self.attributes,
+                                                   field.lower())
+            if existing_value is not None:
+                if type(existing_value) != list:
+                    raise ConflictError("Appending field '%s' of object %s"
+                                        " to '%s', but is not a list: '%s'" %
+                                        (str(field),
+                                         str(self.parent.object_type),
+                                         str(value).strip(),
+                                         str(existing_value).strip()))
+            else:
+                self.attributes[field] = list()
+
+            if type(value) == list:
+                self.attributes[field].extend(value)
+            else:
+                self.attributes[field].append(value)
+
     def combine(self, new_set_values_action):
         for key, value in new_set_values_action.attributes.iteritems():
-            self.add_attribute(key, value)
+            if self.as_list or new_set_values_action.as_list:
+                self.append_list_attribute(key, value)
+            else:
+                self.add_attribute(key, value)
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
@@ -532,6 +556,14 @@ class SetValuesAction(Action):
             if isinstance(value, Action):
                 resolved_value = value.get_stored_value()
                 attributes_copy[key] = resolved_value
+            elif (type(value) == list and
+                    len(value) > 0 and
+                    isinstance(value[0], Action)):
+                resolved_list = list()
+                for item in value:
+                    resolved_item = item.get_stored_value()
+                    resolved_list.append(resolved_item)
+                attributes_copy[key] = resolved_list
             else:
                 attributes_copy[key] = value
 
@@ -552,6 +584,12 @@ class SetValuesAction(Action):
                     value = "'" + value + "'"
             elif isinstance(value, Action):
                 value = "[retrieve %s]" % value._get_reference_string()
+            elif (type(value) == list and
+                    len(value) > 0 and
+                    isinstance(value[0], Action)):
+                value = "[" + ", ".join(
+                    ["retrieve %s" %
+                     x._get_reference_string() for x in value]) + "]"
 
             cur_output += "%s%s = %s\n" % (indent, str(field), str(value))
 
@@ -650,6 +688,10 @@ class RetrieveValueAction(SetValuesAction):
             raise TemplateParseError(
                 "Retrieve value action missing required 'from-name' field")
 
+        as_list = Action.get_dict_field(set_value_dict, 'as-list')
+        if as_list is not None:
+            self.as_list = as_list
+
         self.log.debug(self._get_location("Reading "))
 
         if self.parent is None or self.parent.parent is None:
@@ -662,5 +704,8 @@ class RetrieveValueAction(SetValuesAction):
                 'No value of name %s stored to be retrieved' % self.from_name)
 
         stored_action = self.state['stored_values'][self.from_name]
-        self.add_attribute(self.to_field, stored_action)
+        if self.as_list:
+            self.append_list_attribute(self.to_field, stored_action)
+        else:
+            self.add_attribute(self.to_field, stored_action)
         self.mark_ancestors_for_reorder(self.from_name, is_store=False)
