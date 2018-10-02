@@ -2,6 +2,7 @@ import pytest
 
 from action_test_params import (CREATE_OBJECTS_DICT,
                                 CREATE_OBJECTS_NO_TYPE,
+                                CREATE_OBJECTS_SELECT_FIRST,
                                 INVALID_ACTION_1,
                                 INVALID_ACTION_2,
                                 INVALID_ACTION_3,
@@ -21,6 +22,9 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 RETRIEVE_NO_FIELD,
                                 RETRIEVE_NO_OBJECT,
                                 RETRIEVE_NO_NAME,
+                                SELECT_OBJECTS_BY_POSITION_FIRST,
+                                SELECT_OBJECTS_BY_POSITION_LAST,
+                                SELECT_OBJECTS_BY_POSITION_OOB,
                                 SELECT_OBJECTS_DICT,
                                 SELECT_OBJECTS_NO_FIELD,
                                 SELECT_OBJECTS_NO_TYPE,
@@ -739,8 +743,6 @@ class TestActionsOrdering(object):
 
         root_action.reorder_retrieve()
 
-        print str(root_action)
-
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
 
@@ -1094,3 +1096,47 @@ class TestActionsExecute(object):
         assert "In DomainTemplate" in e.value.get_display_string()
         assert ("In [store id to name template_id]" in
                 e.value.get_display_string())
+
+    def test_create_objects_select_first__revert(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Level2 name = L2-O1 [context_1]',
+            'delete-object [context_3]',
+            'delete-object [context_1]',
+            'stop-session']
+
+        self.run_execute_test(CREATE_OBJECTS_SELECT_FIRST,
+                              expected_actions, is_revert=True)
+
+    def test_select_objects_by_position__first(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'create-object Level2 [context_1]',
+            'set-values name=L2-O1 [context_3]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_OBJECTS_BY_POSITION_FIRST,
+                              expected_actions)
+
+    def test_select_objects_by_position__last(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'create-object Level2 [context_2]',
+            'set-values name=L2-O1 [context_3]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_OBJECTS_BY_POSITION_LAST,
+                              expected_actions)
+
+    def test_select_objects_by_position__oob(self):
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_test(SELECT_OBJECTS_BY_POSITION_OOB, list())
+
+        assert "No object present at position" in str(e)

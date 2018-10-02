@@ -6,7 +6,9 @@ from errors import (ConflictError,
 from logger import Logger
 from util import get_dict_field_no_case
 
-DEFAULT_SELECTION_FIELD = 'name'
+DEFAULT_SELECTION_FIELD = "name"
+FIRST_SELECTOR = "$first"
+POSITION_SELECTOR = "$position"
 
 
 class Action(object):
@@ -306,12 +308,22 @@ class CreateObjectAction(Action):
 
     def delete_object(self, writer, context=None):
         select_value = self.get_select_value()
-        if select_value is not None:
+        if (select_value is not None or
+                self.select_by_field.lower() == FIRST_SELECTOR):
             try:
-                new_context = writer.select_object(self.object_type,
-                                                   self.select_by_field,
-                                                   select_value,
-                                                   context)
+                if self.select_by_field.lower() == FIRST_SELECTOR:
+                    context_list = writer.get_object_list(self.object_type,
+                                                          context)
+
+                    if len(context_list) < 1:
+                        raise MissingSelectionError("No objects selected")
+
+                    new_context = context_list[0]
+                else:
+                    new_context = writer.select_object(self.object_type,
+                                                       self.select_by_field,
+                                                       select_value,
+                                                       context)
 
                 # Always delete children first
                 self.execute_children(writer, new_context)
@@ -328,10 +340,15 @@ class CreateObjectAction(Action):
         return self.get_child_value(self.select_by_field)
 
     def get_object_selector(self):
-        select_value = self.get_select_value()
-        return {'type': self.object_type.lower(),
-                'field': self.select_by_field.lower(),
-                'value': select_value}
+        if self.select_by_field.lower() == FIRST_SELECTOR:
+            return {'type': self.object_type.lower(),
+                    'field': POSITION_SELECTOR,
+                    'value': 0}
+        else:
+            select_value = self.get_select_value()
+            return {'type': self.object_type.lower(),
+                    'field': self.select_by_field.lower(),
+                    'value': select_value}
 
     def is_same_object(self, other_action):
         if other_action.disable_combine is True:
@@ -402,10 +419,20 @@ class SelectObjectAction(Action):
 
     def execute(self, writer, context=None):
         try:
-            new_context = writer.select_object(self.object_type,
-                                               self.field,
-                                               self.value,
-                                               context)
+            if self.field.lower() == POSITION_SELECTOR:
+                context_list = writer.get_object_list(self.object_type,
+                                                      context)
+
+                if len(context_list) <= self.value or len(context_list) == 0:
+                    raise MissingSelectionError(
+                        "No object present at position %d" % self.value)
+
+                new_context = context_list[self.value]
+            else:
+                new_context = writer.select_object(self.object_type,
+                                                   self.field,
+                                                   self.value,
+                                                   context)
             self.execute_children(writer, new_context)
         except MissingSelectionError as e:
             if self.is_revert() is not True:

@@ -552,3 +552,54 @@ ORDER_DISABLE_COMBINE_2 = {"actions": [
                       {"Retrieve-value":
                           {"To-field": "field1",
                            "From-name": "store_2"}}]}}]}}]}
+
+
+CREATE_OBJECTS_SELECT_FIRST = {"actions": [
+    {"Create-object":
+        {"Type": "Level1",
+         "Select-By-field": "$First",
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
+SELECT_OBJECTS_BY_POSITION_FIRST = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "$Position",
+         "Value": 0,
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
+SELECT_OBJECTS_BY_POSITION_LAST = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "$Position",
+         "Value": -1,
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
+SELECT_OBJECTS_BY_POSITION_OOB = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "$Position",
+         "Value": 2,
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
