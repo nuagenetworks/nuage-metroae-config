@@ -459,7 +459,7 @@ class VsdWriter(DeviceWriterBase):
         fetcher = self._get_fetcher(object_name, parent_object)
 
         if self.validate_only is True:
-            return list()
+            return [self._get_new_config_object(object_name)]
 
         objects = fetcher.get()
 

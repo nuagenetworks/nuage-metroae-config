@@ -83,6 +83,7 @@ def get_mock_bambou_error(status_code, reason):
                                              'reason': reason,
                                              'errors': reason})()})())
 
+
 class TestVsdWriterSpecParsing(object):
 
     def validate_valid_specs(self, vsd_writer):
@@ -511,7 +512,7 @@ class TestVsdWriterGetObjectList(object):
 
         if validate_only is True:
             mock_fetcher.get.assert_not_called()
-            assert len(objects) == 0
+            assert len(objects) == 1
         else:
             mock_fetcher.get.assert_called_once_with()
 
@@ -546,7 +547,7 @@ class TestVsdWriterGetObjectList(object):
 
         if validate_only is True:
             mock_fetcher.get.assert_not_called()
-            assert len(objects) == 0
+            assert len(objects) == 1
         else:
             mock_fetcher.get.assert_called_once_with()
 

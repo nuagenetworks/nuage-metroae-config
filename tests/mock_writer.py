@@ -98,3 +98,10 @@ class MockWriter(object):
         """
         self._record_action("get-value %s [%s]" % (field, str(context)))
         return self._new_get_value()
+
+    def get_object_list(self, object_name, context=None):
+        self._record_action("get-object-list %s [%s]" % (object_name,
+                                                         str(context)))
+        context_1 = self._new_context()
+        context_2 = self._new_context()
+        return [context_1, context_2]
