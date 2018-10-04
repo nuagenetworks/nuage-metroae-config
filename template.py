@@ -2,6 +2,7 @@ import jinja2
 import jinja2.ext
 import json
 import os
+import re
 import yaml
 
 from errors import (MissingTemplateError,
@@ -105,9 +106,11 @@ class Template(object):
 
     def _replace_vars_with_null(self):
         try:
-            template = jinja2.Template(self.template_string,
-                                       autoescape=False,
-                                       undefined=NullUndefined)
+            template = jinja2.Template(
+                self.template_string,
+                extensions=(RegularExpressionExtension,),
+                autoescape=False,
+                undefined=NullUndefined)
 
             return template.render()
         except jinja2.TemplateSyntaxError as e:
@@ -295,7 +298,8 @@ class Template(object):
         try:
             self._verify_all_vars_defined(**kwargs)
             template = jinja2.Template(self.template_string,
-                                       extensions=(JSONEscapingExtension,),
+                                       extensions=(JSONEscapingExtension,
+                                                   RegularExpressionExtension),
                                        autoescape=False,
                                        undefined=jinja2.StrictUndefined)
 
@@ -309,6 +313,7 @@ class Template(object):
 
     def _verify_all_vars_defined(self, **kwargs):
         template = jinja2.Template(self.template_string,
+                                   extensions=(RegularExpressionExtension,),
                                    autoescape=False,
                                    undefined=jinja2.StrictUndefined)
         template.render(**kwargs)
@@ -533,3 +538,13 @@ class JSONEscapingExtension(jinja2.ext.Extension):
                 yield jinja2.lexer.Token(token.lineno, 'pipe', '|')
                 yield jinja2.lexer.Token(token.lineno, 'name', 'tojson')
             yield token
+
+
+def jinja2_match_filter(s, pattern):
+    return re.match(pattern, s)
+
+
+class RegularExpressionExtension(jinja2.ext.Extension):
+    # Add regular expression match filter to Jinja2
+    def __init__(self, environment):
+        environment.filters['match'] = jinja2_match_filter
