@@ -603,3 +603,35 @@ SELECT_OBJECTS_BY_POSITION_OOB = {"actions": [
                   "Actions": [
                       {"Set-values":
                           {"name": "L2-O1"}}]}}]}}]}
+
+
+RETRIEVE_AS_LIST = {"actions": [
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O1"}},
+             {"Store-value":
+                 {"from-field": "name",
+                  "As-name": "store_1"}}]}},
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O2"}},
+             {"Store-value":
+                 {"from-field": "name",
+                  "As-name": "store_2"}}]}},
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Set-values":
+                 {"name": "L1-O3"}},
+             {"Retrieve-value":
+                 {"To-field": "field1",
+                  "From-name": "store_1",
+                  "As-List": True}},
+             {"Retrieve-value":
+                 {"To-field": "field1",
+                  "From-name": "store_2",
+                  "As-List": True}}]}}]}

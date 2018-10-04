@@ -16,6 +16,7 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 ORDER_STORE_3,
                                 ORDER_STORE_4,
                                 ORDER_STORE_5,
+                                RETRIEVE_AS_LIST,
                                 RETRIEVE_CONFLICT_1,
                                 RETRIEVE_CONFLICT_2,
                                 RETRIEVE_BEFORE_STORE,
@@ -1140,3 +1141,20 @@ class TestActionsExecute(object):
             self.run_execute_test(SELECT_OBJECTS_BY_POSITION_OOB, list())
 
         assert "No object present at position" in str(e)
+
+    def test_retrieve_as_list__success(self):
+
+        expected_actions = [
+            'start-session',
+            'create-object Level1 [None]',
+            'set-values name=L1-O1 [context_1]',
+            'get-value name [context_1]',
+            'create-object Level1 [None]',
+            'set-values name=L1-O2 [context_3]',
+            'get-value name [context_3]',
+            'create-object Level1 [None]',
+            "set-values field1=['value_1', 'value_2'],name=L1-O3 [context_5]",
+            'stop-session']
+
+        self.run_execute_test(RETRIEVE_AS_LIST,
+                              expected_actions)
