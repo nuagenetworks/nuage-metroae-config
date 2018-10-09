@@ -240,9 +240,11 @@ setup() {
 	
 	if [ ! -z $containerID ] or [ ! -z $runningContainerID ]
 	then
-		echo "Container already setup. Re-running setup will destroy the old container and create a new one"
-		echo "If mount points are not changed user data will stay the same, if the mount points have changes the"
-		echo "needs to copy data manually from the old mount point to new mount point"
+		echo "You already have the MetroAE container setup. Running setup will destroy the"
+		echo "existing container and create a new one. Your data on disk will be preserved."
+		echo "If you continue, create the new container, and use the same"
+		echo "mount points, no changes are required. If you change the mount points,"
+		echo "you will need to copy your existing data to the new mount points."
 		confirmation="init"
 		while [[ $confirmation != "yes" ]] && [[ $confirmation  != "no" ]] && [[ $confirmation  != "y" ]] && [[ $confirmation != "n" ]]
 		do
