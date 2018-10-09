@@ -214,6 +214,11 @@ destroy() {
 }
 
 pull() {
+	if [ ! -z $1 ]
+	then
+		maxContainerVersion=$1
+	fi
+	
 	echo "Retrieving MetroAE container..."
 
 	docker pull $metroAEImage:$maxContainerVersion 2> /dev/null
@@ -221,7 +226,7 @@ pull() {
 	status=$?
 	if [ $status -ne 0 ]
 	then
-		echo "Unable to pull the latest MetroAE docker image"
+		echo "Unable to pull the $maxContainerVersion MetroAE docker image"
 	fi
 
 	return $status
@@ -229,7 +234,29 @@ pull() {
 
 setup() {
 	echo "Setup MetroAE container..."
-
+	
+ 	getContainerID
+	getRunningContainerID
+	
+	if [ ! -z $containerID ] or [ ! -z $runningContainerID ]
+	then
+		echo "Container already setup. Re-running setup will destroy the old container and create a new one"
+		echo "If mount points are not changed user data will stay the same, if the mount points have changes the"
+		echo "needs to copy data manually from the old mount point to new mount point"
+		confirmation="init"
+		while [[ $confirmation != "yes" ]] && [[ $confirmation  != "no" ]] && [[ $confirmation  != "y" ]] && [[ $confirmation != "n" ]]
+		do
+			read -p "Do you want to continue with setup (yes/no): " confirmation
+		done
+	 
+		
+		if [[ $confirmation != "yes" ]] && [[ $confirmation != "y" ]]
+		then
+			echo "Setup Cancelled by user"
+			return 1
+		fi
+	fi
+	
 	getImageID
 
 	if [ -z $imageID ]
@@ -256,6 +283,11 @@ setup() {
 	if [ ! -z $runningContainerID ]
 	then
 		stop
+	fi
+	
+	getContainerID
+	if [ ! -z $containerID ] 
+	then
 		deleteContainerID
 	fi
 
@@ -316,14 +348,19 @@ interactive() {
 }
 
 help() {
-	echo "usage: supported commands are help, version, pull, setup, stop, destroy, upgrade-engine "
-	echo "additionally supports commands that can be executed in the docker container"
+	echo "Nuage Networks Levistate docker container management script"
+	echo "Usage:"
+	echo ""
+	echo "	./levistate [actions] [options]"
+	echo "	[actions]: supported actions are help, version, pull, setup, stop, destroy, upgrade-engine "
+	echo ""
+	echo "	additionally supports commands that can be executed in the docker container"
 
 	getRunningContainerID 
 	
 	if [ ! -z $runningContainerID ]
 	then
-		dockerExec help
+		dockerExec --help
 	fi
 
 }
@@ -346,6 +383,14 @@ do
 	key=$1
 	case $key in
 		help)
+		help
+		shift
+		;;
+		--h)
+		help
+		shift
+		;;
+		--help)
 		help
 		shift
 		;;
