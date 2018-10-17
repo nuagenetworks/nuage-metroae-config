@@ -262,8 +262,8 @@ class Levistate(object):
             self.logger.exception(error_output)
             had_error = True
         except Exception as e:
-            self.logger.exception(str(e))
             error_output = str(e)
+            self.logger.exception(error_output)
             had_error = True
 
         if had_error:
