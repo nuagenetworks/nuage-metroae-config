@@ -303,7 +303,8 @@ class Levistate(object):
 
     def list_info(self):
 
-        if self.action == TEMPLATE_ACTION and self.args.templateAction == LIST_ACTION:
+        if (self.action == TEMPLATE_ACTION and
+                self.args.templateAction == LIST_ACTION):
             template_names = self.store.get_template_names()
             print "\n".join(template_names)
             return True
@@ -399,7 +400,8 @@ class Levistate(object):
         os.remove(tfile.name)
 
     def upgrade_templates(self):
-        if self.action == TEMPLATE_ACTION and self.args.templateAction == UPGRADE_TEMPLATE_ACTION:
+        if (self.action == TEMPLATE_ACTION and
+                self.args.templateAction == UPGRADE_TEMPLATE_ACTION):
             print("Upgrading templates...")
             dirName = TEMPALTE_DIR
             url = TEMPLATE_TAR_LOCATION
