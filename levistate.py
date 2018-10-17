@@ -191,7 +191,7 @@ def add_parser_arguments(parser):
                         help='Enterprise for VSD. Can also set using environment variable %s' % (ENV_VSD_ENTERPRISE))
     parser.add_argument('--debug', dest='debug',
                         action='store_true', required=False,
-                        help='Show logs after run')
+                        help='Output in debug mode')
     parser.add_argument('-lf', '--log-file', dest='log_file',
                         action='store', required=False,
                         help='Write logs to specified file')
