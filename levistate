@@ -86,9 +86,9 @@ checkSelinuxEnforceStatus() {
 }
 
 stop() {
-	getContainerID
+	getRunningContainerID
 
-	if [ -z $containerID  ]
+	if [ -z $runningContainerID  ]
 	then
 		echo "No Container to stop"
 		return 0
@@ -349,6 +349,13 @@ interactive() {
 
 }
 
+status() {
+	docker ps -a
+	echo "Currently used docker settings..." 
+	while read -r line; do declare $line; done < ~/.metroae
+	echo levistate_mount_point=$LEVISTATE_MOUNT_POINT
+}
+
 help() {
 	echo "Nuage Networks Levistate docker container management script"
 	echo "Usage:"
@@ -430,6 +437,10 @@ do
 		;;
 		interactive)
 		interactive
+		shift
+		;;
+		status)
+		status
 		shift
 		;;
 		*)
