@@ -213,6 +213,7 @@ class Levistate(object):
         def output(self, msg, *args, **kwargs):
             if self.isEnabledFor(OUTPUT_LEVEL_NUM):
                 self._log(OUTPUT_LEVEL_NUM, msg, args, **kwargs)
+
         logging.Logger.output = output
 
         bambou_logger = logging.getLogger("bambou")
@@ -402,7 +403,7 @@ class Levistate(object):
     def upgrade_templates(self):
         if (self.action == TEMPLATE_ACTION and
                 self.args.templateAction == UPGRADE_TEMPLATE_ACTION):
-            print("Upgrading templates...")
+            print("Updating templates...")
             dirName = TEMPALTE_DIR
             url = TEMPLATE_TAR_LOCATION
             self.download_and_extract(url, dirName)
