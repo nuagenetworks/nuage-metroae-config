@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import os
 import tarfile
 import urllib3
@@ -8,7 +9,6 @@ import wget
 
 from configuration import Configuration
 from errors import LevistateError
-from logger import Logger
 from template import TemplateStore
 from user_data_parser import UserDataParser
 from vsd_writer import VsdWriter
@@ -189,9 +189,12 @@ def add_parser_arguments(parser):
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_ENTERPRISE, DEFAULT_VSD_ENTERPRISE),
                         help='Enterprise for VSD. Can also set using environment variable %s' % (ENV_VSD_ENTERPRISE))
-    parser.add_argument('-lg', '--logs', dest='logs',
+    parser.add_argument('--debug', dest='debug',
                         action='store_true', required=False,
-                        help='Show logs after run')
+                        help='Output in debug mode')
+    parser.add_argument('-lf', '--log-file', dest='log_file',
+                        action='store', required=False,
+                        help='Write logs to specified file')
     parser.add_argument('datafiles', help="Optional datafile",
                         nargs='*', default=None)
 
@@ -201,14 +204,47 @@ class Levistate(object):
     def __init__(self, args, action):
         self.args = args
         self.template_data = list()
-        self.logger = Logger()
         self.action = action
+
+    def setup_logging(self):
+        OUTPUT_LEVEL_NUM = logging.ERROR + 5
+        logging.addLevelName(OUTPUT_LEVEL_NUM, "OUTPUT")
+
+        def output(self, msg, *args, **kwargs):
+            if self.isEnabledFor(OUTPUT_LEVEL_NUM):
+                self._log(OUTPUT_LEVEL_NUM, msg, args, **kwargs)
+        logging.Logger.output = output
+
+        bambou_logger = logging.getLogger("bambou")
+        bambou_logger.setLevel(logging.DEBUG)
+
+        self.logger = logging.getLogger("bambou.levistate")
+        self.logger.setLevel(logging.DEBUG)
+
+        log_formatter = logging.Formatter("%(levelname)-6s: %(message)s")
+
+        if self.args.log_file is not None:
+            file_handler = logging.FileHandler(self.args.log_file)
+            file_handler.setFormatter(log_formatter)
+            bambou_logger.addHandler(file_handler)
+
+        if self.args.debug:
+            debug_handler = logging.StreamHandler()
+            debug_handler.setFormatter(log_formatter)
+            bambou_logger.addHandler(debug_handler)
+        else:
+            output_handler = logging.StreamHandler()
+            output_handler.setLevel(OUTPUT_LEVEL_NUM)
+            self.logger.addHandler(output_handler)
 
     def run(self):
 
-        if self.action == TEMPLATE_ACTION and self.args.templateAction == UPGRADE_TEMPLATE_ACTION:
+        if (self.action == TEMPLATE_ACTION and
+                self.args.templateAction == UPGRADE_TEMPLATE_ACTION):
             self.upgrade_templates()
             return
+
+        self.setup_logging()
 
         self.setup_template_store()
         if self.list_info():
@@ -217,19 +253,25 @@ class Levistate(object):
         self.parse_user_data()
         self.parse_extra_vars()
 
+        had_error = False
+        error_output = ""
         try:
             self.apply_templates()
         except LevistateError as e:
-            self.logger.error(e.get_display_string())
-            print self.logger.get()
+            error_output = e.get_display_string()
+            self.logger.exception(error_output)
+            had_error = True
+        except Exception as e:
+            error_output = str(e)
+            self.logger.exception(error_output)
+            had_error = True
+
+        if had_error:
             print ""
             print "Error"
             print "-----"
-            print e.get_display_string()
+            print error_output
             exit(1)
-
-        if self.args.logs:
-            print self.logger.get()
 
     def parse_extra_vars(self):
         if self.args.data is not None:
@@ -261,7 +303,8 @@ class Levistate(object):
 
     def list_info(self):
 
-        if self.action == TEMPLATE_ACTION and self.args.templateAction == LIST_ACTION:
+        if (self.action == TEMPLATE_ACTION and
+                self.args.templateAction == LIST_ACTION):
             template_names = self.store.get_template_names()
             print "\n".join(template_names)
             return True
@@ -357,7 +400,8 @@ class Levistate(object):
         os.remove(tfile.name)
 
     def upgrade_templates(self):
-        if self.action == TEMPLATE_ACTION and self.args.templateAction == UPGRADE_TEMPLATE_ACTION:
+        if (self.action == TEMPLATE_ACTION and
+                self.args.templateAction == UPGRADE_TEMPLATE_ACTION):
             print("Upgrading templates...")
             dirName = TEMPALTE_DIR
             url = TEMPLATE_TAR_LOCATION
