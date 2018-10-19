@@ -22,6 +22,7 @@ DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
 DEFAULT_URL = 'https://127.0.0.1:8443'
+DEFAULT_LOG_LEVEL = 'DEBUG'
 ENV_TEMPLATE = 'TEMPLATE_PATH'
 ENV_USER_DATA = 'USER_DATA_PATH'
 ENV_VSD_USERNAME = 'VSD_USERNAME'
@@ -29,6 +30,8 @@ ENV_VSD_PASSWORD = 'VSD_PASSWORD'
 ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+ENV_LOG_FILE = 'LOG_FILE'
+ENV_LOG_LEVEL = 'LOG_LEVEL'
 VALIDATE_ACTION = 'validate'
 CREATE_ACTION = 'create'
 REVERT_ACTION = 'revert'
@@ -41,8 +44,10 @@ VERSION_ACTION = 'version'
 HELP_ACTION = 'help'
 TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
 VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
-TEMPALTE_DIR = "/data/standard-templates"
+TEMPLATE_DIR = "/data/standard-templates"
 SPECIFICATION_DIR = "/data/vsd-api-specifications"
+LOGS_DIR = "/data"
+LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
 DESCRIPTION = """Version %s - This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
@@ -179,24 +184,48 @@ def add_parser_arguments(parser):
                         help='URL to VSD REST API. Can also set using environment variable %s' % (ENV_VSD_URL))
     parser.add_argument('-u', '--username', dest='username',
                         action='store', required=False,
-                        default=os.getenv(ENV_VSD_USERNAME, DEFAULT_VSD_USERNAME),
+                        default=os.getenv(ENV_VSD_USERNAME,
+                                          DEFAULT_VSD_USERNAME),
                         help='Username for VSD. Can also set using environment variable %s' % (ENV_VSD_USERNAME))
     parser.add_argument('-p', '--password', dest='password',
                         action='store', required=False,
-                        default=os.getenv(ENV_VSD_PASSWORD, DEFAULT_VSD_PASSWORD),
+                        default=os.getenv(ENV_VSD_PASSWORD,
+                                          DEFAULT_VSD_PASSWORD),
                         help='Password for VSD. Can also set using environment variable %s' % (ENV_VSD_PASSWORD))
     parser.add_argument('-e', '--enterprise', dest='enterprise',
                         action='store', required=False,
-                        default=os.getenv(ENV_VSD_ENTERPRISE, DEFAULT_VSD_ENTERPRISE),
+                        default=os.getenv(ENV_VSD_ENTERPRISE,
+                                          DEFAULT_VSD_ENTERPRISE),
                         help='Enterprise for VSD. Can also set using environment variable %s' % (ENV_VSD_ENTERPRISE))
     parser.add_argument('--debug', dest='debug',
                         action='store_true', required=False,
                         help='Output in debug mode')
     parser.add_argument('-lf', '--log-file', dest='log_file',
                         action='store', required=False,
-                        help='Write logs to specified file')
+                        default=os.getenv(ENV_LOG_FILE, ""),
+                        help='Write logs to specified file. Can also set using environment variable %s' % (ENV_LOG_FILE))
+    parser.add_argument('-ll', '--log-level', dest='log_level',
+                        action='store', required=False,
+                        default=os.getenv(ENV_LOG_LEVEL, DEFAULT_LOG_LEVEL),
+                        help='Specify log level (%s) Can also set using environment variable %s' % (", ".join(LOG_LEVEL_STRS), ENV_LOG_LEVEL))
     parser.add_argument('datafiles', help="Optional datafile",
                         nargs='*', default=None)
+
+
+class CustomLogHandler(logging.StreamHandler):
+    def __init__(self, stream=None):
+        if stream is not None:
+            super(CustomLogHandler, self).__init__(stream)
+        else:
+            super(CustomLogHandler, self).__init__()
+
+    def emit(self, record):
+        saved_message = record.msg
+        messages = record.msg.split('\n')
+        for message in messages:
+            record.msg = message
+            super(CustomLogHandler, self).emit(record)
+        record.msg = saved_message
 
 
 class Levistate(object):
@@ -216,23 +245,44 @@ class Levistate(object):
 
         logging.Logger.output = output
 
-        bambou_logger = logging.getLogger("bambou")
-        bambou_logger.setLevel(logging.DEBUG)
+        log_level = self.args.log_level.upper()
+        if log_level not in LOG_LEVEL_STRS:
+            print "Invalid log level: " + str(log_level)
+            exit(1)
 
-        self.logger = logging.getLogger("bambou.levistate")
-        self.logger.setLevel(logging.DEBUG)
+        if log_level == "API":
+            bambou_logger = logging.getLogger("bambou")
+            bambou_logger.setLevel(logging.DEBUG)
+
+            self.logger = logging.getLogger("bambou.levistate")
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger = logging.getLogger("levistate")
+            level = logging.getLevelName(log_level)
+            self.logger.setLevel(level)
 
         log_formatter = logging.Formatter("%(levelname)-6s: %(message)s")
 
-        if self.args.log_file is not None:
-            file_handler = logging.FileHandler(self.args.log_file)
+        if self.args.log_file:
+            file_path = self.args.log_file
+            if not file_path.startswith("/") and os.path.isdir(LOGS_DIR):
+                file_path = os.path.join(LOGS_DIR, file_path)
+
+            file = open(file_path, "w")
+            file_handler = CustomLogHandler(file)
             file_handler.setFormatter(log_formatter)
-            bambou_logger.addHandler(file_handler)
+            if log_level == "API":
+                bambou_logger.addHandler(file_handler)
+            else:
+                self.logger.addHandler(file_handler)
 
         if self.args.debug:
-            debug_handler = logging.StreamHandler()
+            debug_handler = CustomLogHandler()
             debug_handler.setFormatter(log_formatter)
-            bambou_logger.addHandler(debug_handler)
+            if log_level == "API":
+                bambou_logger.addHandler(debug_handler)
+            else:
+                self.logger.addHandler(debug_handler)
         else:
             output_handler = logging.StreamHandler()
             output_handler.setLevel(OUTPUT_LEVEL_NUM)
@@ -260,7 +310,8 @@ class Levistate(object):
             self.apply_templates()
         except LevistateError as e:
             error_output = e.get_display_string()
-            self.logger.exception(error_output)
+            self.logger.error(error_output)
+            self.logger.exception("Stack trace")
             had_error = True
         except Exception as e:
             error_output = str(e)
@@ -403,8 +454,9 @@ class Levistate(object):
     def upgrade_templates(self):
         if (self.action == TEMPLATE_ACTION and
                 self.args.templateAction == UPGRADE_TEMPLATE_ACTION):
+
             print("Updating templates...")
-            dirName = TEMPALTE_DIR
+            dirName = TEMPLATE_DIR
             url = TEMPLATE_TAR_LOCATION
             self.download_and_extract(url, dirName)
 
