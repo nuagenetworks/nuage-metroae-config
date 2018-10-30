@@ -236,6 +236,9 @@ class Levistate(object):
         self.action = action
 
     def setup_logging(self):
+        if "log_level" not in self.args:
+            return
+
         OUTPUT_LEVEL_NUM = logging.ERROR + 5
         logging.addLevelName(OUTPUT_LEVEL_NUM, "OUTPUT")
 
