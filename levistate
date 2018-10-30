@@ -7,7 +7,7 @@ runningContainerID=''
 imageID=''
 maxContainerVersion=''
 confirmationMessage=''
-metroAEImage='registry.mv.nuagenetworks.net:5000/demometroae'
+metroAEImage='registry.mv.nuagenetworks.net:5000/metroae'
 osRelease=$LINUX
 
 checkDocker() {
@@ -88,6 +88,7 @@ checkSelinuxEnforceStatus() {
 stop() {
 	getRunningContainerID
 
+	echo $runningContainerID
 	if [ -z $runningContainerID  ]
 	then
 		echo "No Container to stop"
@@ -96,7 +97,7 @@ stop() {
 
 	echo "Stopping MetroAE container..."
 
-	docker stop $containerID
+	docker stop $runningContainerID
 	status=$?
 	if [ $status -ne 0 ]
 	then
@@ -227,6 +228,7 @@ pull() {
 	if [ $status -ne 0 ]
 	then
 		echo "Unable to pull the $maxContainerVersion MetroAE docker image"
+		exit 1
 	fi
 
 	return $status
@@ -404,7 +406,13 @@ do
 		shift
 		;;
 		pull)
-		pull
+		if [ -z $2 ] 
+		then
+			pull
+		else
+			pull $2
+			shift
+		fi
 		shift
 		;;
 		setup)
