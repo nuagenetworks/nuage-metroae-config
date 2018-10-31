@@ -255,7 +255,7 @@ pull() {
 		
 		if [ $? -ne 0 ]
 		then
-			echo "unable to pull metroae container existing" | tee -a ./metroae.log
+			echo "unable to pull metroae container exiting" | tee -a ./metroae.log
 			exit 1
 		fi
 		
