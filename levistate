@@ -7,8 +7,16 @@ runningContainerID=''
 imageID=''
 maxContainerVersion=''
 confirmationMessage=''
-metroAEImage='registry.mv.nuagenetworks.net:5000/metroae'
+registryHost='registry.mv.nuagenetworks.net'
+metroAEImage="$registryHost:5000/metroae"
 osRelease=$LINUX
+
+S3KEY="AKIAJOPWRLAXPCUXZX3A"
+S3SECRET="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"
+file=metroaecontainer.tar
+bucket="nuage-devops"
+prefix="images"
+temp=/tmp/
 
 checkDocker() {
 	docker --version > /dev/null 2> /dev/null
@@ -214,15 +222,48 @@ destroy() {
 	return 0
 }
 
+getFromS3()
+{
+  file=metroaecontainer.tar
+  aws_path=/images/
+  bucket='nuage-devops'
+  date=$(date +"%a, %d %b %Y %T %z")
+  content_type='application/x-compressed-tar'
+  string="GET\n\n$content_type\n$date\n/$bucket$aws_path$file"
+  signature=$(echo -en "${string}" | openssl sha1 -hmac "${S3SECRET}" -binary | base64)
+  curl -X GET\
+    -H "Host: $bucket.s3.amazonaws.com" \
+    -H "Date: $date" \
+    -H "Content-Type: $content_type" \
+    -H "Authorization: AWS ${S3KEY}:$signature" \
+    "https://$bucket.s3.amazonaws.com$aws_path$file" > $temp$file | tee -a ./metroae.log 2>> ./metroae.log
+}
+
 pull() {
 	if [ ! -z $1 ]
 	then
 		maxContainerVersion=$1
 	fi
 	
-	echo "Retrieving MetroAE container..."
-
-	docker pull $metroAEImage:$maxContainerVersion 2> /dev/null
+	ping -c 5 registry.mv.nuagenetworks.net:5000 >> ./metroae.log 2>> ./metroae.log
+	
+	if [ $? -ne 0 ]
+	then
+		echo "Could not ping the local registry to download container" | tee -a ./metroae.log
+		echo "Retrieving the container from amazon s3" | tee -a ./metroae.log
+		getFromS3
+		
+		if [ $? -ne 0 ]
+		then
+			echo "unable to pull metroae container exiting" | tee -a ./metroae.log
+			exit 1
+		fi
+		
+		docker load -i $temp$file
+	else 
+		echo "Retrieving MetroAE container..." | tee -a ./metroae.log
+		docker pull $metroAEImage:$maxContainerVersion 2>> ./metroae.log
+	fi
 
 	status=$?
 	if [ $status -ne 0 ]
