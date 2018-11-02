@@ -410,9 +410,9 @@ help() {
 
 	getRunningContainerID 
 	
-	if [ ! -z $runningContainerID ]
+	if [ -z $runningContainerID ] && [ $1 == 0 ]
 	then
-		dockerExec --help
+		exit
 	fi
 
 }
@@ -427,23 +427,16 @@ then
 fi
 
 checkSelinuxEnforceStatus 
-
+shopt -s extglob
 POSITIONAL=()
 exec=false
 while [ $# -gt 0 ]
 do
 	key=$1
-	case $key in
-		help)
-		help
-		shift
-		;;
-		--h)
-		help
-		shift
-		;;
-		--help)
-		help
+	case "$key" in
+		@(help|--h|-h|--help|-help))
+		help ${#ArrayName[@]}
+		POSITIONAL+=("$1")
 		shift
 		;;
 		pull)
