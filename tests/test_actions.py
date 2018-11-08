@@ -3,6 +3,9 @@ import pytest
 from action_test_params import (CREATE_OBJECTS_DICT,
                                 CREATE_OBJECTS_NO_TYPE,
                                 CREATE_OBJECTS_SELECT_FIRST,
+                                FIND_NO_SELECT,
+                                FIND_SINGLE_LEVEL,
+                                FIND_TREE,
                                 INVALID_ACTION_1,
                                 INVALID_ACTION_2,
                                 INVALID_ACTION_3,
@@ -775,24 +778,31 @@ class TestActionsExecute(object):
         root_action.execute(writer)
         writer.stop_session()
 
+        print str(writer.get_recorded_actions())
+
         assert writer.get_recorded_actions() == expected_actions
 
     def run_execute_with_exception(self, template_dict, expected_actions,
-                                   exception, on_action):
+                                   exception, on_action, expect_error=True,
+                                   is_revert=False):
         root_action = Action(None)
         writer = MockWriter()
         writer.raise_exception(exception, on_action)
 
+        root_action.set_revert(is_revert)
         root_action.read_children_actions(template_dict)
         writer.start_session()
-        with pytest.raises(exception.__class__) as e:
+        if expect_error:
+            with pytest.raises(exception.__class__) as e:
+                root_action.execute(writer)
+        else:
             root_action.execute(writer)
         writer.stop_session()
 
         assert writer.get_recorded_actions() == expected_actions
-        assert e.value == exception
-
-        return e
+        if expect_error:
+            assert e.value == exception
+            return e
 
     def test_enterprise__success(self):
 
@@ -1158,3 +1168,123 @@ class TestActionsExecute(object):
 
         self.run_execute_test(RETRIEVE_AS_LIST,
                               expected_actions)
+
+    def test_find_single_level__success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'create-object Level2 [context_1]',
+            'set-values name=L2-O1 [context_4]',
+            'select-object Find name = L2-O2 [context_1]',
+            'stop-session']
+
+        self.run_execute_test(FIND_SINGLE_LEVEL, expected_actions)
+
+    def test_find_single_level__revert(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Level2 name = L2-O1 [context_1]',
+            'delete-object [context_5]',
+            'stop-session']
+
+        self.run_execute_test(FIND_SINGLE_LEVEL, expected_actions,
+                              is_revert=True)
+
+    def test_find_tree__success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_3]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_6]',
+            'create-object Level3 [context_6]',
+            'set-values name=L3-O1 [context_9]',
+            'select-object Find name = L3-O2 [context_6]',
+            'stop-session']
+
+        self.run_execute_test(FIND_TREE, expected_actions)
+
+    def test_find_tree__revert(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_3]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_6]',
+            'select-object Find name = L3-O2 [context_6]',
+            'select-object Level3 name = L3-O1 [context_6]',
+            'delete-object [context_10]',
+            'stop-session']
+
+        self.run_execute_test(FIND_TREE, expected_actions, is_revert=True)
+
+    def test_find_single_level__second_object(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Find name = L2-O2 [context_2]',
+            'create-object Level2 [context_2]',
+            'set-values name=L2-O1 [context_4]',
+            'select-object Find name = L2-O2 [context_2]',
+            'stop-session']
+
+        self.run_execute_with_exception(
+            FIND_SINGLE_LEVEL,
+            expected_actions,
+            MissingSelectionError("Not found"),
+            'select-object Find name = L2-O2 [context_1]',
+            expect_error=False)
+
+    def test_find_single_level__second_object_revert(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Find name = L2-O2 [context_2]',
+            'select-object Find name = L2-O2 [context_2]',
+            'select-object Level2 name = L2-O1 [context_2]',
+            'delete-object [context_5]',
+            'stop-session']
+
+        self.run_execute_with_exception(
+            FIND_SINGLE_LEVEL,
+            expected_actions,
+            MissingSelectionError("Not found"),
+            'select-object Find name = L2-O2 [context_1]',
+            expect_error=False,
+            is_revert=True)
+
+    def test_find_single_level__no_selector(self):
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_test(FIND_NO_SELECT, list())
+
+        assert "No select-object" in str(e)
+
+    def test_find_single_level__not_found(self):
+
+        expected_actions = []
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_with_exception(
+                FIND_SINGLE_LEVEL,
+                expected_actions,
+                MissingSelectionError("Not found"),
+                'select-object Find name = L2-O2',
+                expect_error=False)
+
+        assert "Could not find matching child selection" in str(e)
+        assert "Find" in str(e)

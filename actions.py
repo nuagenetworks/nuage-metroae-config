@@ -9,6 +9,7 @@ from util import get_dict_field_no_case
 DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
 POSITION_SELECTOR = "$position"
+CHILD_SELECTOR = "$child"
 
 
 class Action(object):
@@ -145,6 +146,9 @@ class Action(object):
         return False
 
     def is_create(self):
+        return False
+
+    def is_select(self):
         return False
 
     def is_retrieve(self):
@@ -392,6 +396,10 @@ class SelectObjectAction(Action):
         self.object_type = None
         self.field = None
         self.value = None
+        self.is_child_find = False
+
+    def is_select(self):
+        return True
 
     def read(self, select_dict):
         self.object_type = Action.get_dict_field(select_dict, 'type')
@@ -408,6 +416,9 @@ class SelectObjectAction(Action):
         if self.value is None:
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
+
+        if self.field.lower() == CHILD_SELECTOR:
+            self.disable_combine = True
 
         disable_combine = Action.get_dict_field(select_dict, 'disable-combine')
         if disable_combine is True:
@@ -428,14 +439,39 @@ class SelectObjectAction(Action):
                         "No object present at position %d" % self.value)
 
                 new_context = context_list[self.value]
+            elif self.field.lower() == CHILD_SELECTOR:
+                child_select = self.get_child_selector(self.value.lower())
+                child_select.is_child_find = True
+                context_list = writer.get_object_list(self.object_type,
+                                                      context)
+                self.log.debug("Searching for child " +
+                               str(child_select).strip())
+                new_context = None
+                for item_context in context_list:
+                    if new_context is None:
+                        try:
+                            child_select.execute(writer, item_context)
+                            new_context = item_context
+                            self.log.debug("Found " + str(new_context))
+                        except MissingSelectionError:
+                            pass
+
+                child_select.is_child_find = False
+
+                if new_context is None:
+                    raise MissingSelectionError(
+                        "Could not find matching child selection " +
+                        str(child_select).strip())
             else:
                 new_context = writer.select_object(self.object_type,
                                                    self.field,
                                                    self.value,
                                                    context)
-            self.execute_children(writer, new_context)
+            if self.is_child_find is not True:
+                self.execute_children(writer, new_context)
+
         except MissingSelectionError as e:
-            if self.is_revert() is not True:
+            if self.is_revert() is not True or self.is_child_find is True:
                 raise e
 
     def get_object_selector(self):
@@ -471,6 +507,14 @@ class SelectObjectAction(Action):
         for child in other_action.children:
             child.parent = self
             self.add_child_action_sorted(child)
+
+    def get_child_selector(self, child_type):
+        for child in self.children:
+            if child.is_select() and child.object_type.lower() == child_type:
+                return child
+
+        raise MissingSelectionError(
+            "No select-object child of specified object type")
 
     def _to_string(self, indent_level):
         indent = Action._indent(indent_level)

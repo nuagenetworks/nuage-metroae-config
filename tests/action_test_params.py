@@ -635,3 +635,56 @@ RETRIEVE_AS_LIST = {"actions": [
                  {"To-field": "field1",
                   "From-name": "store_2",
                   "As-List": True}}]}}]}
+
+FIND_SINGLE_LEVEL = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "$child",
+         "Value": "find",
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}},
+             {"Select-object":
+                 {"Type": "Find",
+                  "By-field": "name",
+                  "Value": "L2-O2"}}]}}]}
+
+FIND_TREE = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "$child",
+         "Value": "level2",
+         "Actions": [
+            {"Select-object":
+                {"Type": "Level2",
+                 "By-field": "$child",
+                 "Value": "find",
+                 "Actions": [
+                     {"Create-object":
+                         {"Type": "Level3",
+                          "Actions": [
+                              {"Set-values":
+                                  {"name": "L3-O1"}}]}},
+                     {"Select-object":
+                         {"Type": "Find",
+                          "By-field": "name",
+                          "Value": "L3-O2"}}]}}]}}]}
+
+FIND_NO_SELECT = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": "$child",
+         "Value": "NoMatch",
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}},
+             {"Select-object":
+                 {"Type": "Find",
+                  "By-field": "name",
+                  "Value": "L2-O2"}}]}}]}
