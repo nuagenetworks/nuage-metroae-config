@@ -96,6 +96,34 @@ SELECT_OBJECTS_NO_VALUE = {"actions": [
          "missing-value": "Invalid"}}]}
 
 
+SELECT_OBJECTS_MULTIPLE = {"actions": [
+    {"Select-object":
+        {"type": "Enterprise",
+         "by-field": ["name", "count"],
+         "value": ["enterprise1", 5]}}]}
+
+
+SELECT_OBJECTS_MULTIPLE_WITH_SINGLE = {"actions": [
+    {"Select-object":
+        {"type": "Enterprise",
+         "by-field": ["name"],
+         "value": ["enterprise1"]}}]}
+
+
+SELECT_OBJECTS_MULTIPLE_MISMATCH = {"actions": [
+    {"Select-object":
+        {"type": "Enterprise",
+         "by-field": ["name", "count"],
+         "value": ["enterprise1", 5, "extra"]}}]}
+
+
+SELECT_OBJECTS_MULTIPLE_BAD_TYPE = {"actions": [
+    {"Select-object":
+        {"type": "Enterprise",
+         "by-field": ["name"],
+         "value": 5}}]}
+
+
 SET_VALUES_DICT = {"actions": [
     {"Create-object":
         {"Type": "Enterprise",
@@ -554,6 +582,88 @@ ORDER_DISABLE_COMBINE_2 = {"actions": [
                            "From-name": "store_2"}}]}}]}}]}
 
 
+ORDER_MULTI_CREATE = {"actions": [
+    {"Create-object":
+        {"Type": "Level1",
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O1",
+                           "field2": "value2"}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O2",
+                           "field2": "value2"}}]}},
+             {"Set-values":
+                 {"name": "L1-O1",
+                  "field1": "value1"}}]}}]}
+
+
+ORDER_MULTI_SELECT_1 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": ["name", "field1"],
+         "Value": ["L1-O1", "value1"],
+         "Actions": [
+             {"Select-object":
+                 {"Type": "Level2",
+                  "By-field": ["field1", "field2"],
+                  "Value": ["L2-O2", "value2"],
+                  "Actions": [
+                      {"Set-values":
+                          {"field3": "value3"}},
+                      {"Create-object":
+                          {"Type": "Level3",
+                           "Select-by-field": "field1",
+                           "Actions": [
+                               {"Set-values":
+                                   {"field1": "L3-O1"}}]}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O3",
+                           "field2": "value2"}}]}},
+             {"Set-values":
+                 {"field2": "value2"}}]}}]}
+
+
+ORDER_MULTI_SELECT_2 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": ["field1", "name"],
+         "Value": ["value1", "L1-O1"],
+         "Actions": [
+             {"Select-object":
+                 {"Type": "Level2",
+                  "By-field": ["field1", "field2"],
+                  "Value": ["L2-O3", "value2"],
+                  "Actions": [
+                      {"Set-values":
+                          {"field3": "value3"}},
+                      {"Create-object":
+                          {"Type": "Level3",
+                           "Select-by-field": "field1",
+                           "Actions": [
+                               {"Set-values":
+                                   {"field1": "L3-O2"}}]}}]}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Select-by-field": "field1",
+                  "Actions": [
+                      {"Set-values":
+                          {"field1": "L2-O4"}}]}},
+             {"Set-values":
+                 {"field3": "value3"}}]}}]}
+
+
 CREATE_OBJECTS_SELECT_FIRST = {"actions": [
     {"Create-object":
         {"Type": "Level1",
@@ -688,3 +798,40 @@ FIND_NO_SELECT = {"actions": [
                  {"Type": "Find",
                   "By-field": "name",
                   "Value": "L2-O2"}}]}}]}
+
+
+SELECT_MULTIPLE_SUCCESS_1 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": ["field1", "field2"],
+         "Value": ["value_1", "value_2"],
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+SELECT_MULTIPLE_SUCCESS_2 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": ["field1", "field2"],
+         "Value": ["value_3", "value_4"],
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+SELECT_MULTIPLE_MISSING = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": ["field1", "field2"],
+         "Value": ["value_1", "value_4"],
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
