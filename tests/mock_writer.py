@@ -22,7 +22,8 @@ class MockWriter(object):
         self._check_for_exception(action_str)
 
     def _check_for_exception(self, action_str):
-        if action_str == self.raise_exception_on:
+        if (self.raise_exception_on is not None and
+                self.raise_exception_on in action_str):
             raise self.mock_exception
 
     def _new_context(self):

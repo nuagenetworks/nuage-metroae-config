@@ -1,5 +1,6 @@
 from errors import (ConflictError,
                     MissingSelectionError,
+                    MultipleSelectionError,
                     LevistateError,
                     TemplateActionError,
                     TemplateParseError)
@@ -9,6 +10,7 @@ from util import get_dict_field_no_case
 DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
 POSITION_SELECTOR = "$position"
+CHILD_SELECTOR = "$child"
 
 
 class Action(object):
@@ -145,6 +147,9 @@ class Action(object):
         return False
 
     def is_create(self):
+        return False
+
+    def is_select(self):
         return False
 
     def is_retrieve(self):
@@ -392,6 +397,10 @@ class SelectObjectAction(Action):
         self.object_type = None
         self.field = None
         self.value = None
+        self.is_child_find = False
+
+    def is_select(self):
+        return True
 
     def read(self, select_dict):
         self.object_type = Action.get_dict_field(select_dict, 'type')
@@ -409,6 +418,20 @@ class SelectObjectAction(Action):
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
 
+        if type(self.field) == list:
+            if type(self.value) != list:
+                raise TemplateParseError(
+                    "Select action value must be a list if by-field is a list")
+            if len(self.field) != len(self.value):
+                raise TemplateParseError(
+                    "Select action value has different length than by-field")
+            if len(self.field) == 1:
+                self.field = self.field[0]
+                self.value = self.value[0]
+        else:
+            if self.field.lower() == CHILD_SELECTOR:
+                self.disable_combine = True
+
         disable_combine = Action.get_dict_field(select_dict, 'disable-combine')
         if disable_combine is True:
             self.disable_combine = True
@@ -419,7 +442,34 @@ class SelectObjectAction(Action):
 
     def execute(self, writer, context=None):
         try:
-            if self.field.lower() == POSITION_SELECTOR:
+            if type(self.field) == list:
+                context_list = writer.get_object_list(self.object_type,
+                                                      context)
+                self.log.debug("Searching for multiple criteria %s = %s" %
+                               (str(self.field), str(self.value)))
+
+                match_count = 0
+                for item_context in context_list:
+                    match = True
+                    for field, value in zip(self.field, self.value):
+                        other_value = writer.get_value(field, item_context)
+                        if value != other_value:
+                            match = False
+
+                    if match or writer.is_validate_only():
+                        new_context = item_context
+                        match_count += 1
+                        self.log.debug("Found " + str(new_context))
+
+                if match_count == 0:
+                    raise MissingSelectionError(
+                        "No object matches selection criteria")
+
+                if match_count > 1:
+                    raise MultipleSelectionError(
+                        "Multiple objects match selection criteria")
+
+            elif self.field.lower() == POSITION_SELECTOR:
                 context_list = writer.get_object_list(self.object_type,
                                                       context)
 
@@ -428,20 +478,52 @@ class SelectObjectAction(Action):
                         "No object present at position %d" % self.value)
 
                 new_context = context_list[self.value]
+            elif self.field.lower() == CHILD_SELECTOR:
+                child_select = self.get_child_selector(self.value.lower())
+                child_select.is_child_find = True
+                context_list = writer.get_object_list(self.object_type,
+                                                      context)
+                self.log.debug("Searching for child " +
+                               str(child_select).strip())
+                new_context = None
+                for item_context in context_list:
+                    if new_context is None:
+                        try:
+                            child_select.execute(writer, item_context)
+                            new_context = item_context
+                            self.log.debug("Found " + str(new_context))
+                        except MissingSelectionError:
+                            pass
+
+                child_select.is_child_find = False
+
+                if new_context is None:
+                    raise MissingSelectionError(
+                        "Could not find matching child selection " +
+                        str(child_select).strip())
             else:
                 new_context = writer.select_object(self.object_type,
                                                    self.field,
                                                    self.value,
                                                    context)
-            self.execute_children(writer, new_context)
+            if self.is_child_find is not True:
+                self.execute_children(writer, new_context)
+
         except MissingSelectionError as e:
-            if self.is_revert() is not True:
+            if self.is_revert() is not True or self.is_child_find is True:
                 raise e
 
     def get_object_selector(self):
+        if type(self.field) == list:
+            fields = sorted([x.lower() for x in self.field])
+            values = sorted(self.value)
+        else:
+            fields = self.field.lower()
+            values = self.value
+
         return {'type': self.object_type.lower(),
-                'field': self.field.lower(),
-                'value': self.value}
+                'field': fields,
+                'value': values}
 
     def is_same_object(self, other_action):
         if self.disable_combine is True:
@@ -457,12 +539,24 @@ class SelectObjectAction(Action):
         if other_selector['type'] != self.object_type.lower():
             return False
 
-        other_value = other_action.get_child_value(self.field)
-        if self.value == other_value:
-            return True
+        if type(self.field) == list:
+            fields = self.field
+            values = self.value
+        else:
+            fields = [self.field]
+            values = [self.value]
 
-        return (other_selector['field'] == self.field.lower() and
-                other_selector['value'] == self.value)
+        # Find the selected field in the other action
+        match = True
+        for field, value in zip(fields, values):
+            other_value = other_action.get_child_value(field)
+            if value != other_value:
+                match = False
+
+        this_selector = self.get_object_selector()
+
+        return match or (other_selector['field'] == this_selector["field"] and
+                         other_selector['value'] == this_selector["value"])
 
     def combine(self, other_action):
         self.store_marks.update(other_action.store_marks)
@@ -472,13 +566,29 @@ class SelectObjectAction(Action):
             child.parent = self
             self.add_child_action_sorted(child)
 
+    def get_child_selector(self, child_type):
+        for child in self.children:
+            if child.is_select() and child.object_type.lower() == child_type:
+                return child
+
+        raise MissingSelectionError(
+            "No select-object child of specified object type")
+
     def _to_string(self, indent_level):
         indent = Action._indent(indent_level)
 
-        cur_output = "%s[select %s (%s of %s)]" % (indent,
-                                                   str(self.object_type),
-                                                   str(self.field),
-                                                   str(self.value))
+        if type(self.field) == list and type(self.value) == list:
+            selection = list()
+            for field, value in zip(self.field, self.value):
+                selection.append("%s of %s" % (str(field), str(value)))
+
+            selection = ", ".join(selection)
+        else:
+            selection = "%s of %s" % (str(self.field), str(self.value))
+
+        cur_output = "%s[select %s (%s)]" % (indent,
+                                             str(self.object_type),
+                                             selection)
 
         return cur_output
 

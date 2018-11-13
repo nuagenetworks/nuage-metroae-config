@@ -3,12 +3,18 @@ import pytest
 from action_test_params import (CREATE_OBJECTS_DICT,
                                 CREATE_OBJECTS_NO_TYPE,
                                 CREATE_OBJECTS_SELECT_FIRST,
+                                FIND_NO_SELECT,
+                                FIND_SINGLE_LEVEL,
+                                FIND_TREE,
                                 INVALID_ACTION_1,
                                 INVALID_ACTION_2,
                                 INVALID_ACTION_3,
                                 ORDER_CREATE,
                                 ORDER_DISABLE_COMBINE_1,
                                 ORDER_DISABLE_COMBINE_2,
+                                ORDER_MULTI_CREATE,
+                                ORDER_MULTI_SELECT_1,
+                                ORDER_MULTI_SELECT_2,
                                 ORDER_SELECT_1,
                                 ORDER_SELECT_2,
                                 ORDER_STORE_1,
@@ -23,10 +29,17 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 RETRIEVE_NO_FIELD,
                                 RETRIEVE_NO_OBJECT,
                                 RETRIEVE_NO_NAME,
+                                SELECT_MULTIPLE_MISSING,
+                                SELECT_MULTIPLE_SUCCESS_1,
+                                SELECT_MULTIPLE_SUCCESS_2,
                                 SELECT_OBJECTS_BY_POSITION_FIRST,
                                 SELECT_OBJECTS_BY_POSITION_LAST,
                                 SELECT_OBJECTS_BY_POSITION_OOB,
                                 SELECT_OBJECTS_DICT,
+                                SELECT_OBJECTS_MULTIPLE,
+                                SELECT_OBJECTS_MULTIPLE_BAD_TYPE,
+                                SELECT_OBJECTS_MULTIPLE_WITH_SINGLE,
+                                SELECT_OBJECTS_MULTIPLE_MISMATCH,
                                 SELECT_OBJECTS_NO_FIELD,
                                 SELECT_OBJECTS_NO_TYPE,
                                 SELECT_OBJECTS_NO_VALUE,
@@ -57,6 +70,14 @@ CREATE_SELECT_ORDERING_CASES = [
     (ORDER_SELECT_2, ORDER_CREATE, ORDER_SELECT_1),
     (ORDER_SELECT_1, ORDER_SELECT_2, ORDER_CREATE),
     (ORDER_SELECT_2, ORDER_SELECT_1, ORDER_CREATE)]
+
+CREATE_SELECT_MULTI_ORDERING_CASES = [
+    (ORDER_MULTI_CREATE, ORDER_MULTI_SELECT_1, ORDER_MULTI_SELECT_2),
+    (ORDER_MULTI_CREATE, ORDER_MULTI_SELECT_2, ORDER_MULTI_SELECT_1),
+    (ORDER_MULTI_SELECT_1, ORDER_MULTI_CREATE, ORDER_MULTI_SELECT_2),
+    (ORDER_MULTI_SELECT_2, ORDER_MULTI_CREATE, ORDER_MULTI_SELECT_1),
+    (ORDER_MULTI_SELECT_1, ORDER_MULTI_SELECT_2, ORDER_MULTI_CREATE),
+    (ORDER_MULTI_SELECT_2, ORDER_MULTI_SELECT_1, ORDER_MULTI_CREATE)]
 
 CREATE_CONFLICT_ORDERING_CASES = [
     (ORDER_CREATE, ORDER_SELECT_1, ORDER_CREATE),
@@ -323,6 +344,42 @@ class TestActionsRead(object):
         assert current_action.object_type == "Domain"
         assert current_action.field == "test_field_4"
         assert current_action.value == "test_value_4"
+
+    def test_select_multiple__success(self):
+        root_action = Action(None)
+
+        root_action.read_children_actions(SELECT_OBJECTS_MULTIPLE)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Enterprise"
+        assert current_action.field == ["name", "count"]
+        assert current_action.value == ["enterprise1", 5]
+
+        root_action.read_children_actions(SELECT_OBJECTS_MULTIPLE_WITH_SINGLE)
+
+        current_action = root_action.children[1]
+        assert current_action.object_type == "Enterprise"
+        assert current_action.field == "name"
+        assert current_action.value == "enterprise1"
+
+    def test_select_multiple__invalid(self):
+        root_action = Action(None)
+
+        with pytest.raises(TemplateParseError) as e:
+            root_action.read_children_actions(SELECT_OBJECTS_MULTIPLE_MISMATCH)
+
+        assert "different length" in str(e)
+
+        assert ("In [select Enterprise (name of enterprise1, count of 5)]" in
+                e.value.get_display_string())
+
+        with pytest.raises(TemplateParseError) as e:
+            root_action.read_children_actions(SELECT_OBJECTS_MULTIPLE_BAD_TYPE)
+
+        assert "must be a list" in str(e)
+
+        assert ("In [select Enterprise (['name'] of 5)]" in
+                e.value.get_display_string())
 
     def test_select__invalid(self):
         root_action = Action(None)
@@ -614,6 +671,71 @@ class TestActionsOrdering(object):
         current_action = root_action.children[0].children[4].children[0]
         assert current_action.attributes == {'field1': 'L2-O4'}
 
+    @pytest.mark.parametrize("read_order", CREATE_SELECT_MULTI_ORDERING_CASES)
+    def test_create_select_multi__success(self, read_order):
+        root_action = Action(None)
+
+        for template in read_order:
+            root_action.read_children_actions(template)
+
+        root_action.reorder_retrieve()
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Level1"
+        assert current_action.select_by_field == "name"
+
+        current_action = root_action.children[0].children[0]
+        assert current_action.attributes == {'field1': 'value1',
+                                             'field2': 'value2',
+                                             'field3': 'value3',
+                                             'name': 'L1-O1'}
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "field1"
+
+        current_action = root_action.children[0].children[1].children[0]
+        assert current_action.attributes == {'field1': 'L2-O1',
+                                             'field2': 'value2'}
+
+        current_action = root_action.children[0].children[2]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "field1"
+
+        current_action = root_action.children[0].children[2].children[0]
+        assert current_action.attributes == {'field1': 'L2-O2',
+                                             'field2': 'value2',
+                                             'field3': 'value3'}
+
+        current_action = root_action.children[0].children[2].children[1]
+        assert current_action.object_type == "Level3"
+        assert current_action.select_by_field == "field1"
+
+        current_action = \
+            root_action.children[0].children[2].children[1].children[0]
+        assert current_action.attributes == {'field1': 'L3-O1'}
+
+        current_action = root_action.children[0].children[3].children[0]
+        assert current_action.attributes == {'field1': 'L2-O3',
+                                             'field2': 'value2',
+                                             'field3': 'value3'}
+
+        current_action = root_action.children[0].children[3].children[1]
+        assert current_action.object_type == "Level3"
+        assert current_action.select_by_field == "field1"
+
+        current_action = \
+            root_action.children[0].children[3].children[1].children[0]
+        assert current_action.attributes == {'field1': 'L3-O2'}
+
+        current_action = root_action.children[0].children[4]
+        assert current_action.object_type == "Level2"
+        assert current_action.select_by_field == "field1"
+
+        current_action = root_action.children[0].children[4].children[0]
+        assert current_action.attributes == {'field1': 'L2-O4'}
+
+
     @pytest.mark.parametrize("read_order", CREATE_CONFLICT_ORDERING_CASES)
     def test_create__conflict(self, read_order):
         root_action = Action(None)
@@ -775,24 +897,31 @@ class TestActionsExecute(object):
         root_action.execute(writer)
         writer.stop_session()
 
+        print str(writer.get_recorded_actions())
+
         assert writer.get_recorded_actions() == expected_actions
 
     def run_execute_with_exception(self, template_dict, expected_actions,
-                                   exception, on_action):
+                                   exception, on_action, expect_error=True,
+                                   is_revert=False):
         root_action = Action(None)
         writer = MockWriter()
         writer.raise_exception(exception, on_action)
 
+        root_action.set_revert(is_revert)
         root_action.read_children_actions(template_dict)
         writer.start_session()
-        with pytest.raises(exception.__class__) as e:
+        if expect_error:
+            with pytest.raises(exception.__class__) as e:
+                root_action.execute(writer)
+        else:
             root_action.execute(writer)
         writer.stop_session()
 
         assert writer.get_recorded_actions() == expected_actions
-        assert e.value == exception
-
-        return e
+        if expect_error:
+            assert e.value == exception
+            return e
 
     def test_enterprise__success(self):
 
@@ -1158,3 +1287,208 @@ class TestActionsExecute(object):
 
         self.run_execute_test(RETRIEVE_AS_LIST,
                               expected_actions)
+
+    def test_find_single_level__success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'create-object Level2 [context_1]',
+            'set-values name=L2-O1 [context_4]',
+            'select-object Find name = L2-O2 [context_1]',
+            'stop-session']
+
+        self.run_execute_test(FIND_SINGLE_LEVEL, expected_actions)
+
+    def test_find_single_level__revert(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Level2 name = L2-O1 [context_1]',
+            'delete-object [context_5]',
+            'stop-session']
+
+        self.run_execute_test(FIND_SINGLE_LEVEL, expected_actions,
+                              is_revert=True)
+
+    def test_find_tree__success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_3]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_6]',
+            'create-object Level3 [context_6]',
+            'set-values name=L3-O1 [context_9]',
+            'select-object Find name = L3-O2 [context_6]',
+            'stop-session']
+
+        self.run_execute_test(FIND_TREE, expected_actions)
+
+    def test_find_tree__revert(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_3]',
+            'get-object-list Level2 [context_1]',
+            'select-object Find name = L3-O2 [context_6]',
+            'select-object Find name = L3-O2 [context_6]',
+            'select-object Level3 name = L3-O1 [context_6]',
+            'delete-object [context_10]',
+            'stop-session']
+
+        self.run_execute_test(FIND_TREE, expected_actions, is_revert=True)
+
+    def test_find_single_level__second_object(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Find name = L2-O2 [context_2]',
+            'create-object Level2 [context_2]',
+            'set-values name=L2-O1 [context_4]',
+            'select-object Find name = L2-O2 [context_2]',
+            'stop-session']
+
+        self.run_execute_with_exception(
+            FIND_SINGLE_LEVEL,
+            expected_actions,
+            MissingSelectionError("Not found"),
+            'select-object Find name = L2-O2 [context_1]',
+            expect_error=False)
+
+    def test_find_single_level__second_object_revert(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_1]',
+            'select-object Find name = L2-O2 [context_2]',
+            'select-object Find name = L2-O2 [context_2]',
+            'select-object Level2 name = L2-O1 [context_2]',
+            'delete-object [context_5]',
+            'stop-session']
+
+        self.run_execute_with_exception(
+            FIND_SINGLE_LEVEL,
+            expected_actions,
+            MissingSelectionError("Not found"),
+            'select-object Find name = L2-O2 [context_1]',
+            expect_error=False,
+            is_revert=True)
+
+    def test_find_single_level__no_selector(self):
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_test(FIND_NO_SELECT, list())
+
+        assert "No select-object" in str(e)
+
+    def test_find_single_level__not_found(self):
+
+        expected_actions = []
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_with_exception(
+                FIND_SINGLE_LEVEL,
+                expected_actions,
+                MissingSelectionError("Not found"),
+                'select-object Find name = L2-O2',
+                expect_error=False)
+
+        assert "Could not find matching child selection" in str(e)
+        assert "Find" in str(e)
+
+    def test_select_multiple__first_success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_1]',
+            'get-value field2 [context_1]',
+            'get-value field1 [context_2]',
+            'get-value field2 [context_2]',
+            'create-object Level2 [context_1]',
+            'set-values name=L2-O1 [context_3]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_MULTIPLE_SUCCESS_1, expected_actions)
+
+    def test_select_multiple__first_revert_success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_1]',
+            'get-value field2 [context_1]',
+            'get-value field1 [context_2]',
+            'get-value field2 [context_2]',
+            'select-object Level2 name = L2-O1 [context_1]',
+            'delete-object [context_3]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_MULTIPLE_SUCCESS_1, expected_actions,
+                              is_revert=True)
+
+    def test_select_multiple__last_success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_1]',
+            'get-value field2 [context_1]',
+            'get-value field1 [context_2]',
+            'get-value field2 [context_2]',
+            'create-object Level2 [context_2]',
+            'set-values name=L2-O1 [context_3]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_MULTIPLE_SUCCESS_2, expected_actions)
+
+    def test_select_multiple__last_revert_success(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_1]',
+            'get-value field2 [context_1]',
+            'get-value field1 [context_2]',
+            'get-value field2 [context_2]',
+            'select-object Level2 name = L2-O1 [context_2]',
+            'delete-object [context_3]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_MULTIPLE_SUCCESS_2, expected_actions,
+                              is_revert=True)
+
+    def test_select_multiple__not_found(self):
+
+        expected_actions = []
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_test(SELECT_MULTIPLE_MISSING, expected_actions)
+
+        assert "No object matches selection criteria" in str(e)
+
+    def test_select_multiple__revert_not_found(self):
+
+        expected_actions = [
+            'start-session',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_1]',
+            'get-value field2 [context_1]',
+            'get-value field1 [context_2]',
+            'get-value field2 [context_2]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_MULTIPLE_MISSING, expected_actions,
+                              is_revert=True)
