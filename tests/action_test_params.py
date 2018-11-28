@@ -746,6 +746,7 @@ RETRIEVE_AS_LIST = {"actions": [
                   "From-name": "store_2",
                   "As-List": True}}]}}]}
 
+
 FIND_SINGLE_LEVEL = {"actions": [
     {"Select-object":
         {"Type": "Level1",
@@ -761,6 +762,7 @@ FIND_SINGLE_LEVEL = {"actions": [
                  {"Type": "Find",
                   "By-field": "name",
                   "Value": "L2-O2"}}]}}]}
+
 
 FIND_TREE = {"actions": [
     {"Select-object":
@@ -782,6 +784,7 @@ FIND_TREE = {"actions": [
                          {"Type": "Find",
                           "By-field": "name",
                           "Value": "L3-O2"}}]}}]}}]}
+
 
 FIND_NO_SELECT = {"actions": [
     {"Select-object":
@@ -812,6 +815,7 @@ SELECT_MULTIPLE_SUCCESS_1 = {"actions": [
                       {"Set-values":
                           {"name": "L2-O1"}}]}}]}}]}
 
+
 SELECT_MULTIPLE_SUCCESS_2 = {"actions": [
     {"Select-object":
         {"Type": "Level1",
@@ -824,12 +828,110 @@ SELECT_MULTIPLE_SUCCESS_2 = {"actions": [
                       {"Set-values":
                           {"name": "L2-O1"}}]}}]}}]}
 
+
+SELECT_MULTIPLE_REVERT_SUCCESS_1 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": ["field1", "field2"],
+         "Value": ["value_5", "value_6"],
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
+SELECT_MULTIPLE_REVERT_SUCCESS_2 = {"actions": [
+    {"Select-object":
+        {"Type": "Level1",
+         "By-field": ["field1", "field2"],
+         "Value": ["value_7", "value_8"],
+         "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
 SELECT_MULTIPLE_MISSING = {"actions": [
     {"Select-object":
         {"Type": "Level1",
          "By-field": ["field1", "field2"],
          "Value": ["value_1", "value_4"],
          "Actions": [
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
+SELECT_RETRIEVE_VALUE = {"actions": [
+    {"Select-object":
+        {"Type": "Object1",
+         "By-field": "name",
+         "Value": "value_1",
+         "Actions": [
+             {"Store-value":
+                 {"From-field": "objectId",
+                  "As-name": "object_id"}}]}},
+    {"Select-object":
+        {"Type": "Object2",
+         "By-field": "$retrieve-value",
+         "Value": "id",
+         "Actions": [
+             {"Retrieve-value":
+                  {"To-field": "id",
+                   "From-name": "object_id"}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
+SELECT_RETRIEVE_MISSING_RETRIEVE = {"actions": [
+    {"Select-object":
+        {"Type": "Object1",
+         "By-field": "name",
+         "Value": "value_1",
+         "Actions": [
+             {"Store-value":
+                 {"From-field": "objectId",
+                  "As-name": "object_id"}}]}},
+    {"Select-object":
+        {"Type": "Object2",
+         "By-field": "$retrieve-value",
+         "Value": "WRONG_VALUE",
+         "Actions": [
+             {"Retrieve-value":
+                  {"To-field": "id",
+                   "From-name": "object_id"}},
+             {"Create-object":
+                 {"Type": "Level2",
+                  "Actions": [
+                      {"Set-values":
+                          {"name": "L2-O1"}}]}}]}}]}
+
+
+SELECT_RETRIEVE_NOT_RETRIEVE = {"actions": [
+    {"Select-object":
+        {"Type": "Object1",
+         "By-field": "name",
+         "Value": "value_1",
+         "Actions": [
+             {"Store-value":
+                 {"From-field": "objectId",
+                  "As-name": "object_id"}}]}},
+    {"Select-object":
+        {"Type": "Object2",
+         "By-field": "$retrieve-value",
+         "Value": "id",
+         "Actions": [
+             {"Set-values":
+                  {"id": "NOT_RETRIEVE"}},
              {"Create-object":
                  {"Type": "Level2",
                   "Actions": [

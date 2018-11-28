@@ -32,6 +32,8 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 SELECT_MULTIPLE_MISSING,
                                 SELECT_MULTIPLE_SUCCESS_1,
                                 SELECT_MULTIPLE_SUCCESS_2,
+                                SELECT_MULTIPLE_REVERT_SUCCESS_1,
+                                SELECT_MULTIPLE_REVERT_SUCCESS_2,
                                 SELECT_OBJECTS_BY_POSITION_FIRST,
                                 SELECT_OBJECTS_BY_POSITION_LAST,
                                 SELECT_OBJECTS_BY_POSITION_OOB,
@@ -43,6 +45,9 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 SELECT_OBJECTS_NO_FIELD,
                                 SELECT_OBJECTS_NO_TYPE,
                                 SELECT_OBJECTS_NO_VALUE,
+                                SELECT_RETRIEVE_MISSING_RETRIEVE,
+                                SELECT_RETRIEVE_NOT_RETRIEVE,
+                                SELECT_RETRIEVE_VALUE,
                                 SET_VALUES_DICT,
                                 SET_VALUES_CONFLICT,
                                 SET_VALUES_NO_OBJECT,
@@ -735,7 +740,6 @@ class TestActionsOrdering(object):
         current_action = root_action.children[0].children[4].children[0]
         assert current_action.attributes == {'field1': 'L2-O4'}
 
-
     @pytest.mark.parametrize("read_order", CREATE_CONFLICT_ORDERING_CASES)
     def test_create__conflict(self, read_order):
         root_action = Action(None)
@@ -897,7 +901,11 @@ class TestActionsExecute(object):
         root_action.execute(writer)
         writer.stop_session()
 
-        print str(writer.get_recorded_actions())
+        print "\nExpected actions:"
+        print "\n".join(expected_actions)
+
+        print "\nRecorded actions:"
+        print "\n".join(writer.get_recorded_actions())
 
         assert writer.get_recorded_actions() == expected_actions
 
@@ -917,6 +925,12 @@ class TestActionsExecute(object):
         else:
             root_action.execute(writer)
         writer.stop_session()
+
+        print "\nExpected actions:"
+        print "\n".join(expected_actions)
+
+        print "\nRecorded actions:"
+        print "\n".join(writer.get_recorded_actions())
 
         assert writer.get_recorded_actions() == expected_actions
         if expect_error:
@@ -963,13 +977,15 @@ class TestActionsExecute(object):
     def test_domain__revert(self):
 
         expected_actions = [
+
             'start-session',
             'select-object Enterprise name = test_enterprise [None]',
-            'select-object Domain name = test_domain [context_1]',
-            'delete-object [context_2]',
+            'select-object Enterprise name = test_enterprise [None]',
+            'select-object Domain name = test_domain [context_2]',
+            'delete-object [context_3]',
             'select-object DomainTemplate name = template_test_domain '
-            '[context_1]',
-            'delete-object [context_4]',
+            '[context_2]',
+            'delete-object [context_5]',
             'stop-session']
 
         self.run_execute_test(EXPECTED_DOMAIN_TEMPLATE,
@@ -1013,11 +1029,15 @@ class TestActionsExecute(object):
             'start-session',
             'select-object Enterprise name = test_enterprise [None]',
             'select-object Domain name = test_domain [context_1]',
-            'select-object EgressACLTemplate name = test_acl [context_2]',
-            'delete-object [context_3]',
-            'select-object IngressACLTemplate name = test_acl [context_2]',
-            'delete-object [context_5]',
             'select-object Subnet name = test_subnet [context_2]',
+            'get-value id [context_3]',
+            'select-object Enterprise name = test_enterprise [None]',
+            'select-object Domain name = test_domain [context_4]',
+            'select-object EgressACLTemplate name = test_acl [context_5]',
+            'delete-object [context_6]',
+            'select-object IngressACLTemplate name = test_acl [context_5]',
+            'delete-object [context_8]',
+            'select-object Subnet name = test_subnet [context_5]',
             'stop-session']
 
         self.run_execute_test(EXPECTED_ACL_TEMPLATE,
@@ -1090,15 +1110,24 @@ class TestActionsExecute(object):
     def test_select__revert(self):
 
         expected_actions = [
+
             'start-session',
-            'select-object Enterprise name = test_enterprise_2 [None]',
-            'select-object Domain test_field_4 = test_value_4 [context_1]',
-            'select-object DomainTemplate test_field_3 = test_value_3 '
-            '[context_1]',
             'select-object Enterprise name = test_enterprise [None]',
-            'select-object Domain test_field_2 = test_value_2 [context_4]',
             'select-object DomainTemplate test_field_1 = test_value_1 '
+            '[context_1]',
+            'select-object Domain test_field_2 = test_value_2 [context_1]',
+            'select-object Enterprise name = test_enterprise_2 [None]',
+            'select-object DomainTemplate test_field_3 = test_value_3 '
             '[context_4]',
+            'select-object Domain test_field_4 = test_value_4 [context_4]',
+            'select-object Enterprise name = test_enterprise_2 [None]',
+            'select-object Domain test_field_4 = test_value_4 [context_7]',
+            'select-object DomainTemplate test_field_3 = test_value_3 '
+            '[context_7]',
+            'select-object Enterprise name = test_enterprise [None]',
+            'select-object Domain test_field_2 = test_value_2 [context_10]',
+            'select-object DomainTemplate test_field_1 = test_value_1 '
+            '[context_10]',
             'stop-session']
 
         self.run_execute_test(SELECT_OBJECTS_DICT,
@@ -1308,8 +1337,11 @@ class TestActionsExecute(object):
             'get-object-list Level1 [None]',
             'select-object Find name = L2-O2 [context_1]',
             'select-object Find name = L2-O2 [context_1]',
-            'select-object Level2 name = L2-O1 [context_1]',
-            'delete-object [context_5]',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_5]',
+            'select-object Find name = L2-O2 [context_5]',
+            'select-object Level2 name = L2-O1 [context_5]',
+            'delete-object [context_9]',
             'stop-session']
 
         self.run_execute_test(FIND_SINGLE_LEVEL, expected_actions,
@@ -1341,8 +1373,14 @@ class TestActionsExecute(object):
             'get-object-list Level2 [context_1]',
             'select-object Find name = L3-O2 [context_6]',
             'select-object Find name = L3-O2 [context_6]',
-            'select-object Level3 name = L3-O1 [context_6]',
-            'delete-object [context_10]',
+            'get-object-list Level1 [None]',
+            'get-object-list Level2 [context_10]',
+            'select-object Find name = L3-O2 [context_12]',
+            'get-object-list Level2 [context_10]',
+            'select-object Find name = L3-O2 [context_15]',
+            'select-object Find name = L3-O2 [context_15]',
+            'select-object Level3 name = L3-O1 [context_15]',
+            'delete-object [context_19]',
             'stop-session']
 
         self.run_execute_test(FIND_TREE, expected_actions, is_revert=True)
@@ -1372,17 +1410,20 @@ class TestActionsExecute(object):
             'start-session',
             'get-object-list Level1 [None]',
             'select-object Find name = L2-O2 [context_1]',
-            'select-object Find name = L2-O2 [context_2]',
-            'select-object Find name = L2-O2 [context_2]',
-            'select-object Level2 name = L2-O1 [context_2]',
-            'delete-object [context_5]',
+            'select-object Find name = L2-O2 [context_1]',
+            'get-object-list Level1 [None]',
+            'select-object Find name = L2-O2 [context_5]',
+            'select-object Find name = L2-O2 [context_6]',
+            'select-object Find name = L2-O2 [context_6]',
+            'select-object Level2 name = L2-O1 [context_6]',
+            'delete-object [context_9]',
             'stop-session']
 
         self.run_execute_with_exception(
             FIND_SINGLE_LEVEL,
             expected_actions,
             MissingSelectionError("Not found"),
-            'select-object Find name = L2-O2 [context_1]',
+            'select-object Find name = L2-O2 [context_5]',
             expect_error=False,
             is_revert=True)
 
@@ -1432,11 +1473,17 @@ class TestActionsExecute(object):
             'get-value field2 [context_1]',
             'get-value field1 [context_2]',
             'get-value field2 [context_2]',
-            'select-object Level2 name = L2-O1 [context_1]',
-            'delete-object [context_3]',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_3]',
+            'get-value field2 [context_3]',
+            'get-value field1 [context_4]',
+            'get-value field2 [context_4]',
+            'select-object Level2 name = L2-O1 [context_3]',
+            'delete-object [context_5]',
             'stop-session']
 
-        self.run_execute_test(SELECT_MULTIPLE_SUCCESS_1, expected_actions,
+        self.run_execute_test(SELECT_MULTIPLE_REVERT_SUCCESS_1,
+                              expected_actions,
                               is_revert=True)
 
     def test_select_multiple__last_success(self):
@@ -1463,11 +1510,17 @@ class TestActionsExecute(object):
             'get-value field2 [context_1]',
             'get-value field1 [context_2]',
             'get-value field2 [context_2]',
-            'select-object Level2 name = L2-O1 [context_2]',
-            'delete-object [context_3]',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_3]',
+            'get-value field2 [context_3]',
+            'get-value field1 [context_4]',
+            'get-value field2 [context_4]',
+            'select-object Level2 name = L2-O1 [context_4]',
+            'delete-object [context_5]',
             'stop-session']
 
-        self.run_execute_test(SELECT_MULTIPLE_SUCCESS_2, expected_actions,
+        self.run_execute_test(SELECT_MULTIPLE_REVERT_SUCCESS_2,
+                              expected_actions,
                               is_revert=True)
 
     def test_select_multiple__not_found(self):
@@ -1488,7 +1541,63 @@ class TestActionsExecute(object):
             'get-value field2 [context_1]',
             'get-value field1 [context_2]',
             'get-value field2 [context_2]',
+            'get-object-list Level1 [None]',
+            'get-value field1 [context_3]',
+            'get-value field2 [context_3]',
+            'get-value field1 [context_4]',
+            'get-value field2 [context_4]',
             'stop-session']
 
         self.run_execute_test(SELECT_MULTIPLE_MISSING, expected_actions,
                               is_revert=True)
+
+    def test_select_retrieve__success(self):
+
+        expected_actions = [
+            'start-session',
+            'select-object Object1 name = value_1 [None]',
+            'get-value objectId [context_1]',
+            'select-object Object2 id = value_1 [None]',
+            'create-object Level2 [context_2]',
+            'set-values name=L2-O1 [context_3]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_RETRIEVE_VALUE, expected_actions)
+
+    def test_select_retrieve__revert(self):
+
+        expected_actions = [
+            'start-session',
+            'select-object Object1 name = value_1 [None]',
+            'get-value objectId [context_1]',
+            'select-object Object2 id = value_1 [None]',
+            'select-object Object2 id = value_1 [None]',
+            'select-object Level2 name = L2-O1 [context_3]',
+            'delete-object [context_4]',
+            'select-object Object1 name = value_1 [None]',
+            'stop-session']
+
+        self.run_execute_test(SELECT_RETRIEVE_VALUE, expected_actions,
+                              is_revert=True)
+
+    def test_select_retrieve__missing_retrieve(self):
+
+        expected_actions = []
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_test(SELECT_RETRIEVE_MISSING_RETRIEVE,
+                                  expected_actions)
+
+        assert "No retrieve-value present" in str(e)
+        assert "WRONG_VALUE" in str(e)
+
+    def test_select_retrieve__not_retrieve(self):
+
+        expected_actions = []
+
+        with pytest.raises(MissingSelectionError) as e:
+            self.run_execute_test(SELECT_RETRIEVE_NOT_RETRIEVE,
+                                  expected_actions)
+
+        assert "Action not retrieve-value" in str(e)
+        assert "id" in str(e)
