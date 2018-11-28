@@ -901,13 +901,16 @@ class TestActionsExecute(object):
         root_action.execute(writer)
         writer.stop_session()
 
+        expected_actions_formatted = filter(
+            None, [x.strip() for x in expected_actions.split("\n")])
+
         print "\nExpected actions:"
-        print "\n".join(expected_actions)
+        print "\n".join(expected_actions_formatted)
 
         print "\nRecorded actions:"
         print "\n".join(writer.get_recorded_actions())
 
-        assert writer.get_recorded_actions() == expected_actions
+        assert writer.get_recorded_actions() == expected_actions_formatted
 
     def run_execute_with_exception(self, template_dict, expected_actions,
                                    exception, on_action, expect_error=True,
@@ -926,134 +929,131 @@ class TestActionsExecute(object):
             root_action.execute(writer)
         writer.stop_session()
 
+        expected_actions_formatted = filter(
+            None, [x.strip() for x in expected_actions.split("\n")])
+
         print "\nExpected actions:"
-        print "\n".join(expected_actions)
+        print "\n".join(expected_actions_formatted)
 
         print "\nRecorded actions:"
         print "\n".join(writer.get_recorded_actions())
 
-        assert writer.get_recorded_actions() == expected_actions
+        assert writer.get_recorded_actions() == expected_actions_formatted
         if expect_error:
             assert e.value == exception
             return e
 
     def test_enterprise__success(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Enterprise [None]',
-            'set-values name=test_enterprise [context_1]',
-            'stop-session'
-        ]
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            set-values name=test_enterprise [context_1]
+            stop-session
+        """
 
         self.run_execute_test(EXPECTED_ENTERPRISE_TEMPLATE,
                               expected_actions)
 
     def test_enterprise__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'delete-object [context_1]', 'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            delete-object [context_1]
+            stop-session
+        """
 
         self.run_execute_test(EXPECTED_ENTERPRISE_TEMPLATE,
                               expected_actions, is_revert=True)
 
     def test_domain__success(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'create-object DomainTemplate [context_1]',
-            'set-values name=template_test_domain [context_2]',
-            'get-value id [context_2]',
-            'create-object Domain [context_1]',
-            'set-values name=test_domain,templateID=value_1 [context_4]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            create-object DomainTemplate [context_1]
+            set-values name=template_test_domain [context_2]
+            get-value id [context_2]
+            create-object Domain [context_1]
+            set-values name=test_domain,templateID=value_1 [context_4]
+            stop-session
+        """
 
         self.run_execute_test(EXPECTED_DOMAIN_TEMPLATE,
                               expected_actions)
 
     def test_domain__revert(self):
 
-        expected_actions = [
-
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object Domain name = test_domain [context_2]',
-            'delete-object [context_3]',
-            'select-object DomainTemplate name = template_test_domain '
-            '[context_2]',
-            'delete-object [context_5]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            select-object Enterprise name = test_enterprise [None]
+            select-object Domain name = test_domain [context_2]
+            delete-object [context_3]
+            select-object DomainTemplate name = template_test_domain [context_2]
+            delete-object [context_5]
+            stop-session
+        """
 
         self.run_execute_test(EXPECTED_DOMAIN_TEMPLATE,
                               expected_actions, is_revert=True)
 
     def test_acl__success(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object Domain name = test_domain [context_1]',
-            'select-object Subnet name = test_subnet [context_2]',
-            'get-value id [context_3]',
-            'create-object IngressACLTemplate [context_2]',
-            'set-values allowAddressSpoof=False,defaultAllowIP=True,'
-            'defaultAllowNonIP=False,name=test_acl,priority=100 [context_4]',
-            'create-object IngressACLEntryTemplate [context_4]',
-            'set-values DSCP=*,action=FORWARD,description=Test ACL,'
-            'destinationPort=*,etherType=0x0800,flowLoggingEnabled=True,'
-            'locationID=value_1,locationType=SUBNET,networkID=,networkType=ANY'
-            ',priority=200,protocol=tcp,sourcePort=80,stateful=True,'
-            'statsLoggingEnabled=True [context_6]',
-            'create-object EgressACLTemplate [context_2]',
-            'set-values defaultAllowIP=True,defaultAllowNonIP=False,'
-            'defaultInstallACLImplicitRules=True,name=test_acl,priority=100 '
-            '[context_8]',
-            'create-object EgressACLEntryTemplate [context_8]',
-            'set-values DSCP=*,action=FORWARD,description=Test ACL,'
-            'destinationPort=*,etherType=0x0800,flowLoggingEnabled=True,'
-            'locationID=value_1,locationType=SUBNET,networkID=,'
-            'networkType=ANY,priority=200,protocol=tcp,sourcePort=80,'
-            'stateful=True,statsLoggingEnabled=True [context_10]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            select-object Domain name = test_domain [context_1]
+            select-object Subnet name = test_subnet [context_2]
+            get-value id [context_3]
+            create-object IngressACLTemplate [context_2]
+            set-values allowAddressSpoof=False,defaultAllowIP=True,defaultAllowNonIP=False,name=test_acl,priority=100 [context_4]
+            create-object IngressACLEntryTemplate [context_4]
+            set-values DSCP=*,action=FORWARD,description=Test ACL,destinationPort=*,etherType=0x0800,flowLoggingEnabled=True,locationID=value_1,locationType=SUBNET,networkID=,networkType=ANY,priority=200,protocol=tcp,sourcePort=80,stateful=True,statsLoggingEnabled=True [context_6]
+            create-object EgressACLTemplate [context_2]
+            set-values defaultAllowIP=True,defaultAllowNonIP=False,defaultInstallACLImplicitRules=True,name=test_acl,priority=100 [context_8]
+            create-object EgressACLEntryTemplate [context_8]
+            set-values DSCP=*,action=FORWARD,description=Test ACL,destinationPort=*,etherType=0x0800,flowLoggingEnabled=True,locationID=value_1,locationType=SUBNET,networkID=,networkType=ANY,priority=200,protocol=tcp,sourcePort=80,stateful=True,statsLoggingEnabled=True [context_10]
+            stop-session
+        """
 
         self.run_execute_test(EXPECTED_ACL_TEMPLATE,
                               expected_actions)
 
     def test_acl__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object Domain name = test_domain [context_1]',
-            'select-object Subnet name = test_subnet [context_2]',
-            'get-value id [context_3]',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object Domain name = test_domain [context_4]',
-            'select-object EgressACLTemplate name = test_acl [context_5]',
-            'delete-object [context_6]',
-            'select-object IngressACLTemplate name = test_acl [context_5]',
-            'delete-object [context_8]',
-            'select-object Subnet name = test_subnet [context_5]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            select-object Domain name = test_domain [context_1]
+            select-object Subnet name = test_subnet [context_2]
+            get-value id [context_3]
+            select-object Enterprise name = test_enterprise [None]
+            select-object Domain name = test_domain [context_4]
+            select-object EgressACLTemplate name = test_acl [context_5]
+            delete-object [context_6]
+            select-object IngressACLTemplate name = test_acl [context_5]
+            delete-object [context_8]
+            select-object Subnet name = test_subnet [context_5]
+            stop-session
+        """
 
         self.run_execute_test(EXPECTED_ACL_TEMPLATE,
                               expected_actions, is_revert=True)
 
     def test_create__success(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Enterprise [None]',
-            'create-object DomainTemplate [context_1]',
-            'create-object Domain [context_1]',
-            'create-object Enterprise [None]',
-            'create-object DomainTemplate [context_4]',
-            'create-object Domain [context_4]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            create-object DomainTemplate [context_1]
+            create-object Domain [context_1]
+            create-object Enterprise [None]
+            create-object DomainTemplate [context_4]
+            create-object Domain [context_4]
+            stop-session
+        """
 
         self.run_execute_test(CREATE_OBJECTS_DICT,
                               expected_actions)
@@ -1062,24 +1062,26 @@ class TestActionsExecute(object):
 
         # There are no set-values in this template, so there are no name
         # fields to select and thus nothing to do
-        expected_actions = [
-            'start-session',
-            'stop-session']
+        expected_actions = """
+            start-session
+            stop-session
+        """
 
         self.run_execute_test(CREATE_OBJECTS_DICT,
                               expected_actions, is_revert=True)
 
     def test_create__invalid_object(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Enterprise [None]',
-            'create-object DomainTemplate [context_1]',
-            'create-object Domain [context_1]',
-            'create-object Enterprise [None]',
-            'create-object DomainTemplate [context_4]',
-            'create-object Domain [context_4]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            create-object DomainTemplate [context_1]
+            create-object Domain [context_1]
+            create-object Enterprise [None]
+            create-object DomainTemplate [context_4]
+            create-object Domain [context_4]
+            stop-session
+        """
 
         e = self.run_execute_with_exception(
             CREATE_OBJECTS_DICT,
@@ -1092,60 +1094,54 @@ class TestActionsExecute(object):
 
     def test_select__success(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object DomainTemplate test_field_1 = test_value_1 '
-            '[context_1]',
-            'select-object Domain test_field_2 = test_value_2 [context_1]',
-            'select-object Enterprise name = test_enterprise_2 [None]',
-            'select-object DomainTemplate test_field_3 = test_value_3 '
-            '[context_4]',
-            'select-object Domain test_field_4 = test_value_4 [context_4]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            select-object DomainTemplate test_field_1 = test_value_1 [context_1]
+            select-object Domain test_field_2 = test_value_2 [context_1]
+            select-object Enterprise name = test_enterprise_2 [None]
+            select-object DomainTemplate test_field_3 = test_value_3 [context_4]
+            select-object Domain test_field_4 = test_value_4 [context_4]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_OBJECTS_DICT,
                               expected_actions)
 
     def test_select__revert(self):
 
-        expected_actions = [
-
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object DomainTemplate test_field_1 = test_value_1 '
-            '[context_1]',
-            'select-object Domain test_field_2 = test_value_2 [context_1]',
-            'select-object Enterprise name = test_enterprise_2 [None]',
-            'select-object DomainTemplate test_field_3 = test_value_3 '
-            '[context_4]',
-            'select-object Domain test_field_4 = test_value_4 [context_4]',
-            'select-object Enterprise name = test_enterprise_2 [None]',
-            'select-object Domain test_field_4 = test_value_4 [context_7]',
-            'select-object DomainTemplate test_field_3 = test_value_3 '
-            '[context_7]',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object Domain test_field_2 = test_value_2 [context_10]',
-            'select-object DomainTemplate test_field_1 = test_value_1 '
-            '[context_10]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            select-object DomainTemplate test_field_1 = test_value_1 [context_1]
+            select-object Domain test_field_2 = test_value_2 [context_1]
+            select-object Enterprise name = test_enterprise_2 [None]
+            select-object DomainTemplate test_field_3 = test_value_3 [context_4]
+            select-object Domain test_field_4 = test_value_4 [context_4]
+            select-object Enterprise name = test_enterprise_2 [None]
+            select-object Domain test_field_4 = test_value_4 [context_7]
+            select-object DomainTemplate test_field_3 = test_value_3 [context_7]
+            select-object Enterprise name = test_enterprise [None]
+            select-object Domain test_field_2 = test_value_2 [context_10]
+            select-object DomainTemplate test_field_1 = test_value_1 [context_10]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_OBJECTS_DICT,
                               expected_actions, is_revert=True)
 
     def test_select__missing_select(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise name = test_enterprise [None]',
-            'select-object DomainTemplate test_field_1 = test_value_1 '
-            '[context_1]',
-            'select-object Domain test_field_2 = test_value_2 [context_1]',
-            'select-object Enterprise name = test_enterprise_2 [None]',
-            'select-object DomainTemplate test_field_3 = test_value_3 '
-            '[context_4]',
-            'select-object Domain test_field_4 = test_value_4 [context_4]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = test_enterprise [None]
+            select-object DomainTemplate test_field_1 = test_value_1 [context_1]
+            select-object Domain test_field_2 = test_value_2 [context_1]
+            select-object Enterprise name = test_enterprise_2 [None]
+            select-object DomainTemplate test_field_3 = test_value_3 [context_4]
+            select-object Domain test_field_4 = test_value_4 [context_4]
+            stop-session
+        """
 
         e = self.run_execute_with_exception(
             SELECT_OBJECTS_DICT,
@@ -1160,35 +1156,38 @@ class TestActionsExecute(object):
 
     def test_set_values__success(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Enterprise [None]',
-            'set-values field1=value1,field2=True,field4=4 [context_1]',
-            'create-object DomainTemplate [context_1]',
-            'create-object Domain [context_1]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            set-values field1=value1,field2=True,field4=4 [context_1]
+            create-object DomainTemplate [context_1]
+            create-object Domain [context_1]
+            stop-session
+        """
 
         self.run_execute_test(SET_VALUES_DICT,
                               expected_actions)
 
     def test_set_values__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise field1 = value1 [None]',
-            'delete-object [context_1]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise field1 = value1 [None]
+            delete-object [context_1]
+            stop-session
+        """
 
         self.run_execute_test(SET_VALUES_DICT,
                               expected_actions, is_revert=True)
 
     def test_set_values__bad_attr(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Enterprise [None]',
-            'set-values field1=value1,field2=True,field4=4 [context_1]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            set-values field1=value1,field2=True,field4=4 [context_1]
+            stop-session
+        """
 
         e = self.run_execute_with_exception(
             SET_VALUES_DICT,
@@ -1201,49 +1200,52 @@ class TestActionsExecute(object):
 
     def test_store_retrieve__success(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Enterprise [None]',
-            'set-values name=enterprise1 [context_1]',
-            'create-object DomainTemplate [context_1]',
-            'set-values name=domain_template [context_3]',
-            'get-value id [context_3]',
-            'create-object Domain [context_1]',
-            'set-values name=domain1,templateID=value_1 [context_5]',
-            'create-object Domain [context_1]',
-            'set-values name=domain2,templateID=value_1 [context_7]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            set-values name=enterprise1 [context_1]
+            create-object DomainTemplate [context_1]
+            set-values name=domain_template [context_3]
+            get-value id [context_3]
+            create-object Domain [context_1]
+            set-values name=domain1,templateID=value_1 [context_5]
+            create-object Domain [context_1]
+            set-values name=domain2,templateID=value_1 [context_7]
+            stop-session
+        """
 
         self.run_execute_test(STORE_RETRIEVE_DICT,
                               expected_actions)
 
     def test_store_retrieve__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Enterprise name = enterprise1 [None]',
-            'select-object Domain name = domain2 [context_1]',
-            'delete-object [context_2]',
-            'select-object Domain name = domain1 [context_1]',
-            'delete-object [context_4]',
-            'select-object DomainTemplate name = domain_template [context_1]',
-            'delete-object [context_6]',
-            'delete-object [context_1]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Enterprise name = enterprise1 [None]
+            select-object Domain name = domain2 [context_1]
+            delete-object [context_2]
+            select-object Domain name = domain1 [context_1]
+            delete-object [context_4]
+            select-object DomainTemplate name = domain_template [context_1]
+            delete-object [context_6]
+            delete-object [context_1]
+            stop-session
+        """
 
         self.run_execute_test(STORE_RETRIEVE_DICT,
                               expected_actions, is_revert=True)
 
     def test_store_retrieve__bad_attr(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Enterprise [None]',
-            'set-values name=enterprise1 [context_1]',
-            'create-object DomainTemplate [context_1]',
-            'set-values name=domain_template [context_3]',
-            'get-value id [context_3]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            set-values name=enterprise1 [context_1]
+            create-object DomainTemplate [context_1]
+            set-values name=domain_template [context_3]
+            get-value id [context_3]
+            stop-session
+        """
 
         e = self.run_execute_with_exception(
             STORE_RETRIEVE_DICT,
@@ -1258,37 +1260,40 @@ class TestActionsExecute(object):
 
     def test_create_objects_select_first__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'select-object Level2 name = L2-O1 [context_1]',
-            'delete-object [context_3]',
-            'delete-object [context_1]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            select-object Level2 name = L2-O1 [context_1]
+            delete-object [context_3]
+            delete-object [context_1]
+            stop-session
+        """
 
         self.run_execute_test(CREATE_OBJECTS_SELECT_FIRST,
                               expected_actions, is_revert=True)
 
     def test_select_objects_by_position__first(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'create-object Level2 [context_1]',
-            'set-values name=L2-O1 [context_3]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            create-object Level2 [context_1]
+            set-values name=L2-O1 [context_3]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_OBJECTS_BY_POSITION_FIRST,
                               expected_actions)
 
     def test_select_objects_by_position__last(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'create-object Level2 [context_2]',
-            'set-values name=L2-O1 [context_3]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            create-object Level2 [context_2]
+            set-values name=L2-O1 [context_3]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_OBJECTS_BY_POSITION_LAST,
                               expected_actions)
@@ -1302,100 +1307,106 @@ class TestActionsExecute(object):
 
     def test_retrieve_as_list__success(self):
 
-        expected_actions = [
-            'start-session',
-            'create-object Level1 [None]',
-            'set-values name=L1-O1 [context_1]',
-            'get-value name [context_1]',
-            'create-object Level1 [None]',
-            'set-values name=L1-O2 [context_3]',
-            'get-value name [context_3]',
-            'create-object Level1 [None]',
-            "set-values field1=['value_1', 'value_2'],name=L1-O3 [context_5]",
-            'stop-session']
+        expected_actions = """
+            start-session
+            create-object Level1 [None]
+            set-values name=L1-O1 [context_1]
+            get-value name [context_1]
+            create-object Level1 [None]
+            set-values name=L1-O2 [context_3]
+            get-value name [context_3]
+            create-object Level1 [None]
+            set-values field1=['value_1', 'value_2'],name=L1-O3 [context_5]
+            stop-session
+        """
 
         self.run_execute_test(RETRIEVE_AS_LIST,
                               expected_actions)
 
     def test_find_single_level__success(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'select-object Find name = L2-O2 [context_1]',
-            'create-object Level2 [context_1]',
-            'set-values name=L2-O1 [context_4]',
-            'select-object Find name = L2-O2 [context_1]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            select-object Find name = L2-O2 [context_1]
+            create-object Level2 [context_1]
+            set-values name=L2-O1 [context_4]
+            select-object Find name = L2-O2 [context_1]
+            stop-session
+        """
 
         self.run_execute_test(FIND_SINGLE_LEVEL, expected_actions)
 
     def test_find_single_level__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'select-object Find name = L2-O2 [context_1]',
-            'select-object Find name = L2-O2 [context_1]',
-            'get-object-list Level1 [None]',
-            'select-object Find name = L2-O2 [context_5]',
-            'select-object Find name = L2-O2 [context_5]',
-            'select-object Level2 name = L2-O1 [context_5]',
-            'delete-object [context_9]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            select-object Find name = L2-O2 [context_1]
+            select-object Find name = L2-O2 [context_1]
+            get-object-list Level1 [None]
+            select-object Find name = L2-O2 [context_5]
+            select-object Find name = L2-O2 [context_5]
+            select-object Level2 name = L2-O1 [context_5]
+            delete-object [context_9]
+            stop-session
+        """
 
         self.run_execute_test(FIND_SINGLE_LEVEL, expected_actions,
                               is_revert=True)
 
     def test_find_tree__success(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'get-object-list Level2 [context_1]',
-            'select-object Find name = L3-O2 [context_3]',
-            'get-object-list Level2 [context_1]',
-            'select-object Find name = L3-O2 [context_6]',
-            'create-object Level3 [context_6]',
-            'set-values name=L3-O1 [context_9]',
-            'select-object Find name = L3-O2 [context_6]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            get-object-list Level2 [context_1]
+            select-object Find name = L3-O2 [context_3]
+            get-object-list Level2 [context_1]
+            select-object Find name = L3-O2 [context_6]
+            create-object Level3 [context_6]
+            set-values name=L3-O1 [context_9]
+            select-object Find name = L3-O2 [context_6]
+            stop-session
+        """
 
         self.run_execute_test(FIND_TREE, expected_actions)
 
     def test_find_tree__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'get-object-list Level2 [context_1]',
-            'select-object Find name = L3-O2 [context_3]',
-            'get-object-list Level2 [context_1]',
-            'select-object Find name = L3-O2 [context_6]',
-            'select-object Find name = L3-O2 [context_6]',
-            'get-object-list Level1 [None]',
-            'get-object-list Level2 [context_10]',
-            'select-object Find name = L3-O2 [context_12]',
-            'get-object-list Level2 [context_10]',
-            'select-object Find name = L3-O2 [context_15]',
-            'select-object Find name = L3-O2 [context_15]',
-            'select-object Level3 name = L3-O1 [context_15]',
-            'delete-object [context_19]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            get-object-list Level2 [context_1]
+            select-object Find name = L3-O2 [context_3]
+            get-object-list Level2 [context_1]
+            select-object Find name = L3-O2 [context_6]
+            select-object Find name = L3-O2 [context_6]
+            get-object-list Level1 [None]
+            get-object-list Level2 [context_10]
+            select-object Find name = L3-O2 [context_12]
+            get-object-list Level2 [context_10]
+            select-object Find name = L3-O2 [context_15]
+            select-object Find name = L3-O2 [context_15]
+            select-object Level3 name = L3-O1 [context_15]
+            delete-object [context_19]
+            stop-session
+        """
 
         self.run_execute_test(FIND_TREE, expected_actions, is_revert=True)
 
     def test_find_single_level__second_object(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'select-object Find name = L2-O2 [context_1]',
-            'select-object Find name = L2-O2 [context_2]',
-            'create-object Level2 [context_2]',
-            'set-values name=L2-O1 [context_4]',
-            'select-object Find name = L2-O2 [context_2]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            select-object Find name = L2-O2 [context_1]
+            select-object Find name = L2-O2 [context_2]
+            create-object Level2 [context_2]
+            set-values name=L2-O1 [context_4]
+            select-object Find name = L2-O2 [context_2]
+            stop-session
+        """
 
         self.run_execute_with_exception(
             FIND_SINGLE_LEVEL,
@@ -1406,18 +1417,19 @@ class TestActionsExecute(object):
 
     def test_find_single_level__second_object_revert(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'select-object Find name = L2-O2 [context_1]',
-            'select-object Find name = L2-O2 [context_1]',
-            'get-object-list Level1 [None]',
-            'select-object Find name = L2-O2 [context_5]',
-            'select-object Find name = L2-O2 [context_6]',
-            'select-object Find name = L2-O2 [context_6]',
-            'select-object Level2 name = L2-O1 [context_6]',
-            'delete-object [context_9]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            select-object Find name = L2-O2 [context_1]
+            select-object Find name = L2-O2 [context_1]
+            get-object-list Level1 [None]
+            select-object Find name = L2-O2 [context_5]
+            select-object Find name = L2-O2 [context_6]
+            select-object Find name = L2-O2 [context_6]
+            select-object Level2 name = L2-O1 [context_6]
+            delete-object [context_9]
+            stop-session
+        """
 
         self.run_execute_with_exception(
             FIND_SINGLE_LEVEL,
@@ -1451,36 +1463,38 @@ class TestActionsExecute(object):
 
     def test_select_multiple__first_success(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_1]',
-            'get-value field2 [context_1]',
-            'get-value field1 [context_2]',
-            'get-value field2 [context_2]',
-            'create-object Level2 [context_1]',
-            'set-values name=L2-O1 [context_3]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            get-value field1 [context_1]
+            get-value field2 [context_1]
+            get-value field1 [context_2]
+            get-value field2 [context_2]
+            create-object Level2 [context_1]
+            set-values name=L2-O1 [context_3]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_MULTIPLE_SUCCESS_1, expected_actions)
 
     def test_select_multiple__first_revert_success(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_1]',
-            'get-value field2 [context_1]',
-            'get-value field1 [context_2]',
-            'get-value field2 [context_2]',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_3]',
-            'get-value field2 [context_3]',
-            'get-value field1 [context_4]',
-            'get-value field2 [context_4]',
-            'select-object Level2 name = L2-O1 [context_3]',
-            'delete-object [context_5]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            get-value field1 [context_1]
+            get-value field2 [context_1]
+            get-value field1 [context_2]
+            get-value field2 [context_2]
+            get-object-list Level1 [None]
+            get-value field1 [context_3]
+            get-value field2 [context_3]
+            get-value field1 [context_4]
+            get-value field2 [context_4]
+            select-object Level2 name = L2-O1 [context_3]
+            delete-object [context_5]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_MULTIPLE_REVERT_SUCCESS_1,
                               expected_actions,
@@ -1488,36 +1502,38 @@ class TestActionsExecute(object):
 
     def test_select_multiple__last_success(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_1]',
-            'get-value field2 [context_1]',
-            'get-value field1 [context_2]',
-            'get-value field2 [context_2]',
-            'create-object Level2 [context_2]',
-            'set-values name=L2-O1 [context_3]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            get-value field1 [context_1]
+            get-value field2 [context_1]
+            get-value field1 [context_2]
+            get-value field2 [context_2]
+            create-object Level2 [context_2]
+            set-values name=L2-O1 [context_3]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_MULTIPLE_SUCCESS_2, expected_actions)
 
     def test_select_multiple__last_revert_success(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_1]',
-            'get-value field2 [context_1]',
-            'get-value field1 [context_2]',
-            'get-value field2 [context_2]',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_3]',
-            'get-value field2 [context_3]',
-            'get-value field1 [context_4]',
-            'get-value field2 [context_4]',
-            'select-object Level2 name = L2-O1 [context_4]',
-            'delete-object [context_5]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            get-value field1 [context_1]
+            get-value field2 [context_1]
+            get-value field1 [context_2]
+            get-value field2 [context_2]
+            get-object-list Level1 [None]
+            get-value field1 [context_3]
+            get-value field2 [context_3]
+            get-value field1 [context_4]
+            get-value field2 [context_4]
+            select-object Level2 name = L2-O1 [context_4]
+            delete-object [context_5]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_MULTIPLE_REVERT_SUCCESS_2,
                               expected_actions,
@@ -1534,48 +1550,51 @@ class TestActionsExecute(object):
 
     def test_select_multiple__revert_not_found(self):
 
-        expected_actions = [
-            'start-session',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_1]',
-            'get-value field2 [context_1]',
-            'get-value field1 [context_2]',
-            'get-value field2 [context_2]',
-            'get-object-list Level1 [None]',
-            'get-value field1 [context_3]',
-            'get-value field2 [context_3]',
-            'get-value field1 [context_4]',
-            'get-value field2 [context_4]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            get-value field1 [context_1]
+            get-value field2 [context_1]
+            get-value field1 [context_2]
+            get-value field2 [context_2]
+            get-object-list Level1 [None]
+            get-value field1 [context_3]
+            get-value field2 [context_3]
+            get-value field1 [context_4]
+            get-value field2 [context_4]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_MULTIPLE_MISSING, expected_actions,
                               is_revert=True)
 
     def test_select_retrieve__success(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Object1 name = value_1 [None]',
-            'get-value objectId [context_1]',
-            'select-object Object2 id = value_1 [None]',
-            'create-object Level2 [context_2]',
-            'set-values name=L2-O1 [context_3]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Object1 name = value_1 [None]
+            get-value objectId [context_1]
+            select-object Object2 id = value_1 [None]
+            create-object Level2 [context_2]
+            set-values name=L2-O1 [context_3]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_RETRIEVE_VALUE, expected_actions)
 
     def test_select_retrieve__revert(self):
 
-        expected_actions = [
-            'start-session',
-            'select-object Object1 name = value_1 [None]',
-            'get-value objectId [context_1]',
-            'select-object Object2 id = value_1 [None]',
-            'select-object Object2 id = value_1 [None]',
-            'select-object Level2 name = L2-O1 [context_3]',
-            'delete-object [context_4]',
-            'select-object Object1 name = value_1 [None]',
-            'stop-session']
+        expected_actions = """
+            start-session
+            select-object Object1 name = value_1 [None]
+            get-value objectId [context_1]
+            select-object Object2 id = value_1 [None]
+            select-object Object2 id = value_1 [None]
+            select-object Level2 name = L2-O1 [context_3]
+            delete-object [context_4]
+            select-object Object1 name = value_1 [None]
+            stop-session
+        """
 
         self.run_execute_test(SELECT_RETRIEVE_VALUE, expected_actions,
                               is_revert=True)
