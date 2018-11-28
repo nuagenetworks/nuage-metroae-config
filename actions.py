@@ -11,6 +11,7 @@ DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
 POSITION_SELECTOR = "$position"
 CHILD_SELECTOR = "$child"
+RETRIEVE_VALUE_SELECTOR = "$retrieve-value"
 
 
 class Action(object):
@@ -116,20 +117,35 @@ class Action(object):
         return new_action
 
     def reset_state(self):
-        self.state = dict()
+        self.state.clear()
 
     def set_revert(self, is_revert=True):
         self.state['is_revert'] = is_revert
+
+    def set_store_only(self, store_only=True):
+        self.state['is_store_only'] = store_only
 
     def set_template_name(self, name):
         self.template_name = name
 
     def execute(self, writer, context=None):
+        if self.is_revert():
+            self.log.debug("Gather store values before revert")
+            self.set_store_only()
+            self.execute_children(writer, context=None)
+            self.log.debug("Perform revert")
+            self.set_store_only(False)
+
         self.execute_children(writer, context=None)
 
     def execute_children(self, writer, context=None):
         if self.is_revert() is True:
-            for child in reversed(self.children):
+            if self.is_store_only():
+                ordered_list = self.children
+            else:
+                ordered_list = reversed(self.children)
+
+            for child in ordered_list:
                 try:
                     child.execute(writer, context)
                 except LevistateError as e:
@@ -169,6 +185,10 @@ class Action(object):
 
     def is_revert(self):
         return 'is_revert' in self.state and self.state['is_revert'] is True
+
+    def is_store_only(self):
+        return ('is_store_only' in self.state and
+                self.state['is_store_only'] is True)
 
     def read_children_actions(self, current_dict):
         child_actions = Action.get_dict_field(current_dict, 'actions')
@@ -309,7 +329,8 @@ class CreateObjectAction(Action):
             new_context = writer.create_object(self.object_type, context)
             self.execute_children(writer, new_context)
         else:
-            self.delete_object(writer, context)
+            if not self.is_store_only():
+                self.delete_object(writer, context)
 
     def delete_object(self, writer, context=None):
         select_value = self.get_select_value()
@@ -443,64 +464,21 @@ class SelectObjectAction(Action):
     def execute(self, writer, context=None):
         try:
             if type(self.field) == list:
-                context_list = writer.get_object_list(self.object_type,
-                                                      context)
-                self.log.debug("Searching for multiple criteria %s = %s" %
-                               (str(self.field), str(self.value)))
 
-                match_count = 0
-                for item_context in context_list:
-                    match = True
-                    for field, value in zip(self.field, self.value):
-                        other_value = writer.get_value(field, item_context)
-                        if value != other_value:
-                            match = False
-
-                    if match or writer.is_validate_only():
-                        new_context = item_context
-                        match_count += 1
-                        self.log.debug("Found " + str(new_context))
-
-                if match_count == 0:
-                    raise MissingSelectionError(
-                        "No object matches selection criteria")
-
-                if match_count > 1:
-                    raise MultipleSelectionError(
-                        "Multiple objects match selection criteria")
+                new_context = self.select_multiple(writer, context)
 
             elif self.field.lower() == POSITION_SELECTOR:
-                context_list = writer.get_object_list(self.object_type,
-                                                      context)
 
-                if len(context_list) <= self.value or len(context_list) == 0:
-                    raise MissingSelectionError(
-                        "No object present at position %d" % self.value)
+                new_context = self.select_by_position(writer, context)
 
-                new_context = context_list[self.value]
             elif self.field.lower() == CHILD_SELECTOR:
-                child_select = self.get_child_selector(self.value.lower())
-                child_select.is_child_find = True
-                context_list = writer.get_object_list(self.object_type,
-                                                      context)
-                self.log.debug("Searching for child " +
-                               str(child_select).strip())
-                new_context = None
-                for item_context in context_list:
-                    if new_context is None:
-                        try:
-                            child_select.execute(writer, item_context)
-                            new_context = item_context
-                            self.log.debug("Found " + str(new_context))
-                        except MissingSelectionError:
-                            pass
 
-                child_select.is_child_find = False
+                new_context = self.select_child(writer, context)
 
-                if new_context is None:
-                    raise MissingSelectionError(
-                        "Could not find matching child selection " +
-                        str(child_select).strip())
+            elif self.field.lower() == RETRIEVE_VALUE_SELECTOR:
+
+                new_context = self.select_retrieve_value(writer, context)
+
             else:
                 new_context = writer.select_object(self.object_type,
                                                    self.field,
@@ -512,6 +490,97 @@ class SelectObjectAction(Action):
         except MissingSelectionError as e:
             if self.is_revert() is not True or self.is_child_find is True:
                 raise e
+
+    def select_multiple(self, writer, context):
+
+        context_list = writer.get_object_list(self.object_type,
+                                              context)
+        self.log.debug("Searching for multiple criteria %s = %s" %
+                       (str(self.field), str(self.value)))
+
+        match_count = 0
+        for item_context in context_list:
+            match = True
+            for field, value in zip(self.field, self.value):
+                other_value = writer.get_value(field, item_context)
+                if value != other_value:
+                    match = False
+
+            if match or writer.is_validate_only():
+                new_context = item_context
+                match_count += 1
+                self.log.debug("Found " + str(new_context))
+
+        if match_count == 0:
+            raise MissingSelectionError(
+                "No object matches selection criteria")
+
+        if match_count > 1:
+            raise MultipleSelectionError(
+                "Multiple objects match selection criteria")
+
+        return new_context
+
+    def select_by_position(self, writer, context):
+
+        context_list = writer.get_object_list(self.object_type,
+                                              context)
+
+        if len(context_list) <= self.value or len(context_list) == 0:
+            raise MissingSelectionError(
+                "No object present at position %d" % self.value)
+
+        return context_list[self.value]
+
+    def select_child(self, writer, context):
+
+        child_select = self.get_child_selector(self.value.lower())
+        child_select.is_child_find = True
+        context_list = writer.get_object_list(self.object_type,
+                                              context)
+
+        self.log.debug("Searching for child " +
+                       str(child_select).strip())
+
+        new_context = None
+        for item_context in context_list:
+            if new_context is None:
+                try:
+                    child_select.execute(writer, item_context)
+                    new_context = item_context
+                    self.log.debug("Found " + str(new_context))
+                except MissingSelectionError:
+                    pass
+
+        child_select.is_child_find = False
+
+        if new_context is None:
+            raise MissingSelectionError(
+                "Could not find matching child selection " +
+                str(child_select).strip())
+
+        return new_context
+
+    def select_retrieve_value(self, writer, context):
+
+        selector = self.get_child_value(self.value.lower())
+
+        if selector is None:
+            raise MissingSelectionError("No retrieve-value present"
+                                        " for attribute %s" %
+                                        self.value)
+
+        if not isinstance(selector, Action):
+            raise MissingSelectionError("Action not retrieve-value"
+                                        " for attribute %s" %
+                                        self.value)
+
+        select_value = selector.get_stored_value()
+
+        return writer.select_object(self.object_type,
+                                    self.value,
+                                    select_value,
+                                    context)
 
     def get_object_selector(self):
         if type(self.field) == list:
@@ -657,8 +726,17 @@ class SetValuesAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
-            resolved_attributes = self.resolve_attributes()
-            writer.set_values(context, **resolved_attributes)
+            if (self.parent.is_select() and
+                    self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
+                attributes_copy = dict(self.resolve_attributes())
+                field = self.parent.value.lower()
+                if field in attributes_copy:
+                    del attributes_copy[field]
+                resolved_attributes = attributes_copy
+            else:
+                resolved_attributes = self.resolve_attributes()
+            if resolved_attributes != dict():
+                writer.set_values(context, **resolved_attributes)
 
     def resolve_attributes(self):
         attributes_copy = dict()
@@ -759,7 +837,7 @@ class StoreValueAction(Action):
                                       self.as_name)
 
     def execute(self, writer, context=None):
-        if self.is_revert() is False:
+        if self.is_revert() is False or self.is_store_only():
             self.stored_value = writer.get_value(self.from_field, context)
 
     def _to_string(self, indent_level):
