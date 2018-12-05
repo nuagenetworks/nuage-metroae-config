@@ -11,10 +11,14 @@ variables:
   - name: select_name
     type: reference
     required-for-delete: true
+  - name: int_as_string
+    type: string
+    allow-integer: true
   - name: number
     type: integer
   - name: floating_point
     type: float
+    range: [0.0..1.0, 98.6]
   - name: true_or_false
     type: boolean
     optional: false
@@ -43,6 +47,7 @@ variables:
   - name: int_list
     type: list
     item-type: integer
+    range: 1..10
   - name: soda_list
     type: list
     item-type: choice

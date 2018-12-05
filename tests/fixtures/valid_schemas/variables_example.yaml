@@ -3,8 +3,9 @@
   values:
     - name: ""                                 # (string) Name field description
       select_name: ""                          # (reference)
+      int_as_string: ""                        # (string)
       number: 0                                # (integer)
-      floating_point: 0.0                      # (float)
+      floating_point: 0.0                      # (float 0.0..1.0, 98.6)
       true_or_false: False                     # (boolean)
       ipv4_address: 0.0.0.0                    # (opt ipv4)
       ipv6_address: 0::0                       # (opt ipv6)

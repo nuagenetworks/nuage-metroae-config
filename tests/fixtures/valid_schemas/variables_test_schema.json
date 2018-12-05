@@ -4,6 +4,7 @@
   "required": [
     "name",
     "select_name",
+    "int_as_string",
     "number",
     "floating_point",
     "true_or_false",
@@ -46,6 +47,10 @@
     "select_name": {
       "type": "string",
       "title": "Select name"
+    },
+    "int_as_string": {
+      "type": "string",
+      "title": "Int as string"
     },
     "int_list": {
       "items": {
