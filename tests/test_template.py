@@ -64,12 +64,17 @@ SUBSTITUTE_CASES = ['string', True, False, 0, 1.0, '0', 'true', 'false', 'yes',
 
 INVALID_VALUES_CASES = [
     ({"name": 1}, "not a string"),
+    ({"int_as_string": True}, "not a string"),
     ({"number": "1"}, "not an integer"),
+    ({"floating_point": "1.0"}, "not a float"),
+    ({"floating_point": 1.1}, "not in valid range"),
     ({"true_or_false": "True"}, "not a boolean"),
     ({"fruit": "candy"}, "not a valid choice"),
     ({"string_list": "not a list"}, "not a list"),
     ({"string_list": ["string", 1]}, "not a string"),
     ({"int_list": [1, "2"]}, "not an integer"),
+    ({"int_list": [1, 0]}, "not in valid range"),
+    ({"int_list": [11]}, "not in valid range"),
     ({"soda_list": ["coke", "coffee"]}, "not a valid choice")]
 
 
@@ -376,15 +381,16 @@ class TestTemplateVariableValidation(object):
 
         all_vars = {"name": "test_name",
                     "select_name": "test_select",
+                    "int_as_string": 10,
                     "number": 10,
-                    "floating_point": 1.2,
+                    "floating_point": 0.2,
                     "true_or_false": True,
                     "ipv4_address": "192.168.0.1",
                     "ipv6_address": "8000::0001",
                     "any_ip_address": "10.0.0.0",
                     "fruit": "Apple",
                     "string_list": ["a", "b", "c"],
-                    "int_list": [1, 2],
+                    "int_list": [1, 2, 10],
                     "soda_list": ["coke", "Pepsi", "SPRITE"]}
 
         assert template.validate_template_data(**all_vars) is True
@@ -405,6 +411,7 @@ class TestTemplateVariableValidation(object):
 
         min_vars = {"name": "another_name",
                     "select_name": "another_select",
+                    "int_as_string": "a_string",
                     "number": 100000,
                     "floating_point": 1,
                     "true_or_false": False,
@@ -420,7 +427,8 @@ class TestTemplateVariableValidation(object):
 
         missing_vars = {"select_name": "another_select",
                         "number": 100000,
-                        "floating_point": 1.2,
+                        "int_as_string": 10,
+                        "floating_point": 98.6,
                         "true_or_false": False,
                         "fruit": "orange",
                         "string_list": ["a", "b", "c"],
@@ -442,6 +450,7 @@ class TestTemplateVariableValidation(object):
 
         assert "name" in str(e)
         assert "select_name" in str(e)
+        assert "int_as_string" in str(e)
         assert "number" in str(e)
         assert "floating_point" in str(e)
         assert "true_or_false" in str(e)
@@ -462,6 +471,7 @@ class TestTemplateVariableValidation(object):
 
         assert "name" in str(e)
         assert "select_name" in str(e)
+        assert "int_as_string" in str(e)
         assert "fruit" in str(e)
         assert "int_list" in str(e)
         assert "soda_list" in str(e)
@@ -471,6 +481,7 @@ class TestTemplateVariableValidation(object):
 
         missing_vars = {"name": "another_name",
                         "select_name": "another_select",
+                        "int_as_string": 10,
                         "number": 100000,
                         "fruit": "orange",
                         "int_list": [],

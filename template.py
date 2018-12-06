@@ -263,8 +263,10 @@ class Template(object):
             value = '""'
         elif var_type == "integer":
             value = "0"
+            type_info += self._generate_range_example(variable)
         elif var_type == "float":
             value = "0.0"
+            type_info += self._generate_range_example(variable)
         elif var_type == "boolean":
             value = "False"
         elif var_type in ["ipv4", "ipv4_or_6"]:
@@ -293,6 +295,17 @@ class Template(object):
         comment = "(%s%s)%s" % (opt_str, type_info, descr_str)
 
         return "%s %s# %s" % (entry_str, " " * spacing, comment)
+
+    def _generate_range_example(self, variable):
+        ranges = get_dict_field_no_case(variable, "range")
+        if ranges is not None:
+            if type(ranges) != list:
+                ranges = [ranges]
+
+            range_strs = [str(x) for x in ranges]
+            return " " + ", ".join(range_strs)
+        else:
+            return ""
 
     def _replace_vars_with_kwargs(self, **kwargs):
         try:
@@ -369,14 +382,20 @@ class Template(object):
             if isinstance(value, basestring):
                 return True
             else:
-                self._raise_value_error(var_name, "is not a string")
+                allow_int = get_dict_field_no_case(var_schema, "allow-integer")
+                if allow_int is True and type(value) == int:
+                    return True
+                else:
+                    self._raise_value_error(var_name, "is not a string")
         elif var_type == "integer":
             if type(value) == int:
+                self._validate_range(var_schema, var_name, value)
                 return True
             else:
                 self._raise_value_error(var_name, "is not an integer")
         elif var_type == "float":
             if type(value) == int or type(value) == float:
+                self._validate_range(var_schema, var_name, value)
                 return True
             else:
                 self._raise_value_error(var_name, "is not a float")
@@ -386,12 +405,38 @@ class Template(object):
             else:
                 self._raise_value_error(var_name, "is not a boolean")
         elif var_type == "choice":
+            if not isinstance(value, basestring):
+                self._raise_value_error(var_name, "is not a string")
             choices = self._get_required_field(var_schema, "choices")
             upper_choices = [x.upper() for x in choices]
             if value.upper() in upper_choices:
                 return True
             else:
                 self._raise_value_error(var_name, "is not a valid choice")
+
+    def _validate_range(self, var_schema, var_name, value):
+        ranges = get_dict_field_no_case(var_schema, "range")
+        if ranges is not None:
+            if type(ranges) != list:
+                ranges = [ranges]
+
+            for r in ranges:
+                if isinstance(r, basestring):
+                    try:
+                        low, high = r.split("..")
+                        low = float(low)
+                        high = float(high)
+                        if high < low:
+                            raise ValueError("High of range greater than low")
+                        if value >= low and value <= high:
+                            return True
+                    except ValueError:
+                        self._raise_value_error(
+                            var_name, "invalid range, format is <low>..<high>")
+                elif r == value:
+                    return True
+
+            self._raise_value_error(var_name, "is not in valid range")
 
     def _validate_required_data(self, var_info, data):
         missing = []
