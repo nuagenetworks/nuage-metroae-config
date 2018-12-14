@@ -285,8 +285,8 @@ getUserPathInput() {
 	while [ $validPath -ne 0 ]
 	do
 		read -p "$1" path
-		echo "checking path for $1"
-		stat $path 2>> /dev/null
+		echo "checking path for $path"
+		stat $path >> /dev/null 2>> /dev/null
 
 		validPath=$?
 		if [ $validPath -ne 0 ]
