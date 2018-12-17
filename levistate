@@ -9,6 +9,10 @@ maxContainerVersion=''
 confirmationMessage=''
 registryHost='registry.mv.nuagenetworks.net'
 metroAEImage="$registryHost:5000/metroae"
+if [ ! -z $IMAGE_NAME ] 
+then
+    metroAEImage="$registryHost:5000/$IMAGE_NAME"
+fi
 osRelease=$LINUX
 
 S3KEY="AKIAJOPWRLAXPCUXZX3A"
@@ -32,71 +36,61 @@ getHostOperatingSystem() {
 
 	stat /etc/os-release > /dev/null 2> /dev/null
     
-    if [ $? -ne 0 ] 
-    then
+	if [ $? -ne 0 ] 
+	then
 		osRelease=$NON_LINUX
 	fi 
 		
 }
 
 getMaxContainerVersion() {
-	versions=`docker images | grep $metroAEImage | awk '{ print $2 }'`
-
-	maxContainerVersion=''
-	for version in $versions
-	do
-	        if [ -z $maxContainerVersion ]
-	        then
-	                maxContainerVersion=$version
-	        fi
-
-	        if [ $maxContainerVersion \< $version ]
-	        then
-	                maxContainerVersion=$version
-	        fi
-	done
-	
-	if [ -z $maxContainerVersion ]
+	if [ ! -z $IMAGE_TAG ]
 	then
-		maxContainerVersion='current'
-	fi
+		maxContainerVersion=$IMAGE_TAG
+	else
+        	versions=`docker images | grep $metroAEImage | awk '{ print $2}'`
+        	maxContainerVersion=''
+        	for version in $versions
+        	do
+            		if [ -z $maxContainerVersion ]
+            		then
+                    		maxContainerVersion=$version
+            		fi
+
+	                if [ $maxContainerVersion \< $version ]
+            		then
+                    		maxContainerVersion=$version
+            		fi
+        	done
+
+        	if [ -z $maxContainerVersion ]
+	        then
+           		 maxContainerVersion='current'
+        	fi
+    	fi
+
+	echo "Max Container version detected $maxContainerVersion" >> ./metroae.log
 }
 
 getContainerID() {
 	getMaxContainerVersion
-	containerID=`docker ps -a | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
+	containerID=`docker ps -a | grep $metroAEImage | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getRunningContainerID() {
 	getMaxContainerVersion
-	runningContainerID=`docker ps | grep metroae | grep $maxContainerVersion | awk '{ print $1}'`
+	runningContainerID=`docker ps | grep $metroAEImage | grep $maxContainerVersion | awk '{ print $1}'`
 }
 
 getImageID() {
 	getMaxContainerVersion
-	imageID=`docker images | grep metroae | grep $maxContainerVersion | awk '{ print $3}'`
+	imageID=`docker images | grep $metroAEImage | grep $maxContainerVersion | awk '{ print $3}'`
 }
 
-checkSelinuxEnforceStatus() { 
-	getHostOperatingSystem 
-	if [ $osRelease -eq $NON_LINUX ]
-	then
-		return 0
-	fi
-	
-	enforcement=`getenforce`
-	
-	if [[ $enforcement == "Enforcing" ]]
-	then
-		echo "Selinux enforcing has to be turned off for MetroAE container to work properly"
-		return 1
-	fi
-}
 
 stop() {
 	getRunningContainerID
 
-	echo $runningContainerID
 	if [ -z $runningContainerID  ]
 	then
 		echo "No Container to stop"
@@ -127,7 +121,7 @@ run() {
 		status=$?
 		if [ $status -ne 0 ]
 		then
-			echo "Unable to setup MetroAE container"
+			echo "Unable to setup MetroÆ container"
 			return $status
 		fi
 	else
@@ -144,11 +138,15 @@ run() {
 	    status=$?
 		if [ $status -ne 0 ]
 		then
-			echo "Unable to run the latest MetroAE docker image"
+			echo "Unable to run the latest MetroÆ container"
+		else
+			echo "Succesfully started the MetroÆ container"
 		fi
 
 		return $status
 	fi
+	
+	return 0
 }
 
 deleteContainerID() {
@@ -163,11 +161,11 @@ deleteContainerID() {
 
 	if [ $? -ne 0 ]
 	then
-		echo "Remove of MetroAE container failed"
+		echo "Removal of MetroÆ container failed"
 		return 1
 	fi
-	
-	echo "MetroAE container removed successfully"
+
+	echo "MetroÆ container removed successfully"
 }
 
 destroy() {
@@ -179,14 +177,15 @@ destroy() {
 		confirmation=$1
 	fi
 
-	while [ $confirmation != "yes" ] && [ $confirmation  != "no" ] && [ $confirmation  != "y" ] && [ $confirmation != "n" ]
+	while [[ $confirmation != "yes" ]] && [[ $confirmation  != "no" ]] && [[ $confirmation  != "y" ]] && [[ $confirmation != "n" ]]
 	do
 		read -p "Do you really want to destroy the MetroAE container (yes/no): " confirmation
 	done
 
-	if [ $confirmation != "yes" ] && [ $confirmation != "y" ]
+
+	if [[ $confirmation != "yes" ]] && [[ $confirmation != "y" ]]
 	then
-		echo "Destroy cancelled by user"
+		echo "Destroy canceled by user"
 		return 1
 	fi
 
@@ -215,7 +214,7 @@ destroy() {
 
 	if [ $? -ne 0 ]
 	then
-		echo "Remove of MetroAE image failed"
+		echo "Removal of MetroÆ image failed"
 		return 1
 	fi
 
@@ -224,19 +223,19 @@ destroy() {
 
 getFromS3()
 {
-  file=metroaecontainer.tar
-  aws_path=/images/
-  bucket='nuage-devops'
-  date=$(date +"%a, %d %b %Y %T %z")
-  content_type='application/x-compressed-tar'
-  string="GET\n\n$content_type\n$date\n/$bucket$aws_path$file"
-  signature=$(echo -en "${string}" | openssl sha1 -hmac "${S3SECRET}" -binary | base64)
-  curl -X GET\
-    -H "Host: $bucket.s3.amazonaws.com" \
-    -H "Date: $date" \
-    -H "Content-Type: $content_type" \
-    -H "Authorization: AWS ${S3KEY}:$signature" \
-    "https://$bucket.s3.amazonaws.com$aws_path$file" > $temp$file | tee -a ./metroae.log 2>> ./metroae.log
+	file=metroaecontainer.tar
+	aws_path=/images/
+	bucket='nuage-devops'
+	date=$(date +"%a, %d %b %Y %T %z")
+	content_type='application/x-compressed-tar'
+	string="GET\n\n$content_type\n$date\n/$bucket$aws_path$file"
+	signature=$(echo -en "${string}" | openssl sha1 -hmac "${S3SECRET}" -binary | base64)
+	curl -X GET\
+  	-H "Host: $bucket.s3.amazonaws.com" \
+  	-H "Date: $date" \
+  	-H "Content-Type: $content_type" \
+  	-H "Authorization: AWS ${S3KEY}:$signature" \
+  	"https://$bucket.s3.amazonaws.com$aws_path$file" > $temp$file | tee -a ./metroae.log 2>> ./metroae.log
 }
 
 pull() {
@@ -245,49 +244,79 @@ pull() {
 		maxContainerVersion=$1
 	fi
 	
+	repo="Docker registry"
+
 	ping -c 5 $registryHost >> ./metroae.log 2>> ./metroae.log
-	
-	if [ $? -ne 0 ]
+
+	if [[ $? -ne 0 || ( ! -z $1 && "$1" = "S3" ) ]] 
 	then
 		echo "Could not ping the local registry to download container" | tee -a ./metroae.log
-		echo "Retrieving the container from amazon s3" | tee -a ./metroae.log
+		echo "Retrieving the container from Amazon S3" | tee -a ./metroae.log
 		getFromS3
-		
+
 		if [ $? -ne 0 ]
 		then
-			echo "unable to pull metroae container exiting" | tee -a ./metroae.log
+			echo "Unable to pull MetroÆ container. Exiting" | tee -a ./metroae.log
 			exit 1
 		fi
 		
 		docker load -i $temp$file
-	else 
-		echo "Retrieving MetroAE container..." | tee -a ./metroae.log
-		docker pull $metroAEImage:$maxContainerVersion 2>> ./metroae.log
+		repo="Amazon S3"
+	else
+		echo "Retrieving MetroÆ container..." | tee -a ./metroae.log
+		docker pull $metroAEImage:$maxContainerVersion | tee -a ./metroae.log
 	fi
 
 	status=$?
 	if [ $status -ne 0 ]
 	then
-		echo "Unable to pull the $maxContainerVersion MetroAE docker image"
-		exit 1
+		echo "Unable to pull the $maxContainerVersion MetroÆ image"
+	else
+		echo "Successfully Pulled the container from $repo"
 	fi
 
 	return $status
 }
 
+getUserPathInput() {
+	validPath=1
+	path=""
+	while [ $validPath -ne 0 ]
+	do
+		read -p "$1" path
+		echo "checking path for $path"
+		stat $path >> /dev/null 2>> /dev/null
+
+		validPath=$?
+		if [ $validPath -ne 0 ]
+		then
+			echo "Path not found"
+		fi
+
+		# check to see if the path ends with passed in directory
+		if [[ "$path" != *"$2" ]]
+		then
+			path=$path/$2
+			mkdir -p $path
+		fi
+
+	done
+}
+
 setup() {
-	echo "Setup MetroAE container..."
-	
- 	getContainerID
+	echo "Setup MetroÆ container..."
+
+	getContainerID
 	getRunningContainerID
 	
 	if [ ! -z $containerID ] || [ ! -z $runningContainerID ]
 	then
-		echo "You already have the MetroAE container setup. Running setup will destroy the"
+		echo "You already have the MetroÆ container set up. Running setup will destroy the"
 		echo "existing container and create a new one. Your data on disk will be preserved."
-		echo "If you continue, create the new container, and use the same"
-		echo "mount points, no changes are required. If you change the mount points,"
+		echo "If you continue, create the new container, and use the same data"
+		echo "mount point, no changes are required. If you change the mount points, however"
 		echo "you will need to copy your existing data to the new mount points."
+
 		confirmation="init"
 		while [[ $confirmation != "yes" ]] && [[ $confirmation  != "no" ]] && [[ $confirmation  != "y" ]] && [[ $confirmation != "n" ]]
 		do
@@ -297,7 +326,7 @@ setup() {
 		
 		if [[ $confirmation != "yes" ]] && [[ $confirmation != "y" ]]
 		then
-			echo "Setup Cancelled by user"
+			echo "Setup canceled by user"
 			return 1
 		fi
 	fi
@@ -316,12 +345,15 @@ setup() {
 
 	if [ -z $1 ]
 	then
-		read -p "Specify the full path to store user data on the host system: " path
+		getUserPathInput "Specify the full path to the directory where your user data will be stored on the host system. Setup will create a subdirectory, called levistate_data, in the directory you specify. If the path you specify ends with levistate_data, we will use that sub-directory and not create one. Data directory path: " levistate_data
+		data_path=$path
 	else
-		path=$1
+		echo "setting data path to passed in parameter $1"
+		data_path=$1
 	fi
 
-	echo LEVISTATE_MOUNT_POINT=$path >> ~/.metroae
+
+	echo LEVISTATE_MOUNT_POINT=$data_path >> ~/.metroae
 
 	#stop and remove existing container if any
 	getRunningContainerID
@@ -373,7 +405,6 @@ runContainerIfNotRunning() {
 	fi
 }
 
-
 dockerExec() {
 	runContainerIfNotRunning
 
@@ -394,7 +425,11 @@ interactive() {
 
 status() {
 	docker ps -a
-	echo "Currently used docker settings..." 
+	echo "Script version: $version"
+	getRunningContainerID
+	docker exec $runningContainerID cat /source/version
+	echo ""
+	echo "Current settings..."
 	while read -r line; do declare $line; done < ~/.metroae
 	echo levistate_mount_point=$LEVISTATE_MOUNT_POINT
 }
@@ -426,7 +461,6 @@ then
 	help 0
 fi
 
-checkSelinuxEnforceStatus 
 shopt -s extglob
 POSITIONAL=()
 exec=false
