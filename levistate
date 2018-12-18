@@ -69,7 +69,7 @@ getMaxContainerVersion() {
         	fi
     	fi
 
-	echo "Max Container version detected $maxContainerVersion" >> ./metroae.log
+	echo "Max Container version detected $maxContainerVersion"
 }
 
 getContainerID() {
@@ -235,7 +235,7 @@ getFromS3()
   	-H "Date: $date" \
   	-H "Content-Type: $content_type" \
   	-H "Authorization: AWS ${S3KEY}:$signature" \
-  	"https://$bucket.s3.amazonaws.com$aws_path$file" > $temp$file | tee -a ./metroae.log 2>> ./metroae.log
+  	"https://$bucket.s3.amazonaws.com$aws_path$file" > $temp$file 
 }
 
 pull() {
@@ -246,25 +246,25 @@ pull() {
 	
 	repo="Docker registry"
 
-	ping -c 5 $registryHost >> ./metroae.log 2>> ./metroae.log
+	ping -c 5 $registryHost
 
 	if [[ $? -ne 0 || ( ! -z $1 && "$1" = "S3" ) ]] 
 	then
-		echo "Could not ping the local registry to download container" | tee -a ./metroae.log
-		echo "Retrieving the container from Amazon S3" | tee -a ./metroae.log
+		echo "Could not ping the local registry to download container"
+		echo "Retrieving the container from Amazon S3"
 		getFromS3
 
 		if [ $? -ne 0 ]
 		then
-			echo "Unable to pull MetroÆ container. Exiting" | tee -a ./metroae.log
+			echo "Unable to pull MetroÆ container. Exiting"
 			exit 1
 		fi
 		
 		docker load -i $temp$file
 		repo="Amazon S3"
 	else
-		echo "Retrieving MetroÆ container..." | tee -a ./metroae.log
-		docker pull $metroAEImage:$maxContainerVersion | tee -a ./metroae.log
+		echo "Retrieving MetroÆ container..."
+		docker pull $metroAEImage:$maxContainerVersion 
 	fi
 
 	status=$?
