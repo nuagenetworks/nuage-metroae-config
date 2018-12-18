@@ -153,42 +153,86 @@ def read_configuration(filename):
 
 def compare_tree(superset, subset):
 
+    best_score = -999999999
+    best_superset = dict()
+
     for child_subset in subset:
         found = False
+        expected_subset = dict(child_subset)
         for subset_obj_type, subset_obj in child_subset.items():
+            expected_subset[subset_obj_type] = dict(subset_obj)
+            expected_subset[subset_obj_type]['children'] = dict()
             for child_superset in superset:
                 for superset_obj_type, superset_obj in child_superset.items():
-                    if (superset_obj_type == subset_obj_type and
-                            compare_objects(superset_obj, subset_obj)):
-                        try:
-                            compare_tree(superset_obj['children'],
-                                         subset_obj['children'])
-                            found = True
-                        except MissingSubset:
-                            pass
-                        except NotRemoved:
-                            pass
+                    if superset_obj_type == subset_obj_type:
+                        object_score = compare_objects(superset_obj,
+                                                       subset_obj)
+                        if object_score == 0:
+                            if args.expect_removed:
+                                extra_yaml = yaml.safe_dump(
+                                    child_subset,
+                                    default_flow_style=False,
+                                    default_style='')
+
+                                raise NotRemoved("\n\nEXTRA:\n" + extra_yaml)
+                            try:
+                                compare_tree(superset_obj['children'],
+                                             subset_obj['children'])
+                                found = True
+                            except MissingSubset as e:
+                                if e.score > best_score:
+                                    best_score = e.score
+                                    best_superset = dict(child_superset)
+                                    best_superset[
+                                        superset_obj_type] = dict(superset_obj)
+                                    best_superset[
+                                        superset_obj_type][
+                                            'children'] = e.superset
+                                    expected_subset[
+                                        subset_obj_type]['children'] = e.subset
+                        else:
+                            if (object_score * 1000) > best_score:
+                                best_score = object_score * 1000
+                                best_superset = dict(child_superset)
+                                best_superset[
+                                    superset_obj_type] = dict(superset_obj)
+                                best_superset[
+                                    superset_obj_type]['children'] = dict()
+                    else:
+                        if best_score < -1000000:
+                            best_score = -1000000
+                            best_superset = dict(child_superset)
+                            best_superset[
+                                superset_obj_type] = dict(superset_obj)
+                            best_superset[
+                                superset_obj_type]['children'] = dict()
 
         if not args.expect_removed and not found:
-            missing_yaml = yaml.safe_dump(child_subset,
+            missing_yaml = yaml.safe_dump(expected_subset,
                                           default_flow_style=False,
                                           default_style='')
-            raise MissingSubset("\n\n" + missing_yaml)
+            superset_yaml = yaml.safe_dump(best_superset,
+                                           default_flow_style=False,
+                                           default_style='')
 
-        if args.expect_removed and found:
-            extra_yaml = yaml.safe_dump(child_subset,
-                                        default_flow_style=False,
-                                        default_style='')
-            raise NotRemoved("\n\n" + extra_yaml)
+            e = MissingSubset("\n\nMISSING:\n" + missing_yaml +
+                              "\n------\nACTUAL:\n" + superset_yaml)
+            e.superset = best_superset
+            e.subset = expected_subset
+            if best_score < -100:
+                best_score = -100
+            e.score = best_score
+            raise e
 
 
 def compare_objects(superset_obj, subset_obj):
+    score = 0
     for subset_name, subset_value in subset_obj['attributes'].items():
         if (subset_name not in superset_obj['attributes'] or
                 superset_obj['attributes'][subset_name] != subset_value):
-            return False
+            score -= 1
 
-    return True
+    return score
 
 
 def parse_args():
@@ -254,6 +298,7 @@ def parse_args():
 
 
 def main():
+
     global args
     args = parse_args()
 
