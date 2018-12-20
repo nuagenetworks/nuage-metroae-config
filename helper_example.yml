@@ -1,0 +1,14 @@
+# This is an example input file for template_helper.py.  The tool creates
+# a starter template from a list of basic commands.
+#
+# Commands:
+#     - name: <name>            Sets template name
+#     - description: <descr>    Sets template description
+#     - version: <version>      Sets software version
+#     - create: <object_name>   Create object in template
+#     - store: <object_name>    Adds store id in template
+
+- name: Enterprise
+- description: First template set - Create an Enterprise
+- version: 5.0.2
+- create: Enterprise
