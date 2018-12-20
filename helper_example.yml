@@ -1,0 +1,23 @@
+# This is an example input file for template_helper.py.  The tool creates
+# a starter template from a list of basic commands.
+#
+# Commands:
+#     - name: <name>                      Sets template name
+#     - description: <descr>              Sets template description
+#     - version: <version>                Sets software version
+#     - create: <object_name>             Create object in template at current level
+#     - create-root: <object_name>        Create object in template at root
+#     - select: <object_name>             Select object in template at current level
+#     - select-root: <object_name>        Select object in template at root
+#     - store: <object_name>              Adds store id in template
+#     - retrieve: <object_name> <attr>    Adds retrieve into specified attribute
+
+- name: Domain
+- description: First template set - Create an Domain
+- version: 5.0.2
+- select-root: Enterprise
+- select: DomainTemplate
+- store: DomainTemplate
+- select-root: Enterprise
+- create: Domain
+- retrieve: DomainTemplate templateID
