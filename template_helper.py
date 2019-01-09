@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 import os
 import re
 import yaml
@@ -33,7 +34,7 @@ def read_specs(path):
     for filename in os.listdir(path):
         if filename.endswith(".spec"):
             spec_file = open("/".join((path, filename)), 'r')
-            spec = yaml.safe_load(spec_file.read())
+            spec = json.loads(spec_file.read())
             rest_name = spec['model']['rest_name']
             if rest_name is not None:
                 store_parents(spec)
@@ -143,7 +144,14 @@ def set_values(lines, spec):
     for attribute in spec["attributes"]:
         name = attribute["name"]
         snake = camel_to_snake_case(name)
+        if attribute["required"] is False:
+            lines.append("%s{%% if %s is defined %%}" % (indent, snake))
+
         lines.append("%s%s: {{ %s }}" % (indent, name, snake))
+
+        if attribute["required"] is False:
+            lines.append("%s{%% endif %%}" % indent)
+
         add_variable(attribute)
 
 
