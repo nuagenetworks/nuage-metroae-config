@@ -81,8 +81,8 @@ INVALID_VALUES_CASES = [
 class TestTemplateParsing(object):
 
     def verify_valid_templates(self, store):
-        assert set(store.get_template_names()) == set(["Enterprise", "Domain",
-                                                       "Bidirectional ACL"])
+        assert store.get_template_names() == ["Bidirectional ACL", "Domain",
+                                              "Enterprise"]
 
         template = store.get_template("enterprise")
         assert template.get_name() == "Enterprise"
@@ -144,8 +144,8 @@ class TestTemplateParsing(object):
         store.read_templates(os.path.join(VALID_TEMPLATE_DIRECTORY,
                                           "bidirectional_acl_template.yaml"))
 
-        assert set(store.get_template_names()) == set(["Enterprise", "Domain",
-                                                       "Bidirectional ACL"])
+        assert store.get_template_names() == ["Bidirectional ACL", "Domain",
+                                              "Enterprise"]
 
         self.verify_valid_templates(store)
 
@@ -168,8 +168,8 @@ class TestTemplateParsing(object):
             template_string = file.read()
             store.add_template(template_string)
 
-        assert set(store.get_template_names()) == set(["Enterprise", "Domain",
-                                                       "Bidirectional ACL"])
+        assert store.get_template_names() == ["Bidirectional ACL", "Domain",
+                                              "Enterprise"]
 
         self.verify_valid_templates(store)
 

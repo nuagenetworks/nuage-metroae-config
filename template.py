@@ -508,10 +508,11 @@ class TemplateStore(object):
             raise NotImplementedError(
                 "Template software versioning not yet implemented")
 
-        names = []
+        names = list()
         for key, value in self.templates.iteritems():
             names.append(self.templates[key].get_name())
 
+        names.sort()
         return names
 
     def get_template(self, name, software_version=None, software_type=None):
