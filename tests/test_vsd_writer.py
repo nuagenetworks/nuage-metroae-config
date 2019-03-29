@@ -26,6 +26,13 @@ SESSION_PARAMS = {
     "url": "https://localhost:8443",
     "username": "testuser",
     "password": "testpass",
+    "enterprise": "testent",
+    "certificate": "testcertificate"
+}
+
+SESSION_PARAMS_NO_CREDENTIALS = {
+    "url": "https://localhost:8443",
+    "username": "testuser",
     "enterprise": "testent"
 }
 
@@ -34,6 +41,7 @@ EXPECTED_SESSION_PARAMS = {
     "username": SESSION_PARAMS['username'],
     "password": SESSION_PARAMS['password'],
     "enterprise": SESSION_PARAMS['enterprise'],
+    "certificate": SESSION_PARAMS['certificate'],
     "version": "5.0",
     "api_prefix": "nuage/api"
 }
@@ -72,6 +80,18 @@ def setup_standard_session(vsd_writer, mock_patch):
     mock_session.set_enterprise_spec.assert_called_once_with(
         vsd_writer.specs['enterprise'])
     assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+    return mock_session
+@patch("levistate.vsd_writer.Session")
+
+def setup_no_credentials_session(vsd_writer, mock_patch):
+    vsd_writer.set_session_params(**SESSION_PARAMS_NO_CREDENTIALS)
+    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+    mock_session = MagicMock()
+    mock_session.root_object = MagicMock()
+    mock_patch.return_value = mock_session
+    vsd_writer.start_session()
 
     return mock_session
 
@@ -156,6 +176,18 @@ class TestVsdWriterSession(object):
             vsd_writer.start_session()
 
         assert "session without parameters" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_certificate__no_password(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+
+        with pytest.raises(MissingSessionParamsError) as e:
+            mock_session = setup_no_credentials_session(vsd_writer)
+        print(e)
+        assert "without password or certificate" in str(e)
+
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test_start__no_root_spec(self, validate_only):

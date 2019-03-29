@@ -34,6 +34,7 @@ class VsdError(SessionError):
     """
     Exception class when there is an error from VSD
     """
+
     def __init__(self, bambou_error, location=None):
         response = bambou_error.connection.response
         message = "VSD returned error response: %s %s" % (response.status_code,
@@ -50,6 +51,7 @@ class VsdWriter(DeviceWriterBase):
     Writes configuration to a VSD.  This class is a derived class from
     the DeviceWriterBase Abstract Base Class.
     """
+
     def __init__(self):
         """
         Derived class from DeviceWriterBase.
@@ -63,7 +65,8 @@ class VsdWriter(DeviceWriterBase):
         self.root_spec_name = None
 
     def set_session_params(self, url, username="csproot",
-                           password="csproot", enterprise="csp"):
+                           password=None, enterprise="csp",
+                           certificate=None):
         """
         Sets the parameters necessary to connect to the VSD.  This must
         be called before writing or an exception will be raised.
@@ -72,7 +75,8 @@ class VsdWriter(DeviceWriterBase):
             'username': username,
             'password': password,
             'enterprise': enterprise,
-            'api_url': url}
+            'api_url': url,
+            'certificate': certificate}
 
     def read_api_specifications(self, path_or_file_name):
         """
@@ -107,6 +111,12 @@ class VsdWriter(DeviceWriterBase):
             if self.session_params is None:
                 raise MissingSessionParamsError(
                     "Cannot start session without parameters")
+            else:
+              if (self.session_params['password'] is None and
+                      self.session_params['certificate'] is None):
+                  raise MissingSessionParamsError(
+                      """Cannot start session without password or certificate
+                       parameter""")
 
             self.log.debug(location)
 
@@ -520,10 +530,10 @@ class VsdWriter(DeviceWriterBase):
                 messages.append("%s: %s" % (attr_name, message))
             raise InvalidValueError("Invalid values: " + ', '.join(messages))
 
-
 #
 # Private classes to do the work
 #
+
 
 class Context(object):
     """
@@ -531,6 +541,7 @@ class Context(object):
     objects.  This class is intended to be private and should not be directly
     modified by external callers of the VSD Writer.
     """
+
     def __init__(self):
         self.parent_object = None
         self.current_object = None
