@@ -77,7 +77,7 @@ class VsdWriter(DeviceWriterBase):
             'enterprise': enterprise,
             'api_url': url}
 
-        if certificate is not None:
+        if certificate[0] is not None:
           self.session_params['certificate'] = certificate
 
     def read_api_specifications(self, path_or_file_name):
