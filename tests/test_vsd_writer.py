@@ -27,13 +27,7 @@ SESSION_PARAMS = {
     "username": "testuser",
     "password": "testpass",
     "enterprise": "testent",
-    "certificate": "testcertificate"
-}
-
-SESSION_PARAMS_NO_CREDENTIALS = {
-    "url": "https://localhost:8443",
-    "username": "testuser",
-    "enterprise": "testent"
+    "certificate": ("testcertificate", "testKey")
 }
 
 EXPECTED_SESSION_PARAMS = {
@@ -83,18 +77,6 @@ def setup_standard_session(vsd_writer, mock_patch):
 
     return mock_session
 @patch("levistate.vsd_writer.Session")
-
-def setup_no_credentials_session(vsd_writer, mock_patch):
-    vsd_writer.set_session_params(**SESSION_PARAMS_NO_CREDENTIALS)
-    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
-
-    mock_session = MagicMock()
-    mock_session.root_object = MagicMock()
-    mock_patch.return_value = mock_session
-    vsd_writer.start_session()
-
-    return mock_session
-
 
 def get_mock_bambou_error(status_code, reason):
     return BambouHTTPError(
