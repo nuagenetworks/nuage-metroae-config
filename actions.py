@@ -103,6 +103,8 @@ class Action(object):
             new_action = StoreValueAction(parent, state)
         elif action_type == "retrieve-value":
             new_action = RetrieveValueAction(parent, state)
+        elif action_type == "save-to-file":
+            new_action = SaveToFileAction(parent, state)
         else:
             raise TemplateParseError("Invalid action: " + str(action_key))
 
@@ -897,3 +899,62 @@ class RetrieveValueAction(SetValuesAction):
         else:
             self.add_attribute(self.to_field, stored_action)
         self.mark_ancestors_for_reorder(self.from_name, is_store=False)
+
+
+class SaveToFileAction(Action):
+
+    def __init__(self, parent, state):
+        super(SaveToFileAction, self).__init__(parent, state)
+        self.file_path = None
+        self.from_field = None
+        self.append_to_file = True
+        self.prefix_string = None
+        self.suffix_string = None
+
+    def read(self, save_to_file_dict):
+        self.file_path = Action.get_dict_field(save_to_file_dict,
+                                               'file-path')
+        if self.file_path is None:
+            raise TemplateParseError(
+                "Save to file action missing required 'file-path' field")
+
+        self.from_field = Action.get_dict_field(save_to_file_dict,
+                                                'from-field')
+
+        append_to_file = Action.get_dict_field(save_to_file_dict,
+                                               'append_to_file')
+        if append_to_file is not None:
+            self.append_to_file = append_to_file
+
+        self.prefix_string = Action.get_dict_field(save_to_file_dict,
+                                                   'prefix_string')
+
+        self.suffix_string = Action.get_dict_field(save_to_file_dict,
+                                                   'suffix_string')
+
+        self.log.debug(self._get_location("Reading "))
+
+        if self.parent is None or self.parent.parent is None:
+            raise TemplateActionError("No object exists for saving values")
+
+    def execute(self, writer, context=None):
+        if self.is_revert() is False and not writer.is_validate_only():
+            if self.from_field is not None:
+                field_value = writer.get_value(self.from_field, context)
+
+            file_mode = "w" if self.append_to_file is False else "a"
+            with open(self.file_path, file_mode) as f:
+                if self.prefix_string is not None:
+                    f.write(self.prefix_string)
+                if self.from_field is not None:
+                    f.write(field_value)
+                if self.suffix_string is not None:
+                    f.write(self.suffix_string)
+
+    def _to_string(self, indent_level):
+        indent = Action._indent(indent_level)
+
+        cur_output = "%s[save %s to file %s]" % (indent,
+                                                 str(self.from_field),
+                                                 str(self.file_path))
+        return cur_output
