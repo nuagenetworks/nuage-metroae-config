@@ -745,7 +745,6 @@ class SetValuesAction(Action):
         for key, value in self.attributes.iteritems():
             if isinstance(value, Action):
                 resolved_value = value.get_stored_value()
-                attributes_copy[key] = resolved_value
             elif (type(value) == list and
                     len(value) > 0 and
                     isinstance(value[0], Action)):
@@ -753,9 +752,37 @@ class SetValuesAction(Action):
                 for item in value:
                     resolved_item = item.get_stored_value()
                     resolved_list.append(resolved_item)
-                attributes_copy[key] = resolved_list
+                resolved_value = resolved_list
             else:
-                attributes_copy[key] = value
+                resolved_value = value
+
+            if "." in key:
+                obj_name, param = key.split(".")
+                if obj_name not in attributes_copy:
+                    if obj_name not in self.attributes:
+                        raise ConflictError("Field '%s' of object %s"
+                                            " is not set" %
+                                            (str(obj_name),
+                                             str(self.parent.object_type)))
+                    if type(self.attributes[obj_name]) is not dict:
+                        raise ConflictError("Field '%s' of object %s"
+                                            " is not a dictionary" %
+                                            (str(obj_name),
+                                             str(self.parent.object_type)))
+
+                    attributes_copy[obj_name] = dict(self.attributes[obj_name])
+
+                if param in attributes_copy[obj_name]:
+                    raise ConflictError("Param '%s' in field '%s' of object %s"
+                                        " is already set" %
+                                        (str(param),
+                                         str(obj_name),
+                                         str(self.parent.object_type)))
+                attributes_copy[obj_name][param] = resolved_value
+            else:
+                if (type(resolved_value) is not dict or
+                        key not in attributes_copy):
+                    attributes_copy[key] = resolved_value
 
         return attributes_copy
 
@@ -922,15 +949,15 @@ class SaveToFileAction(Action):
                                                 'from-field')
 
         append_to_file = Action.get_dict_field(save_to_file_dict,
-                                               'append_to_file')
+                                               'append-to-file')
         if append_to_file is not None:
             self.append_to_file = append_to_file
 
         self.prefix_string = Action.get_dict_field(save_to_file_dict,
-                                                   'prefix_string')
+                                                   'prefix-string')
 
         self.suffix_string = Action.get_dict_field(save_to_file_dict,
-                                                   'suffix_string')
+                                                   'suffix-string')
 
         self.log.debug(self._get_location("Reading "))
 
