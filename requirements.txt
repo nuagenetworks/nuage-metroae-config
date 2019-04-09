@@ -1,5 +1,5 @@
 bambou
-Jinja2
+Jinja2==2.10
 PyYAML
 wget
 
