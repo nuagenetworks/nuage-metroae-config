@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from action_test_params import (CREATE_OBJECTS_DICT,
@@ -29,6 +30,9 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 RETRIEVE_NO_FIELD,
                                 RETRIEVE_NO_OBJECT,
                                 RETRIEVE_NO_NAME,
+                                SAVE_TO_FILE,
+                                SAVE_TO_FILE_APPEND,
+                                SAVE_TO_FILE_NO_FILE,
                                 SELECT_MULTIPLE_MISSING,
                                 SELECT_MULTIPLE_SUCCESS_1,
                                 SELECT_MULTIPLE_SUCCESS_2,
@@ -55,6 +59,10 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 STORE_NO_OBJECT,
                                 STORE_NO_NAME,
                                 STORE_RETRIEVE_DICT,
+                                STORE_RETRIEVE_TO_OBJECT,
+                                STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
+                                STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
+                                STORE_RETRIEVE_TO_OBJECT_NOT_SET,
                                 STORE_SAME_TWICE)
 from levistate.actions import Action
 from levistate.errors import (ConflictError,
@@ -611,6 +619,28 @@ class TestActionsRead(object):
         assert "In Enterprise" in e.value.get_display_string()
         assert "In Domain" in e.value.get_display_string()
         assert "In [set values]" in e.value.get_display_string()
+
+    def test_save_to_file__success(self):
+        root_action = Action(None)
+
+        root_action.read_children_actions(SAVE_TO_FILE)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Job"
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.file_path == "/tmp/pytest_save_to_file.txt"
+        assert current_action.append_to_file is False
+        assert current_action.from_field == "result"
+
+    def test_save_to_file__invalid(self):
+        root_action = Action(None)
+
+        with pytest.raises(TemplateParseError) as e:
+            root_action.read_children_actions(SAVE_TO_FILE_NO_FILE)
+
+        assert "missing required 'file-path' field" in str(e)
+        assert "In Job" in e.value.get_display_string()
 
 
 class TestActionsOrdering(object):
@@ -1258,6 +1288,50 @@ class TestActionsExecute(object):
         assert ("In [store id to name template_id]" in
                 e.value.get_display_string())
 
+    def test_store_retrieve_to_object__success(self):
+
+        expected_actions = """
+            start-session
+            create-object Enterprise [None]
+            set-values name=enterprise1 [context_1]
+            create-object NSGatewayTemplate [context_1]
+            set-values name=nsg_template [context_3]
+            get-value id [context_3]
+            create-object Job [context_1]
+            set-values parameters={'entityID': 'value_1', 'type': 'ISO'} [context_5]
+            stop-session
+        """
+
+        self.run_execute_test(STORE_RETRIEVE_TO_OBJECT,
+                              expected_actions)
+
+    def test_store_retrieve_to_object__not_set(self):
+
+        with pytest.raises(ConflictError) as e:
+            self.run_execute_test(STORE_RETRIEVE_TO_OBJECT_NOT_SET, list())
+
+        assert "is not set" in str(e)
+        assert "parameters" in str(e)
+        assert "Job" in str(e)
+
+    def test_store_retrieve_to_object__not_dict(self):
+
+        with pytest.raises(ConflictError) as e:
+            self.run_execute_test(STORE_RETRIEVE_TO_OBJECT_NOT_DICT, list())
+
+        assert "is not a dictionary" in str(e)
+        assert "parameters" in str(e)
+        assert "Job" in str(e)
+
+    def test_store_retrieve_to_object__already_set(self):
+
+        with pytest.raises(ConflictError) as e:
+            self.run_execute_test(STORE_RETRIEVE_TO_OBJECT_ALREADY_SET, list())
+
+        assert "is already set" in str(e)
+        assert "parameters" in str(e)
+        assert "Job" in str(e)
+
     def test_create_objects_select_first__revert(self):
 
         expected_actions = """
@@ -1620,3 +1694,48 @@ class TestActionsExecute(object):
 
         assert "Action not retrieve-value" in str(e)
         assert "id" in str(e)
+
+    def test_save_to_file__success(self):
+
+        TEST_FILE = "/tmp/pytest_save_to_file.txt"
+
+        expected_actions = """
+            start-session
+            create-object Job [None]
+            set-values command=GET_ZFB_INFO,parameters={'mediaType': 'ISO'} [context_1]
+            get-value result [context_1]
+            stop-session
+        """
+
+        with open(TEST_FILE, "w") as f:
+            f.write("SHOULD GET OVERWRITTEN!!")
+
+        self.run_execute_test(SAVE_TO_FILE, expected_actions)
+
+        with open(TEST_FILE, "r") as f:
+            assert f.read() == "value_1"
+
+        os.remove(TEST_FILE)
+
+    def test_save_to_file__append(self):
+
+        TEST_FILE = "/tmp/pytest_save_to_file.txt"
+
+        expected_actions = """
+            start-session
+            create-object Job [None]
+            set-values command=GET_ZFB_INFO,parameters={'mediaType': 'ISO'} [context_1]
+            get-value result [context_1]
+            stop-session
+        """
+
+        with open(TEST_FILE, "w") as f:
+            f.write("SHOULD BE PRESERVED")
+
+        self.run_execute_test(SAVE_TO_FILE_APPEND, expected_actions)
+
+        with open(TEST_FILE, "r") as f:
+            assert f.read() == (
+                "SHOULD BE PRESERVEDno::valueprefix:value_1:suffix")
+
+        os.remove(TEST_FILE)
