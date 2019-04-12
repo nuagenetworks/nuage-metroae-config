@@ -78,7 +78,7 @@ class VsdWriter(DeviceWriterBase):
             'api_url': url}
 
         if certificate is not None and certificate[0] is not None:
-          self.session_params['certificate'] = certificate
+            self.session_params['certificate'] = certificate
 
     def read_api_specifications(self, path_or_file_name):
         """
@@ -114,11 +114,13 @@ class VsdWriter(DeviceWriterBase):
                 raise MissingSessionParamsError(
                     "Cannot start session without parameters")
             else:
-              if (self.session_params['password'] is None and
-                      self.session_params['certificate'] is None):
-                  raise MissingSessionParamsError(
-                      """Cannot start session without password or certificate
-                       parameter""")
+                if (self.session_params['password'] is None and
+                      (not self.session_params.has_key('certificate') or
+                       self.session_params['certificate'][0] is None or
+                       self.session_params['certificate'][1] is None)):
+                    raise MissingSessionParamsError(
+                        """Cannot start session without password or certificate
+                         parameter""")
 
             self.log.debug(location)
 
