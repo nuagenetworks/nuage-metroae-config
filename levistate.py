@@ -32,6 +32,8 @@ ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
 ENV_LOG_FILE = 'LOG_FILE'
 ENV_LOG_LEVEL = 'LOG_LEVEL'
+ENV_VSD_CERTIFICATE = 'VSD_CERTIFICATE'
+ENV_VSD_CERTIFICATE_KEY = 'VSD_CERTIFICATE_KEY'
 VALIDATE_ACTION = 'validate'
 CREATE_ACTION = 'create'
 REVERT_ACTION = 'revert'
@@ -192,6 +194,17 @@ def add_parser_arguments(parser):
                         default=os.getenv(ENV_VSD_PASSWORD,
                                           DEFAULT_VSD_PASSWORD),
                         help='Password for VSD. Can also set using environment variable %s' % (ENV_VSD_PASSWORD))
+    parser.add_argument('-c', '--certificate', dest='certificate',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_CERTIFICATE,
+                                          None),
+                        help='Certificate used to authenticate with VSD. Can also set using environment variable %s' % (ENV_VSD_CERTIFICATE))
+    parser.add_argument('-ck', '--certificate_key', dest='certificate_key',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_CERTIFICATE_KEY,
+                                          None),
+                        help='Certificate Key used to authenticate with VSD. Can also set using environment variable %s' % (ENV_VSD_CERTIFICATE))
+
     parser.add_argument('-e', '--enterprise', dest='enterprise',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_ENTERPRISE,
@@ -213,6 +226,7 @@ def add_parser_arguments(parser):
 
 
 class CustomLogHandler(logging.StreamHandler):
+
     def __init__(self, stream=None):
         if stream is not None:
             super(CustomLogHandler, self).__init__(stream)
@@ -387,6 +401,8 @@ class Levistate(object):
                                        username=self.args.username,
                                        password=self.args.password,
                                        enterprise=self.args.enterprise,
+                                       certificate=(self.args.certificate,
+                                                    self.args.certificate_key)
                                        )
 
     def setup_template_store(self):

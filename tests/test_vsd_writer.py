@@ -26,7 +26,8 @@ SESSION_PARAMS = {
     "url": "https://localhost:8443",
     "username": "testuser",
     "password": "testpass",
-    "enterprise": "testent"
+    "enterprise": "testent",
+    "certificate": ("testcertificate", "testKey")
 }
 
 EXPECTED_SESSION_PARAMS = {
@@ -34,6 +35,60 @@ EXPECTED_SESSION_PARAMS = {
     "username": SESSION_PARAMS['username'],
     "password": SESSION_PARAMS['password'],
     "enterprise": SESSION_PARAMS['enterprise'],
+    "certificate": SESSION_PARAMS['certificate'],
+    "version": "5.0",
+    "api_prefix": "nuage/api"
+}
+
+SESSION_PARAMS_NO_AUTH = {
+    "url": "https://localhost:8443",
+    "username": "testuser",
+    "enterprise": "testent",
+    "password": None,
+    "certificate": None
+}
+
+EXPECTED_SESSION_PARAMS_NO_AUTH = {
+    "api_url": SESSION_PARAMS_NO_AUTH['url'],
+    "username": SESSION_PARAMS_NO_AUTH['username'],
+    "password": SESSION_PARAMS_NO_AUTH['password'],
+    "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
+    "version": "5.0",
+    "api_prefix": "nuage/api"
+}
+
+SESSION_PARAMS_NO_CERTIFICATE = {
+    "url": "https://localhost:8443",
+    "username": "testuser",
+    "enterprise": "testent",
+    "password": None,
+    "certificate": (None, "certificate_key")
+}
+
+EXPECTED_SESSION_PARAMS_NO_CERTIFICATE = {
+    "api_url": SESSION_PARAMS_NO_AUTH['url'],
+    "username": SESSION_PARAMS_NO_AUTH['username'],
+    "password": SESSION_PARAMS_NO_AUTH['password'],
+    "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
+    "certificate": SESSION_PARAMS_NO_CERTIFICATE['certificate'],
+    "version": "5.0",
+    "api_prefix": "nuage/api"
+}
+
+SESSION_PARAMS_NO_CERTIFICATE_KEY = {
+    "url": "https://localhost:8443",
+    "username": "testuser",
+    "enterprise": "testent",
+    "password": None,
+    "certificate": ("certificate", None)
+}
+
+EXPECTED_SESSION_PARAMS_NO_CERTIFICATE_KEY = {
+    "api_url": SESSION_PARAMS_NO_AUTH['url'],
+    "username": SESSION_PARAMS_NO_AUTH['username'],
+    "password": SESSION_PARAMS_NO_AUTH['password'],
+    "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
+    "certificate": SESSION_PARAMS_NO_CERTIFICATE_KEY['certificate'],
     "version": "5.0",
     "api_prefix": "nuage/api"
 }
@@ -64,6 +119,78 @@ def setup_standard_session(vsd_writer, mock_patch):
 
     mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
                                        **EXPECTED_SESSION_PARAMS)
+    if vsd_writer.validate_only is True:
+        mock_session.start.assert_not_called()
+    else:
+        mock_session.start.assert_called_once()
+
+    mock_session.set_enterprise_spec.assert_called_once_with(
+        vsd_writer.specs['enterprise'])
+    assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+    return mock_session
+
+
+@patch("levistate.vsd_writer.Session")
+def setup_authentication_less_session(vsd_writer, mock_patch):
+    vsd_writer.set_session_params(**SESSION_PARAMS_NO_AUTH)
+    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+    mock_session = MagicMock()
+    mock_session.root_object = MagicMock()
+    mock_patch.return_value = mock_session
+    vsd_writer.start_session()
+
+    mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                       **EXPECTED_SESSION_PARAMS_NO_AUTH)
+    if vsd_writer.validate_only is True:
+        mock_session.start.assert_not_called()
+    else:
+        mock_session.start.assert_called_once()
+
+    mock_session.set_enterprise_spec.assert_called_once_with(
+        vsd_writer.specs['enterprise'])
+    assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+    return mock_session
+
+
+@patch("levistate.vsd_writer.Session")
+def setup_authentication_no_certificate_session(vsd_writer, mock_patch):
+    vsd_writer.set_session_params(**SESSION_PARAMS_NO_CERTIFICATE)
+    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+    mock_session = MagicMock()
+    mock_session.root_object = MagicMock()
+    mock_patch.return_value = mock_session
+    vsd_writer.start_session()
+
+    mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                       **EXPECTED_SESSION_PARAMS_NO_CERTIFICATE)
+    if vsd_writer.validate_only is True:
+        mock_session.start.assert_not_called()
+    else:
+        mock_session.start.assert_called_once()
+
+    mock_session.set_enterprise_spec.assert_called_once_with(
+        vsd_writer.specs['enterprise'])
+    assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+    return mock_session
+
+
+@patch("levistate.vsd_writer.Session")
+def setup_authentication_no_certificate_key_session(vsd_writer, mock_patch):
+    vsd_writer.set_session_params(**SESSION_PARAMS_NO_CERTIFICATE_KEY)
+    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+    mock_session = MagicMock()
+    mock_session.root_object = MagicMock()
+    mock_patch.return_value = mock_session
+    vsd_writer.start_session()
+
+    mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                       **EXPECTED_SESSION_PARAMS_NO_CERTIFICATE_KEY)
     if vsd_writer.validate_only is True:
         mock_session.start.assert_not_called()
     else:
@@ -156,6 +283,36 @@ class TestVsdWriterSession(object):
             vsd_writer.start_session()
 
         assert "session without parameters" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_certificate__no_password(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(MissingSessionParamsError) as e:
+            setup_authentication_less_session(vsd_writer)
+
+        assert "without password or certificate" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_certificate_file__no_password(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(MissingSessionParamsError) as e:
+            setup_authentication_no_certificate_session(vsd_writer)
+
+        assert "without password or certificate" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_certificate_key__no_password(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(MissingSessionParamsError) as e:
+            setup_authentication_no_certificate_key_session(vsd_writer)
+
+        assert "without password or certificate" in str(e)
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test_start__no_root_spec(self, validate_only):

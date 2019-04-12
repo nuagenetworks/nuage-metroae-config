@@ -11,10 +11,11 @@ class Session(NURESTSession):
     """
 
     def __init__(self, spec, username, password, enterprise, api_url,
-                 api_prefix, version):
+                 api_prefix, version, certificate=None):
         self.spec = spec
         super(Session, self).__init__(username, password, enterprise,
-                                      api_url, api_prefix, version)
+                                      api_url, api_prefix, version,
+                                      certificate)
 
     def create_root_object(self):
         return Root(self.spec, self.enterprise_spec)
@@ -29,6 +30,7 @@ class ConfigObject(NURESTObject):
     specific methods.  This class is effectively a generic config object of any
     type.
     """
+
     def __init__(self, spec):
         super(ConfigObject, self).__init__()
 
@@ -233,6 +235,7 @@ class Fetcher(NURESTFetcher):
     Wrapper class around Bambou fetcher needed to override with levistate
     specific methods.  This class is effectively a generic fetcher of any type.
     """
+
     def __init__(self, parent_object, spec):
         super(Fetcher, self).__init__()
 
