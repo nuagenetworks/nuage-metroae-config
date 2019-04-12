@@ -51,6 +51,11 @@ PARSE_ERROR_CASES = [
 
 VALIDATE_ONLY_CASES = [False, True]
 
+VERSION_OUTPUT = """
+APP_GITVERSION = 'r5.3-2bc6ddd'
+APP_BUILDVERSION='5.3.3_99'
+"""
+
 
 @patch("levistate.vsd_writer.Session")
 def setup_standard_session(vsd_writer, mock_patch):
@@ -1167,3 +1172,66 @@ class TestVsdWriterGetValue(object):
         assert "FooBar" in str(e)
 
         assert "Get value FooBar" in e.value.get_display_string()
+
+
+class TestVsdWriterVersion(object):
+
+    @patch("requests.get")
+    def test_get_version__success(self, mock_request):
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = VERSION_OUTPUT
+        mock_request.return_value = mock_response
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_called_once_with(
+            "https://localhost:8443/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": "Nuage Networks VSD",
+            "software_version": "5.3.3"}
+
+    @patch("requests.get")
+    def test_get_version__bad_response(self, mock_request):
+
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.text = "Not found"
+        mock_request.return_value = mock_response
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_called_once_with(
+            "https://localhost:8443/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": None,
+            "software_version": None}
+
+    @patch("requests.get")
+    def test_get_version__not_parsable(self, mock_request):
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = "INVALID version"
+        mock_request.return_value = mock_response
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_called_once_with(
+            "https://localhost:8443/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": None,
+            "software_version": None}
