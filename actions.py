@@ -125,7 +125,7 @@ class Action(object):
         self.state['is_revert'] = is_revert
 
     def set_update(self, is_update=True):
-        self.state['is_udpate'] = is_update
+        self.state['is_update'] = is_update
 
     def set_store_only(self, store_only=True):
         self.state['is_store_only'] = store_only
