@@ -191,6 +191,9 @@ class Action(object):
     def is_revert(self):
         return 'is_revert' in self.state and self.state['is_revert'] is True
 
+    def is_update(self):
+        return 'is_update' in self.state and self.state['is_update'] is True
+
     def is_store_only(self):
         return ('is_store_only' in self.state and
                 self.state['is_store_only'] is True)
