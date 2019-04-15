@@ -456,6 +456,8 @@ class Levistate(object):
             self.writer.set_validate_only(validate_only)
             if self.action == REVERT_ACTION:
                 config.revert(self.writer)
+            elif self.action == UPDATE_ACTION:
+                config.update(self.writer)
             else:
                 config.apply(self.writer)
 
