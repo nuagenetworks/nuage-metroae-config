@@ -31,6 +31,7 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 RETRIEVE_NO_OBJECT,
                                 RETRIEVE_NO_NAME,
                                 SAVE_TO_FILE,
+                                SAVE_TO_FILE_AND_CONSOLE,
                                 SAVE_TO_FILE_APPEND,
                                 SAVE_TO_FILE_NO_FILE,
                                 SELECT_MULTIPLE_MISSING,
@@ -632,6 +633,20 @@ class TestActionsRead(object):
         assert current_action.file_path == "/tmp/pytest_save_to_file.txt"
         assert current_action.append_to_file is False
         assert current_action.from_field == "result"
+
+    def test_save_to_file_and_console__success(self):
+        root_action = Action(None)
+
+        root_action.read_children_actions(SAVE_TO_FILE_AND_CONSOLE)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Job"
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.file_path == "/tmp/pytest_save_to_file.txt"
+        assert current_action.append_to_file is False
+        assert current_action.from_field == "result"
+        assert current_action.write_to_console is True
 
     def test_save_to_file__invalid(self):
         root_action = Action(None)
@@ -1695,7 +1710,7 @@ class TestActionsExecute(object):
         assert "Action not retrieve-value" in str(e)
         assert "id" in str(e)
 
-    def test_save_to_file__success(self):
+    def test_save_to_file__success(self, capsys):
 
         TEST_FILE = "/tmp/pytest_save_to_file.txt"
 
@@ -1715,9 +1730,13 @@ class TestActionsExecute(object):
         with open(TEST_FILE, "r") as f:
             assert f.read() == "value_1"
 
+        output = capsys.readouterr()
+
+        assert "value_1" in output.out
+
         os.remove(TEST_FILE)
 
-    def test_save_to_file__append(self):
+    def test_save_to_file__append(self, capsys):
 
         TEST_FILE = "/tmp/pytest_save_to_file.txt"
 
@@ -1737,5 +1756,9 @@ class TestActionsExecute(object):
         with open(TEST_FILE, "r") as f:
             assert f.read() == (
                 "SHOULD BE PRESERVEDno::valueprefix:value_1:suffix")
+
+        output = capsys.readouterr()
+
+        assert "value_1" not in output.out
 
         os.remove(TEST_FILE)

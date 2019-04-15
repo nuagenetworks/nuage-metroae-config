@@ -1285,7 +1285,25 @@ actions:
           File-path: /tmp/pytest_save_to_file.txt
           Append-to-file: false
           From-field: result
+          Write-to-console: True
 
+""")
+
+
+SAVE_TO_FILE_AND_CONSOLE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Job
+    Actions:
+      - set-values:
+          command: GET_ZFB_INFO
+          parameters:
+              mediaType: ISO
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Append-to-file: false
+          From-field: result
+          Write-to-console: true
 """)
 
 
@@ -1324,4 +1342,5 @@ actions:
           Prefix-string: "prefix:"
           From-field: result
           Suffix-string: ":suffix"
+          Write-to-console: False
 """)
