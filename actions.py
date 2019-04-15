@@ -983,7 +983,7 @@ class SaveToFileAction(Action):
                     console_text += field_value
                     f.write(field_value)
                 if self.suffix_string is not None:
-                    console_text = self.suffix_string
+                    console_text += self.suffix_string
                     f.write(self.suffix_string)
 
                 if self.write_to_console:
