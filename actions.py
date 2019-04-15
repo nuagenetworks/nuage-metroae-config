@@ -974,19 +974,20 @@ class SaveToFileAction(Action):
                 field_value = writer.get_value(self.from_field, context)
 
             file_mode = "w" if self.append_to_file is False else "a"
+            console_text = ""
             with open(self.file_path, file_mode) as f:
-                self.write(f, self.prefix_string)
+                if self.prefix_string is not None:
+                    console_text += self.prefix_string
+                    f.write(self.prefix_string)
                 if self.from_field is not None:
-                    self.write(f, field_value)
-                self.write(f, self.suffix_string)
+                    console_text += field_value
+                    f.write(field_value)
+                if self.suffix_string is not None:
+                    console_text = self.suffix_string
+                    f.write(self.suffix_string)
 
-    def write(self, file, value):
-        if value is not None:
-            if self.write_to_console:
-                self.log.output(value)
-
-            file.write(value)
-
+                if self.write_to_console:
+                    log.console.output(console_text)
 
     def _to_string(self, indent_level):
         indent = Action._indent(indent_level)
