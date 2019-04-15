@@ -987,7 +987,7 @@ class SaveToFileAction(Action):
                     f.write(self.suffix_string)
 
                 if self.write_to_console:
-                    log.output(console_text)
+                    self.log.output(console_text)
 
     def _to_string(self, indent_level):
         indent = Action._indent(indent_level)
