@@ -17,6 +17,7 @@ class Configuration(object):
         self.software_type = None
         self.data = collections.OrderedDict()
         self.log = Logger()
+        self.update = False
 
     def set_logger(self, logger):
         self.log = logger
@@ -167,7 +168,7 @@ class Configuration(object):
     def _execute_templates(self, writer, is_revert=False, is_update=False):
         self.root_action = Action(None)
         self.root_action.set_logger(self.log)
-        self.root_action.set_update(is_update)
+        self.update = is_update
         if is_revert is True:
             self._walk_data(self._revert_data)
         else:
@@ -188,6 +189,7 @@ class Configuration(object):
         template_dict = template._parse_with_vars(**data)
         self.root_action.reset_state()
         self.root_action.set_revert(False)
+        self.root_action.set_update(self.update)
         self.root_action.set_template_name(template.get_name())
         self.root_action.read_children_actions(template_dict)
 
