@@ -1285,6 +1285,7 @@ actions:
           File-path: /tmp/pytest_save_to_file.txt
           Append-to-file: false
           From-field: result
+          Write-to-console: True
 
 """)
 
@@ -1341,4 +1342,5 @@ actions:
           Prefix-string: "prefix:"
           From-field: result
           Suffix-string: ":suffix"
+          Write-to-console: False
 """)

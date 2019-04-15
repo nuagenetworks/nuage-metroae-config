@@ -1710,7 +1710,7 @@ class TestActionsExecute(object):
         assert "Action not retrieve-value" in str(e)
         assert "id" in str(e)
 
-    def test_save_to_file__success(self):
+    def test_save_to_file__success(self, capsys):
 
         TEST_FILE = "/tmp/pytest_save_to_file.txt"
 
@@ -1730,9 +1730,13 @@ class TestActionsExecute(object):
         with open(TEST_FILE, "r") as f:
             assert f.read() == "value_1"
 
+        output = capsys.readouterr()
+
+        assert "value_1" in output.out
+
         os.remove(TEST_FILE)
 
-    def test_save_to_file__append(self):
+    def test_save_to_file__append(self, capsys):
 
         TEST_FILE = "/tmp/pytest_save_to_file.txt"
 
@@ -1752,5 +1756,9 @@ class TestActionsExecute(object):
         with open(TEST_FILE, "r") as f:
             assert f.read() == (
                 "SHOULD BE PRESERVEDno::valueprefix:value_1:suffix")
+
+        output = capsys.readouterr()
+
+        assert "value_1" not in output.out
 
         os.remove(TEST_FILE)
