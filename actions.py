@@ -937,6 +937,7 @@ class SaveToFileAction(Action):
         self.append_to_file = True
         self.prefix_string = None
         self.suffix_string = None
+        self.write_to_console = False
 
     def read(self, save_to_file_dict):
         self.file_path = Action.get_dict_field(save_to_file_dict,
@@ -959,6 +960,9 @@ class SaveToFileAction(Action):
         self.suffix_string = Action.get_dict_field(save_to_file_dict,
                                                    'suffix-string')
 
+        self.write_to_console = Action.get_dict_field(save_to_file_dict,
+                                                      'write-to-console')
+
         self.log.debug(self._get_location("Reading "))
 
         if self.parent is None or self.parent.parent is None:
@@ -971,12 +975,18 @@ class SaveToFileAction(Action):
 
             file_mode = "w" if self.append_to_file is False else "a"
             with open(self.file_path, file_mode) as f:
-                if self.prefix_string is not None:
-                    f.write(self.prefix_string)
+                self.write(f, self.prefix_string)
                 if self.from_field is not None:
-                    f.write(field_value)
-                if self.suffix_string is not None:
-                    f.write(self.suffix_string)
+                    self.write(f, field_value)
+                self.write(f, self.suffix_string)
+
+    def write(self, file, value):
+        if value is not None:
+            if self.write_to_console:
+                self.log.output(value)
+
+            file.write(value)
+
 
     def _to_string(self, indent_level):
         indent = Action._indent(indent_level)

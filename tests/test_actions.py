@@ -31,6 +31,7 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 RETRIEVE_NO_OBJECT,
                                 RETRIEVE_NO_NAME,
                                 SAVE_TO_FILE,
+                                SAVE_TO_FILE_AND_CONSOLE,
                                 SAVE_TO_FILE_APPEND,
                                 SAVE_TO_FILE_NO_FILE,
                                 SELECT_MULTIPLE_MISSING,
@@ -632,6 +633,20 @@ class TestActionsRead(object):
         assert current_action.file_path == "/tmp/pytest_save_to_file.txt"
         assert current_action.append_to_file is False
         assert current_action.from_field == "result"
+
+    def test_save_to_file_and_console__success(self):
+        root_action = Action(None)
+
+        root_action.read_children_actions(SAVE_TO_FILE_AND_CONSOLE)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Job"
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.file_path == "/tmp/pytest_save_to_file.txt"
+        assert current_action.append_to_file is False
+        assert current_action.from_field == "result"
+        assert current_action.write_to_console is True
 
     def test_save_to_file__invalid(self):
         root_action = Action(None)
