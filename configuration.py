@@ -108,7 +108,8 @@ class Configuration(object):
         not be considered conflicts.  Returns True if ok, otherwise
         an exception is raised.
         """
-        raise NotImplementedError("Template update not yet implemented")
+        self._execute_templates(writer, is_update=True)
+        return True
 
     def revert(self, writer):
         """
@@ -163,9 +164,10 @@ class Configuration(object):
     def _get_template_key(self, id):
         return id['key']
 
-    def _execute_templates(self, writer, is_revert=False):
+    def _execute_templates(self, writer, is_revert=False, is_update=False):
         self.root_action = Action(None)
         self.root_action.set_logger(self.log)
+        self.root_action.set_update(is_update)
         if is_revert is True:
             self._walk_data(self._revert_data)
         else:

@@ -124,6 +124,9 @@ class Action(object):
     def set_revert(self, is_revert=True):
         self.state['is_revert'] = is_revert
 
+    def set_update(self, is_update=True):
+        self.state['is_udpate'] = is_update
+
     def set_store_only(self, store_only=True):
         self.state['is_store_only'] = store_only
 
@@ -328,7 +331,21 @@ class CreateObjectAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
-            new_context = writer.create_object(self.object_type, context)
+            new_context = None
+            if self.is_update():
+                try:
+                    select_value = self.get_select_value()
+                    new_context = writer.select_object(self.object_type,
+                                                       self.select_by_field,
+                                                       select_value,
+                                                       context)
+                except MissingSelectionError:
+                    # Skip Object not present need to create it
+                    pass
+
+            if new_context is None:
+                new_context = writer.create_object(self.object_type, context)
+
             self.execute_children(writer, new_context)
         else:
             if not self.is_store_only():
