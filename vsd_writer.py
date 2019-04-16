@@ -17,7 +17,8 @@ from errors import (DeviceWriterError,
 
 SPEC_EXTENSION = ".spec"
 SOFTWARE_TYPE = "Nuage Networks VSD"
-VERSION_ENDPOINT = "/Resources/app-version.js"
+LEGACY_VERSION_ENDPOINT = "/Resources/app-version.js"
+VERSION_ENDPOINT = "/architect" + LEGACY_VERSION_ENDPOINT
 VERSION_TOKEN = "APP_BUILDVERSION"
 
 
@@ -111,6 +112,14 @@ class VsdWriter(DeviceWriterBase):
         try:
             version_url = self.session_params['api_url'] + VERSION_ENDPOINT
             resp = requests.get(version_url, verify=False)
+
+            if resp.status_code == 404:
+                legacy_version_url = (
+                    self.session_params['api_url'] + LEGACY_VERSION_ENDPOINT)
+                legacy_resp = requests.get(legacy_version_url, verify=False)
+
+                if legacy_resp.status_code == 200:
+                    resp = legacy_resp
 
             if resp.status_code != 200:
                 raise Exception("Status code %d from URL %s" % (

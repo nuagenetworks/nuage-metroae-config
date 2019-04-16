@@ -1189,7 +1189,7 @@ class TestVsdWriterVersion(object):
         version = vsd_writer.get_version()
 
         mock_request.assert_called_once_with(
-            "https://localhost:8443/Resources/app-version.js",
+            "https://localhost:8443/architect/Resources/app-version.js",
             verify=False)
 
         assert version == {
@@ -1200,7 +1200,7 @@ class TestVsdWriterVersion(object):
     def test_get_version__bad_response(self, mock_request):
 
         mock_response = MagicMock()
-        mock_response.status_code = 404
+        mock_response.status_code = 500
         mock_response.text = "Not found"
         mock_request.return_value = mock_response
 
@@ -1209,6 +1209,60 @@ class TestVsdWriterVersion(object):
         version = vsd_writer.get_version()
 
         mock_request.assert_called_once_with(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": None,
+            "software_version": None}
+
+    @patch("requests.get")
+    def test_get_version__legacy_success(self, mock_request):
+
+        mock_response_1 = MagicMock()
+        mock_response_1.status_code = 404
+        mock_response_1.text = "Not found"
+        mock_response_2 = MagicMock()
+        mock_response_2.status_code = 200
+        mock_response_2.text = VERSION_OUTPUT
+        mock_request.side_effect = [mock_response_1, mock_response_2]
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_any_call(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        mock_request.assert_called_with(
+            "https://localhost:8443/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": "Nuage Networks VSD",
+            "software_version": "5.3.3"}
+
+    @patch("requests.get")
+    def test_get_version__legacy_failure(self, mock_request):
+
+        mock_response_1 = MagicMock()
+        mock_response_1.status_code = 404
+        mock_response_1.text = "Not found"
+        mock_response_2 = MagicMock()
+        mock_response_2.status_code = 404
+        mock_response_2.text = "Not Found"
+        mock_request.side_effect = [mock_response_1, mock_response_2]
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_any_call(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        mock_request.assert_called_with(
             "https://localhost:8443/Resources/app-version.js",
             verify=False)
 
@@ -1229,7 +1283,7 @@ class TestVsdWriterVersion(object):
         version = vsd_writer.get_version()
 
         mock_request.assert_called_once_with(
-            "https://localhost:8443/Resources/app-version.js",
+            "https://localhost:8443/architect/Resources/app-version.js",
             verify=False)
 
         assert version == {
