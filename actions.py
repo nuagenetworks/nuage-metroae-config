@@ -338,10 +338,26 @@ class CreateObjectAction(Action):
             if self.is_update():
                 try:
                     select_value = self.get_select_value()
-                    new_context = writer.select_object(self.object_type,
-                                                       self.select_by_field,
-                                                       select_value,
-                                                       context)
+                    if (select_value is not None or
+                            self.select_by_field.lower() == FIRST_SELECTOR):
+                        try:
+                            if self.select_by_field.lower() == FIRST_SELECTOR:
+                                context_list = writer.get_object_list(self.object_type,
+                                                                      context)
+
+                                if len(context_list) < 1:
+                                    raise MissingSelectionError("No objects selected")
+
+                                new_context = context_list[0]
+                            else:
+                                new_context = writer.select_object(self.object_type,
+                                                                   self.select_by_field,
+                                                                   select_value,
+                                                                   context)
+                    # new_context = writer.select_object(self.object_type,
+                    #                                    self.select_by_field,
+                    #                                    select_value,
+                    #                                    context)
                 except MissingSelectionError:
                     # Skip Object not present need to create it
                     pass
