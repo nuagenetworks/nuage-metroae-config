@@ -355,6 +355,7 @@ class CreateObjectAction(Action):
                 new_context = writer.create_object(self.object_type, context)
                 if selectedId is not None:
                     new_context.current_object.id = selectedId
+                    new_context.object_exists = True
 
             self.execute_children(writer, new_context)
         else:
