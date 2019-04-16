@@ -335,6 +335,7 @@ class CreateObjectAction(Action):
     def execute(self, writer, context=None):
         if self.is_revert() is False:
             new_context = None
+            selectedId = None
             if self.is_update():
                   try :
                       select_value = self.get_select_value()
@@ -343,8 +344,7 @@ class CreateObjectAction(Action):
                                                              self.select_by_field,
                                                              select_value,
                                                              context)
-                          if self.object_type == 'Zone':
-                              self.log.output(str(new_context.current_object.policygroupid))
+                          selectedId = new_context.current_object.id
 
                   except MissingSelectionError:
                       # Skip Object not present need to create it
@@ -352,6 +352,8 @@ class CreateObjectAction(Action):
 
             if new_context is None:
                 new_context = writer.create_object(self.object_type, context)
+                if selectedId is not None:
+                    new_context.current_object.id = selectedId
 
             self.execute_children(writer, new_context)
         else:
