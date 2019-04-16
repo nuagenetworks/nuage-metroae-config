@@ -343,6 +343,9 @@ class CreateObjectAction(Action):
                                                              self.select_by_field,
                                                              select_value,
                                                              context)
+                          if self.object_type == 'Zone':
+                              self.log.output(str(new_context.current_object.policygroupid))
+
                   except MissingSelectionError:
                       # Skip Object not present need to create it
                       pass
