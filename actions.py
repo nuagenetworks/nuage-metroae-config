@@ -345,6 +345,7 @@ class CreateObjectAction(Action):
                                                              select_value,
                                                              context)
                           selectedId = new_context.current_object.id
+                          new_context = None
 
                   except MissingSelectionError:
                       # Skip Object not present need to create it
