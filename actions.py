@@ -314,6 +314,7 @@ class CreateObjectAction(Action):
         super(CreateObjectAction, self).__init__(parent, state)
         self.object_type = None
         self.select_by_field = DEFAULT_SELECTION_FIELD
+        self.is_updatable = False
 
     def is_create(self):
         return True
@@ -327,6 +328,10 @@ class CreateObjectAction(Action):
         field = Action.get_dict_field(create_dict, 'select-by-field')
         if field is not None:
             self.select_by_field = field
+
+        updatable = Action.get_dict_filed(create_dict, 'update-supported')
+        if updatable is not None:
+            self.is_updatable = updatable
 
         self.log.debug(self._get_location("Reading "))
 
@@ -756,17 +761,18 @@ class SetValuesAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
-            if (self.parent.is_select() and
-                    self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
-                attributes_copy = dict(self.resolve_attributes())
-                field = self.parent.value.lower()
-                if field in attributes_copy:
-                    del attributes_copy[field]
-                resolved_attributes = attributes_copy
-            else:
-                resolved_attributes = self.resolve_attributes()
-            if resolved_attributes != dict():
-                writer.set_values(context, **resolved_attributes)
+            if self.parent.is_updatable:
+                if (self.parent.is_select() and
+                        self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
+                    attributes_copy = dict(self.resolve_attributes())
+                    field = self.parent.value.lower()
+                    if field in attributes_copy:
+                        del attributes_copy[field]
+                    resolved_attributes = attributes_copy
+                else:
+                    resolved_attributes = self.resolve_attributes()
+                if resolved_attributes != dict():
+                    writer.set_values(context, **resolved_attributes)
 
     def resolve_attributes(self):
         attributes_copy = dict()
