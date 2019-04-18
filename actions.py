@@ -772,7 +772,7 @@ class SetValuesAction(Action):
             else:
                 if self.parent.is_updatable:
                     resolved_attributes = self.resolve_attributes()
-            if resolved_attributes != dict():
+            if resolved_attributes is not None and resolved_attributes != dict():
                 writer.set_values(context, **resolved_attributes)
 
     def resolve_attributes(self):
