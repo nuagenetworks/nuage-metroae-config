@@ -763,7 +763,7 @@ class SetValuesAction(Action):
     def execute(self, writer, context=None):
         if self.is_revert() is False:
             self.log.output(self.parent.object_type)
-            self.log.output(self.parent.is_update)
+            self.log.output(self.parent.is_updatable)
             if self.parent.is_updatable:
                 self.log.output(self.parent.id)
                 if (self.parent.is_select() and
