@@ -332,6 +332,7 @@ class CreateObjectAction(Action):
         updatable = Action.get_dict_field(create_dict, 'update-supported')
         if updatable is not None:
             self.is_updatable = updatable
+            self.log.output(self.object_type)
 
         self.log.debug(self._get_location("Reading "))
 
