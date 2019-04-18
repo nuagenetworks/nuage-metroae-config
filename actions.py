@@ -762,6 +762,7 @@ class SetValuesAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
+            resolved_attributes = None
             if (self.parent.is_select() and
                     self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
                 attributes_copy = dict(self.resolve_attributes())
