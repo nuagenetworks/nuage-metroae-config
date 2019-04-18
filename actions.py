@@ -774,6 +774,7 @@ class SetValuesAction(Action):
                 resolved_attributes = self.resolve_attributes()
             if self.parent.is_updatable and resolved_attributes != dict():
                 writer.set_values(context, **resolved_attributes)
+            self.log.output("done setting values for %s", (self.parent.object_type))
 
     def resolve_attributes(self):
         attributes_copy = dict()
