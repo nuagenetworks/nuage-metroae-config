@@ -329,7 +329,7 @@ class CreateObjectAction(Action):
         if field is not None:
             self.select_by_field = field
 
-        updatable = Action.get_dict_filed(create_dict, 'update-supported')
+        updatable = Action.get_dict_field(create_dict, 'update-supported')
         if updatable is not None:
             self.is_updatable = updatable
 
