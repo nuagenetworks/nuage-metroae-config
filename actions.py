@@ -314,7 +314,7 @@ class CreateObjectAction(Action):
         super(CreateObjectAction, self).__init__(parent, state)
         self.object_type = None
         self.select_by_field = DEFAULT_SELECTION_FIELD
-        self.is_updatable = False
+        self.is_updatable = True
 
     def is_create(self):
         return True
