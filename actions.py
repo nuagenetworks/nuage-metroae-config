@@ -183,6 +183,7 @@ class Action(object):
         return False
 
     def get_child_value(self, field):
+        self.log.output("calling get_value from child")
         if len(self.children) > 0 and self.children[0].is_set_values():
             return self.children[0].get_value(field)
         else:
@@ -772,9 +773,10 @@ class SetValuesAction(Action):
                 resolved_attributes = attributes_copy
             else:
                 resolved_attributes = self.resolve_attributes()
+            self.log.output("setting values for %s, %s", (self.parent.object_type, self.parent.is_updatable))
             if self.parent.is_updatable and resolved_attributes != dict():
                 writer.set_values(context, **resolved_attributes)
-            self.log.output("done setting values for %s", (self.parent.object_type))
+
 
     def resolve_attributes(self):
         attributes_copy = dict()
