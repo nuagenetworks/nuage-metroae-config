@@ -762,21 +762,18 @@ class SetValuesAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
-            self.log.output(self.parent.object_type)
-            self.log.output(self.parent.is_updatable)
-            if self.parent.is_updatable:
-                self.log.output(self.parent.id)
-                if (self.parent.is_select() and
-                        self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
-                    attributes_copy = dict(self.resolve_attributes())
-                    field = self.parent.value.lower()
-                    if field in attributes_copy:
-                        del attributes_copy[field]
-                    resolved_attributes = attributes_copy
-                else:
+            if (self.parent.is_select() and
+                    self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
+                attributes_copy = dict(self.resolve_attributes())
+                field = self.parent.value.lower()
+                if field in attributes_copy:
+                    del attributes_copy[field]
+                resolved_attributes = attributes_copy
+            else:
+                if self.parent.is_updatable:
                     resolved_attributes = self.resolve_attributes()
-                if resolved_attributes != dict():
-                    writer.set_values(context, **resolved_attributes)
+            if resolved_attributes != dict():
+                writer.set_values(context, **resolved_attributes)
 
     def resolve_attributes(self):
         attributes_copy = dict()
