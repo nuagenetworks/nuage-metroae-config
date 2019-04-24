@@ -183,7 +183,6 @@ class Action(object):
         return False
 
     def get_child_value(self, field):
-        self.log.output("calling get_value from child")
         if len(self.children) > 0 and self.children[0].is_set_values():
             return self.children[0].get_value(field)
         else:
@@ -333,7 +332,6 @@ class CreateObjectAction(Action):
         updatable = Action.get_dict_field(create_dict, 'update-supported')
         if updatable is not None:
             self.is_updatable = updatable
-            self.log.output(self.object_type)
 
         self.log.debug(self._get_location("Reading "))
 
@@ -362,6 +360,8 @@ class CreateObjectAction(Action):
                 new_context = writer.create_object(self.object_type, context)
                 if selectedId is not None:
                     new_context.current_object.id = selectedId
+
+                if self.is_update():
                     new_context.object_exists = True
 
             self.execute_children(writer, new_context)
@@ -612,6 +612,7 @@ class SelectObjectAction(Action):
                                         " for attribute %s" %
                                         self.value)
 
+        self.log.debug("select retrieve value")
         select_value = selector.get_stored_value()
 
         return writer.select_object(self.object_type,
@@ -773,13 +774,12 @@ class SetValuesAction(Action):
                 resolved_attributes = attributes_copy
             else:
                 resolved_attributes = self.resolve_attributes()
-            self.log.output("setting values for %s", (self.parent.object_type))
-            self.log.output("is updatable %s", (self.parent.is_updatable))
             if self.parent.is_updatable and resolved_attributes != dict():
                 writer.set_values(context, **resolved_attributes)
 
 
     def resolve_attributes(self):
+        self.log.debug("resolve attributes")
         attributes_copy = dict()
         for key, value in self.attributes.iteritems():
             if isinstance(value, Action):

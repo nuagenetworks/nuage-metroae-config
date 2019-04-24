@@ -72,9 +72,9 @@ class ConfigObject(NURESTObject):
                 attribute['max_value'] if 'max_value' in attribute else None)
             self._attributes[local_name].min_value = (
                 attribute['min_value'] if 'min_value' in attribute else None)
-
-            if not hasattr(self, local_name):
-                setattr(self, local_name, None)
+            #
+            # if not hasattr(self, local_name):
+            #     setattr(self, local_name, None)
 
     def _get_attribute_type(self, label):
         if label == "string":
