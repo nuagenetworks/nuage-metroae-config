@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import requests
 
 from bambou.exceptions import BambouHTTPError
 from bambou_adapter import ConfigObject, Fetcher, Root, Session
@@ -14,6 +16,10 @@ from errors import (DeviceWriterError,
                     SessionNotStartedError)
 
 SPEC_EXTENSION = ".spec"
+SOFTWARE_TYPE = "Nuage Networks VSD"
+LEGACY_VERSION_ENDPOINT = "/Resources/app-version.js"
+VERSION_ENDPOINT = "/architect" + LEGACY_VERSION_ENDPOINT
+VERSION_TOKEN = "APP_BUILDVERSION"
 
 
 class MissingSessionParamsError(DeviceWriterError):
@@ -103,6 +109,43 @@ class VsdWriter(DeviceWriterBase):
     #
     # Implement all required Abstract Base Class prototype functions.
     #
+    def get_version(self):
+        """
+        Returns the version running on the device in format:
+            {"software_version": "xxx",
+             "software_type": "xxx"}
+        """
+        try:
+            version_url = self.session_params['api_url'] + VERSION_ENDPOINT
+            resp = requests.get(version_url, verify=False)
+
+            if resp.status_code == 404:
+                legacy_version_url = (
+                    self.session_params['api_url'] + LEGACY_VERSION_ENDPOINT)
+                legacy_resp = requests.get(legacy_version_url, verify=False)
+
+                if legacy_resp.status_code == 200:
+                    resp = legacy_resp
+
+            if resp.status_code != 200:
+                raise Exception("Status code %d from URL %s" % (
+                    resp.status_code, version_url))
+
+            version = self._parse_version_output(resp.text)
+
+            self.log.output("Device: %s %s" % (SOFTWARE_TYPE, version))
+
+            return {
+                "software_version": version,
+                "software_type": SOFTWARE_TYPE}
+
+        except Exception as e:
+            self.log.output("WARNING: Could not determine VSD version")
+            self.log.error("Could not determine VSD version: %s" % str(e))
+            return {
+                "software_version": None,
+                "software_type": None}
+
     def start_session(self):
         """
         Starts a session with the VSD
@@ -331,6 +374,14 @@ class VsdWriter(DeviceWriterBase):
     #
     # Private functions to do the work
     #
+
+    def _parse_version_output(self, version_text):
+        match = re.search(VERSION_TOKEN + "=.([0-9.]+)", version_text)
+        if match is None:
+            raise Exception("Could not find version from endpoint text: %s" %
+                            version_text)
+
+        return match.group(1)
 
     def _read_specification(self, file_name):
         try:

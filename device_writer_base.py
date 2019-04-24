@@ -37,6 +37,15 @@ class DeviceWriterBase(object):
     # All types of device writer classes will need to implement these
     # functions in order to apply the configurations to the device.
 
+    def get_version(self):
+        """
+        Returns the version running on the device in format:
+            {"software_version": "xxx",
+             "software_type": "xxx"}
+        """
+        # Abstract prototype function
+        raise NotImplementedError("Abstract base function not implemented")
+
     def start_session(self):
         """
         Starts a session with device

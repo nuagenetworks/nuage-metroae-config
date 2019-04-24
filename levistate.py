@@ -11,7 +11,7 @@ from configuration import Configuration
 from errors import LevistateError
 from template import TemplateStore
 from user_data_parser import UserDataParser
-from vsd_writer import VsdWriter
+from vsd_writer import VsdWriter, SOFTWARE_TYPE
 
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
@@ -30,6 +30,7 @@ ENV_VSD_PASSWORD = 'VSD_PASSWORD'
 ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+ENV_SOFTWARE_VERSION = 'SOFTWARE_VERSION'
 ENV_LOG_FILE = 'LOG_FILE'
 ENV_LOG_LEVEL = 'LOG_LEVEL'
 ENV_VSD_CERTIFICATE = 'VSD_CERTIFICATE'
@@ -158,6 +159,10 @@ def add_template_path_parser_argument(parser):
     parser.add_argument('--version', dest='version',
                         action='store_true', required=False,
                         help='Displays version information')
+    parser.add_argument('-sv', '--software_version', dest='software_version',
+                        action='store', required=False,
+                        default=os.getenv(ENV_SOFTWARE_VERSION, None),
+                        help='Override software version for VSD. Can also set using environment variable %s' % (ENV_SOFTWARE_VERSION))
 
 
 def add_template_parser_arguments(parser):
@@ -248,6 +253,7 @@ class Levistate(object):
         self.args = args
         self.template_data = list()
         self.action = action
+        self.device_version = None
 
     def setup_logging(self):
         if "log_level" not in self.args:
@@ -374,19 +380,25 @@ class Levistate(object):
 
         if (self.action == TEMPLATE_ACTION and
                 self.args.templateAction == LIST_ACTION):
-            template_names = self.store.get_template_names()
+            template_names = self.store.get_template_names(
+                self.get_software_type(),
+                self.get_software_version())
             print "\n".join(template_names)
             return True
 
         if self.action == SCHEMA_ACTION:
             for template_name in self.args.template_names:
-                template = self.store.get_template(template_name)
+                template = self.store.get_template(template_name,
+                                                   self.get_software_type(),
+                                                   self.get_software_version())
                 print template.get_schema()
             return True
 
         if self.action == EXAMPLE_ACTION:
             for template_name in self.args.template_names:
-                template = self.store.get_template(template_name)
+                template = self.store.get_template(template_name,
+                                                   self.get_software_type(),
+                                                   self.get_software_version())
                 print template.get_example()
             return True
 
@@ -404,9 +416,16 @@ class Levistate(object):
                                        certificate=(self.args.certificate,
                                                     self.args.certificate_key)
                                        )
+        if self.device_version is None:
+            self.device_version = self.writer.get_version()
 
     def setup_template_store(self):
-        self.store = TemplateStore()
+        self.store = TemplateStore(LEVISTATE_VERSION)
+
+        if self.args.software_version is not None:
+            self.device_version = {
+                "software_version": self.args.software_version,
+                "software_type": SOFTWARE_TYPE}
 
         for path in self.args.template_path:
             self.store.read_templates(path)
@@ -437,6 +456,8 @@ class Levistate(object):
 
     def apply_templates(self):
         config = Configuration(self.store)
+        config.set_software_version(self.get_software_type(),
+                                    self.get_software_version())
         config.set_logger(self.logger)
         for data in self.template_data:
             template_name = data[0]
@@ -459,6 +480,18 @@ class Levistate(object):
 
             if self.action == VALIDATE_ACTION:
                 print str(config.root_action)
+
+    def get_software_type(self):
+        if self.device_version is not None:
+            return self.device_version['software_type']
+        else:
+            return None
+
+    def get_software_version(self):
+        if self.device_version is not None:
+            return self.device_version['software_version']
+        else:
+            return None
 
     def download_and_extract(self, url, dirName):
         if not os.path.isdir(dirName):

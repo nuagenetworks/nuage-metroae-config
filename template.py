@@ -33,6 +33,7 @@ class Template(object):
         self.name = "Unknown"
         self.description = None
         self.template_version = "1.0"
+        self.engine_version = "1.0"
         self.software_type = None
         self.software_version = None
         self.variables = None
@@ -59,6 +60,66 @@ class Template(object):
         """
         return {"software_version": self.software_version,
                 "software_type": self.software_type}
+
+    def get_engine_version(self):
+        """
+        Returns the engine version required for the template
+        """
+        return self.engine_version
+
+    def is_supported_by_engine(self, engine_version):
+        if engine_version is not None:
+            return self._version_compare(self.engine_version,
+                                         engine_version) <= 0
+        else:
+            return True
+
+    def is_matching_version(self, device_version):
+        """
+        Returns True if template is valid for given device version
+        """
+        if device_version["software_type"] is not None:
+            if (self.software_type is None or
+                    device_version["software_type"].lower() !=
+                    self.software_type.lower()):
+                return False
+
+            if device_version["software_version"] is not None:
+                if (self.software_version is not None and
+                    self._version_compare(
+                        self.software_version,
+                        device_version["software_version"]) <= 0):
+                    return True
+                else:
+                    return False
+            else:
+                return True
+        else:
+            return True
+
+    def is_newer_than(self, other_template):
+        """
+        Returns True if this template is a newer version than the other
+        specified template
+        """
+        if (other_template.software_version is not None and
+                self.software_version is not None):
+            compare = self._version_compare(self.software_version,
+                                            other_template.software_version)
+            if (compare < 0):
+                return False
+            elif (compare > 0):
+                return True
+        elif (other_template.software_version is not None):
+            return False
+        elif (self.software_version is not None):
+            return True
+
+        other_template_version = other_template.get_template_version()
+        compare = self._version_compare(self.template_version,
+                                        other_template_version)
+
+        return compare > 0
 
     def get_schema(self):
         """
@@ -120,6 +181,12 @@ class Template(object):
     def _parse_headers(self, template_dict):
         self.name = self._get_required_field(template_dict, "name")
         self.description = get_dict_field_no_case(template_dict, "description")
+        version = get_dict_field_no_case(template_dict, "template-version")
+        if version is not None:
+            self.template_version = str(version)
+        version = get_dict_field_no_case(template_dict, "engine-version")
+        if version is not None:
+            self.engine_version = str(version)
         self.software_type = \
             self._get_required_field(template_dict, "software-type")
         self.software_version = \
@@ -142,6 +209,21 @@ class Template(object):
         raise TemplateParseError(
             "In template %s, Required field %s missing" % (self.filename,
                                                            field))
+
+    def _version_compare(self, version_l, version_r):
+        version_l_list = version_l.split(".")
+        version_r_list = version_r.split(".")
+
+        for pair in zip(version_l_list, version_r_list):
+            try:
+                if int(pair[0]) < int(pair[1]):
+                    return -1
+                if int(pair[0]) > int(pair[1]):
+                    return 1
+            except ValueError:
+                break
+
+        return len(version_l_list) - len(version_r_list)
 
     def _convert_variables_to_schema(self):
         new_schema = dict()
@@ -461,11 +543,12 @@ class TemplateStore(object):
     """
     Reads and parses configuration templates.
     """
-    def __init__(self):
+    def __init__(self, engine_version=None):
         """
         Standard constructor.
         """
         self.templates = dict()
+        self.engine_version = engine_version
 
     def read_templates(self, path_or_file_name):
         """
@@ -498,37 +581,49 @@ class TemplateStore(object):
         template._parse_without_vars(template_string, filename)
         self._register_template(template)
 
-    def get_template_names(self, software_version=None, software_type=None):
+    def get_template_names(self, software_type=None, software_version=None):
         """
         Returns a list of all template names currently loaded in store.
         If software_version and/or software_type is provided, names will
         be filtered by the specified version/type.
         """
-        if software_version is not None or software_type is not None:
-            raise NotImplementedError(
-                "Template software versioning not yet implemented")
-
         names = list()
-        for key, value in self.templates.iteritems():
-            names.append(self.templates[key].get_name())
+        for key, template_list in self.templates.iteritems():
+            template = self._get_latest_template(template_list,
+                                                 software_type,
+                                                 software_version)
+            if (template is not None and
+                    template.is_supported_by_engine(self.engine_version)):
+                names.append(template.get_name())
 
         names.sort()
         return names
 
-    def get_template(self, name, software_version=None, software_type=None):
+    def get_template(self, name, software_type=None, software_version=None):
         """
         Returns a Template object of the specified name.  If software_version
         and/or software_type is provided, template of specified version/type
         will be returned.
         """
-        if software_version is not None or software_type is not None:
-            raise NotImplementedError(
-                "Template software versioning not yet implemented")
-
         if name.lower() not in self.templates:
             raise MissingTemplateError("No template with name " + name)
 
-        return self.templates[name.lower()]
+        template_list = self.templates[name.lower()]
+        template = self._get_latest_template(template_list,
+                                             software_type,
+                                             software_version)
+
+        if template is None:
+            raise MissingTemplateError(
+                "%s templates do not support software version %s %s" % (
+                    name, str(software_type), str(software_version)))
+
+        if not template.is_supported_by_engine(self.engine_version):
+            raise MissingTemplateError(
+                "%s template requires configuration engine version %s" % (
+                    name, str(template.get_engine_version())))
+
+        return template
 
     #
     # Private functions to do the work
@@ -542,12 +637,28 @@ class TemplateStore(object):
             raise TemplateParseError("Error reading template: " + str(e))
 
     def _register_template(self, template):
-        template_name = template.get_name()
-        if template_name.lower() in self.templates:
-            raise NotImplementedError(
-                "Template versioning not yet implemented")
+        template_name = template.get_name().lower()
 
-        self.templates[template_name.lower()] = template
+        if template_name not in self.templates:
+            self.templates[template_name] = list()
+
+        self.templates[template_name].append(template)
+
+    def _get_latest_template(self, template_list,
+                             software_type,
+                             software_version):
+        latest_template = None
+        for template in template_list:
+            if template.is_matching_version({
+                    "software_version": software_version,
+                    "software_type": software_type}):
+                if latest_template is not None:
+                    if template.is_newer_than(latest_template):
+                        latest_template = template
+                else:
+                    latest_template = template
+
+        return latest_template
 
 
 #
