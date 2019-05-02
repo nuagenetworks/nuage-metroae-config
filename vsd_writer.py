@@ -164,6 +164,36 @@ class VsdWriter(DeviceWriterBase):
                 self.session.reset()
             self.session = None
 
+    def update_object(self, object_name, by_field, select_value, context=None):
+        """
+        Update an object in the current context, object is not saved to VSD
+        """
+        location = "Update object %s %s = %s [%s]" % (object_name,
+                                                      by_field,
+                                                      select_value,
+                                                      context)
+        self.log.debug(location)
+        self._check_session()
+        try :
+            if select_value is not None:
+                new_context = self.select_object(object_name,
+                                                 by_field,
+                                                 select_value,
+                                                 context)
+                selectedId = new_context.current_object.id
+
+                new_context = self._get_new_child_context(context)
+
+                new_context.current_object = self._get_new_config_object(
+                    object_name)
+                new_context.current_object.id = selectedId
+                new_context.object_exists = True
+
+                return new_context
+        except MissingSelectionError:
+            # Skip Object not present need to create it
+            pass
+
     def create_object(self, object_name, context=None):
         """
         Creates an object in the current context, object is not saved to VSD

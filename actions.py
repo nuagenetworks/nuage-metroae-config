@@ -41,7 +41,7 @@ class Action(object):
             self.log = parent.log
 
     def __str__(self):
-        return self._to_string_with_children()
+        return self._to_string_with_children(self.level)
 
     def _to_string_with_children(self):
         cur_output = self._to_string(self.level)
@@ -339,31 +339,13 @@ class CreateObjectAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
-            new_context = None
-            selectedId = None
-            if self.is_update():
-                  try :
-                      select_value = self.get_select_value()
-                      if select_value is not None:
-                          new_context = writer.select_object(self.object_type,
-                                                             self.select_by_field,
-                                                             select_value,
-                                                             context)
-                          selectedId = new_context.current_object.id
-                          new_context = None
-
-                  except MissingSelectionError:
-                      # Skip Object not present need to create it
-                      pass
-
-            if new_context is None:
+            if not self.is_update():
                 new_context = writer.create_object(self.object_type, context)
-                if selectedId is not None:
-                    new_context.current_object.id = selectedId
-
-                if self.is_update():
-                    new_context.object_exists = True
-
+            else:
+                new_context = writer.update_object(self.object_type,
+                                                   self.select_by_field,
+                                                   self.get_select_value(),
+                                                   context)
             self.execute_children(writer, new_context)
         else:
             if not self.is_store_only():
@@ -774,7 +756,8 @@ class SetValuesAction(Action):
                 resolved_attributes = attributes_copy
             else:
                 resolved_attributes = self.resolve_attributes()
-            if self.parent.is_updatable and resolved_attributes != dict():
+            if (not (self.parent.is_update() and not self.parent.is_updatable)
+                    and resolved_attributes != dict()):
                 writer.set_values(context, **resolved_attributes)
 
 
@@ -895,7 +878,7 @@ class StoreValueAction(Action):
             raise TemplateActionError(
                 'Value of name %s already stored' % self.as_name)
 
-        self.mark_ancestors_for_reorder(self.as_name, is_store=True)
+        self.mark_ancestors_for_reorder(self, is_store=True)
 
     def get_stored_value(self):
         if self.stored_value is not None:
@@ -964,7 +947,7 @@ class RetrieveValueAction(SetValuesAction):
             self.append_list_attribute(self.to_field, stored_action)
         else:
             self.add_attribute(self.to_field, stored_action)
-        self.mark_ancestors_for_reorder(self.from_name, is_store=False)
+        self.mark_ancestors_for_reorder(stored_action, is_store=False)
 
 
 class SaveToFileAction(Action):
