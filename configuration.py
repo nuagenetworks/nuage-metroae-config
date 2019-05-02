@@ -25,14 +25,14 @@ class Configuration(object):
     def get_logger(self):
         return self.log
 
-    def set_software_version(self, software_version, software_type=None):
+    def set_software_version(self, software_type=None, software_version=None):
         """
         Sets the current software version of templates that is desired.
         If not called, the latest software version of templates will be
         used.
         """
-        raise NotImplementedError(
-            "Template software versioning not yet implemented")
+        self.software_type = software_type
+        self.software_version = software_version
 
     def get_template_names(self):
         """
@@ -40,8 +40,8 @@ class Configuration(object):
         In reality, this just calls the template_store function with
         the currently set software_version and software_type.
         """
-        return self.store.get_template_names(self.software_version,
-                                             self.software_type)
+        return self.store.get_template_names(self.software_type,
+                                             self.software_version)
 
     def get_template(self, name):
         """
@@ -50,8 +50,8 @@ class Configuration(object):
         set software_version and software_type.
         """
         return self.store.get_template(name,
-                                       self.software_version,
-                                       self.software_type)
+                                       self.software_type,
+                                       self.software_version)
 
     def add_template_data(self, template_name, **template_data):
         """
