@@ -234,8 +234,7 @@ class VsdWriter(DeviceWriterBase):
 
                 return new_context
         except MissingSelectionError:
-            # Skip Object not present need to create it
-            pass
+            return self.create_object(object_name, context)
 
     def create_object(self, object_name, context=None):
         """

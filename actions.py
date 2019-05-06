@@ -41,7 +41,7 @@ class Action(object):
             self.log = parent.log
 
     def __str__(self):
-        return self._to_string_with_children(self.level)
+        return self._to_string_with_children()
 
     def _to_string_with_children(self):
         cur_output = self._to_string(self.level)

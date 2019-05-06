@@ -135,7 +135,6 @@ class TestConfigObject(object):
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
 
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
 
     @requests_mock.mock()
     def test_create_parent__success(self, mock):
@@ -144,7 +143,6 @@ class TestConfigObject(object):
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
 
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
 
         obj.name = "test_enterprise"
         resource_name = ENTERPRISE_SPEC_TEST["model"]["resource_name"]
@@ -173,7 +171,6 @@ class TestConfigObject(object):
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
 
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
 
         obj.name = "test_enterprise"
         resource_name = ENTERPRISE_SPEC_TEST["model"]["resource_name"]
@@ -210,7 +207,6 @@ class TestConfigObject(object):
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
 
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "new_name"
@@ -235,7 +231,6 @@ class TestConfigObject(object):
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
 
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "new_name"
@@ -279,7 +274,6 @@ class TestConfigObject(object):
         child_obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
 
         assert child_obj.get_name() == "DomainTemplate"
-        assert hasattr(child_obj, "name") is True
 
         child_obj.name = "test_domain_template"
 
@@ -317,7 +311,6 @@ class TestConfigObject(object):
         child_obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
 
         assert child_obj.get_name() == "DomainTemplate"
-        assert hasattr(child_obj, "name") is True
 
         child_obj.name = "test_domain_template"
 
@@ -358,7 +351,6 @@ class TestConfigObject(object):
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
 
         assert obj.get_name() == "DomainTemplate"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "new_name"
@@ -383,7 +375,6 @@ class TestConfigObject(object):
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
 
         assert obj.get_name() == "DomainTemplate"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "new_name"
@@ -422,7 +413,6 @@ class TestConfigObject(object):
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
 
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "test_enterprise"
@@ -448,7 +438,6 @@ class TestConfigObject(object):
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
 
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "test_enterprise"
@@ -489,7 +478,6 @@ class TestConfigObject(object):
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
 
         assert obj.get_name() == "DomainTemplate"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "test_domain_template"
@@ -515,7 +503,6 @@ class TestConfigObject(object):
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
 
         assert obj.get_name() == "DomainTemplate"
-        assert hasattr(obj, "name") is True
 
         obj.id = test_id
         obj.name = "test_domain_template"
@@ -576,9 +563,7 @@ class TestFetcher(object):
         assert len(objects) == 1
         obj = objects[0]
         assert obj.get_name() == "Enterprise"
-        assert hasattr(obj, "name") is True
         assert obj.name == "test_enterprise"
-        assert hasattr(obj, "id") is True
         assert obj.id == test_id
 
     @requests_mock.mock()
@@ -631,15 +616,11 @@ class TestFetcher(object):
         obj_2 = objects[1]
 
         assert obj_1.get_name() == "Enterprise"
-        assert hasattr(obj_1, "name") is True
         assert obj_1.name == "test_enterprise"
-        assert hasattr(obj_1, "id") is True
         assert obj_1.id == test_id_1
 
         assert obj_2.get_name() == "Enterprise"
-        assert hasattr(obj_2, "name") is True
         assert obj_2.name == "test_enterprise"
-        assert hasattr(obj_2, "id") is True
         assert obj_2.id == test_id_2
 
     @requests_mock.mock()
@@ -676,9 +657,7 @@ class TestFetcher(object):
         assert len(objects) == 1
         obj = objects[0]
         assert obj.get_name() == "DomainTemplate"
-        assert hasattr(obj, "name") is True
         assert obj.name == "test_domain_template"
-        assert hasattr(obj, "id") is True
         assert obj.id == child_test_id
 
     @requests_mock.mock()
@@ -747,15 +726,11 @@ class TestFetcher(object):
         obj_2 = objects[1]
 
         assert obj_1.get_name() == "DomainTemplate"
-        assert hasattr(obj_1, "name") is True
         assert obj_1.name == "test_domain_template"
-        assert hasattr(obj_1, "id") is True
         assert obj_1.id == child_test_id_1
 
         assert obj_2.get_name() == "DomainTemplate"
-        assert hasattr(obj_2, "name") is True
         assert obj_2.name == "test_domain_template"
-        assert hasattr(obj_2, "id") is True
         assert obj_2.id == child_test_id_2
 
     @requests_mock.mock()
