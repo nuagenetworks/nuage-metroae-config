@@ -762,7 +762,6 @@ class SetValuesAction(Action):
 
 
     def resolve_attributes(self):
-        self.log.debug("resolve attributes")
         attributes_copy = dict()
         for key, value in self.attributes.iteritems():
             if isinstance(value, Action):
