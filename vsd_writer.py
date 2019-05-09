@@ -564,7 +564,6 @@ class VsdWriter(DeviceWriterBase):
             local_name = field.lower()
             self._get_attribute_name(obj.spec, field)
             setattr(obj, local_name, value)
-                                  obj.get_name()))
 
     def _get_attribute(self, obj, field):
         self._get_attribute_name(obj.spec, field)
