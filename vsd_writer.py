@@ -563,12 +563,8 @@ class VsdWriter(DeviceWriterBase):
         for field, value in kwargs.iteritems():
             local_name = field.lower()
             self._get_attribute_name(obj.spec, field)
-            # if hasattr(obj, local_name):
             setattr(obj, local_name, value)
-            # else:
-            #     raise SessionError("Missing field %s in %s object" %
-            #                        (local_name,
-            #                         obj.get_name()))
+                                  obj.get_name()))
 
     def _get_attribute(self, obj, field):
         self._get_attribute_name(obj.spec, field)
