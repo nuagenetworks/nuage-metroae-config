@@ -438,6 +438,7 @@ class SelectObjectAction(Action):
         self.field = None
         self.value = None
         self.is_child_find = False
+        self.is_updatable = False
 
     def is_select(self):
         return True
@@ -457,6 +458,10 @@ class SelectObjectAction(Action):
         if self.value is None:
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
+
+        updatable = Action.get_dict_field(select_dict, 'update-supported')
+        if updatable is not None:
+            self.is_updatable = updatable
 
         if type(self.field) == list:
             if type(self.value) != list:
