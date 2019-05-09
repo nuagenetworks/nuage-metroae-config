@@ -1344,3 +1344,26 @@ actions:
           Suffix-string: ":suffix"
           Write-to-console: False
 """)
+
+UPDATE_ROOT_OBJECT = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    Actions:
+    - Set-values:
+        name: L1-O1
+""")
+
+UPDATE_CREATE_CHILD_OBJECT = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - Create-object:
+        Type: Level2
+        Actions:
+        - Set-values:
+            name: L2-O1
+""")
