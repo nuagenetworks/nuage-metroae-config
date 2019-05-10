@@ -38,6 +38,7 @@ ENV_VSD_CERTIFICATE_KEY = 'VSD_CERTIFICATE_KEY'
 VALIDATE_ACTION = 'validate'
 CREATE_ACTION = 'create'
 REVERT_ACTION = 'revert'
+UPDATE_ACTION = 'update'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
@@ -130,6 +131,9 @@ def get_parser():
 
     validate_parser = sub_parser.add_parser(VALIDATE_ACTION)
     add_parser_arguments(validate_parser)
+
+    update_parser = sub_parser.add_parser(UPDATE_ACTION)
+    add_parser_arguments(update_parser)
 
     template_parser = sub_parser.add_parser(TEMPLATE_ACTION)
     template_sub_parser = template_parser.add_subparsers(dest='templateAction')
@@ -473,6 +477,8 @@ class Levistate(object):
             self.writer.set_validate_only(validate_only)
             if self.action == REVERT_ACTION:
                 config.revert(self.writer)
+            elif self.action == UPDATE_ACTION:
+                config.update(self.writer)
             else:
                 config.apply(self.writer)
 

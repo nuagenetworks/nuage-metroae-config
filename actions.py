@@ -124,6 +124,9 @@ class Action(object):
     def set_revert(self, is_revert=True):
         self.state['is_revert'] = is_revert
 
+    def set_update(self, is_update=True):
+        self.state['is_update'] = is_update
+
     def set_store_only(self, store_only=True):
         self.state['is_store_only'] = store_only
 
@@ -187,6 +190,9 @@ class Action(object):
 
     def is_revert(self):
         return 'is_revert' in self.state and self.state['is_revert'] is True
+
+    def is_update(self):
+        return 'is_update' in self.state and self.state['is_update'] is True
 
     def is_store_only(self):
         return ('is_store_only' in self.state and
@@ -308,6 +314,7 @@ class CreateObjectAction(Action):
         super(CreateObjectAction, self).__init__(parent, state)
         self.object_type = None
         self.select_by_field = DEFAULT_SELECTION_FIELD
+        self.is_updatable = True
 
     def is_create(self):
         return True
@@ -322,13 +329,23 @@ class CreateObjectAction(Action):
         if field is not None:
             self.select_by_field = field
 
+        updatable = Action.get_dict_field(create_dict, 'update-supported')
+        if updatable is not None:
+            self.is_updatable = updatable
+
         self.log.debug(self._get_location("Reading "))
 
         self.read_children_actions(create_dict)
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
-            new_context = writer.create_object(self.object_type, context)
+            if not self.is_update():
+                new_context = writer.create_object(self.object_type, context)
+            else:
+                new_context = writer.update_object(self.object_type,
+                                                   self.select_by_field,
+                                                   self.get_select_value(),
+                                                   context)
             self.execute_children(writer, new_context)
         else:
             if not self.is_store_only():
@@ -421,6 +438,7 @@ class SelectObjectAction(Action):
         self.field = None
         self.value = None
         self.is_child_find = False
+        self.is_updatable = False
 
     def is_select(self):
         return True
@@ -440,6 +458,10 @@ class SelectObjectAction(Action):
         if self.value is None:
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
+
+        updatable = Action.get_dict_field(select_dict, 'update-supported')
+        if updatable is not None:
+            self.is_updatable = updatable
 
         if type(self.field) == list:
             if type(self.value) != list:
@@ -728,6 +750,7 @@ class SetValuesAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
+            resolved_attributes = None
             if (self.parent.is_select() and
                     self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
                 attributes_copy = dict(self.resolve_attributes())
@@ -737,8 +760,10 @@ class SetValuesAction(Action):
                 resolved_attributes = attributes_copy
             else:
                 resolved_attributes = self.resolve_attributes()
-            if resolved_attributes != dict():
+            if ((not self.parent.is_update() or self.parent.is_updatable)
+                    and resolved_attributes != dict()):
                 writer.set_values(context, **resolved_attributes)
+
 
     def resolve_attributes(self):
         attributes_copy = dict()
@@ -856,7 +881,7 @@ class StoreValueAction(Action):
             raise TemplateActionError(
                 'Value of name %s already stored' % self.as_name)
 
-        self.mark_ancestors_for_reorder(self.as_name, is_store=True)
+        self.mark_ancestors_for_reorder(self, is_store=True)
 
     def get_stored_value(self):
         if self.stored_value is not None:
@@ -925,7 +950,7 @@ class RetrieveValueAction(SetValuesAction):
             self.append_list_attribute(self.to_field, stored_action)
         else:
             self.add_attribute(self.to_field, stored_action)
-        self.mark_ancestors_for_reorder(self.from_name, is_store=False)
+        self.mark_ancestors_for_reorder(stored_action, is_store=False)
 
 
 class SaveToFileAction(Action):

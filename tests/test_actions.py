@@ -64,7 +64,9 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
-                                STORE_SAME_TWICE)
+                                STORE_SAME_TWICE,
+                                UPDATE_CREATE_CHILD_OBJECT,
+                                UPDATE_ROOT_OBJECT)
 from levistate.actions import Action
 from levistate.errors import (ConflictError,
                               InvalidAttributeError,
@@ -161,6 +163,9 @@ class TestActionsRead(object):
         current_action = root_action.children[0].children[1].children[0]
         assert current_action.attributes == {'name': 'test_domain',
                                              'templateID': store_id}
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.is_updatable is False
 
     def test_acl__success(self):
         root_action = Action(None)
@@ -936,11 +941,12 @@ class TestActionsOrdering(object):
 class TestActionsExecute(object):
 
     def run_execute_test(self, template_dict, expected_actions,
-                         is_revert=False):
+                         is_revert=False, is_update=False):
         root_action = Action(None)
         writer = MockWriter()
 
         root_action.set_revert(is_revert)
+        root_action.set_update(is_update)
         root_action.read_children_actions(template_dict)
         writer.start_session()
         root_action.execute(writer)
@@ -959,12 +965,13 @@ class TestActionsExecute(object):
 
     def run_execute_with_exception(self, template_dict, expected_actions,
                                    exception, on_action, expect_error=True,
-                                   is_revert=False):
+                                   is_revert=False, is_update=False):
         root_action = Action(None)
         writer = MockWriter()
         writer.raise_exception(exception, on_action)
 
         root_action.set_revert(is_revert)
+        root_action.set_update(is_update)
         root_action.read_children_actions(template_dict)
         writer.start_session()
         if expect_error:
@@ -1762,3 +1769,71 @@ class TestActionsExecute(object):
         assert "value_1" not in output.out
 
         os.remove(TEST_FILE)
+
+    def test_update_action__no_new_objects(self):
+
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-O1 [None]
+            update-object Level1 name = L1-O1 [None]
+            set-values name=L1-O1 [context_2]
+            stop-session
+        """
+
+        self.run_execute_test(UPDATE_ROOT_OBJECT,
+                              expected_actions,
+                              is_update=True)
+
+    def test_update_action__create_root_object(self):
+
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-O1 [None]
+            create-object Level1 [None]
+            set-values name=L1-O1 [context_2]
+            stop-session
+        """
+
+        self.run_execute_with_exception(UPDATE_ROOT_OBJECT,
+                                    expected_actions,
+                                    MissingSelectionError("test exception"),
+                                    'select-object Level1 name = L1-O1 [None]',
+                                    expect_error=False,
+                                    is_update=True)
+
+    def test_update_action__update_child_object(self):
+
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-O1 [None]
+            update-object Level1 name = L1-O1 [None]
+            set-values name=L1-O1 [context_2]
+            select-object Level2 name = L2-O1 [context_2]
+            update-object Level2 name = L2-O1 [context_2]
+            set-values name=L2-O1 [context_5]
+            stop-session
+        """
+
+        self.run_execute_test(UPDATE_CREATE_CHILD_OBJECT,
+                              expected_actions,
+                              is_update=True)
+
+    def test_update_action__create_child_object(self):
+
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-O1 [None]
+            update-object Level1 name = L1-O1 [None]
+            set-values name=L1-O1 [context_2]
+            select-object Level2 name = L2-O1 [context_2]
+            create-object Level2 [context_2]
+            set-values name=L2-O1 [context_5]
+            stop-session
+        """
+
+        self.run_execute_with_exception(UPDATE_CREATE_CHILD_OBJECT,
+                                expected_actions,
+                                MissingSelectionError("test exception"),
+                                'select-object Level2 name = L2-O1 [context_2]',
+                                expect_error=False,
+                                is_update=True)

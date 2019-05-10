@@ -73,9 +73,6 @@ class ConfigObject(NURESTObject):
             self._attributes[local_name].min_value = (
                 attribute['min_value'] if 'min_value' in attribute else None)
 
-            if not hasattr(self, local_name):
-                setattr(self, local_name, None)
-
     def _get_attribute_type(self, label):
         if label == "string":
             return str

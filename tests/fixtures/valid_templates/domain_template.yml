@@ -26,6 +26,7 @@ actions:
                   from-field: id
         - create-object:
             type: Domain
+            update-supported: False
             actions:
               - set-values:
                   name: {{ domain_name }}

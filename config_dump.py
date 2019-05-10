@@ -59,7 +59,8 @@ def build_object_dict(obj, children):
                                    "children": children}
 
     for attr_name, attr in obj._attributes.items():
-        attributes[attr_name] = getattr(obj, attr_name)
+        if hasattr(obj, attr_name):
+            attributes[attr_name] = getattr(obj, attr_name)
 
     return object_dict
 
