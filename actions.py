@@ -599,7 +599,6 @@ class SelectObjectAction(Action):
                                         " for attribute %s" %
                                         self.value)
 
-        self.log.debug("select retrieve value")
         select_value = selector.get_stored_value()
 
         return writer.select_object(self.object_type,

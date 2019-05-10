@@ -65,8 +65,8 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
                                 STORE_SAME_TWICE,
-                                UPDATE_ROOT_OBJECT,
-                                UPDATE_CREATE_CHILD_OBJECT)
+                                UPDATE_CREATE_CHILD_OBJECT,
+                                UPDATE_ROOT_OBJECT)
 from levistate.actions import Action
 from levistate.errors import (ConflictError,
                               InvalidAttributeError,
@@ -1770,7 +1770,7 @@ class TestActionsExecute(object):
 
         os.remove(TEST_FILE)
 
-    def test_update_action_no_new_objects(self):
+    def test_update_action__no_new_objects(self):
 
         expected_actions = """
             start-session
@@ -1784,7 +1784,7 @@ class TestActionsExecute(object):
                               expected_actions,
                               is_update=True)
 
-    def test_update_action_create_root_object(self):
+    def test_update_action__create_root_object(self):
 
         expected_actions = """
             start-session
@@ -1801,7 +1801,7 @@ class TestActionsExecute(object):
                                     expect_error=False,
                                     is_update=True)
 
-    def test_update_action_update_child_object(self):
+    def test_update_action__update_child_object(self):
 
         expected_actions = """
             start-session
@@ -1818,7 +1818,7 @@ class TestActionsExecute(object):
                               expected_actions,
                               is_update=True)
 
-    def test_update_action_create_child_object(self):
+    def test_update_action__create_child_object(self):
 
         expected_actions = """
             start-session
