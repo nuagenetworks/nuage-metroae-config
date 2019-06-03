@@ -18,6 +18,7 @@ urllib3.disable_warnings()
 
 LEVISTATE_VERSION = "1.0"
 
+PROG_NAME = "metroae config"
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
@@ -119,7 +120,8 @@ def main():
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(prog=PROG_NAME,
+                                     description=DESCRIPTION)
 
     sub_parser = parser.add_subparsers(dest='action')
 
