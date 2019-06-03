@@ -26,7 +26,8 @@ SESSION_PARAMS = {
     "url": "https://localhost:8443",
     "username": "testuser",
     "password": "testpass",
-    "enterprise": "testent"
+    "enterprise": "testent",
+    "certificate": ("testcertificate", "testKey")
 }
 
 EXPECTED_SESSION_PARAMS = {
@@ -34,6 +35,60 @@ EXPECTED_SESSION_PARAMS = {
     "username": SESSION_PARAMS['username'],
     "password": SESSION_PARAMS['password'],
     "enterprise": SESSION_PARAMS['enterprise'],
+    "certificate": SESSION_PARAMS['certificate'],
+    "version": "5.0",
+    "api_prefix": "nuage/api"
+}
+
+SESSION_PARAMS_NO_AUTH = {
+    "url": "https://localhost:8443",
+    "username": "testuser",
+    "enterprise": "testent",
+    "password": None,
+    "certificate": None
+}
+
+EXPECTED_SESSION_PARAMS_NO_AUTH = {
+    "api_url": SESSION_PARAMS_NO_AUTH['url'],
+    "username": SESSION_PARAMS_NO_AUTH['username'],
+    "password": SESSION_PARAMS_NO_AUTH['password'],
+    "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
+    "version": "5.0",
+    "api_prefix": "nuage/api"
+}
+
+SESSION_PARAMS_NO_CERTIFICATE = {
+    "url": "https://localhost:8443",
+    "username": "testuser",
+    "enterprise": "testent",
+    "password": None,
+    "certificate": (None, "certificate_key")
+}
+
+EXPECTED_SESSION_PARAMS_NO_CERTIFICATE = {
+    "api_url": SESSION_PARAMS_NO_AUTH['url'],
+    "username": SESSION_PARAMS_NO_AUTH['username'],
+    "password": SESSION_PARAMS_NO_AUTH['password'],
+    "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
+    "certificate": SESSION_PARAMS_NO_CERTIFICATE['certificate'],
+    "version": "5.0",
+    "api_prefix": "nuage/api"
+}
+
+SESSION_PARAMS_NO_CERTIFICATE_KEY = {
+    "url": "https://localhost:8443",
+    "username": "testuser",
+    "enterprise": "testent",
+    "password": None,
+    "certificate": ("certificate", None)
+}
+
+EXPECTED_SESSION_PARAMS_NO_CERTIFICATE_KEY = {
+    "api_url": SESSION_PARAMS_NO_AUTH['url'],
+    "username": SESSION_PARAMS_NO_AUTH['username'],
+    "password": SESSION_PARAMS_NO_AUTH['password'],
+    "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
+    "certificate": SESSION_PARAMS_NO_CERTIFICATE_KEY['certificate'],
     "version": "5.0",
     "api_prefix": "nuage/api"
 }
@@ -51,6 +106,11 @@ PARSE_ERROR_CASES = [
 
 VALIDATE_ONLY_CASES = [False, True]
 
+VERSION_OUTPUT = """
+APP_GITVERSION = 'r5.3-2bc6ddd'
+APP_BUILDVERSION='5.3.3_99'
+"""
+
 
 @patch("levistate.vsd_writer.Session")
 def setup_standard_session(vsd_writer, mock_patch):
@@ -64,6 +124,78 @@ def setup_standard_session(vsd_writer, mock_patch):
 
     mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
                                        **EXPECTED_SESSION_PARAMS)
+    if vsd_writer.validate_only is True:
+        mock_session.start.assert_not_called()
+    else:
+        mock_session.start.assert_called_once()
+
+    mock_session.set_enterprise_spec.assert_called_once_with(
+        vsd_writer.specs['enterprise'])
+    assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+    return mock_session
+
+
+@patch("levistate.vsd_writer.Session")
+def setup_authentication_less_session(vsd_writer, mock_patch):
+    vsd_writer.set_session_params(**SESSION_PARAMS_NO_AUTH)
+    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+    mock_session = MagicMock()
+    mock_session.root_object = MagicMock()
+    mock_patch.return_value = mock_session
+    vsd_writer.start_session()
+
+    mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                       **EXPECTED_SESSION_PARAMS_NO_AUTH)
+    if vsd_writer.validate_only is True:
+        mock_session.start.assert_not_called()
+    else:
+        mock_session.start.assert_called_once()
+
+    mock_session.set_enterprise_spec.assert_called_once_with(
+        vsd_writer.specs['enterprise'])
+    assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+    return mock_session
+
+
+@patch("levistate.vsd_writer.Session")
+def setup_authentication_no_certificate_session(vsd_writer, mock_patch):
+    vsd_writer.set_session_params(**SESSION_PARAMS_NO_CERTIFICATE)
+    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+    mock_session = MagicMock()
+    mock_session.root_object = MagicMock()
+    mock_patch.return_value = mock_session
+    vsd_writer.start_session()
+
+    mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                       **EXPECTED_SESSION_PARAMS_NO_CERTIFICATE)
+    if vsd_writer.validate_only is True:
+        mock_session.start.assert_not_called()
+    else:
+        mock_session.start.assert_called_once()
+
+    mock_session.set_enterprise_spec.assert_called_once_with(
+        vsd_writer.specs['enterprise'])
+    assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+    return mock_session
+
+
+@patch("levistate.vsd_writer.Session")
+def setup_authentication_no_certificate_key_session(vsd_writer, mock_patch):
+    vsd_writer.set_session_params(**SESSION_PARAMS_NO_CERTIFICATE_KEY)
+    vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+    mock_session = MagicMock()
+    mock_session.root_object = MagicMock()
+    mock_patch.return_value = mock_session
+    vsd_writer.start_session()
+
+    mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                       **EXPECTED_SESSION_PARAMS_NO_CERTIFICATE_KEY)
     if vsd_writer.validate_only is True:
         mock_session.start.assert_not_called()
     else:
@@ -156,6 +288,36 @@ class TestVsdWriterSession(object):
             vsd_writer.start_session()
 
         assert "session without parameters" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_certificate__no_password(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(MissingSessionParamsError) as e:
+            setup_authentication_less_session(vsd_writer)
+
+        assert "without password or certificate" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_certificate_file__no_password(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(MissingSessionParamsError) as e:
+            setup_authentication_no_certificate_session(vsd_writer)
+
+        assert "without password or certificate" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_start__no_certificate_key__no_password(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(MissingSessionParamsError) as e:
+            setup_authentication_no_certificate_key_session(vsd_writer)
+
+        assert "without password or certificate" in str(e)
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test_start__no_root_spec(self, validate_only):
@@ -1167,3 +1329,120 @@ class TestVsdWriterGetValue(object):
         assert "FooBar" in str(e)
 
         assert "Get value FooBar" in e.value.get_display_string()
+
+
+class TestVsdWriterVersion(object):
+
+    @patch("requests.get")
+    def test_get_version__success(self, mock_request):
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = VERSION_OUTPUT
+        mock_request.return_value = mock_response
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_called_once_with(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": "Nuage Networks VSD",
+            "software_version": "5.3.3"}
+
+    @patch("requests.get")
+    def test_get_version__bad_response(self, mock_request):
+
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.text = "Not found"
+        mock_request.return_value = mock_response
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_called_once_with(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": None,
+            "software_version": None}
+
+    @patch("requests.get")
+    def test_get_version__legacy_success(self, mock_request):
+
+        mock_response_1 = MagicMock()
+        mock_response_1.status_code = 404
+        mock_response_1.text = "Not found"
+        mock_response_2 = MagicMock()
+        mock_response_2.status_code = 200
+        mock_response_2.text = VERSION_OUTPUT
+        mock_request.side_effect = [mock_response_1, mock_response_2]
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_any_call(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        mock_request.assert_called_with(
+            "https://localhost:8443/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": "Nuage Networks VSD",
+            "software_version": "5.3.3"}
+
+    @patch("requests.get")
+    def test_get_version__legacy_failure(self, mock_request):
+
+        mock_response_1 = MagicMock()
+        mock_response_1.status_code = 404
+        mock_response_1.text = "Not found"
+        mock_response_2 = MagicMock()
+        mock_response_2.status_code = 404
+        mock_response_2.text = "Not Found"
+        mock_request.side_effect = [mock_response_1, mock_response_2]
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_any_call(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        mock_request.assert_called_with(
+            "https://localhost:8443/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": None,
+            "software_version": None}
+
+    @patch("requests.get")
+    def test_get_version__not_parsable(self, mock_request):
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = "INVALID version"
+        mock_request.return_value = mock_response
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_called_once_with(
+            "https://localhost:8443/architect/Resources/app-version.js",
+            verify=False)
+
+        assert version == {
+            "software_type": None,
+            "software_version": None}

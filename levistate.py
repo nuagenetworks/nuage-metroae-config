@@ -11,13 +11,14 @@ from configuration import Configuration
 from errors import LevistateError
 from template import TemplateStore
 from user_data_parser import UserDataParser
-from vsd_writer import VsdWriter
+from vsd_writer import VsdWriter, SOFTWARE_TYPE
 
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
 
 LEVISTATE_VERSION = "1.0"
 
+PROG_NAME = "metroae config"
 DEFAULT_VSD_USERNAME = 'csproot'
 DEFAULT_VSD_PASSWORD = 'csproot'
 DEFAULT_VSD_ENTERPRISE = 'csp'
@@ -30,11 +31,15 @@ ENV_VSD_PASSWORD = 'VSD_PASSWORD'
 ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+ENV_SOFTWARE_VERSION = 'SOFTWARE_VERSION'
 ENV_LOG_FILE = 'LOG_FILE'
 ENV_LOG_LEVEL = 'LOG_LEVEL'
+ENV_VSD_CERTIFICATE = 'VSD_CERTIFICATE'
+ENV_VSD_CERTIFICATE_KEY = 'VSD_CERTIFICATE_KEY'
 VALIDATE_ACTION = 'validate'
 CREATE_ACTION = 'create'
 REVERT_ACTION = 'revert'
+UPDATE_ACTION = 'update'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
@@ -115,7 +120,8 @@ def main():
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(prog=PROG_NAME,
+                                     description=DESCRIPTION)
 
     sub_parser = parser.add_subparsers(dest='action')
 
@@ -127,6 +133,9 @@ def get_parser():
 
     validate_parser = sub_parser.add_parser(VALIDATE_ACTION)
     add_parser_arguments(validate_parser)
+
+    update_parser = sub_parser.add_parser(UPDATE_ACTION)
+    add_parser_arguments(update_parser)
 
     template_parser = sub_parser.add_parser(TEMPLATE_ACTION)
     template_sub_parser = template_parser.add_subparsers(dest='templateAction')
@@ -156,6 +165,10 @@ def add_template_path_parser_argument(parser):
     parser.add_argument('--version', dest='version',
                         action='store_true', required=False,
                         help='Displays version information')
+    parser.add_argument('-sv', '--software_version', dest='software_version',
+                        action='store', required=False,
+                        default=os.getenv(ENV_SOFTWARE_VERSION, None),
+                        help='Override software version for VSD. Can also set using environment variable %s' % (ENV_SOFTWARE_VERSION))
 
 
 def add_template_parser_arguments(parser):
@@ -192,6 +205,17 @@ def add_parser_arguments(parser):
                         default=os.getenv(ENV_VSD_PASSWORD,
                                           DEFAULT_VSD_PASSWORD),
                         help='Password for VSD. Can also set using environment variable %s' % (ENV_VSD_PASSWORD))
+    parser.add_argument('-c', '--certificate', dest='certificate',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_CERTIFICATE,
+                                          None),
+                        help='Certificate used to authenticate with VSD. Can also set using environment variable %s' % (ENV_VSD_CERTIFICATE))
+    parser.add_argument('-ck', '--certificate_key', dest='certificate_key',
+                        action='store', required=False,
+                        default=os.getenv(ENV_VSD_CERTIFICATE_KEY,
+                                          None),
+                        help='Certificate Key used to authenticate with VSD. Can also set using environment variable %s' % (ENV_VSD_CERTIFICATE))
+
     parser.add_argument('-e', '--enterprise', dest='enterprise',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_ENTERPRISE,
@@ -213,6 +237,7 @@ def add_parser_arguments(parser):
 
 
 class CustomLogHandler(logging.StreamHandler):
+
     def __init__(self, stream=None):
         if stream is not None:
             super(CustomLogHandler, self).__init__(stream)
@@ -234,6 +259,7 @@ class Levistate(object):
         self.args = args
         self.template_data = list()
         self.action = action
+        self.device_version = None
 
     def setup_logging(self):
         if "log_level" not in self.args:
@@ -360,19 +386,25 @@ class Levistate(object):
 
         if (self.action == TEMPLATE_ACTION and
                 self.args.templateAction == LIST_ACTION):
-            template_names = self.store.get_template_names()
+            template_names = self.store.get_template_names(
+                self.get_software_type(),
+                self.get_software_version())
             print "\n".join(template_names)
             return True
 
         if self.action == SCHEMA_ACTION:
             for template_name in self.args.template_names:
-                template = self.store.get_template(template_name)
+                template = self.store.get_template(template_name,
+                                                   self.get_software_type(),
+                                                   self.get_software_version())
                 print template.get_schema()
             return True
 
         if self.action == EXAMPLE_ACTION:
             for template_name in self.args.template_names:
-                template = self.store.get_template(template_name)
+                template = self.store.get_template(template_name,
+                                                   self.get_software_type(),
+                                                   self.get_software_version())
                 print template.get_example()
             return True
 
@@ -387,10 +419,19 @@ class Levistate(object):
                                        username=self.args.username,
                                        password=self.args.password,
                                        enterprise=self.args.enterprise,
+                                       certificate=(self.args.certificate,
+                                                    self.args.certificate_key)
                                        )
+        if self.device_version is None:
+            self.device_version = self.writer.get_version()
 
     def setup_template_store(self):
-        self.store = TemplateStore()
+        self.store = TemplateStore(LEVISTATE_VERSION)
+
+        if self.args.software_version is not None:
+            self.device_version = {
+                "software_version": self.args.software_version,
+                "software_type": SOFTWARE_TYPE}
 
         for path in self.args.template_path:
             self.store.read_templates(path)
@@ -421,6 +462,8 @@ class Levistate(object):
 
     def apply_templates(self):
         config = Configuration(self.store)
+        config.set_software_version(self.get_software_type(),
+                                    self.get_software_version())
         config.set_logger(self.logger)
         for data in self.template_data:
             template_name = data[0]
@@ -436,6 +479,8 @@ class Levistate(object):
             self.writer.set_validate_only(validate_only)
             if self.action == REVERT_ACTION:
                 config.revert(self.writer)
+            elif self.action == UPDATE_ACTION:
+                config.update(self.writer)
             else:
                 config.apply(self.writer)
 
@@ -443,6 +488,18 @@ class Levistate(object):
 
             if self.action == VALIDATE_ACTION:
                 print str(config.root_action)
+
+    def get_software_type(self):
+        if self.device_version is not None:
+            return self.device_version['software_type']
+        else:
+            return None
+
+    def get_software_version(self):
+        if self.device_version is not None:
+            return self.device_version['software_version']
+        else:
+            return None
 
     def download_and_extract(self, url, dirName):
         if not os.path.isdir(dirName):

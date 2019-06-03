@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import requests
 
 from bambou.exceptions import BambouHTTPError
 from bambou_adapter import ConfigObject, Fetcher, Root, Session
@@ -14,6 +16,10 @@ from errors import (DeviceWriterError,
                     SessionNotStartedError)
 
 SPEC_EXTENSION = ".spec"
+SOFTWARE_TYPE = "Nuage Networks VSD"
+LEGACY_VERSION_ENDPOINT = "/Resources/app-version.js"
+VERSION_ENDPOINT = "/architect" + LEGACY_VERSION_ENDPOINT
+VERSION_TOKEN = "APP_BUILDVERSION"
 
 
 class MissingSessionParamsError(DeviceWriterError):
@@ -34,6 +40,7 @@ class VsdError(SessionError):
     """
     Exception class when there is an error from VSD
     """
+
     def __init__(self, bambou_error, location=None):
         response = bambou_error.connection.response
         message = "VSD returned error response: %s %s" % (response.status_code,
@@ -50,6 +57,7 @@ class VsdWriter(DeviceWriterBase):
     Writes configuration to a VSD.  This class is a derived class from
     the DeviceWriterBase Abstract Base Class.
     """
+
     def __init__(self):
         """
         Derived class from DeviceWriterBase.
@@ -63,7 +71,8 @@ class VsdWriter(DeviceWriterBase):
         self.root_spec_name = None
 
     def set_session_params(self, url, username="csproot",
-                           password="csproot", enterprise="csp"):
+                           password=None, enterprise="csp",
+                           certificate=None):
         """
         Sets the parameters necessary to connect to the VSD.  This must
         be called before writing or an exception will be raised.
@@ -73,6 +82,9 @@ class VsdWriter(DeviceWriterBase):
             'password': password,
             'enterprise': enterprise,
             'api_url': url}
+
+        if certificate is not None and certificate[0] is not None:
+            self.session_params['certificate'] = certificate
 
     def read_api_specifications(self, path_or_file_name):
         """
@@ -97,6 +109,43 @@ class VsdWriter(DeviceWriterBase):
     #
     # Implement all required Abstract Base Class prototype functions.
     #
+    def get_version(self):
+        """
+        Returns the version running on the device in format:
+            {"software_version": "xxx",
+             "software_type": "xxx"}
+        """
+        try:
+            version_url = self.session_params['api_url'] + VERSION_ENDPOINT
+            resp = requests.get(version_url, verify=False)
+
+            if resp.status_code == 404:
+                legacy_version_url = (
+                    self.session_params['api_url'] + LEGACY_VERSION_ENDPOINT)
+                legacy_resp = requests.get(legacy_version_url, verify=False)
+
+                if legacy_resp.status_code == 200:
+                    resp = legacy_resp
+
+            if resp.status_code != 200:
+                raise Exception("Status code %d from URL %s" % (
+                    resp.status_code, version_url))
+
+            version = self._parse_version_output(resp.text)
+
+            self.log.output("Device: %s %s" % (SOFTWARE_TYPE, version))
+
+            return {
+                "software_version": version,
+                "software_type": SOFTWARE_TYPE}
+
+        except Exception as e:
+            self.log.output("WARNING: Could not determine VSD version")
+            self.log.error("Could not determine VSD version: %s" % str(e))
+            return {
+                "software_version": None,
+                "software_type": None}
+
     def start_session(self):
         """
         Starts a session with the VSD
@@ -107,6 +156,14 @@ class VsdWriter(DeviceWriterBase):
             if self.session_params is None:
                 raise MissingSessionParamsError(
                     "Cannot start session without parameters")
+            else:
+                if (self.session_params['password'] is None and
+                      (not self.session_params.has_key('certificate') or
+                       self.session_params['certificate'][0] is None or
+                       self.session_params['certificate'][1] is None)):
+                    raise MissingSessionParamsError(
+                        """Cannot start session without password or certificate
+                         parameter""")
 
             self.log.debug(location)
 
@@ -149,6 +206,35 @@ class VsdWriter(DeviceWriterBase):
             if self.validate_only is False:
                 self.session.reset()
             self.session = None
+
+    def update_object(self, object_name, by_field, select_value, context=None):
+        """
+        Update an object in the current context, object is not saved to VSD
+        """
+        location = "Update object %s %s = %s [%s]" % (object_name,
+                                                      by_field,
+                                                      select_value,
+                                                      context)
+        self.log.debug(location)
+        self._check_session()
+        try :
+            if select_value is not None:
+                new_context = self.select_object(object_name,
+                                                 by_field,
+                                                 select_value,
+                                                 context)
+                selectedId = new_context.current_object.id
+
+                new_context = self._get_new_child_context(context)
+
+                new_context.current_object = self._get_new_config_object(
+                    object_name)
+                new_context.current_object.id = selectedId
+                new_context.object_exists = True
+
+                return new_context
+        except MissingSelectionError:
+            return self.create_object(object_name, context)
 
     def create_object(self, object_name, context=None):
         """
@@ -318,6 +404,14 @@ class VsdWriter(DeviceWriterBase):
     # Private functions to do the work
     #
 
+    def _parse_version_output(self, version_text):
+        match = re.search(VERSION_TOKEN + "=.([0-9.]+)", version_text)
+        if match is None:
+            raise Exception("Could not find version from endpoint text: %s" %
+                            version_text)
+
+        return match.group(1)
+
     def _read_specification(self, file_name):
         try:
             with open(file_name, 'r') as file:
@@ -469,12 +563,7 @@ class VsdWriter(DeviceWriterBase):
         for field, value in kwargs.iteritems():
             local_name = field.lower()
             self._get_attribute_name(obj.spec, field)
-            if hasattr(obj, local_name):
-                setattr(obj, local_name, value)
-            else:
-                raise SessionError("Missing field %s in %s object" %
-                                   (local_name,
-                                    obj.get_name()))
+            setattr(obj, local_name, value)
 
     def _get_attribute(self, obj, field):
         self._get_attribute_name(obj.spec, field)
@@ -520,10 +609,10 @@ class VsdWriter(DeviceWriterBase):
                 messages.append("%s: %s" % (attr_name, message))
             raise InvalidValueError("Invalid values: " + ', '.join(messages))
 
-
 #
 # Private classes to do the work
 #
+
 
 class Context(object):
     """
@@ -531,6 +620,7 @@ class Context(object):
     objects.  This class is intended to be private and should not be directly
     modified by external callers of the VSD Writer.
     """
+
     def __init__(self):
         self.parent_object = None
         self.current_object = None

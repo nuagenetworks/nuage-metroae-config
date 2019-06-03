@@ -3,6 +3,7 @@ import os
 import pytest
 
 from levistate.template import (MissingTemplateError,
+                                Template,
                                 TemplateParseError,
                                 TemplateStore,
                                 UndefinedVariableError,
@@ -76,6 +77,63 @@ INVALID_VALUES_CASES = [
     ({"int_list": [1, 0]}, "not in valid range"),
     ({"int_list": [11]}, "not in valid range"),
     ({"soda_list": ["coke", "coffee"]}, "not a valid choice")]
+
+VERSION_COMPARE_CASES = [
+    ("1.2.3", "1.2.3", 0),
+    ("1.2.4", "1.2.3", 1),
+    ("1.2.3", "1.2.4", -1),
+    ("2.2.3", "1.2.3", 1),
+    ("1.2.3", "2.2.3", -1),
+    ("1.3.3", "1.2.3", 1),
+    ("1.2.3", "1.3.3", -1),
+    ("2.0", "1.2.3", 1),
+    ("1.2.3", "2.0", -1),
+    ("1.2.3.4", "1.2.3", 1),
+    ("1.2.3", "1.2.3.4", -1),
+    ("1.2.3.4", "1.2.3", 1),
+    ("1.2.3", "1.2.3.4", -1),
+    ("1.2.R1", "1.2.R2", 0),
+    ("1.2.3.R1", "1.2.3", 1),
+    ("1.2.3", "1.2.3.R1", -1),
+    ("1.2.3.R1", "1.2.4", -1),
+    ("1.2.4", "1.2.3.R1", 1),
+    ("foo", "bar", 0)]
+
+MATCHING_VERSION_CASES = [
+    ("Nuage Networks VSD", "Nuage Networks VSD", "5.4.1", "5.4.1", True),
+    ("Nuage Networks VSD", "Nuage Networks VSD", "5.4.1", "5.4.2", True),
+    ("Nuage Networks VSD", "Nuage Networks VSD", "5.4.2", "5.4.1", False),
+    ("Acme Router", "Nuage Networks VSD", "5.4.1", "5.4.1", False),
+    ("Acme Router", "Nuage Networks VSD", "5.4.1", "5.4.1", False),
+    (None, "Nuage Networks VSD", "5.4.1", "5.4.1", False),
+    ("Nuage Networks VSD", None, "9.9.9", "5.4.1", True),
+    (None, None, "9.9.9", "5.4.1", True),
+    ("Nuage Networks VSD", "Nuage Networks VSD", None, "5.4.1", False),
+    ("Nuage Networks VSD", "Nuage Networks VSD", "5.4.1", None, True),
+    ("Nuage Networks VSD", "Nuage Networks VSD", None, None, True),
+    (None, None, None, None, True)]
+
+NEWER_VERSION_CASES = [
+    ("5.4.1", "5.4.1", "1.0", "1.0", False),
+    ("5.4.1", "5.4.2", "1.0", "1.0", False),
+    ("5.4.2", "5.4.1", "1.0", "1.0", True),
+    ("5.4.1", "5.4.1", "1.1", "1.0", True),
+    ("5.4.1", "5.4.1", "1.0", "1.1", False),
+    ("5.4.1", "5.4.1", "2.0", "1.0", True),
+    ("5.4.1", "5.4.1", "1.0", "2.0", False),
+    (None, "5.4.1", "1.0", "1.0", False),
+    ("5.4.1", None, "1.0", "1.0", True),
+    (None, None, "1.0", "1.0", False),
+    (None, None, "1.1", "1.0", True),
+    (None, None, "1.0", "1.1", False)]
+
+ENGINE_VERSION_CASES = [
+    ("1.0", "1.0", True),
+    ("1.0", "1.1", True),
+    ("1.1", "1.0", False),
+    ("1.0", "2.0", True),
+    ("2.0", "1.0", False),
+    ("2.0", None, True)]
 
 
 class TestTemplateParsing(object):
@@ -492,3 +550,233 @@ class TestTemplateVariableValidation(object):
 
         assert "true_or_false" in str(e)
         assert "string_list" in str(e)
+
+
+class TestTemplateVersioning(object):
+
+    @pytest.mark.parametrize("version_l, version_r, compare",
+                             VERSION_COMPARE_CASES)
+    def test_version_compare__success(self, version_l, version_r, compare):
+        template = Template()
+        assert template._version_compare(version_l, version_r) == compare
+
+    @pytest.mark.parametrize(
+        "template_type, device_type, template_version, device_version, match",
+        MATCHING_VERSION_CASES)
+    def test_matching_version__success(self, template_type, device_type,
+                                       template_version, device_version,
+                                       match):
+        template = Template()
+        template.software_type = template_type
+        template.software_version = template_version
+        device = {"software_type": device_type,
+                  "software_version": device_version}
+        assert template.is_matching_version(device) == match
+
+    @pytest.mark.parametrize(
+        "this_version, other_version, this_revision, other_revision, match",
+        NEWER_VERSION_CASES)
+    def test_newer_version__success(self, this_version, other_version,
+                                    this_revision, other_revision, match):
+        this = Template()
+        other = Template()
+        this.software_version = this_version
+        other.software_version = other_version
+        this.template_version = this_revision
+        other.template_version = other_revision
+
+        assert this.is_newer_than(other) == match
+
+    @pytest.mark.parametrize("template_version, engine_version, match",
+                             ENGINE_VERSION_CASES)
+    def test_engine_version__success(self, template_version, engine_version,
+                                     match):
+        template = Template()
+        template.engine_version = template_version
+        assert template.is_supported_by_engine(engine_version) == match
+
+    def add_template_data(self, store):
+        self.add_template(store, 0, "Template 1", "VSD", "5.4.1", "1.0", "1.0")
+        self.add_template(store, 1, "Template 1", "VSD", "5.4.2", "1.0", "1.1")
+        self.add_template(store, 2, "Template 1", "VSD", "5.4.1", "1.1", "1.0")
+        self.add_template(store, 3, "Template 1", "Acme", "5.4.1", "2.0",
+                          "1.0")
+        self.add_template(store, 4, "Template 2", "VSD", "5.4.2", "1.0", "1.1")
+        self.add_template(store, 5, "Template 3", "Acme", "5.4.1", "1.0",
+                          "1.0")
+
+    def add_template(self, store, id, name, software_type, software_version,
+                     template_version, engine_version):
+        template = Template()
+        template.id = id
+        template.name = name
+        template.software_type = software_type
+        template.software_version = software_version
+        template.template_version = template_version
+        template.engine_version = engine_version
+
+        store._register_template(template)
+
+    def test_get_template__no_engine_version(self):
+        store = TemplateStore()
+
+        self.add_template_data(store)
+
+        assert store.get_template("Template 1", "VSD", "5.4.1").id == 2
+        assert store.get_template("Template 1", "VSD", "6.0.0").id == 1
+        assert store.get_template("Template 1", "Acme", "5.4.1").id == 3
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 1", "VSD", "5.4.0")
+        assert "Template 1" in str(e)
+        assert "VSD" in str(e)
+        assert "5.4.0" in str(e)
+
+        assert store.get_template("Template 2", "VSD", "6.0.0").id == 4
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 2", "Acme", "6.0.0")
+        assert "Template 2" in str(e)
+        assert "Acme" in str(e)
+        assert "6.0.0" in str(e)
+
+        assert store.get_template("Template 3", "Acme", "6.0.0").id == 5
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 3", "VSD", "6.0.0")
+        assert "Template 3" in str(e)
+        assert "VSD" in str(e)
+        assert "6.0.0" in str(e)
+
+        assert store.get_template("Template 1").id == 1
+        assert store.get_template("Template 2").id == 4
+        assert store.get_template("Template 3").id == 5
+
+    def test_get_names__no_engine_version(self):
+        store = TemplateStore()
+
+        self.add_template_data(store)
+
+        assert store.get_template_names("VSD", "5.4.0") == []
+        assert store.get_template_names("VSD", "5.4.1") == ["Template 1"]
+        assert store.get_template_names("VSD", "5.4.2") == [
+            "Template 1", "Template 2"]
+        assert store.get_template_names() == [
+            "Template 1", "Template 2", "Template 3"]
+        assert store.get_template_names("Acme", "5.4.1") == [
+            "Template 1", "Template 3"]
+
+    def test_get_template__engine_1_0(self):
+        store = TemplateStore("1.0")
+
+        self.add_template_data(store)
+
+        assert store.get_template("Template 1", "VSD", "5.4.1").id == 2
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 1", "VSD", "6.0.0")
+        assert "Template 1" in str(e)
+        assert "engine version" in str(e)
+        assert "1.1" in str(e)
+
+        assert store.get_template("Template 1", "Acme", "5.4.1").id == 3
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 1", "VSD", "5.4.0")
+        assert "Template 1" in str(e)
+        assert "VSD" in str(e)
+        assert "5.4.0" in str(e)
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 2", "VSD", "6.0.0")
+        assert "Template 2" in str(e)
+        assert "engine version" in str(e)
+        assert "1.1" in str(e)
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 2", "Acme", "6.0.0")
+        assert "Template 2" in str(e)
+        assert "Acme" in str(e)
+        assert "6.0.0" in str(e)
+
+        assert store.get_template("Template 3", "Acme", "6.0.0").id == 5
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 3", "VSD", "6.0.0")
+        assert "Template 3" in str(e)
+        assert "VSD" in str(e)
+        assert "6.0.0" in str(e)
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 1")
+        assert "Template 1" in str(e)
+        assert "engine version" in str(e)
+        assert "1.1" in str(e)
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 2")
+        assert "Template 2" in str(e)
+        assert "engine version" in str(e)
+        assert "1.1" in str(e)
+
+        assert store.get_template("Template 3").id == 5
+
+    def test_get_names__engine_1_0(self):
+        store = TemplateStore("1.0")
+
+        self.add_template_data(store)
+
+        assert store.get_template_names("VSD", "5.4.0") == []
+        assert store.get_template_names("VSD", "5.4.1") == ["Template 1"]
+        assert store.get_template_names("VSD", "5.4.2") == []
+        assert store.get_template_names() == ["Template 3"]
+        assert store.get_template_names("Acme", "5.4.1") == [
+            "Template 1", "Template 3"]
+
+    def test_get_template__engine_1_1(self):
+        store = TemplateStore("1.1")
+
+        self.add_template_data(store)
+
+        assert store.get_template("Template 1", "VSD", "5.4.1").id == 2
+        assert store.get_template("Template 1", "VSD", "6.0.0").id == 1
+        assert store.get_template("Template 1", "Acme", "5.4.1").id == 3
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 1", "VSD", "5.4.0")
+        assert "Template 1" in str(e)
+        assert "VSD" in str(e)
+        assert "5.4.0" in str(e)
+
+        assert store.get_template("Template 2", "VSD", "6.0.0").id == 4
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 2", "Acme", "6.0.0")
+        assert "Template 2" in str(e)
+        assert "Acme" in str(e)
+        assert "6.0.0" in str(e)
+
+        assert store.get_template("Template 3", "Acme", "6.0.0").id == 5
+
+        with pytest.raises(MissingTemplateError) as e:
+            store.get_template("Template 3", "VSD", "6.0.0")
+        assert "Template 3" in str(e)
+        assert "VSD" in str(e)
+        assert "6.0.0" in str(e)
+
+        assert store.get_template("Template 1").id == 1
+        assert store.get_template("Template 2").id == 4
+        assert store.get_template("Template 3").id == 5
+
+    def test_get_names__engine_1_1(self):
+        store = TemplateStore("1.1")
+
+        self.add_template_data(store)
+
+        assert store.get_template_names("VSD", "5.4.0") == []
+        assert store.get_template_names("VSD", "5.4.1") == ["Template 1"]
+        assert store.get_template_names("VSD", "5.4.2") == [
+            "Template 1", "Template 2"]
+        assert store.get_template_names() == [
+            "Template 1", "Template 2", "Template 3"]
+        assert store.get_template_names("Acme", "5.4.1") == [
+            "Template 1", "Template 3"]

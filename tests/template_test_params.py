@@ -50,6 +50,7 @@ EXPECTED_DOMAIN_TEMPLATE = \
                                 'as-name': 'domain_template_id'}}]}},
                   {'create-object':
                       {'type': 'Domain',
+                       'update-supported': False,
                        'actions': [
                            {'set-values':
                                {'name': 'test_domain'}},

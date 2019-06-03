@@ -17,6 +17,7 @@ class Configuration(object):
         self.software_type = None
         self.data = collections.OrderedDict()
         self.log = Logger()
+        self.is_update = False
 
     def set_logger(self, logger):
         self.log = logger
@@ -24,14 +25,14 @@ class Configuration(object):
     def get_logger(self):
         return self.log
 
-    def set_software_version(self, software_version, software_type=None):
+    def set_software_version(self, software_type=None, software_version=None):
         """
         Sets the current software version of templates that is desired.
         If not called, the latest software version of templates will be
         used.
         """
-        raise NotImplementedError(
-            "Template software versioning not yet implemented")
+        self.software_type = software_type
+        self.software_version = software_version
 
     def get_template_names(self):
         """
@@ -39,8 +40,8 @@ class Configuration(object):
         In reality, this just calls the template_store function with
         the currently set software_version and software_type.
         """
-        return self.store.get_template_names(self.software_version,
-                                             self.software_type)
+        return self.store.get_template_names(self.software_type,
+                                             self.software_version)
 
     def get_template(self, name):
         """
@@ -49,8 +50,8 @@ class Configuration(object):
         set software_version and software_type.
         """
         return self.store.get_template(name,
-                                       self.software_version,
-                                       self.software_type)
+                                       self.software_type,
+                                       self.software_version)
 
     def add_template_data(self, template_name, **template_data):
         """
@@ -108,7 +109,8 @@ class Configuration(object):
         not be considered conflicts.  Returns True if ok, otherwise
         an exception is raised.
         """
-        raise NotImplementedError("Template update not yet implemented")
+        self._execute_templates(writer, is_update=True)
+        return True
 
     def revert(self, writer):
         """
@@ -163,9 +165,10 @@ class Configuration(object):
     def _get_template_key(self, id):
         return id['key']
 
-    def _execute_templates(self, writer, is_revert=False):
+    def _execute_templates(self, writer, is_revert=False, is_update=False):
         self.root_action = Action(None)
         self.root_action.set_logger(self.log)
+        self.is_update = is_update
         if is_revert is True:
             self._walk_data(self._revert_data)
         else:
@@ -186,6 +189,7 @@ class Configuration(object):
         template_dict = template._parse_with_vars(**data)
         self.root_action.reset_state()
         self.root_action.set_revert(False)
+        self.root_action.set_update(self.is_update)
         self.root_action.set_template_name(template.get_name())
         self.root_action.read_children_actions(template_dict)
 

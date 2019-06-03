@@ -1158,3 +1158,212 @@ actions:
             name: domain_template
 
 """)
+
+
+STORE_RETRIEVE_TO_OBJECT = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Enterprise
+    Actions:
+    - Set-values:
+        name: enterprise1
+    - Create-object:
+        Type: NSGatewayTemplate
+        Actions:
+        - Store-value:
+            As-name: template_id
+            from-field: id
+        - Set-values:
+            name: nsg_template
+    - create-object:
+        type: Job
+        actions:
+        - Set-values:
+            parameters:
+                type: ISO
+        - Retrieve-value:
+            From-name: template_id
+            To-field: parameters.entityID
+
+""")
+
+
+STORE_RETRIEVE_TO_OBJECT_NOT_SET = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Enterprise
+    Actions:
+    - Set-values:
+        name: enterprise1
+    - Create-object:
+        Type: NSGatewayTemplate
+        Actions:
+        - Store-value:
+            As-name: template_id
+            from-field: id
+        - Set-values:
+            name: nsg_template
+    - create-object:
+        type: Job
+        actions:
+        - Set-values:
+            wrongName:
+                type: ISO
+        - Retrieve-value:
+            From-name: template_id
+            To-field: parameters.entityID
+
+""")
+
+
+STORE_RETRIEVE_TO_OBJECT_NOT_DICT = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Enterprise
+    Actions:
+    - Set-values:
+        name: enterprise1
+    - Create-object:
+        Type: NSGatewayTemplate
+        Actions:
+        - Store-value:
+            As-name: template_id
+            from-field: id
+        - Set-values:
+            name: nsg_template
+    - create-object:
+        type: Job
+        actions:
+        - Set-values:
+            parameters: not a dictionary
+        - Retrieve-value:
+            From-name: template_id
+            To-field: parameters.entityID
+
+""")
+
+
+STORE_RETRIEVE_TO_OBJECT_ALREADY_SET = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Enterprise
+    Actions:
+    - Set-values:
+        name: enterprise1
+    - Create-object:
+        Type: NSGatewayTemplate
+        Actions:
+        - Store-value:
+            As-name: template_id
+            from-field: id
+        - Set-values:
+            name: nsg_template
+    - create-object:
+        type: Job
+        actions:
+        - Set-values:
+            parameters:
+                type: ISO
+                entityID: already set
+        - Retrieve-value:
+            From-name: template_id
+            To-field: parameters.entityID
+
+""")
+
+
+SAVE_TO_FILE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Job
+    Actions:
+      - set-values:
+          command: GET_ZFB_INFO
+          parameters:
+              mediaType: ISO
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Append-to-file: false
+          From-field: result
+          Write-to-console: True
+
+""")
+
+
+SAVE_TO_FILE_AND_CONSOLE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Job
+    Actions:
+      - set-values:
+          command: GET_ZFB_INFO
+          parameters:
+              mediaType: ISO
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Append-to-file: false
+          From-field: result
+          Write-to-console: true
+""")
+
+
+SAVE_TO_FILE_NO_FILE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Job
+    Actions:
+      - set-values:
+          command: GET_ZFB_INFO
+          parameters:
+              mediaType: ISO
+      - Save-to-file:
+          Append-to-file: false
+          From-field: result
+
+""")
+
+
+SAVE_TO_FILE_APPEND = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Job
+    Actions:
+      - set-values:
+          command: GET_ZFB_INFO
+          parameters:
+              mediaType: ISO
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Prefix-string: "no:"
+          Suffix-string: ":value"
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Append-to-file: true
+          Prefix-string: "prefix:"
+          From-field: result
+          Suffix-string: ":suffix"
+          Write-to-console: False
+""")
+
+UPDATE_ROOT_OBJECT = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    Actions:
+    - Set-values:
+        name: L1-O1
+""")
+
+UPDATE_CREATE_CHILD_OBJECT = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - Create-object:
+        Type: Level2
+        Actions:
+        - Set-values:
+            name: L2-O1
+""")

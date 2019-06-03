@@ -64,6 +64,23 @@ class MockWriter(object):
                                                        str(context)))
         return self._new_context()
 
+    def update_object(self, object_name, by_field, value, context=None):
+        """
+        Updates an object in the current context, object is not saved to device
+        """
+        try:
+            self.select_object(object_name, by_field, value, context)
+            self._record_action("update-object %s %s = %s [%s]" % (object_name,
+                                                                   by_field,
+                                                                   str(value),
+                                                                   str(context)
+                                                                   ))
+
+        except Exception:
+            self.create_object(object_name, context)
+
+        return self._new_context()
+
     def select_object(self, object_name, by_field, value, context=None):
         """
         Selects an object in the current context

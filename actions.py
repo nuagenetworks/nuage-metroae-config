@@ -103,6 +103,8 @@ class Action(object):
             new_action = StoreValueAction(parent, state)
         elif action_type == "retrieve-value":
             new_action = RetrieveValueAction(parent, state)
+        elif action_type == "save-to-file":
+            new_action = SaveToFileAction(parent, state)
         else:
             raise TemplateParseError("Invalid action: " + str(action_key))
 
@@ -121,6 +123,9 @@ class Action(object):
 
     def set_revert(self, is_revert=True):
         self.state['is_revert'] = is_revert
+
+    def set_update(self, is_update=True):
+        self.state['is_update'] = is_update
 
     def set_store_only(self, store_only=True):
         self.state['is_store_only'] = store_only
@@ -185,6 +190,9 @@ class Action(object):
 
     def is_revert(self):
         return 'is_revert' in self.state and self.state['is_revert'] is True
+
+    def is_update(self):
+        return 'is_update' in self.state and self.state['is_update'] is True
 
     def is_store_only(self):
         return ('is_store_only' in self.state and
@@ -306,6 +314,7 @@ class CreateObjectAction(Action):
         super(CreateObjectAction, self).__init__(parent, state)
         self.object_type = None
         self.select_by_field = DEFAULT_SELECTION_FIELD
+        self.is_updatable = True
 
     def is_create(self):
         return True
@@ -320,13 +329,23 @@ class CreateObjectAction(Action):
         if field is not None:
             self.select_by_field = field
 
+        updatable = Action.get_dict_field(create_dict, 'update-supported')
+        if updatable is not None:
+            self.is_updatable = updatable
+
         self.log.debug(self._get_location("Reading "))
 
         self.read_children_actions(create_dict)
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
-            new_context = writer.create_object(self.object_type, context)
+            if not self.is_update():
+                new_context = writer.create_object(self.object_type, context)
+            else:
+                new_context = writer.update_object(self.object_type,
+                                                   self.select_by_field,
+                                                   self.get_select_value(),
+                                                   context)
             self.execute_children(writer, new_context)
         else:
             if not self.is_store_only():
@@ -419,6 +438,7 @@ class SelectObjectAction(Action):
         self.field = None
         self.value = None
         self.is_child_find = False
+        self.is_updatable = False
 
     def is_select(self):
         return True
@@ -438,6 +458,10 @@ class SelectObjectAction(Action):
         if self.value is None:
             raise TemplateParseError(
                 "Select object action missing required 'value' field")
+
+        updatable = Action.get_dict_field(select_dict, 'update-supported')
+        if updatable is not None:
+            self.is_updatable = updatable
 
         if type(self.field) == list:
             if type(self.value) != list:
@@ -726,6 +750,7 @@ class SetValuesAction(Action):
 
     def execute(self, writer, context=None):
         if self.is_revert() is False:
+            resolved_attributes = None
             if (self.parent.is_select() and
                     self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
                 attributes_copy = dict(self.resolve_attributes())
@@ -735,15 +760,16 @@ class SetValuesAction(Action):
                 resolved_attributes = attributes_copy
             else:
                 resolved_attributes = self.resolve_attributes()
-            if resolved_attributes != dict():
+            if ((not self.parent.is_update() or self.parent.is_updatable)
+                    and resolved_attributes != dict()):
                 writer.set_values(context, **resolved_attributes)
+
 
     def resolve_attributes(self):
         attributes_copy = dict()
         for key, value in self.attributes.iteritems():
             if isinstance(value, Action):
                 resolved_value = value.get_stored_value()
-                attributes_copy[key] = resolved_value
             elif (type(value) == list and
                     len(value) > 0 and
                     isinstance(value[0], Action)):
@@ -751,9 +777,37 @@ class SetValuesAction(Action):
                 for item in value:
                     resolved_item = item.get_stored_value()
                     resolved_list.append(resolved_item)
-                attributes_copy[key] = resolved_list
+                resolved_value = resolved_list
             else:
-                attributes_copy[key] = value
+                resolved_value = value
+
+            if "." in key:
+                obj_name, param = key.split(".")
+                if obj_name not in attributes_copy:
+                    if obj_name not in self.attributes:
+                        raise ConflictError("Field '%s' of object %s"
+                                            " is not set" %
+                                            (str(obj_name),
+                                             str(self.parent.object_type)))
+                    if type(self.attributes[obj_name]) is not dict:
+                        raise ConflictError("Field '%s' of object %s"
+                                            " is not a dictionary" %
+                                            (str(obj_name),
+                                             str(self.parent.object_type)))
+
+                    attributes_copy[obj_name] = dict(self.attributes[obj_name])
+
+                if param in attributes_copy[obj_name]:
+                    raise ConflictError("Param '%s' in field '%s' of object %s"
+                                        " is already set" %
+                                        (str(param),
+                                         str(obj_name),
+                                         str(self.parent.object_type)))
+                attributes_copy[obj_name][param] = resolved_value
+            else:
+                if (type(resolved_value) is not dict or
+                        key not in attributes_copy):
+                    attributes_copy[key] = resolved_value
 
         return attributes_copy
 
@@ -827,7 +881,7 @@ class StoreValueAction(Action):
             raise TemplateActionError(
                 'Value of name %s already stored' % self.as_name)
 
-        self.mark_ancestors_for_reorder(self.as_name, is_store=True)
+        self.mark_ancestors_for_reorder(self, is_store=True)
 
     def get_stored_value(self):
         if self.stored_value is not None:
@@ -896,4 +950,74 @@ class RetrieveValueAction(SetValuesAction):
             self.append_list_attribute(self.to_field, stored_action)
         else:
             self.add_attribute(self.to_field, stored_action)
-        self.mark_ancestors_for_reorder(self.from_name, is_store=False)
+        self.mark_ancestors_for_reorder(stored_action, is_store=False)
+
+
+class SaveToFileAction(Action):
+
+    def __init__(self, parent, state):
+        super(SaveToFileAction, self).__init__(parent, state)
+        self.file_path = None
+        self.from_field = None
+        self.append_to_file = True
+        self.prefix_string = None
+        self.suffix_string = None
+        self.write_to_console = False
+
+    def read(self, save_to_file_dict):
+        self.file_path = Action.get_dict_field(save_to_file_dict,
+                                               'file-path')
+        if self.file_path is None:
+            raise TemplateParseError(
+                "Save to file action missing required 'file-path' field")
+
+        self.from_field = Action.get_dict_field(save_to_file_dict,
+                                                'from-field')
+
+        append_to_file = Action.get_dict_field(save_to_file_dict,
+                                               'append-to-file')
+        if append_to_file is not None:
+            self.append_to_file = append_to_file
+
+        self.prefix_string = Action.get_dict_field(save_to_file_dict,
+                                                   'prefix-string')
+
+        self.suffix_string = Action.get_dict_field(save_to_file_dict,
+                                                   'suffix-string')
+
+        self.write_to_console = Action.get_dict_field(save_to_file_dict,
+                                                      'write-to-console')
+
+        self.log.debug(self._get_location("Reading "))
+
+        if self.parent is None or self.parent.parent is None:
+            raise TemplateActionError("No object exists for saving values")
+
+    def execute(self, writer, context=None):
+        if self.is_revert() is False and not writer.is_validate_only():
+            if self.from_field is not None:
+                field_value = writer.get_value(self.from_field, context)
+
+            file_mode = "w" if self.append_to_file is False else "a"
+            console_text = ""
+            with open(self.file_path, file_mode) as f:
+                if self.prefix_string is not None:
+                    console_text += self.prefix_string
+                    f.write(self.prefix_string)
+                if self.from_field is not None:
+                    console_text += field_value
+                    f.write(field_value)
+                if self.suffix_string is not None:
+                    console_text += self.suffix_string
+                    f.write(self.suffix_string)
+
+                if self.write_to_console:
+                    self.log.output(console_text)
+
+    def _to_string(self, indent_level):
+        indent = Action._indent(indent_level)
+
+        cur_output = "%s[save %s to file %s]" % (indent,
+                                                 str(self.from_field),
+                                                 str(self.file_path))
+        return cur_output
