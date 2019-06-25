@@ -1795,11 +1795,11 @@ class TestActionsExecute(object):
         """
 
         self.run_execute_with_exception(UPDATE_ROOT_OBJECT,
-                                    expected_actions,
-                                    MissingSelectionError("test exception"),
-                                    'select-object Level1 name = L1-O1 [None]',
-                                    expect_error=False,
-                                    is_update=True)
+                                        expected_actions,
+                                        MissingSelectionError("test exception"),
+                                        'select-object Level1 name = L1-O1 [None]',
+                                        expect_error=False,
+                                        is_update=True)
 
     def test_update_action__update_child_object(self):
 
@@ -1832,8 +1832,8 @@ class TestActionsExecute(object):
         """
 
         self.run_execute_with_exception(UPDATE_CREATE_CHILD_OBJECT,
-                                expected_actions,
-                                MissingSelectionError("test exception"),
-                                'select-object Level2 name = L2-O1 [context_2]',
-                                expect_error=False,
-                                is_update=True)
+                                        expected_actions,
+                                        MissingSelectionError("test exception"),
+                                        'select-object Level2 name = L2-O1 [context_2]',
+                                        expect_error=False,
+                                        is_update=True)

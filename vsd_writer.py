@@ -158,7 +158,7 @@ class VsdWriter(DeviceWriterBase):
                     "Cannot start session without parameters")
             else:
                 if (self.session_params['password'] is None and
-                      (not self.session_params.has_key('certificate') or
+                   ('certificate' not in self.session_params or
                        self.session_params['certificate'][0] is None or
                        self.session_params['certificate'][1] is None)):
                     raise MissingSessionParamsError(
@@ -217,7 +217,7 @@ class VsdWriter(DeviceWriterBase):
                                                       context)
         self.log.debug(location)
         self._check_session()
-        try :
+        try:
             if select_value is not None:
                 new_context = self.select_object(object_name,
                                                  by_field,
