@@ -1354,6 +1354,33 @@ actions:
         name: L1-O1
 """)
 
+UPDATE_ROOT_UPDATE_NOT_SUPPORTED_OBJECT = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    update-supported: False
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - store-value:
+        as-name: level1_id
+        from-field: id
+""")
+
+UPDATE_SELECT_ROOT_OBJECT = yaml.safe_load("""
+actions:
+- Select-object:
+    Type: Level1
+    by-field: name
+    value: L1-01
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - store-value:
+        as-name: level1_id
+        from-field: id
+""")
+
 UPDATE_CREATE_CHILD_OBJECT = yaml.safe_load("""
 actions:
 - Create-object:
