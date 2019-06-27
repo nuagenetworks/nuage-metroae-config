@@ -66,7 +66,9 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
                                 STORE_SAME_TWICE,
                                 UPDATE_CREATE_CHILD_OBJECT,
-                                UPDATE_ROOT_OBJECT)
+                                UPDATE_ROOT_OBJECT,
+                                UPDATE_ROOT_UPDATE_NOT_SUPPORTED_OBJECT,
+                                UPDATE_SELECT_ROOT_OBJECT)
 from levistate.actions import Action
 from levistate.errors import (ConflictError,
                               InvalidAttributeError,
@@ -992,6 +994,7 @@ class TestActionsExecute(object):
 
         assert writer.get_recorded_actions() == expected_actions_formatted
         if expect_error:
+            print(e)
             assert e.value == exception
             return e
 
@@ -1790,7 +1793,7 @@ class TestActionsExecute(object):
             start-session
             select-object Level1 name = L1-O1 [None]
             create-object Level1 [None]
-            set-values name=L1-O1 [context_2]
+            set-values name=L1-O1 [context_1]
             stop-session
         """
 
@@ -1800,6 +1803,38 @@ class TestActionsExecute(object):
                                     'select-object Level1 name = L1-O1 [None]',
                                     expect_error=False,
                                     is_update=True)
+
+    def test_update_action__create_root_object_update_not_supported(self):
+
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-O1 [None]
+            create-object Level1 [None]
+            set-values name=L1-O1 [context_1]
+            get-value id [context_1]
+            stop-session
+        """
+
+        self.run_execute_with_exception(UPDATE_ROOT_UPDATE_NOT_SUPPORTED_OBJECT,
+                                    expected_actions,
+                                    MissingSelectionError("test exception"),
+                                    'select-object Level1 name = L1-O1 [None]',
+                                    expect_error=False,
+                                    is_update=True)
+
+    def test_update_action__select_root_object(self):
+
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-01 [None]
+            set-values name=L1-O1 [context_1]
+            get-value id [context_1]
+            stop-session
+        """
+
+        self.run_execute_test(UPDATE_SELECT_ROOT_OBJECT,
+                              expected_actions,
+                              is_update=True)
 
     def test_update_action__update_child_object(self):
 
@@ -1827,7 +1862,7 @@ class TestActionsExecute(object):
             set-values name=L1-O1 [context_2]
             select-object Level2 name = L2-O1 [context_2]
             create-object Level2 [context_2]
-            set-values name=L2-O1 [context_5]
+            set-values name=L2-O1 [context_4]
             stop-session
         """
 

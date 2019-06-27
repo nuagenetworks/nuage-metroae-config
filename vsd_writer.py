@@ -400,6 +400,9 @@ class VsdWriter(DeviceWriterBase):
 
         return value
 
+    def does_object_exist(self, context=None):
+        return context is not None and context.object_exists
+
     #
     # Private functions to do the work
     #
@@ -443,7 +446,7 @@ class VsdWriter(DeviceWriterBase):
 
     def _validate_specification_field(self, field, section):
         if field not in section or section[field] is None:
-            raise InvalidSpecification("'%s' missing in specification" % field)
+            raise InvalidSpecification("'%s' missing in specification %s " % (field, section))
 
     def _get_specification(self, object_name):
         name_key = object_name.lower()
