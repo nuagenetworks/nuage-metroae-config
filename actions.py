@@ -760,8 +760,9 @@ class SetValuesAction(Action):
                 resolved_attributes = attributes_copy
             else:
                 resolved_attributes = self.resolve_attributes()
-            if ((not self.parent.is_update() or not writer.does_object_exist(context)
-                    or self.parent.is_updatable)
+            if ((not self.parent.is_update()
+                    or self.parent.is_updatable
+                    or not writer.does_object_exist(context))
                     and resolved_attributes != dict()):
                 writer.set_values(context, **resolved_attributes)
 

@@ -994,7 +994,6 @@ class TestActionsExecute(object):
 
         assert writer.get_recorded_actions() == expected_actions_formatted
         if expect_error:
-            print(e)
             assert e.value == exception
             return e
 
