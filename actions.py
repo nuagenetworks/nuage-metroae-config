@@ -765,7 +765,6 @@ class SetValuesAction(Action):
                     and resolved_attributes != dict()):
                 writer.set_values(context, **resolved_attributes)
 
-
     def resolve_attributes(self):
         attributes_copy = dict()
         for key, value in self.attributes.iteritems():
