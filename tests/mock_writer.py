@@ -77,7 +77,7 @@ class MockWriter(object):
                                                                    ))
 
         except Exception:
-            self.create_object(object_name, context)
+            return self.create_object(object_name, context)
 
         return self._new_context()
 
@@ -123,3 +123,9 @@ class MockWriter(object):
         context_1 = self._new_context()
         context_2 = self._new_context()
         return [context_1, context_2]
+
+    def does_object_exist(self, context):
+        """
+        Return is the object already exists on the device or not
+        """
+        return False

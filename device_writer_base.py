@@ -90,3 +90,9 @@ class DeviceWriterBase(object):
         Gets a value from the object selected in the current context
         """
         raise NotImplementedError("Abstract base function not implemented")
+
+    def does_object_exist(self, context):
+        """
+        Return is the object already exists on the device or not
+        """
+        raise NotImplementedError("Abstract base function not implemented")

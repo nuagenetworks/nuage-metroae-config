@@ -98,7 +98,12 @@ class VsdWriter(DeviceWriterBase):
                         not file_name.startswith('@')):
                     spec_json = self._read_specification(os.path.join(
                         path_or_file_name, file_name))
-                    self._register_specification(spec_json)
+                    try:
+                        self._register_specification(spec_json)
+                    except InvalidSpecification as e:
+                        self.log.error(
+                            "Could not parse VSD API specification %s: %s" % (
+                                file_name, str(e)))
         elif (os.path.isfile(path_or_file_name)):
             spec_json = self._read_specification(path_or_file_name)
             self._register_specification(spec_json)
@@ -158,7 +163,7 @@ class VsdWriter(DeviceWriterBase):
                     "Cannot start session without parameters")
             else:
                 if (self.session_params['password'] is None and
-                      (not self.session_params.has_key('certificate') or
+                   ('certificate' not in self.session_params or
                        self.session_params['certificate'][0] is None or
                        self.session_params['certificate'][1] is None)):
                     raise MissingSessionParamsError(
@@ -217,7 +222,7 @@ class VsdWriter(DeviceWriterBase):
                                                       context)
         self.log.debug(location)
         self._check_session()
-        try :
+        try:
             if select_value is not None:
                 new_context = self.select_object(object_name,
                                                  by_field,
@@ -400,6 +405,9 @@ class VsdWriter(DeviceWriterBase):
 
         return value
 
+    def does_object_exist(self, context=None):
+        return context is not None and context.object_exists
+
     #
     # Private functions to do the work
     #
@@ -443,7 +451,7 @@ class VsdWriter(DeviceWriterBase):
 
     def _validate_specification_field(self, field, section):
         if field not in section or section[field] is None:
-            raise InvalidSpecification("'%s' missing in specification" % field)
+            raise InvalidSpecification("'%s' missing in specification %s " % (field, section))
 
     def _get_specification(self, object_name):
         name_key = object_name.lower()
