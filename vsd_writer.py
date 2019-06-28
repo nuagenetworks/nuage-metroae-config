@@ -238,6 +238,8 @@ class VsdWriter(DeviceWriterBase):
                 new_context.object_exists = True
 
                 return new_context
+            else:
+                return self.create_object(object_name, context)
         except MissingSelectionError:
             return self.create_object(object_name, context)
 

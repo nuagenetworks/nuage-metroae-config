@@ -9,6 +9,7 @@ class MockWriter(object):
         self.current_get_value_index = 0
         self.raise_exception_on = None
         self.mock_exception = None
+        self.return_empty_select_list = False
 
     def get_recorded_actions(self):
         return self.recorded_actions
@@ -39,6 +40,9 @@ class MockWriter(object):
 
     def is_validate_only(self):
         return False
+
+    def set_return_empty_select_list(self, return_empty_select_list=True):
+        self.return_empty_select_list = return_empty_select_list
 
     #
     # Implement all required Abstract Base Class prototype functions.
@@ -120,6 +124,10 @@ class MockWriter(object):
     def get_object_list(self, object_name, context=None):
         self._record_action("get-object-list %s [%s]" % (object_name,
                                                          str(context)))
+
+        if self.return_empty_select_list:
+            return []
+
         context_1 = self._new_context()
         context_2 = self._new_context()
         return [context_1, context_2]

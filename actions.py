@@ -342,10 +342,22 @@ class CreateObjectAction(Action):
             if not self.is_update():
                 new_context = writer.create_object(self.object_type, context)
             else:
-                new_context = writer.update_object(self.object_type,
-                                                   self.select_by_field,
-                                                   self.get_select_value(),
-                                                   context)
+                if self.select_by_field.lower() == FIRST_SELECTOR:
+                    context_list = writer.get_object_list(self.object_type,
+                                                          context)
+
+                    if len(context_list) < 1:
+                        new_context = writer.update_object(self.object_type,
+                                                           self.select_by_field,
+                                                           self.get_select_value(),
+                                                           context)
+                    else:
+                        new_context = context_list[0]
+                else:
+                    new_context = writer.update_object(self.object_type,
+                                                       self.select_by_field,
+                                                       self.get_select_value(),
+                                                       context)
             self.execute_children(writer, new_context)
         else:
             if not self.is_store_only():

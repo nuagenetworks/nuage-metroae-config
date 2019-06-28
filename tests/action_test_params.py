@@ -1367,6 +1367,22 @@ actions:
         from-field: id
 """)
 
+UPDATE_CHILD_OBJECT_WITH_FIRST_SELECTOR = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    update-supported: False
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - Create-object:
+        type: Level2
+        select-by-field: $first
+        Actions:
+        - Set-values:
+            value: L2
+""")
+
 UPDATE_SELECT_ROOT_OBJECT = yaml.safe_load("""
 actions:
 - Select-object:
