@@ -945,7 +945,7 @@ class TestActionsExecute(object):
 
     def run_execute_test(self, template_dict, expected_actions,
                          is_revert=False, is_update=False,
-                        return_empty_select_list=False):
+                         return_empty_select_list=False):
         root_action = Action(None)
         writer = MockWriter()
         writer.set_return_empty_select_list(return_empty_select_list)
@@ -970,10 +970,12 @@ class TestActionsExecute(object):
 
     def run_execute_with_exception(self, template_dict, expected_actions,
                                    exception, on_action, expect_error=True,
-                                   is_revert=False, is_update=False):
+                                   is_revert=False, is_update=False,
+                                   return_empty_select_list=False):
         root_action = Action(None)
         writer = MockWriter()
         writer.raise_exception(exception, on_action)
+        writer.set_return_empty_select_list(return_empty_select_list)
 
         root_action.set_revert(is_revert)
         root_action.set_update(is_update)
@@ -1898,12 +1900,15 @@ class TestActionsExecute(object):
             set-values name=L1-O1 [context_2]
             get-object-list Level2 [context_2]
             select-object Level2 $first = None [context_2]
-            update-object Level2 $first = None [context_2]
-            set-values value=L2 [context_5]
+            create-object Level2 [context_2]
+            set-values value=L2 [context_4]
             stop-session
         """
 
-        self.run_execute_test(UPDATE_CHILD_OBJECT_WITH_FIRST_SELECTOR,
-                              expected_actions,
-                              is_update=True,
-                              return_empty_select_list=True)
+        self.run_execute_with_exception(UPDATE_CHILD_OBJECT_WITH_FIRST_SELECTOR,
+                                        expected_actions,
+                                        MissingSelectionError("test exception"),
+                                        'select-object Level2 $first = None [context_2]',
+                                        expect_error=False,
+                                        is_update=True,
+                                        return_empty_select_list=True)

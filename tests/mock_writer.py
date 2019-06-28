@@ -41,7 +41,7 @@ class MockWriter(object):
     def is_validate_only(self):
         return False
 
-    def set_return_empty_select_list(self, return_empty_select_list=False):
+    def set_return_empty_select_list(self, return_empty_select_list=True):
         self.return_empty_select_list = return_empty_select_list
 
     #
