@@ -49,9 +49,9 @@ VERSION_ACTION = 'version'
 HELP_ACTION = 'help'
 TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
 VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
-TEMPLATE_DIR = "/data/standard-templates"
-SPECIFICATION_DIR = "/data/vsd-api-specifications"
-LOGS_DIR = "/data"
+TEMPLATE_DIR = "/metroae_data/standard-templates"
+SPECIFICATION_DIR = "/metroae_data/vsd-api-specifications"
+LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
 DESCRIPTION = """Version %s - This tool reads JSON or Yaml files of templates

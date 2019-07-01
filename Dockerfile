@@ -9,7 +9,7 @@ COPY ./ /source
 WORKDIR /source
 
 #Define date volume for templates and user data
-VOLUME /data
+VOLUME /metroae_data
 
 # install python requirements
 RUN pip install -r requirements.txt
