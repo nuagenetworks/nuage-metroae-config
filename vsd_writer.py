@@ -128,7 +128,6 @@ class VsdWriter(DeviceWriterBase):
             version_dict = dict()
             if resp.status_code == 200:
                 version_dict = resp.json()
-                print str(version_dict)
 
             if "vsdVersion" in version_dict:
                 version = version_dict["vsdVersion"]
