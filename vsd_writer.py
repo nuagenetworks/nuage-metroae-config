@@ -18,7 +18,8 @@ from errors import (DeviceWriterError,
 SPEC_EXTENSION = ".spec"
 SOFTWARE_TYPE = "Nuage Networks VSD"
 LEGACY_VERSION_ENDPOINT = "/Resources/app-version.js"
-VERSION_ENDPOINT = "/architect" + LEGACY_VERSION_ENDPOINT
+VERSION_ENDPOINT_6 = "/nuage"
+VERSION_ENDPOINT_5 = "/architect" + LEGACY_VERSION_ENDPOINT
 VERSION_TOKEN = "APP_BUILDVERSION"
 
 
@@ -121,22 +122,37 @@ class VsdWriter(DeviceWriterBase):
              "software_type": "xxx"}
         """
         try:
-            version_url = self.session_params['api_url'] + VERSION_ENDPOINT
+            version_url = self.session_params['api_url'] + VERSION_ENDPOINT_6
             resp = requests.get(version_url, verify=False)
 
-            if resp.status_code == 404:
-                legacy_version_url = (
-                    self.session_params['api_url'] + LEGACY_VERSION_ENDPOINT)
-                legacy_resp = requests.get(legacy_version_url, verify=False)
+            version_dict = dict()
+            if resp.status_code == 200:
+                version_dict = resp.json()
+                print str(version_dict)
 
-                if legacy_resp.status_code == 200:
-                    resp = legacy_resp
+            if "vsdVersion" in version_dict:
+                version = version_dict["vsdVersion"]
+            else:
 
-            if resp.status_code != 200:
-                raise Exception("Status code %d from URL %s" % (
-                    resp.status_code, version_url))
+                version_url = (self.session_params['api_url'] +
+                               VERSION_ENDPOINT_5)
+                resp = requests.get(version_url, verify=False)
 
-            version = self._parse_version_output(resp.text)
+                if resp.status_code == 404:
+                    legacy_version_url = (
+                        self.session_params['api_url'] +
+                        LEGACY_VERSION_ENDPOINT)
+                    legacy_resp = requests.get(legacy_version_url,
+                                               verify=False)
+
+                    if legacy_resp.status_code == 200:
+                        resp = legacy_resp
+
+                if resp.status_code != 200:
+                    raise Exception("Status code %d from URL %s" % (
+                        resp.status_code, version_url))
+
+                version = self._parse_version_output(resp.text)
 
             self.log.output("Device: %s %s" % (SOFTWARE_TYPE, version))
 

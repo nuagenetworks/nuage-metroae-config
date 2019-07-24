@@ -1,4 +1,5 @@
 from mock import patch, MagicMock
+import json
 import os
 import pytest
 
@@ -109,6 +110,31 @@ VALIDATE_ONLY_CASES = [False, True]
 VERSION_OUTPUT = """
 APP_GITVERSION = 'r5.3-2bc6ddd'
 APP_BUILDVERSION='5.3.3_99'
+"""
+
+VERSION_OUTPUT_6 = """
+{"vsdBuild":"6.0.1_8","vsdVersion":"6.0.1",
+"versions":[{"version":"V6","status":"CURRENT",
+"updated":"2019-02-15T11:30:00Z",
+"url":"https://vsd1.example.met:8443/nuage/api/v6"},
+{"version":"V5.0","status":"DEPRECATED","updated":"2017-02-16T11:30:00Z",
+"url":"https://vsd1.example.met:8443/nuage/api/v5_0"}]}
+"""
+
+VERSION_OUTPUT_5 = """
+{"versions":[{"version":"V5.0","status":"CURRENT",
+"updated":"2017-02-16T11:30:00Z",
+"url":"https://vsd1.example.com:8443/nuage/api/v5_0"},
+{"version":"V4.0","status":"DEPRECATED","updated":"2017-02-16T11:30:00Z",
+"url":"https://vsd1.example.com:8443/nuage/api/v4_0"},
+{"version":"V3.2","status":"UNSUPPORTED","updated":"2015-01-27T11:30:00Z",
+"url":"https://vsd1.example.com:8443/nuage/api/v3_2"},{"version":"V3.1",
+"status":"UNSUPPORTED","updated":"2014-10-17T11:30:00Z",
+"url":"https://vsd1.example.com:8443/nuage/api/v3_1"},{"version":"V3.0",
+"status":"UNSUPPORTED","updated":"2014-07-15T11:30:00Z",
+"url":"https://vsd1.example.com:8443/nuage/api/v3_0"},
+{"version":"V1.0","status":"UNSUPPORTED","updated":"2014-07-15T11:30:00Z",
+"url":"https://vsd1.example.com:8443/nuage/api/v1_0"}]}
 """
 
 
@@ -1334,11 +1360,11 @@ class TestVsdWriterGetValue(object):
 class TestVsdWriterVersion(object):
 
     @patch("requests.get")
-    def test_get_version__success(self, mock_request):
+    def test_get_version_6__success(self, mock_request):
 
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = VERSION_OUTPUT
+        mock_response.json.return_value = json.loads(VERSION_OUTPUT_6)
         mock_request.return_value = mock_response
 
         vsd_writer = VsdWriter()
@@ -1346,6 +1372,31 @@ class TestVsdWriterVersion(object):
         version = vsd_writer.get_version()
 
         mock_request.assert_called_once_with(
+            "https://localhost:8443/nuage",
+            verify=False)
+
+        assert version == {
+            "software_type": "Nuage Networks VSD",
+            "software_version": "6.0.1"}
+
+    @patch("requests.get")
+    def test_get_version_5__success(self, mock_request):
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = json.loads(VERSION_OUTPUT_5)
+        mock_response.text = VERSION_OUTPUT
+        mock_request.return_value = mock_response
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params("https://localhost:8443")
+        version = vsd_writer.get_version()
+
+        mock_request.assert_any_call(
+            "https://localhost:8443/nuage",
+            verify=False)
+
+        mock_request.assert_any_call(
             "https://localhost:8443/architect/Resources/app-version.js",
             verify=False)
 
@@ -1365,7 +1416,11 @@ class TestVsdWriterVersion(object):
         vsd_writer.set_session_params("https://localhost:8443")
         version = vsd_writer.get_version()
 
-        mock_request.assert_called_once_with(
+        mock_request.assert_any_call(
+            "https://localhost:8443/nuage",
+            verify=False)
+
+        mock_request.assert_any_call(
             "https://localhost:8443/architect/Resources/app-version.js",
             verify=False)
 
@@ -1377,22 +1432,30 @@ class TestVsdWriterVersion(object):
     def test_get_version__legacy_success(self, mock_request):
 
         mock_response_1 = MagicMock()
-        mock_response_1.status_code = 404
-        mock_response_1.text = "Not found"
+        mock_response_1.status_code = 200
+        mock_response_1.json.return_value = json.loads(VERSION_OUTPUT_5)
         mock_response_2 = MagicMock()
-        mock_response_2.status_code = 200
-        mock_response_2.text = VERSION_OUTPUT
-        mock_request.side_effect = [mock_response_1, mock_response_2]
+        mock_response_2.status_code = 404
+        mock_response_2.text = "Not found"
+        mock_response_3 = MagicMock()
+        mock_response_3.status_code = 200
+        mock_response_3.text = VERSION_OUTPUT
+        mock_request.side_effect = [mock_response_1, mock_response_2,
+                                    mock_response_3]
 
         vsd_writer = VsdWriter()
         vsd_writer.set_session_params("https://localhost:8443")
         version = vsd_writer.get_version()
 
         mock_request.assert_any_call(
+            "https://localhost:8443/nuage",
+            verify=False)
+
+        mock_request.assert_any_call(
             "https://localhost:8443/architect/Resources/app-version.js",
             verify=False)
 
-        mock_request.assert_called_with(
+        mock_request.assert_any_call(
             "https://localhost:8443/Resources/app-version.js",
             verify=False)
 
@@ -1416,10 +1479,14 @@ class TestVsdWriterVersion(object):
         version = vsd_writer.get_version()
 
         mock_request.assert_any_call(
+            "https://localhost:8443/nuage",
+            verify=False)
+
+        mock_request.assert_any_call(
             "https://localhost:8443/architect/Resources/app-version.js",
             verify=False)
 
-        mock_request.assert_called_with(
+        mock_request.assert_any_call(
             "https://localhost:8443/Resources/app-version.js",
             verify=False)
 
@@ -1432,6 +1499,7 @@ class TestVsdWriterVersion(object):
 
         mock_response = MagicMock()
         mock_response.status_code = 200
+        mock_response.json.return_value = json.loads(VERSION_OUTPUT_5)
         mock_response.text = "INVALID version"
         mock_request.return_value = mock_response
 
@@ -1439,7 +1507,11 @@ class TestVsdWriterVersion(object):
         vsd_writer.set_session_params("https://localhost:8443")
         version = vsd_writer.get_version()
 
-        mock_request.assert_called_once_with(
+        mock_request.assert_any_call(
+            "https://localhost:8443/nuage",
+            verify=False)
+
+        mock_request.assert_any_call(
             "https://localhost:8443/architect/Resources/app-version.js",
             verify=False)
 
