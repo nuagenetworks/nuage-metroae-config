@@ -215,7 +215,7 @@ def add_variable(attribute):
 
     default = attribute["default_value"]
     if default is not None:
-        lines.append(INDENT_STR + "  default: " + default)
+        lines.append(INDENT_STR + "  default: " + str(default))
 
     template_variables.append(lines)
 
