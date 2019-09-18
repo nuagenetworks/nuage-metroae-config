@@ -29,7 +29,6 @@ def main():
         template_data = t.read()
     template_metadata = re.search(METADATA_RE, template_data)
     yaml_data = yaml.safe_load(template_metadata.group(1))
-    print template_metadata.group(1)
     with open('feature_md.j2') as file_:
         template = Template(file_.read(), trim_blocks=True)
     print template.render(yaml_data)
