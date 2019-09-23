@@ -1,4 +1,5 @@
-## Feature Template: {{ name }}
+#!/usr/bin/env python
+template = """## Feature Template: {{ name }}
 #### Description
 {{ description }}
 
@@ -15,7 +16,7 @@ If you do not provide values for the optional parameters listed below, then defa
 - template: {{ name }}
   values:
 {% for variable in variables %}
-{% if loop.index == 1 %}    - {% else %}      {% endif %}{{ "%-50s"|format(variable.name+": \"\"") }}# ({% if variable.optional %}opt {% endif %}{{ variable.type}})
+{% if loop.index == 1 %}    - {% else %}      {% endif %}{{ "%-50s"|format(variable.name+": \\\"\\\"") }}# ({% if variable.optional %}opt {% endif %}{{ variable.type}})
 {% endfor %}
 ```
 
@@ -47,3 +48,4 @@ User input file {{ example.user_input.file_name }}:
 {{ example.user_input.sample_run }}
 ```
 {% endfor %}
+"""
