@@ -29,10 +29,10 @@ def main():
     with open(args.template_file, mode='r') as t:
         template_data = t.read()
     docfile_metadata = re.search(TEMPLATE_METADATA_RE, template_data)
-    yaml_data = yaml.safe_load(docfile_metadata.group(1) + "\nfile_name: " + os.path.basename(args.template_file))
+    yaml_data = yaml.safe_load(docfile_metadata.group(1) + "\ntemplate-file-name: " + os.path.basename(args.template_file))
     template = Template(md_template.template, trim_blocks=True)
     with open(args.md_directory + "/" + yaml_data['doc-file'], mode='w') as md:
-        md.write(template.render(yaml_data))
+        md.write(template.render(data=yaml_data))
 
 
 if __name__ == "__main__":
