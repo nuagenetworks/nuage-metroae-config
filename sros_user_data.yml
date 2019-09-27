@@ -1,0 +1,12 @@
+- template: Port
+  values:
+    - identifier: 1/1/10
+      description: Modified by levistate 1/1/10
+      shutdown: false
+      speed: 1000
+      mtu: 1400
+    - identifier: 1/1/11
+      description: Modified by levistate 1/1/11
+      shutdown: false
+      speed: 1000
+      mtu: 1600

@@ -1,0 +1,472 @@
+exit all
+configure
+#--------------------------------------------------
+echo "System Configuration"
+#--------------------------------------------------
+    system
+        name "cas-sf1-018"
+        snmp
+            shutdown
+        exit
+        time
+            sntp
+                shutdown
+            exit
+            zone UTC
+        exit
+        thresholds
+            rmon
+            exit
+        exit
+    exit
+#--------------------------------------------------
+echo "System Security Configuration"
+#--------------------------------------------------
+    system
+    exit
+#--------------------------------------------------
+echo "Log Configuration"
+#--------------------------------------------------
+    log
+    exit
+#--------------------------------------------------
+echo "System Security Cpm Hw Filters and PKI Configuration"
+#--------------------------------------------------
+    system
+        security
+        exit
+    exit
+#--------------------------------------------------
+echo "QoS Policy Configuration"
+#--------------------------------------------------
+    qos
+        ingress 1 create
+            description "Default ingress QoS policy."
+        exit
+        ingress 2 create
+            description "Default ingress QoS policy for trusted traffic."
+        exit
+    exit
+#--------------------------------------------------
+echo "Card Configuration"
+#--------------------------------------------------
+    card 1
+        card-type iom-48-25g+6-100g
+        mda 1
+            no shutdown
+        exit
+        mda 2
+            no shutdown
+        exit
+        mda 3
+            no shutdown
+        exit
+        no shutdown
+    exit
+#--------------------------------------------------
+echo "Service Configuration"
+#--------------------------------------------------
+    service
+        dynamic-services
+            port-profile "vsg-vtep" create
+                vlan-range 0-4093 mode push create
+                exit
+                no shutdown
+            exit
+        exit
+    exit
+#--------------------------------------------------
+echo "Port Configuration"
+#--------------------------------------------------
+    port 1/1/1
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/2
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/3
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/4
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/5
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/6
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/7
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/8
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/9
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/10
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/11
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/12
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/13
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/14
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/15
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/16
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/17
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/18
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/19
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/20
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/21
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/22
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/23
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/24
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/25
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/26
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/27
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/28
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/29
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/30
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/31
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/32
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/33
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/34
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/35
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/36
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/37
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/38
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/39
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/40
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/41
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/42
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/43
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/44
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/45
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/46
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/47
+        description "connection to cas-cs2-021 // ebc baremetal"
+        ethernet
+            encap-type dot1q
+            speed 1000
+        exit
+        dynamic-service-profile "vsg-vtep"
+        no shutdown
+    exit
+    port 1/1/48
+        description "connection to cas-cs2-021 // ebc baremetal"
+        ethernet
+            encap-type dot1q
+            speed 1000
+        exit
+        dynamic-service-profile "vsg-vtep"
+        no shutdown
+    exit
+    port 1/2/1
+        description "connection to cas-sf2-007 // ebc vtep"
+        ethernet
+            encap-type dot1q
+            media-mode 40G
+        exit
+        no shutdown
+    exit
+    port 1/2/5
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/2/9
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/2/13
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/2/17
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/2/21
+        shutdown
+        ethernet
+        exit
+    exit
+#--------------------------------------------------
+echo "System Sync-If-Timing Configuration"
+#--------------------------------------------------
+    system
+        sync-if-timing
+            begin
+            commit
+        exit
+    exit
+#--------------------------------------------------
+echo "LAG Configuration"
+#--------------------------------------------------
+    lag 97
+    exit
+    lag 98
+        description "Multichassis interconnect LAG"
+        encap-type dot1q
+        lacp active administrative-key 36864
+        no shutdown
+    exit
+#--------------------------------------------------
+echo "QoS Policy Configuration"
+#--------------------------------------------------
+    qos
+    exit
+#--------------------------------------------------
+echo "Virtual Switch Controller Configuration"
+#--------------------------------------------------
+    vswitch-controller
+        xmpp-server "wbx1@ebc-vsd-512.caso"
+        open-flow
+        exit
+        xmpp
+        exit
+        ovsdb
+        exit
+        route-preference primary inband secondary none
+    exit
+#--------------------------------------------------
+echo "Management Router Configuration"
+#--------------------------------------------------
+    router management
+    exit
+
+#--------------------------------------------------
+echo "Router (Network Side) Configuration"
+#--------------------------------------------------
+    router
+        interface "OC-VTEP-Interconnect"
+            address 10.100.1.206/24
+            port 1/2/1:101
+            no shutdown
+        exit
+        interface "OC-VTEP-Mgmt"
+            address 10.100.0.206/24
+            port 1/2/1:100
+            no shutdown
+        exit
+        interface "system"
+            address 172.16.1.206/32
+            no shutdown
+        exit
+        vxlan
+        exit
+        autonomous-system 65000
+#--------------------------------------------------
+echo "Static Route Configuration"
+#--------------------------------------------------
+        static-route 10.100.2.0/24 next-hop 10.100.1.79
+        static-route 10.100.3.0/24 next-hop 10.100.1.79
+        static-route 10.100.4.0/24 next-hop 10.100.1.79
+        static-route 172.16.1.100/32 next-hop 10.100.1.100
+        static-route 172.16.1.101/32 next-hop 10.100.1.101
+#--------------------------------------------------
+echo "Web Portal Protocol Configuration"
+#--------------------------------------------------
+    exit
+
+#--------------------------------------------------
+echo "Service Configuration"
+#--------------------------------------------------
+    service
+        customer 1 create
+            description "Default customer"
+        exit
+    exit
+#--------------------------------------------------
+echo "Router (Service Side) Configuration"
+#--------------------------------------------------
+    router
+#--------------------------------------------------
+echo "BGP Configuration"
+#--------------------------------------------------
+        bgp
+            connect-retry 5
+            hold-time 120
+            min-route-advertisement 1
+            group "internal"
+                family vpn-ipv4 evpn
+                type internal
+                neighbor 172.16.1.100
+                exit
+                neighbor 172.16.1.101
+                exit
+            exit
+            no shutdown
+        exit
+    exit
+
+
+exit all

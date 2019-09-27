@@ -10,8 +10,11 @@ import wget
 from configuration import Configuration
 from errors import LevistateError
 from template import TemplateStore
+from sros_writer import SrosWriter
+from sros_writer import SOFTWARE_TYPE as SROS_SOFTWARE_TYPE
 from user_data_parser import UserDataParser
-from vsd_writer import VsdWriter, SOFTWARE_TYPE
+from vsd_writer import VsdWriter
+from vsd_writer import SOFTWARE_TYPE as VSD_SOFTWARE_TYPE
 
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
@@ -31,6 +34,7 @@ ENV_VSD_PASSWORD = 'VSD_PASSWORD'
 ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+ENV_SROS_HOST = 'SROS_HOST'
 ENV_SOFTWARE_VERSION = 'SOFTWARE_VERSION'
 ENV_LOG_FILE = 'LOG_FILE'
 ENV_LOG_LEVEL = 'LOG_LEVEL'
@@ -195,6 +199,10 @@ def add_parser_arguments(parser):
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_URL, DEFAULT_URL),
                         help='URL to VSD REST API. Can also set using environment variable %s' % (ENV_VSD_URL))
+    parser.add_argument('-s', '--sros-host', dest='sros_host',
+                        action='store', required=False,
+                        default=os.getenv(ENV_SROS_HOST, None),
+                        help='URL to VSD REST API. Can also set using environment variable %s' % (ENV_VSD_URL))
     parser.add_argument('-u', '--username', dest='username',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_USERNAME,
@@ -317,6 +325,9 @@ class Levistate(object):
             output_handler.setLevel(OUTPUT_LEVEL_NUM)
             self.logger.addHandler(output_handler)
 
+    def is_sros(self):
+        return "sros_host" in self.args
+
     def run(self):
 
         if (self.action == TEMPLATE_ACTION and
@@ -329,7 +340,10 @@ class Levistate(object):
         self.setup_template_store()
         if self.list_info():
             return
-        self.setup_vsd_writer()
+        if self.is_sros():
+            self.setup_sros_writer()
+        else:
+            self.setup_vsd_writer()
         self.parse_user_data()
         self.parse_extra_vars()
 
@@ -425,13 +439,33 @@ class Levistate(object):
         if self.device_version is None:
             self.device_version = self.writer.get_version()
 
+    def setup_sros_writer(self):
+        self.writer = SrosWriter()
+        self.writer.set_logger(self.logger)
+        host = self.args.sros_host
+        port = 22
+        if ":" in host:
+            pair = host.split(":")
+            host = pair[0]
+            port = int(pair[1])
+        self.writer.set_session_params(host,
+                                       port=port,
+                                       username=self.args.username,
+                                       password=self.args.password)
+        if self.device_version is None:
+            self.device_version = self.writer.get_version()
+
     def setup_template_store(self):
         self.store = TemplateStore(LEVISTATE_VERSION)
 
         if self.args.software_version is not None:
+            software_type = VSD_SOFTWARE_TYPE
+            if self.is_sros():
+                software_type = SROS_SOFTWARE_TYPE
+
             self.device_version = {
                 "software_version": self.args.software_version,
-                "software_type": SOFTWARE_TYPE}
+                "software_type": software_type}
 
         for path in self.args.template_path:
             self.store.read_templates(path)
