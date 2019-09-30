@@ -532,7 +532,7 @@ class SrosWriter(DeviceWriterBase):
         except Exception as e:
             raise SrosError(str(e))
 
-        self.log.output(output)
+        self.log.debug(output)
 
         self._check_output_for_errors(command_list, output)
 
