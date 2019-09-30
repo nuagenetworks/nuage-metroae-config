@@ -1,3 +1,17 @@
+
+- template: Lag
+  values:
+    - identifier: 1
+      description: Modified by levistate lag 1
+      shutdown: false
+      mode: hybrid
+      port: 1/1/10
+    - identifier: 2
+      description: Modified by levistate lag 2
+      shutdown: false
+      mode: hybrid
+      port: 1/1/11
+
 - template: Port
   values:
     - identifier: 1/1/10

@@ -1,0 +1,40 @@
+name: Lag
+description: Create a Lag
+template-version: 1.0
+engine-version: 1.0
+software-type: Nuage Networks WBX
+software-version: 9.9.9
+variables:
+  - name: identifier
+    type: integer
+  - name: description
+    type: string
+  - name: shutdown
+    type: boolean
+  - name: mode
+    type: string
+  - name: port
+    type: string
+actions:
+  - select-object:
+      type: Port
+      by-field: identifier
+      value: {{ port }}
+      actions:
+        - store-value:
+            as-name: port_id
+            from-field: identifier
+
+  - create-object:
+      type: Lag
+      select-by-field: identifier
+      actions:
+        - set-values:
+            identifier: {{ identifier }}
+            description: {{ description }}
+            shutdown: {{ shutdown }}
+            mode: {{ mode }}
+            port: {{ port }}
+        - retrieve-value:
+            from-name: port_id
+            to-field: $dependency

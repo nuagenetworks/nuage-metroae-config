@@ -1,0 +1,23 @@
+name: Lag
+software-type: Nuage Networks WBX
+parent: null
+attributes:
+  - name: identifier
+    type: integer
+    key: true
+    config: null
+  - name: description
+    type: string
+  - name: shutdown
+    type: boolean
+  - name: port
+    type: string
+  - name: mode
+    type: choice
+    choices:
+      - access
+      - network
+      - hybrid
+config: "{no} lag {identifier}"
+pre-delete-configs:
+  - shutdown

@@ -442,6 +442,8 @@ class Levistate(object):
     def setup_sros_writer(self):
         self.writer = SrosWriter()
         self.writer.set_logger(self.logger)
+        for path in self.args.spec_path:
+            self.writer.read_api_specifications(path)
         host = self.args.sros_host
         port = 22
         if ":" in host:
