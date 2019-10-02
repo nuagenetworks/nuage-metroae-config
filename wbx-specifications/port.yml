@@ -1,6 +1,7 @@
 name: Port
 software-type: Nuage Networks WBX
 parent: null
+config: "{no} port {identifier}"
 attributes:
   - name: identifier
     type: string
@@ -9,6 +10,5 @@ attributes:
     type: string
   - name: shutdown
     type: boolean
-config: "{no} port {identifier}"
 pre-delete-configs:
   - shutdown

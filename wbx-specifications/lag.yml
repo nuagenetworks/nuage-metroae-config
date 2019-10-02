@@ -4,7 +4,6 @@ parent: null
 attributes:
   - name: identifier
     type: integer
-    key: true
     config: null
   - name: description
     type: string

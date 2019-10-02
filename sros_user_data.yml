@@ -1,3 +1,17 @@
+- template: Router
+  values:
+    autonomousSystem: 100
+    ecmp: 10
+    routerId: 1.1.1.1
+    vxlanInterface: e1/1/1
+
+- template: Router Interface
+  values:
+    - router_interface_name: if1/1/1
+      description: Modified by levistate if1/1/1
+      address: 1.1.1.1/24
+      shutdown: false
+      port: 1/1/1
 
 - template: Lag
   values:

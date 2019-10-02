@@ -1,0 +1,26 @@
+name: Router
+description: Configure global router
+template-version: 1.0
+engine-version: 1.0
+software-type: Nuage Networks WBX
+software-version: 9.9.9
+variables:
+  - name: autonomousSystem
+    type: integer
+  - name: ecmp
+    type: integer
+  - name: routerId
+    type: string
+  - name: vxlanInterface
+    type: string
+actions:
+  - select-object:
+      type: Router
+      by-field: $singleton
+      value: ""
+      actions:
+        - set-values:
+            autonomousSystem: {{ autonomousSystem }}
+            ecmp: {{ ecmp }}
+            routerId: {{ routerId }}
+            # vxlanMultichassisVtepInterface: {{ vxlanInterface }}

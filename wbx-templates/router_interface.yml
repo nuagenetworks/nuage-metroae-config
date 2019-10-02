@@ -1,0 +1,39 @@
+name: Router Interface
+description: Configure global router
+template-version: 1.0
+engine-version: 1.0
+software-type: Nuage Networks WBX
+software-version: 9.9.9
+variables:
+  - name: router_interface_name
+    type: string
+  - name: description
+    type: string
+  - name: address
+    type: string
+  - name: ipv6Address
+    type: string
+    optional: true
+  - name: port
+    type: string
+  - name: shutdown
+    type: boolean
+actions:
+  - select-object:
+      type: Router
+      by-field: $singleton
+      value: ""
+      actions:
+        - create-object:
+            type: RouterInterface
+            select-by-field: name
+            actions:
+              - set-values:
+                  name: {{ router_interface_name }}
+                  description: {{ description }}
+                  address: {{ address }}
+                  {% if ipv6Address is defined %}
+                  ipv6Address: {{ ipv6Address }}
+                  {% endif %}
+                  port: {{ port }}
+                  shutdown: {{ shutdown }}

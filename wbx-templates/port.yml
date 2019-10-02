@@ -26,9 +26,10 @@ actions:
             description: {{ description }}
             shutdown: {{ shutdown }}
 
-        - create-object:
+        - select-object:
             type: Ethernet
-            select-by-field: speed
+            by-field: $singleton
+            value: ""
             actions:
               - set-values:
                   speed: {{ speed }}

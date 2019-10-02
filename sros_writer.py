@@ -7,18 +7,18 @@ from errors import (DeviceWriterError,
                     InvalidAttributeError,
                     InvalidObjectError,
                     InvalidValueError,
-                    MissingSelectionError,
-                    MultipleSelectionError,
                     SessionError,
                     SessionNotStartedError)
+from util import get_dict_field_no_case
 
 SOFTWARE_TYPE = "Nuage Networks WBX"
 SPEC_EXTENSION = ".yml"
+SROS_PROMPT = r'[#$]'
 
 
 class MissingSessionParamsError(DeviceWriterError):
     """
-    Exception class when session is started without parameters specified
+    Exception claSROS_PROMPT session is started without parameters specified
     """
     pass
 
@@ -68,7 +68,7 @@ class SrosWriter(DeviceWriterBase):
         self.session_params = {
             'device_type': 'alcatel_sros',
             'ssh_config_file': "/etc/ssh/ssh_config",
-            'blocking_timeout': 60,
+            # 'blocking_timeout': 60,
             'secret': '',
             'verbose': False,
             'username': username,
@@ -399,7 +399,7 @@ class SrosWriter(DeviceWriterBase):
 
         attribute_dict['no'] = "no"
         for config_format in spec['pre-delete-configs']:
-            config = config_format.format(**attribute_dict)
+            config = config_format.format(**attribute_dict).strip()
             config_list.append(config)
 
         if self.validate_only is False:
@@ -422,6 +422,8 @@ class SrosWriter(DeviceWriterBase):
     def _build_config_list(self, spec, context, attribute_dict):
         config_list = list()
 
+        self.log.debug(str(attribute_dict))
+
         object_config = self._build_object_config(spec, attribute_dict)
         context.set_current_config(object_config)
 
@@ -442,18 +444,24 @@ class SrosWriter(DeviceWriterBase):
         attribute_dict_copy = dict(attribute_dict)
         if 'no' not in attribute_dict_copy:
             attribute_dict_copy['no'] = ""
-        return spec['config'].format(**attribute_dict_copy)
+        return spec['config'].format(**attribute_dict_copy).strip()
 
     def _build_attribute_config(self, spec, name, attribute_dict):
+        attribute_dict_copy = dict(attribute_dict)
+        if 'no' not in attribute_dict_copy:
+            attribute_dict_copy['no'] = ""
         attr_spec = self._get_attribute_spec(spec, name)
         name = name.lower()
-        value = attribute_dict[name]
+        value = get_dict_field_no_case(attribute_dict, name)
+        if value is None:
+            raise InvalidValueError("Value not set for %s" % name)
         attr_type = attr_spec['type'].lower()
         if "config" in attr_spec:
             if attr_spec["config"] is None:
                 return None
             else:
-                return attr_spec["config"].format(**attribute_dict)
+                return attr_spec["config"].format(
+                    **attribute_dict_copy).strip()
 
         if attr_type == "string":
             return '%s "%s"' % (name, value)
@@ -473,8 +481,23 @@ class SrosWriter(DeviceWriterBase):
                 attr_type, name))
 
     def _apply_config_list(self, command_list):
+        output = ""
         try:
-            output = self.session.send_config_set(command_list)
+            # output = self.session.send_config_set(command_list)
+            output += self.session.send_command("configure",
+                                                strip_prompt=False,
+                                                strip_command=False,
+                                                expect_string=SROS_PROMPT)
+            for command in command_list:
+                output += self.session.send_command(command,
+                                                    strip_prompt=False,
+                                                    strip_command=False,
+                                                    expect_string=SROS_PROMPT)
+            output += self.session.send_command("exit all",
+                                                strip_prompt=False,
+                                                strip_command=False,
+                                                expect_string=SROS_PROMPT)
+
         except Exception as e:
             raise SrosError(str(e))
 
