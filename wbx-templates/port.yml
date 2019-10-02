@@ -16,9 +16,10 @@ variables:
   - name: mtu
     type: integer
 actions:
-  - create-object:
+  - select-object:
       type: Port
-      select-by-field: identifier
+      by-field: identifier
+      value: {{ identifier }}
       actions:
         - set-values:
             identifier: {{ identifier }}

@@ -288,11 +288,19 @@ class Levistate(object):
             exit(1)
 
         if log_level == "API":
-            bambou_logger = logging.getLogger("bambou")
-            bambou_logger.setLevel(logging.DEBUG)
+            if self.is_sros():
+                api_logger = logging.getLogger("netmiko")
+                api_logger.setLevel(logging.DEBUG)
 
-            self.logger = logging.getLogger("bambou.levistate")
-            self.logger.setLevel(logging.DEBUG)
+                self.logger = logging.getLogger("netmiko.levistate")
+                self.logger.setLevel(logging.DEBUG)
+            else:
+                api_logger = logging.getLogger("bambou")
+                api_logger.setLevel(logging.DEBUG)
+
+                self.logger = logging.getLogger("bambou.levistate")
+                self.logger.setLevel(logging.DEBUG)
+
         else:
             self.logger = logging.getLogger("levistate")
             level = logging.getLevelName(log_level)
@@ -309,7 +317,7 @@ class Levistate(object):
             file_handler = CustomLogHandler(file)
             file_handler.setFormatter(log_formatter)
             if log_level == "API":
-                bambou_logger.addHandler(file_handler)
+                api_logger.addHandler(file_handler)
             else:
                 self.logger.addHandler(file_handler)
 
@@ -317,7 +325,7 @@ class Levistate(object):
             debug_handler = CustomLogHandler()
             debug_handler.setFormatter(log_formatter)
             if log_level == "API":
-                bambou_logger.addHandler(debug_handler)
+                api_logger.addHandler(debug_handler)
             else:
                 self.logger.addHandler(debug_handler)
         else:

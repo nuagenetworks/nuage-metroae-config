@@ -68,6 +68,7 @@ class SrosWriter(DeviceWriterBase):
         self.session_params = {
             'device_type': 'alcatel_sros',
             'ssh_config_file': "/etc/ssh/ssh_config",
+            'blocking_timeout': 60,
             'secret': '',
             'verbose': False,
             'username': username,
@@ -124,12 +125,15 @@ class SrosWriter(DeviceWriterBase):
                 raise MissingSessionParamsError(
                     "Cannot start session without parameters")
             else:
-                try:
-                    self.session = netmiko.ConnectHandler(
-                        **self.session_params)
-                except Exception as e:
-                    raise SessionError("Could not establish session: " +
-                                       str(e))
+                if self.validate_only is not True:
+                    try:
+                        self.session = netmiko.ConnectHandler(
+                            **self.session_params)
+                    except Exception as e:
+                        raise SessionError("Could not establish session: " +
+                                           str(e))
+                else:
+                    self.session = None
 
             self.log.debug(location)
 
@@ -216,7 +220,7 @@ class SrosWriter(DeviceWriterBase):
 
         return list()
 
-    def delete_object(self, context):
+    def delete_object(self, context, attribute_dict):
         """
         Deletes the object selected in the current context
         """
@@ -224,18 +228,11 @@ class SrosWriter(DeviceWriterBase):
         self.log.debug(location)
         self._check_session()
 
-        if (context is None or context.current_object is None or
-                not context.object_exists):
+        if context is None or not context.has_current_object():
             raise SessionError("No object for deletion", location)
 
         if self.validate_only is False:
-            try:
-                context.current_object.delete()
-            except BambouHTTPError as e:
-                raise VsdError(e, location)
-
-        context.current_object = None
-        context.object_exists = False
+            self._delete_object(context, attribute_dict)
 
         return context
 
@@ -247,79 +244,10 @@ class SrosWriter(DeviceWriterBase):
         self.log.debug(location)
         self._check_session()
 
-        if context is None or context.current_object is None:
+        if context is None or not context.has_current_object():
             raise SessionError("No object for setting values", location)
 
         self._set_values(context, kwargs)
-
-        # commands = list()
-
-        # if context.current_object["name"] == "Port":
-
-        #     context.current_object["key"] = kwargs['identifier']
-
-        #     commands.append("port %s" % kwargs['identifier'])
-        #     commands.append('description "%s"' % kwargs['description'])
-        #     if kwargs['shutdown']:
-        #         commands.append("shutdown")
-        #     else:
-        #         commands.append("no shutdown")
-
-        # elif context.current_object["name"] == "Ethernet":
-
-        #     context.current_object["key"] = ""
-
-        #     commands.append("port %s" % context.parent_object['key'])
-        #     commands.append("ethernet")
-        #     commands.append("mtu %d" % kwargs['mtu'])
-        #     commands.append("speed %d" % kwargs['speed'])
-
-        # elif context.current_object["name"] == "Lag":
-
-        #     context.current_object["key"] = kwargs['identifier']
-
-        #     commands.append("lag %d" % kwargs['identifier'])
-        #     commands.append('description "%s"' % kwargs['description'])
-        #     if kwargs['shutdown']:
-        #         commands.append("shutdown")
-        #     else:
-        #         commands.append("no shutdown")
-
-        #     commands.append("mode %s" % kwargs['mode'])
-        #     commands.append("port %s" % kwargs['port'])
-
-        # if self.validate_only is False:
-
-        #     output = self.session.send_config_set(commands)
-
-        #     print(output)
-        #     print("lines: " + str(len(output.split("\n"))))
-
-        # try:
-        #     self._set_attributes(context.current_object, **kwargs)
-        #     self._validate_values(context.current_object)
-        # except DeviceWriterError as e:
-        #     e.reraise_with_location(location)
-
-        # if context.object_exists:
-        #     location = "Saving [%s]" % context
-        #     self.log.debug(location)
-        #     if self.validate_only is False:
-        #         try:
-        #             context.current_object.save()
-        #         except BambouHTTPError as e:
-        #             raise VsdError(e, location)
-        # else:
-        #     location = "Creating child [%s]" % context
-        #     self.log.debug(location)
-        #     try:
-        #         self._add_object(context.current_object, context.parent_object)
-        #     except BambouHTTPError as e:
-        #         raise VsdError(e, location)
-        #     except DeviceWriterError as e:
-        #         e.reraise_with_location(location)
-
-        #     context.object_exists = True
 
         self.log.debug("Saved [%s]" % context)
 
@@ -332,21 +260,6 @@ class SrosWriter(DeviceWriterBase):
         location = "Get value %s [%s]" % (field, context)
         self.log.debug(location)
         self._check_session()
-
-        # if (context is None or context.current_object is None or
-        #         not context.object_exists):
-        #     raise SessionError("No object for getting values", location)
-
-        # try:
-        #     value = self._get_attribute(context.current_object, field)
-        # except BambouHTTPError as e:
-        #     raise VsdError(e, location)
-        # except DeviceWriterError as e:
-        #     e.reraise_with_location(location)
-
-        # self.log.debug("Value %s = %s" % (field, str(value)))
-
-        # return value
 
         return "< GET NOT SUPPORTED >"
 
@@ -404,6 +317,9 @@ class SrosWriter(DeviceWriterBase):
                                     (spec['name'], local_name))
 
     def _check_session(self):
+        if self.validate_only is True:
+            return
+
         if self.session is None:
             raise SessionNotStartedError("Session is not started")
 
@@ -412,8 +328,8 @@ class SrosWriter(DeviceWriterBase):
 
     def _check_child_object(self, object_name, context):
         parent_name = None
-        if context is not None and context.current_object is not None:
-            parent_name = context.current_object['name']
+        if context is not None:
+            parent_name = context.get_obj_name()
 
         spec = self._get_specification(object_name)
 
@@ -429,9 +345,7 @@ class SrosWriter(DeviceWriterBase):
 
     def _get_new_child_context(self, old_context):
         new_context = Context()
-        if old_context is not None:
-            if old_context.current_object is not None:
-                new_context.parent_object = old_context.current_object
+        new_context.set_child_context(old_context)
 
         return new_context
 
@@ -439,13 +353,7 @@ class SrosWriter(DeviceWriterBase):
         self._check_child_object(object_name, context)
         new_context = self._get_new_child_context(context)
 
-        config_object = {
-            "name": object_name,
-            "config": None
-        }
-
-        new_context.current_object = config_object
-        new_context.object_exists = True
+        new_context.set_current_obj(object_name, None, object_exists=False)
 
         return new_context
 
@@ -456,33 +364,70 @@ class SrosWriter(DeviceWriterBase):
         spec = self._get_specification(object_name)
         config = self._build_object_config(spec, {field: key})
 
-        config_object = {
-            "name": object_name,
-            "config": config
-        }
-
-        new_context.current_object = config_object
-        new_context.object_exists = True
+        new_context.set_current_obj(object_name, config, object_exists=True)
 
         return new_context
 
+    def _delete_object(self, context, attribute_dict):
+        object_name = context.get_obj_name()
+        spec = self._get_specification(object_name)
+
+        if 'pre-delete-configs' in spec:
+            self._apply_pre_delete_configs(context, spec,
+                                           attribute_dict)
+
+        config_list = list()
+
+        attribute_dict['no'] = "no"
+        object_config = self._build_object_config(spec, attribute_dict)
+        context.set_current_config(object_config)
+        config_list.append(context.get_path_config())
+
+        if self.validate_only is False:
+            self._apply_config_list(config_list)
+        else:
+            for config in config_list:
+                self.log.debug(config)
+
+        context.clear_current_object()
+
+    def _apply_pre_delete_configs(self, context, spec, attribute_dict):
+        config_list = list()
+        object_config = self._build_object_config(spec, attribute_dict)
+        context.set_current_config(object_config)
+        config_list.append(context.get_path_config())
+
+        attribute_dict['no'] = "no"
+        for config_format in spec['pre-delete-configs']:
+            config = config_format.format(**attribute_dict)
+            config_list.append(config)
+
+        if self.validate_only is False:
+            self._apply_config_list(config_list)
+        else:
+            for config in config_list:
+                self.log.debug(config)
+
     def _set_values(self, context, attribute_dict):
-        object_name = context.current_object['name']
+        object_name = context.get_obj_name()
         spec = self._get_specification(object_name)
         config_list = self._build_config_list(spec, context, attribute_dict)
         if self.validate_only is False:
             self._apply_config_list(config_list)
+        else:
+            for config in config_list:
+                self.log.debug(config)
+        context.object_exists = True
 
     def _build_config_list(self, spec, context, attribute_dict):
         config_list = list()
 
-        if (context.parent_object is not None and
-                context.parent_object["config"] is not None):
-            config_list.append(context.parent_object["config"])
-
         object_config = self._build_object_config(spec, attribute_dict)
-        config_list.append(object_config)
-        context.current_object['config'] = object_config
+        context.set_current_config(object_config)
+
+        parent_config = context.get_path_config()
+        if parent_config is not None:
+            config_list.append(parent_config)
 
         for name in attribute_dict.keys():
             if name.lower() != "$dependency":
@@ -495,7 +440,8 @@ class SrosWriter(DeviceWriterBase):
 
     def _build_object_config(self, spec, attribute_dict):
         attribute_dict_copy = dict(attribute_dict)
-        attribute_dict_copy['no'] = ""
+        if 'no' not in attribute_dict_copy:
+            attribute_dict_copy['no'] = ""
         return spec['config'].format(**attribute_dict_copy)
 
     def _build_attribute_config(self, spec, name, attribute_dict):
@@ -545,10 +491,10 @@ class SrosWriter(DeviceWriterBase):
             if cmd not in out:
                 raise SrosError(output)
 
+
 #
 # Private classes to do the work
 #
-
 
 class Context(object):
     """
@@ -558,18 +504,86 @@ class Context(object):
     """
 
     def __init__(self):
+        self.parent_configs = list()
         self.parent_object = None
         self.current_object = None
         self.object_exists = False
 
     def __str__(self):
+        current = self.get_object_string(self.current_object)
+
         if self.object_exists:
             marker = ''
         else:
             marker = ' **'
-        if self.parent_object is None:
+        if self.parent_configs == list():
             parent = "Root"
         else:
-            parent = str(self.parent_object)
+            parent = self.get_path_config()
 
-        return "%s / %s%s" % (parent, self.current_object, marker)
+        return "%s / %s%s" % (parent, current, marker)
+
+    def get_object_string(self, obj):
+        obj_str = "(none)"
+
+        if obj is not None:
+            if obj['config'] is not None:
+                obj_str = obj['config']
+            else:
+                obj_str = obj['name']
+
+        return obj_str
+
+    def get_obj_config(self, obj):
+        if obj is not None:
+            if obj['config'] is not None:
+                return obj['config']
+
+        return None
+
+    def has_current_object(self):
+        return self.current_object is not None
+
+    def clear_current_object(self):
+        self.current_object = None
+        self.object_exists = False
+
+    def get_obj_name(self):
+        if self.current_object is None:
+            return None
+        else:
+            return self.current_object['name']
+
+    def get_path_config(self):
+        path_config = list()
+        for config in self.parent_configs:
+            path_config.append(config)
+
+        if (self.current_object is not None and
+                self.current_object['config'] is not None):
+            path_config.append(self.current_object["config"])
+
+        if path_config == list():
+            return None
+        else:
+            return " ".join(path_config)
+
+    def set_current_obj(self, object_name, config, object_exists):
+
+        config_object = {
+            "name": object_name,
+            "config": config
+        }
+
+        self.current_object = config_object
+        self.object_exists = object_exists
+
+    def set_current_config(self, config):
+        self.current_object['config'] = config
+
+    def set_child_context(self, parent_context):
+        if parent_context is not None:
+            if parent_context.current_object is not None:
+                self.parent_object = parent_context.current_object
+                if self.parent_object['config'] is not None:
+                    self.parent_configs.append(self.parent_object['config'])

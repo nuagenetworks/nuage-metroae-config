@@ -335,7 +335,7 @@ class VsdWriter(DeviceWriterBase):
 
         return contexts
 
-    def delete_object(self, context):
+    def delete_object(self, context, attribute_dict):
         """
         Deletes the object selected in the current context
         """

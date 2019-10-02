@@ -73,7 +73,7 @@ class DeviceWriterBase(object):
         """
         raise NotImplementedError("Abstract base function not implemented")
 
-    def delete_object(self, context):
+    def delete_object(self, context, attribute_dict):
         """
         Deletes the object selected in the current context
         """

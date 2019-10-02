@@ -188,6 +188,12 @@ class Action(object):
         else:
             return None
 
+    def get_child_attribute_dict(self):
+        if len(self.children) > 0 and self.children[0].is_set_values():
+            return self.children[0].get_attribute_dict()
+        else:
+            return None
+
     def is_revert(self):
         return 'is_revert' in self.state and self.state['is_revert'] is True
 
@@ -347,10 +353,11 @@ class CreateObjectAction(Action):
                                                           context)
 
                     if len(context_list) < 1:
-                        new_context = writer.update_object(self.object_type,
-                                                           self.select_by_field,
-                                                           self.get_select_value(),
-                                                           context)
+                        new_context = writer.update_object(
+                            self.object_type,
+                            self.select_by_field,
+                            self.get_select_value(),
+                            context)
                     else:
                         new_context = context_list[0]
                 else:
@@ -388,7 +395,8 @@ class CreateObjectAction(Action):
                 if not writer.is_validate_only():
                     self.log.output(self._get_location("Revert "))
 
-                writer.delete_object(new_context)
+                attribute_dict = self.get_child_attribute_dict()
+                writer.delete_object(new_context, attribute_dict)
             except MissingSelectionError:
                 # Skip deletion if object is not present (not created)
                 pass
@@ -707,6 +715,9 @@ class SetValuesAction(Action):
 
     def is_set_values(self):
         return True
+
+    def get_attribute_dict(self):
+        return dict(self.attributes)
 
     def read(self, set_values_dict):
         if type(set_values_dict) != dict:
