@@ -95,7 +95,7 @@ class MockWriter(object):
                                                                str(context)))
         return self._new_context()
 
-    def delete_object(self, context):
+    def delete_object(self, context, attribute_dict):
         """
         Deletes the object selected in the current context
         """

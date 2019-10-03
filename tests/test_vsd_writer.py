@@ -860,7 +860,7 @@ class TestVsdWriterDeleteObject(object):
         vsd_writer.set_validate_only(validate_only)
 
         with pytest.raises(SessionNotStartedError) as e:
-            vsd_writer.delete_object("context")
+            vsd_writer.delete_object("context", None)
 
         assert "not started" in str(e)
 
@@ -878,7 +878,7 @@ class TestVsdWriterDeleteObject(object):
         context.current_object = mock_object
         context.object_exists = True
 
-        new_context = vsd_writer.delete_object(context)
+        new_context = vsd_writer.delete_object(context, None)
 
         if validate_only is True:
             mock_object.delete.assert_not_called()
@@ -900,7 +900,7 @@ class TestVsdWriterDeleteObject(object):
         context.object_exists = False
 
         with pytest.raises(SessionError) as e:
-            vsd_writer.delete_object(context)
+            vsd_writer.delete_object(context, None)
 
         assert "No object" in str(e)
 
@@ -910,7 +910,7 @@ class TestVsdWriterDeleteObject(object):
         context.object_exists = True
 
         with pytest.raises(SessionError) as e:
-            vsd_writer.delete_object(context)
+            vsd_writer.delete_object(context, None)
 
         assert "No object" in str(e)
 
@@ -931,7 +931,7 @@ class TestVsdWriterDeleteObject(object):
         context.object_exists = True
 
         with pytest.raises(SessionError) as e:
-            vsd_writer.delete_object(context)
+            vsd_writer.delete_object(context, None)
 
         assert "403" in str(e)
         assert "forbidden" in str(e)

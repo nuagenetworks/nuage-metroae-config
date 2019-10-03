@@ -411,6 +411,7 @@ class SrosWriter(DeviceWriterBase):
     def _set_values(self, context, attribute_dict):
         object_name = context.get_obj_name()
         spec = self._get_specification(object_name)
+        self._validate_attributes(spec, attribute_dict)
         config_list = self._build_config_list(spec, context, attribute_dict)
         if self.validate_only is False:
             self._apply_config_list(config_list)
@@ -418,6 +419,35 @@ class SrosWriter(DeviceWriterBase):
             for config in config_list:
                 self.log.debug(config)
         context.object_exists = True
+
+    def _validate_attributes(self, spec, attribute_dict):
+        for name in attribute_dict.keys():
+            if name[0] != "$":
+                attr_spec = self._get_attribute_spec(spec, name)
+                attr_type = attr_spec['type'].lower()
+                value = attribute_dict[name]
+
+                if attr_type == "choice":
+                    choices = get_dict_field_no_case(attr_spec, "choices")
+                    if value not in choices:
+                        raise InvalidValueError(
+                            "Value %s not a valid choice for attribute %s" % (
+                                value, name))
+                elif attr_type == "integer":
+                    try:
+                        int(value)
+                    except ValueError:
+                        raise InvalidValueError(
+                            "Value %s is not an integer for attribute %s" % (
+                                value, name))
+                elif attr_type == "boolean":
+                    if value is not True and value is not False:
+                        raise InvalidValueError(
+                            "Value %s is not a boolean for attribute %s" % (
+                                value, name))
+                else:
+                    InvalidSpecification("Invalid type %s for attribute %s" % (
+                        attr_type, name))
 
     def _build_config_list(self, spec, context, attribute_dict):
         config_list = list()
@@ -432,7 +462,7 @@ class SrosWriter(DeviceWriterBase):
             config_list.append(parent_config)
 
         for name in attribute_dict.keys():
-            if name.lower() != "$dependency":
+            if name[0] != "$":
                 config = self._build_attribute_config(spec, name,
                                                       attribute_dict)
                 if config is not None:
@@ -464,6 +494,8 @@ class SrosWriter(DeviceWriterBase):
                     **attribute_dict_copy).strip()
 
         if attr_type == "string":
+            return '%s "%s"' % (name, value)
+        elif attr_type == "choice":
             return '%s "%s"' % (name, value)
         elif attr_type == "integer":
             return "%s %d" % (name, value)
