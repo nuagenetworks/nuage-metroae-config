@@ -130,8 +130,8 @@ class SrosWriter(DeviceWriterBase):
                         self.session = netmiko.ConnectHandler(
                             **self.session_params)
                     except Exception as e:
-                        raise SessionError("Could not establish session: " +
-                                           str(e))
+                        raise SrosError("Could not establish session: " +
+                                        str(e))
                 else:
                     self.session = None
 
@@ -320,11 +320,8 @@ class SrosWriter(DeviceWriterBase):
         if self.validate_only is True:
             return
 
-        if self.session is None:
+        if self.session is None or not self.session.is_alive():
             raise SessionNotStartedError("Session is not started")
-
-        if not self.session.is_alive():
-            raise SessionNotStartedError("Session is not alive")
 
     def _check_child_object(self, object_name, context):
         parent_name = None
@@ -338,7 +335,8 @@ class SrosWriter(DeviceWriterBase):
                 raise InvalidObjectError(
                     "Object %s is not defined at root level" % object_name)
         else:
-            if spec['parent'].lower() != parent_name.lower():
+            if (spec['parent'] is None or
+                    spec['parent'].lower() != parent_name.lower()):
                 raise InvalidObjectError(
                     "Object %s is not defined as a child of %s" % (
                         object_name, parent_name))
@@ -565,7 +563,7 @@ class Context(object):
         self.object_exists = False
 
     def __str__(self):
-        current = self.get_object_string(self.current_object)
+        current = self._get_object_string(self.current_object)
 
         if self.object_exists:
             marker = ''
@@ -577,17 +575,6 @@ class Context(object):
             parent = self.get_path_config()
 
         return "%s / %s%s" % (parent, current, marker)
-
-    def get_object_string(self, obj):
-        obj_str = "(none)"
-
-        if obj is not None:
-            if obj['config'] is not None:
-                obj_str = obj['config']
-            else:
-                obj_str = obj['name']
-
-        return obj_str
 
     def get_obj_config(self, obj):
         if obj is not None:
@@ -642,3 +629,14 @@ class Context(object):
                 self.parent_object = parent_context.current_object
                 if self.parent_object['config'] is not None:
                     self.parent_configs.append(self.parent_object['config'])
+
+    def _get_object_string(self, obj):
+        obj_str = "(none)"
+
+        if obj is not None:
+            if obj['config'] is not None:
+                obj_str = obj['config']
+            else:
+                obj_str = obj['name']
+
+        return obj_str

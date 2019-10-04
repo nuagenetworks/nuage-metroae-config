@@ -1,0 +1,6 @@
+name: Port
+software-type: Nuage Networks WBX
+parent: null
+config: "{no} port {identifier}"
+pre-delete-configs:
+  - shutdown

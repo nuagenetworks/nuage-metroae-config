@@ -1,6 +1,6 @@
-from mock import patch, MagicMock
 import json
 import os
+from mock import patch, MagicMock
 import pytest
 
 from bambou.exceptions import BambouHTTPError

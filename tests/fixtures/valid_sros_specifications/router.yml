@@ -1,0 +1,17 @@
+name: Router
+software-type: Nuage Networks WBX
+parent: null
+config: "router"
+attributes:
+  - name: autonomousSystem
+    type: integer
+    config: "{no} autonomous-system {autonomousSystem}"
+  - name: ecmp
+    type: integer
+    config: "{no} ecmp {ecmp}"
+  - name: routerId
+    type: string
+    config: "{no} router-id {routerId}"
+  - name: vxlanMultichassisVtepInterface
+    type: string
+    config: "vxlan {no} multichassis-vtep {vxlanMultichassisVtepInterface}"

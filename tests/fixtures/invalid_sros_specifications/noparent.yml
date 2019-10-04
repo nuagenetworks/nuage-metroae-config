@@ -1,0 +1,13 @@
+name: Port
+software-type: Nuage Networks WBX
+config: "{no} port {identifier}"
+attributes:
+  - name: identifier
+    type: string
+    config: null
+  - name: description
+    type: string
+  - name: shutdown
+    type: boolean
+pre-delete-configs:
+  - shutdown

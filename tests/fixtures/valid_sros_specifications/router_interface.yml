@@ -1,0 +1,21 @@
+name: RouterInterface
+software-type: Nuage Networks WBX
+parent: Router
+config: "{no} interface {name}"
+attributes:
+  - name: name
+    type: string
+    config: null
+  - name: description
+    type: string
+  - name: address
+    type: string
+  - name: ipv6Address
+    type: string
+    config: "{no} ipv6 address {ipv6Address}"
+  - name: port
+    type: string
+  - name: shutdown
+    type: boolean
+pre-delete-configs:
+  - shutdown
