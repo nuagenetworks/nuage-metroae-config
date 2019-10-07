@@ -1,6 +1,7 @@
-import yaml
 import netmiko
 import os
+import re
+import yaml
 
 from device_writer_base import DeviceWriterBase
 from errors import (DeviceWriterError,
@@ -11,6 +12,8 @@ from errors import (DeviceWriterError,
                     SessionNotStartedError)
 from util import get_dict_field_no_case
 
+WBX_DEVICE_TYPE_STR = "NUAGE 210"
+DEVICE_VERSION_PATTERN = r'-([0-9]+\.[0-9]+\.[0-9]+)-'
 SOFTWARE_TYPE = "Nuage Networks WBX"
 SPEC_EXTENSION = ".yml"
 SROS_PROMPT = r'[#$]'
@@ -110,9 +113,37 @@ class SrosWriter(DeviceWriterBase):
              "software_type": "xxx"}
         """
 
-        return {
-            "software_version": "9.9.9",
-            "software_type": SOFTWARE_TYPE}
+        try:
+            session = netmiko.ConnectHandler(**self.session_params)
+
+            output = session.send_command("show version")
+
+            session.disconnect()
+
+            if WBX_DEVICE_TYPE_STR in output:
+                software_type = SOFTWARE_TYPE
+            else:
+                raise Exception("No device string found")
+
+            match = re.search(DEVICE_VERSION_PATTERN, output)
+
+            if match is not None:
+                version = match.group(1)
+            else:
+                raise Exception("No version string found")
+
+            self.log.output("Device: %s %s" % (software_type, version))
+
+            return {
+                "software_version": version,
+                "software_type": software_type}
+
+        except Exception as e:
+            self.log.output("WARNING: Could not determine SROS version")
+            self.log.error("Could not determine SROS version: %s" % str(e))
+            return {
+                "software_version": None,
+                "software_type": None}
 
     def start_session(self):
         """

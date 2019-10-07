@@ -19,6 +19,13 @@ VALID_SPECS_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
 INVALID_SPECS_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
                                        'invalid_sros_specifications')
 
+MOCK_VERSION_OUTPUT = """
+TiMOS-DC-B-5.1.2-125 both/x86 NUAGE 210 Copyright (c) 2000-2018 Nokia.
+All rights reserved. All use subject to applicable license agreements.
+Built on Wed Jan 17 13:35:31 PST 2018 [0008c8] by builder in
+/rel5.1-DC/release/panos/main
+"""
+
 VALIDATE_ONLY_CASES = [False, True]
 
 SESSION_PARAMS = {
@@ -132,6 +139,69 @@ class TestSrosWriterSpecParsing(object):
                 filename))
 
         assert message in str(e)
+
+
+class TestSrosWriterGetVersion(object):
+
+    @patch("levistate.sros_writer.netmiko")
+    def test__success(self, mock_patch):
+        sros_writer = SrosWriter()
+        sros_writer.set_session_params(**SESSION_PARAMS)
+
+        mock_session = MagicMock()
+        mock_patch.ConnectHandler.return_value = mock_session
+        mock_session.send_command.return_value = MOCK_VERSION_OUTPUT
+
+        version = sros_writer.get_version()
+
+        mock_patch.ConnectHandler.assert_called_once_with(
+            **EXPECTED_SESSION_PARAMS)
+        mock_session.send_command.assert_called_once_with("show version")
+
+        assert version == {
+            "software_type": "Nuage Networks WBX",
+            "software_version": "5.1.2"
+        }
+
+    @patch("levistate.sros_writer.netmiko")
+    def test__no_device_str(self, mock_patch):
+        sros_writer = SrosWriter()
+        sros_writer.set_session_params(**SESSION_PARAMS)
+
+        mock_session = MagicMock()
+        mock_patch.ConnectHandler.return_value = mock_session
+        mock_session.send_command.return_value = "Unknown version output"
+
+        version = sros_writer.get_version()
+
+        mock_patch.ConnectHandler.assert_called_once_with(
+            **EXPECTED_SESSION_PARAMS)
+        mock_session.send_command.assert_called_once_with("show version")
+
+        assert version == {
+            "software_type": None,
+            "software_version": None
+        }
+
+    @patch("levistate.sros_writer.netmiko")
+    def test__netmiko_error(self, mock_patch):
+        sros_writer = SrosWriter()
+        sros_writer.set_session_params(**SESSION_PARAMS)
+
+        mock_session = MagicMock()
+        mock_patch.ConnectHandler.return_value = mock_session
+        mock_session.send_command.side_effect = Exception("Cannot connect")
+
+        version = sros_writer.get_version()
+
+        mock_patch.ConnectHandler.assert_called_once_with(
+            **EXPECTED_SESSION_PARAMS)
+        mock_session.send_command.assert_called_once_with("show version")
+
+        assert version == {
+            "software_type": None,
+            "software_version": None
+        }
 
 
 class TestSrosWriterSession(object):

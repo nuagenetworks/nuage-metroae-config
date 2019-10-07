@@ -3,7 +3,7 @@ description: Configure global router
 template-version: 1.0
 engine-version: 1.0
 software-type: Nuage Networks WBX
-software-version: 9.9.9
+software-version: 5.1.2
 variables:
   - name: autonomousSystem
     type: integer
