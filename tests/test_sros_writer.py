@@ -87,7 +87,12 @@ def mock_send_command(command, strip_prompt, strip_command, expect_string):
 
     recorded_commands.append(command)
 
-    return command
+    if "generate error" in command:
+        error_output = "Test error\n"
+    else:
+        error_output = ""
+
+    return command + "\n" + error_output
 
 
 class TestSrosWriterSpecParsing(object):
@@ -618,6 +623,40 @@ class TestSrosWriterSetValues(object):
             sros_writer.set_values(None, **{})
 
         assert "No object for setting values" in str(e.value)
+
+    def test_parent__attribute_error(self):
+        sros_writer = SrosWriter()
+        mock_session = setup_standard_session(sros_writer)
+        mock_session.send_command = mock_send_command
+
+        del recorded_commands[:]
+
+        sel_context = sros_writer.create_object("Port")
+        with pytest.raises(SrosError) as e:
+            sros_writer.set_values(
+                sel_context,
+                **{"identifier": "1/1/1",
+                   "description": "generate error",
+                   "shutdown": False})
+
+        assert "Test error" in str(e.value)
+
+    def test_parent__netmiko_error(self):
+        sros_writer = SrosWriter()
+        mock_session = setup_standard_session(sros_writer)
+        mock_session.send_command.side_effect = Exception("netmiko error")
+
+        del recorded_commands[:]
+
+        sel_context = sros_writer.create_object("Port")
+        with pytest.raises(SrosError) as e:
+            sros_writer.set_values(
+                sel_context,
+                **{"identifier": "1/1/1",
+                   "description": "descr",
+                   "shutdown": False})
+
+        assert "netmiko error" in str(e.value)
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     def test__invalid_choice(self, validate_only):

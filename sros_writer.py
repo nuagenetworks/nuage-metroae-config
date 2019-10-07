@@ -21,7 +21,7 @@ SROS_PROMPT = r'[#$]'
 
 class MissingSessionParamsError(DeviceWriterError):
     """
-    Exception claSROS_PROMPT session is started without parameters specified
+    Exception class when session is started without parameters specified
     """
     pass
 
