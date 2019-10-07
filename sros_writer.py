@@ -231,8 +231,7 @@ class SrosWriter(DeviceWriterBase):
         if context is None or not context.has_current_object():
             raise SessionError("No object for deletion", location)
 
-        if self.validate_only is False:
-            self._delete_object(context, attribute_dict)
+        self._delete_object(context, attribute_dict)
 
         return context
 

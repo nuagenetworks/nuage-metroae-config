@@ -2,11 +2,15 @@ from mock import patch, MagicMock
 import os
 import pytest
 
-from levistate.sros_writer import (InvalidObjectError,
+from levistate.sros_writer import (InvalidAttributeError,
+                                   InvalidObjectError,
                                    InvalidSpecification,
+                                   InvalidValueError,
                                    MissingSessionParamsError,
+                                   SessionError,
                                    SessionNotStartedError,
                                    SrosError,
+                                   SROS_PROMPT,
                                    SrosWriter)
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -64,6 +68,19 @@ def setup_standard_session(sros_writer, mock_patch):
             **EXPECTED_SESSION_PARAMS)
 
     return mock_session
+
+
+recorded_commands = list()
+
+
+def mock_send_command(command, strip_prompt, strip_command, expect_string):
+    assert strip_prompt is False
+    assert strip_command is False
+    assert expect_string == SROS_PROMPT
+
+    recorded_commands.append(command)
+
+    return command
 
 
 class TestSrosWriterSpecParsing(object):
@@ -372,3 +389,222 @@ class TestSrosWriterDeleteObject(object):
             sros_writer.delete_object(None, dict())
 
         assert "not started" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_parent__success(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(sros_writer)
+        mock_session.send_command = mock_send_command
+
+        del recorded_commands[:]
+
+        sel_context = sros_writer.select_object("Port", "identifier", "1/1/1")
+        del_context = sros_writer.delete_object(sel_context,
+                                                {"identifier": "1/1/1"})
+
+        assert del_context.has_current_object() is False
+        assert del_context.get_obj_name() is None
+        assert del_context.get_path_config() is None
+        assert del_context.object_exists is False
+
+        if validate_only:
+            assert recorded_commands == []
+        else:
+            assert recorded_commands == [
+                "configure",
+                "port 1/1/1",
+                "shutdown",
+                "exit all",
+                "configure",
+                "no port 1/1/1",
+                "exit all",
+            ]
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_child__success(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(sros_writer)
+        mock_session.send_command = mock_send_command
+
+        del recorded_commands[:]
+
+        parent_context = sros_writer.select_object("Router", "$singleton", "")
+        sel_context = sros_writer.select_object("RouterInterface", "name",
+                                                "intf1", parent_context)
+        del_context = sros_writer.delete_object(sel_context,
+                                                {"name": "intf1"})
+
+        assert del_context.has_current_object() is False
+        assert del_context.get_obj_name() is None
+        assert del_context.get_path_config() == "router"
+        assert del_context.object_exists is False
+
+        if validate_only:
+            assert recorded_commands == []
+        else:
+            assert recorded_commands == [
+                "configure",
+                "router interface intf1",
+                "shutdown",
+                "exit all",
+                "configure",
+                "router no interface intf1",
+                "exit all",
+            ]
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_object(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        setup_standard_session(sros_writer)
+
+        with pytest.raises(SessionError) as e:
+            sros_writer.delete_object(None, {"identifier": "1/1/1"})
+
+        assert "No object for deletion" in str(e.value)
+
+
+class TestSrosWriterSetValues(object):
+
+    def test__no_session(self):
+        sros_writer = SrosWriter()
+
+        with pytest.raises(SessionNotStartedError) as e:
+            sros_writer.set_values(None, **{})
+
+        assert "not started" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_parent__success(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(sros_writer)
+        mock_session.send_command = mock_send_command
+
+        del recorded_commands[:]
+
+        sel_context = sros_writer.create_object("Port")
+        set_context = sros_writer.set_values(sel_context,
+                                             **{"identifier": "1/1/1",
+                                                "description": "test descr",
+                                                "shutdown": False})
+
+        assert set_context.has_current_object() is True
+        assert set_context.get_obj_name() is "Port"
+        assert set_context.get_path_config() == "port 1/1/1"
+        assert set_context.object_exists is True
+
+        if validate_only:
+            assert recorded_commands == []
+        else:
+            assert recorded_commands == [
+                "configure",
+                "port 1/1/1",
+                'description "test descr"',
+                "no shutdown",
+                "exit all",
+            ]
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test_child__success(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(sros_writer)
+        mock_session.send_command = mock_send_command
+
+        del recorded_commands[:]
+
+        sel_context = sros_writer.select_object("Port", "identifier", "1/1/1")
+        create_context = sros_writer.create_object("Ethernet", sel_context)
+        set_context = sros_writer.set_values(create_context,
+                                             **{"mtu": 1600,
+                                                "speed": 1000})
+
+        assert set_context.has_current_object() is True
+        assert set_context.get_obj_name() is "Ethernet"
+        assert set_context.get_path_config() == "port 1/1/1 ethernet"
+        assert set_context.object_exists is True
+
+        if validate_only:
+            assert recorded_commands == []
+        else:
+            assert recorded_commands == [
+                "configure",
+                "port 1/1/1 ethernet",
+                "speed 1000",
+                "mtu 1600",
+                "exit all",
+            ]
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_object(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        setup_standard_session(sros_writer)
+
+        with pytest.raises(SessionError) as e:
+            sros_writer.set_values(None, **{})
+
+        assert "No object for setting values" in str(e.value)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__invalid_choice(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        setup_standard_session(sros_writer)
+
+        create_context = sros_writer.create_object("Lag")
+
+        with pytest.raises(InvalidValueError) as e:
+            sros_writer.set_values(create_context,
+                                   **{"mode": "not valid"})
+
+        assert "not a valid choice" in str(e.value)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__invalid_integer(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        setup_standard_session(sros_writer)
+
+        sel_context = sros_writer.select_object("Port", "identifier", "1/1/1")
+        create_context = sros_writer.create_object("Ethernet", sel_context)
+        set_context = sros_writer.set_values(create_context,
+                                             **{"mtu": 1600,
+                                                "speed": 1000})
+
+        with pytest.raises(InvalidValueError) as e:
+            sros_writer.set_values(set_context,
+                                   **{"mtu": "not integer"})
+
+        assert "not an integer" in str(e.value)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__invalid_boolean(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        setup_standard_session(sros_writer)
+
+        create_context = sros_writer.create_object("Port")
+
+        with pytest.raises(InvalidValueError) as e:
+            sros_writer.set_values(create_context,
+                                   **{"shutdown": "not boolean"})
+
+        assert "not a boolean" in str(e.value)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__invalid_attribute(self, validate_only):
+        sros_writer = SrosWriter()
+        sros_writer.set_validate_only(validate_only)
+        setup_standard_session(sros_writer)
+
+        create_context = sros_writer.create_object("Port")
+
+        with pytest.raises(InvalidAttributeError) as e:
+            sros_writer.set_values(create_context,
+                                   **{"foobar": "not attribute"})
+
+        assert "does not define an attribute" in str(e.value)
