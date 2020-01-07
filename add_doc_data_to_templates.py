@@ -57,8 +57,8 @@ def add_doc_data_to_template(data, template_path):
 
     insert_parameters(lines, data)
     insert_docfile(lines, data)
-    insert_usage(lines, data)
     insert_restrictions(lines, data)
+    insert_usage(lines, data)
     update_description(lines, data)
     insert_examples(lines, data)
 
@@ -160,7 +160,6 @@ def main():
     args = parse_args()
     doc_data = read_doc_data(args.doc_data_file)
     template_info = read_template_info(args.template_file_dir)
-    print str(template_info)
 
     add_doc_data_to_all_templates(doc_data, template_info)
 

@@ -43,6 +43,7 @@ UPDATE_ACTION = 'update'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
+DOCUMENT_ACTION = 'document'
 TEMPLATE_ACTION = 'templates'
 UPGRADE_TEMPLATE_ACTION = 'update'
 VERSION_ACTION = 'version'
@@ -103,7 +104,7 @@ def main():
             print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
 
-    elif args.action == SCHEMA_ACTION or args.action == EXAMPLE_ACTION:
+    elif args.action in [SCHEMA_ACTION, EXAMPLE_ACTION, DOCUMENT_ACTION]:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
@@ -149,6 +150,9 @@ def get_parser():
 
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguments(example_parser)
+
+    document_parser = sub_parser.add_parser(DOCUMENT_ACTION)
+    add_template_parser_arguments(document_parser)
 
     sub_parser.add_parser(VERSION_ACTION)
 
@@ -406,6 +410,14 @@ class Levistate(object):
                                                    self.get_software_type(),
                                                    self.get_software_version())
                 print template.get_example()
+            return True
+
+        if self.action == DOCUMENT_ACTION:
+            for template_name in self.args.template_names:
+                template = self.store.get_template(template_name,
+                                                   self.get_software_type(),
+                                                   self.get_software_version())
+                print template.get_documentation()
             return True
 
         return False

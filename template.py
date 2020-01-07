@@ -5,6 +5,7 @@ import os
 import re
 import yaml
 
+from document_template_md import DOCUMENT_TEMPLATE_MD
 from errors import (MissingTemplateError,
                     TemplateParseError,
                     UndefinedVariableError,
@@ -37,6 +38,8 @@ class Template(object):
         self.software_type = None
         self.software_version = None
         self.variables = None
+
+        self.documentation = None
 
     def __str__(self):
         return self.get_name() + " template"
@@ -134,6 +137,12 @@ class Template(object):
         """
         return self._convert_variables_to_example()
 
+    def get_documentation(self):
+        """
+        Returns template documentation in MarkDown format.
+        """
+        return self._generate_md_documentation()
+
     def validate_template_data(self, **template_data):
         """
         Validates that the template_data provided matches the variables schema.
@@ -152,6 +161,7 @@ class Template(object):
         filled_template = self._replace_vars_with_null()
         template_dict = self._decode_to_dict(filled_template)
         self._parse_headers(template_dict)
+        self._parse_documentation(template_dict)
 
     def _decode_to_dict(self, filled_template):
         try:
@@ -537,6 +547,50 @@ class Template(object):
     def _raise_value_error(self, var_name, message):
         raise VariableValueError("In template %s, variable %s: %s" % (
             self.get_name(), var_name, message))
+
+    def _parse_documentation(self, template_dict):
+        self.documentation = dict()
+
+        self.documentation["document_file"] = None
+        self.documentation["usage"] = "(documentation missing)"
+        self.documentation["restrictions"] = []
+        self.documentation["examples"] = []
+
+        file = get_dict_field_no_case(template_dict, "doc-file")
+        if file is not None:
+            self.documentation["document_file"] = file
+
+        usage = get_dict_field_no_case(template_dict, "usage")
+        if usage is not None:
+            self.documentation["usage"] = usage
+
+        restrictions = get_dict_field_no_case(template_dict, "restrictions")
+        if restrictions is not None:
+            self.documentation["restrictions"] = restrictions
+
+        examples = get_dict_field_no_case(template_dict, "examples")
+        if examples is not None:
+            self.documentation["examples"] = examples
+
+    def _generate_md_documentation(self):
+        doc_vars = dict(self.documentation)
+        doc_vars["name"] = self.name
+        doc_vars["description"] = self.description
+        doc_vars["variables"] = self.variables
+        doc_vars["template_file_name"] = self.filename
+
+        doc_vars["user_data"] = self.get_example()
+
+        try:
+            template = jinja2.Template(
+                DOCUMENT_TEMPLATE_MD,
+                autoescape=False,
+                undefined=jinja2.StrictUndefined)
+
+            return template.render(**doc_vars)
+        except jinja2.TemplateSyntaxError as e:
+            raise TemplateParseError("Syntax error in %s:%d: %s" %
+                                     (self.filename, e.lineno, e.message))
 
 
 class TemplateStore(object):
