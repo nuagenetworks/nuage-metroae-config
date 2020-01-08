@@ -1,0 +1,129 @@
+## Feature Template: Ingress Qos Policy
+#### Description
+Define an NSG Network Port ingress QoS policy with the Ingress QoS Policy feature template.
+
+#### Usage
+In NSG deployment cases where QoS is applied the Ingress QoS Policy provides the ability for priority treatment on a per queue basis by assigning bandwidth to each queue. The treatment is effectively a set of traffic shapers on a per class (4) basis.
+
+#### Template File Name
+/Users/mpiecuch/levistate-templates/templates/ingress_qos_policy.yml
+
+#### User Data Requirements
+If you do not provide values for the optional parameters listed below, then default values are used.
+
+```
+# Define an NSG Network Port ingress QoS policy with the Ingress QoS Policy feature template.
+- template: Ingress Qos Policy
+  values:
+    - enterprise_name: ""                      # (opt reference) ingress QoS Policy can be configured in the Platform Configuration or within an Enterprise. Optional addition of the Enterprise Name to configure it within an Enterprise only.
+      description: ""                          # (opt string) optional description of the Ingress QoS Policy.
+      ingress_qos_policy_name: ""              # (reference) name of the Ingress QoS Policy.
+      parent_rate_limiter_name: ""             # (reference) optional assigned name of a rate limiter for the port.
+      priority_queue_1_classes: []             # (opt list of choice) list of the Forwarding Classes assigned to the Priority Queue.
+      priority_queue_1_rate_limiter_name: ""   # (opt reference) rate limiter attached to priority queue.
+      wrr_queue_2_classes: []                  # (opt list of choice) list of the Forwarding Classes assigned to the WRR Q2.
+      wrr_queue_2_rate_limiter_name: ""        # (opt reference) rate limiter attached to WRR Q2.
+      wrr_queue_3_classes: []                  # (opt list of choice) list of the Forwarding Classes assigned to the WRR Q3.
+      wrr_queue_3_rate_limiter_name: ""        # (opt reference) rate limiter attached to WRR Q3.
+      wrr_queue_4_classes: []                  # (opt list of choice) list of the Forwarding Classes assigned to the WRR Q4.
+      wrr_queue_4_rate_limiter_name: ""        # (opt reference) rate limiter attached to WRR Q4.
+
+```
+
+#### Parameters
+*enterprise_name:* ingress QoS Policy can be configured in the Platform Configuration or within an Enterprise. Optional addition of the Enterprise Name to configure it within an Enterprise only.<br>
+*description:* optional description of the Ingress QoS Policy.<br>
+*ingress_qos_policy_name:* name of the Ingress QoS Policy.<br>
+*parent_rate_limiter_name:* optional assigned name of a rate limiter for the port.<br>
+*priority_queue_1_classes:* list of the Forwarding Classes assigned to the Priority Queue.<br>
+*priority_queue_1_rate_limiter_name:* rate limiter attached to priority queue.<br>
+*wrr_queue_2_classes:* list of the Forwarding Classes assigned to the WRR Q2.<br>
+*wrr_queue_2_rate_limiter_name:* rate limiter attached to WRR Q2.<br>
+*wrr_queue_3_classes:* list of the Forwarding Classes assigned to the WRR Q3.<br>
+*wrr_queue_3_rate_limiter_name:* rate limiter attached to WRR Q3.<br>
+*wrr_queue_4_classes:* list of the Forwarding Classes assigned to the WRR Q4.<br>
+*wrr_queue_4_rate_limiter_name:* rate limiter attached to WRR Q4.<br>
+
+
+#### Restrictions
+**create:**
+* Ingress QoS Policy name must be unique.
+* Rate Limiters attached to Parent and Queues must exist.
+* Forwarding Classed can only be assigned to a single queue.
+
+**revert:**
+* Ingress QoS policy cannot reverted if it is attached a NSG port.
+
+#### Examples
+
+##### Create Ingress QoS Policy for Two Provider Networks
+This example creates two Ingress QoS policies with BW rate limiters and classes based on a 6 QoS scheme.  nsg-qos-ingress-policy.yaml
+```
+- template: Ingress Qos Policy
+  values:
+    - ingress_qos_policy_name: MPLS-Provider-1-6QoS-1000M
+      parent_rate_limiter_name: rate-1000M
+      priority_queue_1_classes: ['A']
+      priority_queue_1_rate_limiter_name: rate-100M
+      wrr_queue_2_classes: ['B']
+      wrr_queue_2_rate_limiter_name: rate-200M
+      wrr_queue_3_classes: ['C', 'D', 'E']
+      wrr_queue_3_rate_limiter_name: rate-500M-1000M
+      wrr_queue_4_classes: ['F', 'G', 'H']
+      wrr_queue_4_rate_limiter_name: rate-200M-1000M
+    - ingress_qos_policy_name: MPLS-Provider-2-6QoS-1000M
+      parent_rate_limiter_name: rate-1000M
+      priority_queue_1_classes: ['A']
+      priority_queue_1_rate_limiter_name: rate-100M
+      wrr_queue_2_classes: ['B']
+      wrr_queue_2_rate_limiter_name: rate-200M
+      wrr_queue_3_classes: ['C', 'D', 'E']
+      wrr_queue_3_rate_limiter_name: rate-500M-1000M
+      wrr_queue_4_classes: ['F', 'G', 'H']
+      wrr_queue_4_rate_limiter_name: rate-200M-1000M
+
+```
+```
+[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-ingress-policy.yaml
+Device: Nuage Networks VSD 5.4.1
+    [select RateLimiter (name of rate-1000M)]
+        [store id to name parent_rate_limiter_id]
+        [store id to name parent_rate_limiter_id]
+    [select RateLimiter (name of rate-100M)]
+        [store id to name priority_queue_1_rate_limiter_id]
+        [store id to name priority_queue_1_rate_limiter_id]
+    [select RateLimiter (name of rate-200M)]
+        [store id to name wrr_queue_2_rate_limiter_id]
+        [store id to name wrr_queue_2_rate_limiter_id]
+    [select RateLimiter (name of rate-500M-1000M)]
+        [store id to name wrr_queue_3_rate_limiter_id]
+        [store id to name wrr_queue_3_rate_limiter_id]
+    [select RateLimiter (name of rate-200M-1000M)]
+        [store id to name wrr_queue_4_rate_limiter_id]
+        [store id to name wrr_queue_4_rate_limiter_id]
+    IngressQOSPolicy
+        name = 'MPLS-Provider-1-6QoS-1000M'
+        queue4AssociatedRateLimiterID = [retrieve wrr_queue_4_rate_limiter_id (RateLimiter:id)]
+        queue1AssociatedRateLimiterID = [retrieve priority_queue_1_rate_limiter_id (RateLimiter:id)]
+        queue2AssociatedRateLimiterID = [retrieve wrr_queue_2_rate_limiter_id (RateLimiter:id)]
+        queue2ForwardingClasses = ['B']
+        queue3ForwardingClasses = ['C', 'D', 'E']
+        queue4ForwardingClasses = ['F', 'G', 'H']
+        queue3AssociatedRateLimiterID = [retrieve wrr_queue_3_rate_limiter_id (RateLimiter:id)]
+        parentQueueAssociatedRateLimiterID = [retrieve parent_rate_limiter_id (RateLimiter:id)]
+        queue1ForwardingClasses = ['A']
+        description = 'ingress QoS policy MPLS-Provider-1-6QoS-1000M'
+    IngressQOSPolicy
+        name = 'MPLS-Provider-2-6QoS-1000M'
+        queue4AssociatedRateLimiterID = [retrieve wrr_queue_4_rate_limiter_id (RateLimiter:id)]
+        queue1AssociatedRateLimiterID = [retrieve priority_queue_1_rate_limiter_id (RateLimiter:id)]
+        queue2AssociatedRateLimiterID = [retrieve wrr_queue_2_rate_limiter_id (RateLimiter:id)]
+        queue2ForwardingClasses = ['B']
+        queue3ForwardingClasses = ['C', 'D', 'E']
+        queue4ForwardingClasses = ['F', 'G', 'H']
+        queue3AssociatedRateLimiterID = [retrieve wrr_queue_3_rate_limiter_id (RateLimiter:id)]
+        parentQueueAssociatedRateLimiterID = [retrieve parent_rate_limiter_id (RateLimiter:id)]
+        queue1ForwardingClasses = ['A']
+        description = 'ingress QoS policy MPLS-Provider-2-6QoS-1000M'
+
+```
