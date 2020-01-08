@@ -4,8 +4,8 @@ import argparse
 import os
 import yaml
 
-DESCRIPTION = """This tool is used to pull add documentation data into the
- templates."""
+DESCRIPTION = """This tool is used to add documentation data into the
+ templates from a doc data file."""
 
 
 def parse_args():
