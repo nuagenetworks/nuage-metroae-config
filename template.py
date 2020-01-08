@@ -143,6 +143,14 @@ class Template(object):
         """
         return self._generate_md_documentation()
 
+    def get_doc_file_name(self):
+        file_name = None
+        if (self.documentation is not None and
+                "document_file" in self.documentation):
+            file_name = self.documentation["document_file"]
+
+        return file_name
+
     def validate_template_data(self, **template_data):
         """
         Validates that the template_data provided matches the variables schema.
@@ -575,7 +583,10 @@ class Template(object):
     def _generate_md_documentation(self):
         doc_vars = dict(self.documentation)
         doc_vars["name"] = self.name
-        doc_vars["description"] = self.description
+        if self.description is not None:
+            doc_vars["description"] = self.description
+        else:
+            doc_vars["description"] = "(missing documentation)"
         doc_vars["variables"] = self.variables
         doc_vars["template_file_name"] = self.filename
 

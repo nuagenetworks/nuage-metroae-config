@@ -17,7 +17,7 @@ If you do not provide values for the optional parameters listed below, then defa
 
 #### Parameters
 {% for variable in variables -%}
-*{{ variable.name }}:* {{ variable.description }}<br>
+*{{ variable.name }}:* {{ variable.description | default("") }}<br>
 {% endfor %}
 
 #### Restrictions
