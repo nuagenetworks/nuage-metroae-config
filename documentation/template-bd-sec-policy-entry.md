@@ -81,6 +81,7 @@ This example creates a single ingress/egress security policy entry in an existin
   values:
     enterprise_name: DemoEnterprise
     security_policy_name: Intrazone-West
+    domain_type: l3domain
     domain_name: L3-Domain-US
     acl_entry_name: dns
     entry_priority: 100
@@ -98,8 +99,7 @@ This example creates a single ingress/egress security policy entry in an existin
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create security-bd-sec-policy-entry-flat.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -211,6 +211,7 @@ This example creates multiple security policy entries in a single security polic
   values:
     enterprise_name: DemoEnterprise
     security_policy_name: Intrazone-West
+    domain_type: l3domain
     domain_name: L3-Domain-US
     security_policy_name: Intrazone-West
   children:
@@ -249,8 +250,7 @@ This example creates multiple security policy entries in a single security polic
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create security-bd-sec-policy-entry-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]

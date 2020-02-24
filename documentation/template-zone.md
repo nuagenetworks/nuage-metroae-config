@@ -55,8 +55,7 @@ This example creates two Zones, both in the same Enterprise and Domain. All para
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-zone-flat.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             Zone
@@ -83,8 +82,7 @@ The common attributes (Enterprise and Domain) are listed under group, and the Zo
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-zone-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             Zone

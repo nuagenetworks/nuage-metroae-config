@@ -67,8 +67,7 @@ This example creates three rate limiters where CIR=PIR, such that all 100Mbps, 2
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-rate-limiter-cir-eq-pir.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     RateLimiter
         committedInformationRate = '100'
         peakBurstSize = '25000'
@@ -108,8 +107,7 @@ This example creates two rate limiters with PIR >> CIR, such that 200Mbps and 50
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-rate-limiter-cir-lt-pir.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     RateLimiter
         committedInformationRate = '200'
         peakBurstSize = '50000'
@@ -137,8 +135,7 @@ This example creates a rate limiter for best effort traffic only. No bandwidth i
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-rate-limiter-be.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     RateLimiter
         committedInformationRate = '0'
         peakBurstSize = '250000'

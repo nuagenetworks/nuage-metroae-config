@@ -66,19 +66,19 @@ This example creates an NSG Instance with minimal additional configuration in a 
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-instance-minimal.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
         [store id to name nsgateway_template_id]
     [select Enterprise (name of DemoEnterprise)]
         NSGateway
+            TCPMSSEnabled = False
             name = 'West-Branch-001'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
             description = 'NSGateway West-Branch-001'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = ''
                 ZFBMatchAttribute = 'NONE'
 
@@ -104,71 +104,79 @@ This example creates multiple NSG Instances in a specific enterprise using group
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-instance-multiple.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
+        [store id to name nsgateway_template_id]
+        [store id to name nsgateway_template_id]
+        [store id to name nsgateway_template_id]
         [store id to name nsgateway_template_id]
         [store id to name nsgateway_template_id]
         [store id to name nsgateway_template_id]
     [select Enterprise (name of DemoEnterprise)]
         NSGateway
+            TCPMSSEnabled = False
             name = 'West-Branch-001'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
             description = 'NSGateway West-Branch-001'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = ''
                 ZFBMatchAttribute = 'NONE'
         NSGateway
+            TCPMSSEnabled = False
             name = 'West-Branch-002'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
             description = 'NSGateway West-Branch-002'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = ''
                 ZFBMatchAttribute = 'NONE'
         NSGateway
+            TCPMSSEnabled = False
             name = 'West-Branch-003'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
             description = 'NSGateway West-Branch-003'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = ''
                 ZFBMatchAttribute = 'NONE'
         NSGateway
+            TCPMSSEnabled = False
             name = 'East-Branch-001'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
             description = 'NSGateway East-Branch-001'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = ''
                 ZFBMatchAttribute = 'NONE'
         NSGateway
+            TCPMSSEnabled = False
             name = 'East-Branch-002'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
             description = 'NSGateway East-Branch-002'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = ''
                 ZFBMatchAttribute = 'NONE'
         NSGateway
+            TCPMSSEnabled = False
             name = 'East-Branch-003'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
             description = 'NSGateway East-Branch-003'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = ''
                 ZFBMatchAttribute = 'NONE'
 
@@ -187,19 +195,19 @@ This example creates an NSG instance within the enterprise with match criteria d
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config nsg-instance-zfb.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
         [store id to name nsgateway_template_id]
     [select Enterprise (name of DemoEnterprise)]
         NSGateway
-            name = 'West-Branch-002'
+            TCPMSSEnabled = False
+            name = 'West-Branch-001'
             controlTrafficDSCPValue = 56
             controlTrafficCOSValue = 7
             templateID = [retrieve nsgateway_template_id (NSGatewayTemplate:id)]
             SSHService = 'INHERITED'
-            description = 'NSGateway West-Branch-002'
-            [select Bootstrap (ZFBMatchAttribute of NONE)]
+            description = 'NSGateway West-Branch-001'
+            [select Bootstrap ($position of 0)]
                 ZFBMatchValue = 'NS1550Q0448'
                 ZFBMatchAttribute = 'SERIAL_NUMBER'
 

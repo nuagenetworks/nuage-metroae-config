@@ -63,5 +63,20 @@ This example creates NSGateway Activate template with minimal information.nsg-ga
 
 ```
 ```
+(example)$ metroae config create user-data.yml
+    [select Enterprise (name of DemoEnterprise)]
+        [select User (userName of admin)]
+            [store id to name installer_id]
+        [select NSGateway (name of West-Branch-001)]
+            [select Bootstrap ($position of 0)]
+                installerID = [retrieve installer_id (User:id)]
+            [select Location ($position of 0)]
+                timeZoneID = 'UTC'
+                country = ''
+                state = ''
+                locality = ''
+                address = ''
+            Job
+                command = 'NOTIFY_NSG_REGISTRATION'
 
 ```

@@ -80,8 +80,7 @@ This example creates an L2 Domain with DHCP enabled using IPv4 addressing only. 
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-l2domain-ipv4.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         L2DomainTemplate
             name = 'template_L2-Domain-IPv4'
@@ -115,8 +114,7 @@ This example creates an L2 Domain with DHCP enabled using both IPv4 and IPv6 add
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-l2domain-dualstack.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         L2DomainTemplate
             name = 'template_L2-Domain-DualStack'
@@ -147,8 +145,7 @@ This example creates an L2 Domain with no DHCP or network allocated.  network-l2
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-l2domain-noip.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         L2DomainTemplate
             dhcpmanaged = False

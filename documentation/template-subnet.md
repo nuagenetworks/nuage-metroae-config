@@ -91,8 +91,7 @@ This example creates two subnets, both in the same Enterprise, Domain and Zone. 
 
 ```
 ```
-
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -139,9 +138,7 @@ In this case the common attributes for where the subnet is created ie. the Enter
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-subnet-groups.yaml
-
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -149,7 +146,7 @@ Device: Nuage Networks VSD 5.4.1
                     underlayEnabled = 'DISABLED'
                     PATEnabled = 'DISABLED'
                     name = 'West-Subnet-001'
-                    description = 'Subnet West-Subnet-01'
+                    description = 'Subnet West-Subnet-001'
                     netmask = '255.255.255.0'
                     address = '100.1.1.0'
                     gateway = '100.1.1.1'
@@ -193,9 +190,7 @@ This example is similar to the last example, except in this case we are creating
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-subnet-groups-zones.yaml
-
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -221,7 +216,7 @@ Device: Nuage Networks VSD 5.4.1
                 Subnet
                     underlayEnabled = 'DISABLED'
                     PATEnabled = 'DISABLED'
-                    name = 'East-Subnet-011'
+                    name = 'East-Subnet-001'
                     description = 'Subnet East-Subnet-001'
                     netmask = '255.255.255.0'
                     address = '200.1.1.0'
@@ -247,9 +242,7 @@ This example creates a dualstack IPv4 and IPv6 subnet.  network-subnet-dualstack
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]$ metroae config create network-subnet-dualstack.yaml
-
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]

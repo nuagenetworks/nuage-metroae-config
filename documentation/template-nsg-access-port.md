@@ -64,8 +64,7 @@ This example creates a single access port on an existing NSG Template.  nsg-acce
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-access-port-flat.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
         NSPortTemplate
             description = 'Access Port West-NSG-Type1-Access-Port'
@@ -106,8 +105,7 @@ This example creates two access ports on the NSG Template, each with multiple VL
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-access-port-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
         NSPortTemplate
             description = 'Access Port West-NSG-Type1-Access-Port-1'

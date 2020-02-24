@@ -84,8 +84,7 @@ This example creates two Ingress QoS policies with BW rate limiters and classes 
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-ingress-policy.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select RateLimiter (name of rate-1000M)]
         [store id to name parent_rate_limiter_id]
         [store id to name parent_rate_limiter_id]

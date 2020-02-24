@@ -60,7 +60,7 @@ This example configures a single range on a single subnet. All required paramete
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -101,8 +101,7 @@ This example defines multiple IP ranges per subnet. The required Enterprise, Dom
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-dhcp-pool-multi-subnet-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -160,8 +159,7 @@ This example creates a DHCP range per subnet. The subnets span more than a singl
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-dhcp-pool-multi-zone-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]

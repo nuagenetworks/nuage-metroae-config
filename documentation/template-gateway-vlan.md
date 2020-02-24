@@ -55,7 +55,7 @@ This example creates a list of VLANs on a single port.  dcgateway-vlan-list-flat
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         [select Port (name of eth2)]
             Vlan
@@ -87,8 +87,7 @@ This example creates multiple ranges of VLANs on a single port along with some n
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create dcgateway-vlan-range-flat.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         [select Port (name of eth2)]
             Vlan
@@ -146,7 +145,7 @@ This example configures different VLAN ranges on different ports, we are going t
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         [select Port (name of eth2)]
             Vlan
@@ -188,7 +187,7 @@ This example creates VLANs and assigns Enterprise Permissions at the same time. 
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [store id to name enterprise_id]
         [store id to name enterprise_id]

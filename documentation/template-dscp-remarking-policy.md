@@ -58,8 +58,7 @@ This example sets the DSCP Bits based on two different service provider 6 class 
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-dhcp-remarking-policy.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     DSCPRemarkingPolicyTable
         name = 'MPLS-Provider-1'
         description = 'DSCP Alignment for MPLS Provider 1 / DiffServ'

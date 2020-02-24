@@ -82,21 +82,27 @@ This example creates Performance Monitor template with HTTP probe.nsg-perfromanc
     - enterprise_name: "DemoEnterprise"
       performance_monitor_name: "http-probe"
       probe_type: "HTTP"
+      tier_type: tier1
       hold_down_timer: 1000
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-performance-monitor-http.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         PerformanceMonitor
             numberOfPackets = 1
-            holdDownTimer = 1000
+            interval = 10
             name = 'http-probe'
             probeType = 'HTTP'
             serviceClass = 'H'
             payloadSize = 137
-            interval = 10
+            holdDownTimer = 1000
+            description = 'Performance Monitor http-probe'
+            [select Tier (tierType of TIER1)]
+                tierType = 'TIER1'
+                description = 'Tier tier1'
+                destinationurl
+                    percentageWeight = 100
 
 ```
 
@@ -115,17 +121,17 @@ This example creates Performance Monitor template with One-Way probe.nsg-perfrom
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-performance-monitor-one-way.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         PerformanceMonitor
             numberOfPackets = 10
-            holdDownTimer = 1000
+            interval = 10
             name = 'one-way-probe'
             probeType = 'ONEWAY'
             serviceClass = 'H'
             payloadSize = 150
-            interval = 10
+            holdDownTimer = 1000
+            description = 'Performance Monitor one-way-probe'
 
 ```
 
@@ -144,16 +150,16 @@ This example creates Performance Monitor template with ipsec-vxlan probe.nsg-per
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-performance-monitor-ipsec-vxlan.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         PerformanceMonitor
             numberOfPackets = 10
-            holdDownTimer = 1000
+            interval = 10
             name = 'ipsec-vxlan-probe'
             probeType = 'IPSEC_AND_VXLAN'
             serviceClass = 'H'
             payloadSize = 150
-            interval = 10
+            holdDownTimer = 1000
+            description = 'Performance Monitor ipsec-vxlan-probe'
 
 ```

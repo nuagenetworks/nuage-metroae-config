@@ -126,8 +126,7 @@ This example creates a global Symmetric QoS policy. From this we will see that t
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-symmetric-policy.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     RateLimiter
         committedInformationRate = '1000'
         peakBurstSize = '250000'

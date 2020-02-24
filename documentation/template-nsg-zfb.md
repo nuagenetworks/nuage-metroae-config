@@ -60,8 +60,7 @@ This example creates a ZFB Auto Assignment for auto-assigning incoming auto-boot
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-zfb-auto-assignment.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [store id to name enterprise_id]
     ZFBAutoAssignment

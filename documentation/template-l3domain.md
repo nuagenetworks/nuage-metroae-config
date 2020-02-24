@@ -63,8 +63,7 @@ In this example, the minimum required data is passed to create an L3 domain.  ne
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-domain-default.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         DomainTemplate
             name = 'template_L3-Domain-US'
@@ -72,8 +71,10 @@ Device: Nuage Networks VSD 5.4.1
         Domain
             underlayEnabled = 'DISABLED'
             PATEnabled = 'DISABLED'
-            templateID = [retrieve domain_template_id (DomainTemplate:id)]
+            aggregateFlowsEnabled = False
             name = 'L3-Domain-US'
+            flowCollectionEnabled = 'DISABLED'
+            templateID = [retrieve domain_template_id (DomainTemplate:id)]
             description = 'Domain L3-Domain-US'
 
 ```
@@ -91,8 +92,7 @@ This example adds the parameters required to enable PAT to underlay on the domai
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-domain-options.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         DomainTemplate
             name = 'template_L3-Domain-US'
@@ -100,8 +100,10 @@ Device: Nuage Networks VSD 5.4.1
         Domain
             underlayEnabled = 'ENABLED'
             PATEnabled = 'ENABLED'
-            templateID = [retrieve domain_template_id (DomainTemplate:id)]
+            aggregateFlowsEnabled = False
             name = 'L3-Domain-US'
+            flowCollectionEnabled = 'DISABLED'
+            templateID = [retrieve domain_template_id (DomainTemplate:id)]
             description = 'Domain L3-Domain-US'
 
 ```

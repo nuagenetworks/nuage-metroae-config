@@ -52,7 +52,7 @@ This example creates a VSC Profile with a single VSC assigned and default values
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-vscprofile-sa.yml
+(example)$ metroae config create user-data.yml
     InfrastructureVscProfile
         description = 'Infrastructure VSC Profile Provider-1-VSC-East'
         name = 'Provider-1-VSC-East'
@@ -85,28 +85,28 @@ This example creates multiple VSC Profiles supporting different transport networ
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-vscprofile-ha.yml
-InfrastructureVscProfile
-    secondController = '192.168.10.201'
-    description = 'Infrastructure VSC Profile Provider-1-VSC-East'
-    name = 'Provider-1-VSC-East'
-    firstController = '192.168.10.200'
-InfrastructureVscProfile
-    probeInterval = 15000
-    secondController = '172.16.10.201'
-    description = 'Infrastructure VSC Profile Provider-2-VSC-East'
-    name = 'Provider-2-VSC-East'
-    firstController = '172.16.10.200'
-InfrastructureVscProfile
-    secondController = '192.168.11.201'
-    description = 'Infrastructure VSC Profile Provider-1-VSC-West'
-    name = 'Provider-1-VSC-West'
-    firstController = '192.168.11.200'
-InfrastructureVscProfile
-    probeInterval = 15000
-    secondController = '172.16.11.201'
-    description = 'Infrastructure VSC Profile Provider-2-VSC-West'
-    name = 'Provider-2-VSC-West'
-    firstController = '172.16.11.200'
+(example)$ metroae config create user-data.yml
+    InfrastructureVscProfile
+        secondController = '192.168.10.201'
+        description = 'Infrastructure VSC Profile Provider-1-VSC-East'
+        name = 'Provider-1-VSC-East'
+        firstController = '192.168.10.200'
+    InfrastructureVscProfile
+        probeInterval = 15000
+        secondController = '172.16.10.201'
+        description = 'Infrastructure VSC Profile Provider-2-VSC-East'
+        name = 'Provider-2-VSC-East'
+        firstController = '172.16.10.200'
+    InfrastructureVscProfile
+        secondController = '192.168.11.201'
+        description = 'Infrastructure VSC Profile Provider-1-VSC-West'
+        name = 'Provider-1-VSC-West'
+        firstController = '192.168.11.200'
+    InfrastructureVscProfile
+        probeInterval = 15000
+        secondController = '172.16.11.201'
+        description = 'Infrastructure VSC Profile Provider-2-VSC-West'
+        name = 'Provider-2-VSC-West'
+        firstController = '172.16.11.200'
 
 ```

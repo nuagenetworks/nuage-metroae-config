@@ -75,8 +75,7 @@ This example creates a single SSID connection with minimal data.  nsg-wifi-ssid-
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-wifi-ssid-minimal.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select NSGateway (name of West-Branch-001)]
             [select WirelessPort (name of West-Branch-Building1-Wifi-Port)]
@@ -105,7 +104,7 @@ This example creates SSID connection on Wifi port with captive portal informatio
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select CaptivePortalProfile (name of West-Branch-Wifi-Guest-Portal)]
             [store id to name captive_portal_profile_id]
@@ -138,7 +137,7 @@ This example creates SSID connection on Wifi port with secure password based acc
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select NSGateway (name of West-Branch-001)]
             [select WirelessPort (name of West-Branch-Building1-Wifi-Port)]

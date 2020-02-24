@@ -90,8 +90,7 @@ This example creates a single network port on an existing NSG Template.  nsg-net
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-network-port-flat.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select InfrastructureVscProfile (name of Provider-1-VSC-West)]
         [store id to name infrastructure_vsc_profile_id]
     [select Underlay (name of Underlay-MPLS-1)]
@@ -102,7 +101,7 @@ Device: Nuage Networks VSD 5.4.1
         [store id to name egress_qos_policy_id]
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
         NSPortTemplate
-            description = 'Network Port MPLS-Provider-1-West'
+            description = 'NSG Network Port MPLS-Provider-1-West'
             physicalName = 'port1'
             mtu = 1500
             VLANRange = '0-1024'
@@ -111,7 +110,7 @@ Device: Nuage Networks VSD 5.4.1
             name = 'MPLS-Provider-1-West'
             VlanTemplate
                 associatedVSCProfileID = [retrieve infrastructure_vsc_profile_id (InfrastructureVscProfile:id)]
-                description = 'Network Port MPLS-Provider-1-West'
+                description = 'NSG Network Port MPLS-Provider-1-West'
                 associatedIngressQOSPolicyID = [retrieve ingress_qos_policy_id (IngressQOSPolicy:id)]
                 isUplink = True
                 value = 0
@@ -159,7 +158,7 @@ This example adds both a primary and secondary network port to an existing NSG T
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-network-port-groups.yaml
+(example)$ metroae config create user-data.yml
     [select InfrastructureVscProfile (name of Provider-1-VSC-West)]
         [store id to name infrastructure_vsc_profile_id]
     [select Underlay (name of Underlay-MPLS-1)]
@@ -168,17 +167,17 @@ This example adds both a primary and secondary network port to an existing NSG T
         [store id to name ingress_qos_policy_id]
     [select EgressQOSPolicy (name of MPLS-Provider-1-6QoS-1000M)]
         [store id to name egress_qos_policy_id]
-    [select Underlay (name of Underlay-MPLS-2)]
-        [store id to name underlay_id]
-    [select EgressQOSPolicy (name of MPLS-Provider-2-6QoS-1000M)]
-        [store id to name egress_qos_policy_id]
-    [select IngressQOSPolicy (name of MPLS-Provider-2-6QoS-1000M)]
-        [store id to name ingress_qos_policy_id]
     [select InfrastructureVscProfile (name of Provider-2-VSC-West)]
         [store id to name infrastructure_vsc_profile_id]
+    [select EgressQOSPolicy (name of MPLS-Provider-2-6QoS-1000M)]
+        [store id to name egress_qos_policy_id]
+    [select Underlay (name of Underlay-MPLS-2)]
+        [store id to name underlay_id]
+    [select IngressQOSPolicy (name of MPLS-Provider-2-6QoS-1000M)]
+        [store id to name ingress_qos_policy_id]
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
         NSPortTemplate
-            description = 'Network Port MPLS-Provider-1-West'
+            description = 'NSG Network Port MPLS-Provider-1-West'
             physicalName = 'port1'
             mtu = 1500
             VLANRange = '0-1024'
@@ -187,7 +186,7 @@ This example adds both a primary and secondary network port to an existing NSG T
             name = 'MPLS-Provider-1-West'
             VlanTemplate
                 associatedVSCProfileID = [retrieve infrastructure_vsc_profile_id (InfrastructureVscProfile:id)]
-                description = 'Network Port MPLS-Provider-1-West'
+                description = 'NSG Network Port MPLS-Provider-1-West'
                 associatedIngressQOSPolicyID = [retrieve ingress_qos_policy_id (IngressQOSPolicy:id)]
                 isUplink = True
                 value = 0
@@ -200,7 +199,7 @@ This example adds both a primary and secondary network port to an existing NSG T
                     mode = 'Dynamic'
                     downloadRateLimit = 10.0
         NSPortTemplate
-            description = 'Network Port MPLS-Provider-2-West'
+            description = 'NSG Network Port MPLS-Provider-2-West'
             physicalName = 'port2'
             mtu = 1500
             VLANRange = '0-1024'
@@ -209,7 +208,7 @@ This example adds both a primary and secondary network port to an existing NSG T
             name = 'MPLS-Provider-2-West'
             VlanTemplate
                 associatedVSCProfileID = [retrieve infrastructure_vsc_profile_id (InfrastructureVscProfile:id)]
-                description = 'Network Port MPLS-Provider-2-West'
+                description = 'NSG Network Port MPLS-Provider-2-West'
                 associatedIngressQOSPolicyID = [retrieve ingress_qos_policy_id (IngressQOSPolicy:id)]
                 isUplink = True
                 value = 0

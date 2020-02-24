@@ -44,8 +44,7 @@ This example configures a single underlay tag. nsg-infrastructure-single-underla
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-infrastructure-single-underlay.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     Underlay
         name = 'Underlay-MPLS-1'
         description = 'Underlay Tag for MPLS Provider 1'
@@ -66,8 +65,7 @@ This example configures three underlays with a single user data template.  nsg-i
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-infrastructure-multiple-underlay.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     Underlay
         name = 'Underlay-MPLS-1'
         description = 'Underlay Tag for MPLS Provider 1'

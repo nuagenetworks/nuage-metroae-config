@@ -54,8 +54,7 @@ This example creates an Routing Policy that can be used for either blocking eith
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bgp-routing-policy-reject-all.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         RoutingPolicy
             defaultAction = 'REJECT'
@@ -108,8 +107,7 @@ This example creates an Routing Policy that will reject all routes except a defa
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bgp-routing-policy-default-only.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         RoutingPolicy
             defaultAction = 'REJECT'
@@ -142,8 +140,7 @@ Device: Nuage Networks VSD 5.4.1
 </statement>
 </statements>
 </policy-definition>
-</routing-policy>
-'
+</routing-policy>'
             contentType = 'DEFAULT'
             name = 'DefaultOnly'
             description = 'Policy to only receive or send default route'

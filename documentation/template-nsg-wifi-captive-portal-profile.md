@@ -54,8 +54,7 @@ This example creates a Captive Portal Profile with some basic formatting. Note t
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-access-wifi-captive-portal-profile.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         CaptivePortalProfile
             portalType = 'CLICK_THROUGH'
@@ -63,8 +62,7 @@ Device: Nuage Networks VSD 5.4.1
 <ul>
 <li>access restriction 1<li/>
 <li>access restriction 2<li/>
-<ul/>
-'
+<ul/>'
             name = 'Branch-Site-Wifi-Access'
             description = 'Captive Portal Profile Branch-Site-Wifi-Access'
 

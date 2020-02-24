@@ -86,14 +86,14 @@ This example creates a profile with mandatory attributes and minimal optional at
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-infrastructure-gateway-profile-minimal.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     InfrastructureGatewayProfile
         flowEvictionThreshold = 2500
         NTPServerKeyID = 0
         name = 'West-NSG-profile-default'
         upgradeAction = 'DOWNLOAD_AND_UPGRADE_AT_WINDOW'
         proxyDNSName = 'proxy.demoenterprise.net'
+        statsCollectorPort = 39090
         useTwoFactor = False
         metadataUpgradePath = 'http://upgrade.demoenterprise.net/nsg/upgrade.json'
         remoteLogMode = 'DISABLED'
@@ -121,13 +121,13 @@ This example creates a profile with mandatory attributes along with enabling con
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-infrastructure-gateway-profile-controllerless.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     InfrastructureGatewayProfile
         NTPServerKeyID = 0
         description = 'basic infrastructure profile'
         flowEvictionThreshold = 2500
         proxyDNSName = 'proxy.demoenterprise.net'
+        statsCollectorPort = 39090
         upgradeAction = 'UPGRADE_AT_BOOTSTRAPPING'
         deadTimer = 'P1DT12H0M'
         controllerLessRemoteDuration = 'P0DT12H0M'

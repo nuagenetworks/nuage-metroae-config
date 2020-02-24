@@ -58,7 +58,7 @@ This example creates a WBX Gateway in VSD. dcgateway-wbx.yaml
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     GatewayTemplate
         personality = 'NUAGE_210_WBX_48_S'
         description = 'Gateway 10.0.1.21'
@@ -83,7 +83,7 @@ This example creates a VRS-G. This virtual gateway is not dynamically discovered
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     GatewayTemplate
         personality = 'VRSG'
         description = 'Gateway 10.0.1.20'

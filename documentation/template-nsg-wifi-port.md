@@ -64,8 +64,7 @@ This example creates a single wifi  port on an existing NSG.  nsg-wifi-port.yaml
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-wifi-port.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select NSGateway (name of West-Branch-001)]
             WirelessPort
@@ -88,7 +87,7 @@ This example creates two access ports on the NSG Template, each with multiple VL
     nsg_template_name: West-NSG-Type-1
     egress_qos_policy_name: West-NSG-Type-1-Access-QoS
   children:
-    - template: Access Port
+    - template: NSG Access Port
       values:
         - access_port_name: West-NSG-Type1-Access-Port-1
           physical_name: port3
@@ -99,8 +98,7 @@ This example creates two access ports on the NSG Template, each with multiple VL
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-access-port-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select NSGatewayTemplate (name of West-NSG-Type-1)]
         NSPortTemplate
             description = 'Access Port West-NSG-Type1-Access-Port-1'

@@ -59,7 +59,7 @@ This example creates a single access port on a Gateway with a defined VLAN range
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         Port
             portType = 'ACCESS'
@@ -92,7 +92,7 @@ This example creates multiple Access Ports each with the VLAN range of 0-4094.  
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         Port
             portType = 'ACCESS'
@@ -149,7 +149,7 @@ This example creates multiple Access Ports each with its own VLAN range.  dcgate
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         Port
             portType = 'ACCESS'
@@ -200,8 +200,7 @@ This example creates Access Ports and assigns Enterprise Permissions at the same
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create dcgateway-port-groups-common-enterprise-permissions.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [store id to name enterprise_id]
         [store id to name enterprise_id]

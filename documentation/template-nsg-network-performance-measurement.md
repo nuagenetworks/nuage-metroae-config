@@ -50,8 +50,7 @@ This example creates a Network Performance Measurement template.nsg-network-perf
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-network-performance-measurement.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select PerformanceMonitor (name of one-way-probe)]
             [store id to name performance_monitor_id]

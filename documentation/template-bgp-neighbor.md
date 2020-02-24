@@ -89,13 +89,13 @@ This example creates an IPv4 BGP Peer on a VM vPort, providing the VM IP address
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bgp-neighbor-ipv4-vmip.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
-        [select Domain ($child of Zone)]
-            [select Zone ($child of Subnet)]
-                [select Subnet ($child of VPort)]
-                    [select VPort (id of 78c607f5-42d0-44a7-903b-8d2ee0f1f539)]
+        [select Domain (name of L3-Domain-US)]
+            [select Zone (name of West-Zone)]
+                [select Subnet (name of West-Subnet-001)]
+                    [select VPort ($child of VMInterface)]
+                        [select VMInterface (IPAddress of 100.1.1.2)]
                         BGPNeighbor
                             peerIP = '100.1.1.2'
                             IPType = 'IPV4'
@@ -121,8 +121,7 @@ This example creates an IPv4 BGP peer on the same vPort as the previous example,
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bgp-neighbor-ipv4-vportuuid.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain ($child of Zone)]
             [select Zone ($child of Subnet)]
@@ -191,8 +190,7 @@ This example creates an IPv6 BGP Peer on a WBX bridge Vport. We do not need to s
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bgp-neighbor-ipv6-vmip-blob.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         [select Port (name of eth2)]
             [select Vlan (value of 22)]
@@ -241,8 +239,7 @@ Device: Nuage Networks VSD 5.4.1
   <error-handling>
     <treat-as-withdraw>false</treat-as-withdraw>
   </error-handling>
-</neighbor>
-'
+</neighbor>'
                             dampeningEnabled = True
                             BFDEnabled = True
                             name = 'gw-bgp'
@@ -266,8 +263,7 @@ This example creates a BGP peer for a WAN deployment on a NSG associated Subnet.
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bgp-neighbor-ipv4-nsg-access-port.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]

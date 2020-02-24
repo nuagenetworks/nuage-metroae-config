@@ -53,8 +53,7 @@ This example configures a single static route within a domain. In this case all 
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-static-route-flat.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             StaticRoute
@@ -86,8 +85,7 @@ This example defines multiple static routes within a domain, however we will def
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-static-route-groups-child.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             StaticRoute
@@ -130,8 +128,7 @@ This example creates multiple static routes but rather than inheriting the group
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-static-route-groups-sub.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             StaticRoute

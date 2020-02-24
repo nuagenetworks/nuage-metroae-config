@@ -57,6 +57,7 @@ This example creates a single security policy. security-bd-sec-policy-flat.yaml
   values:
       enterprise_name: DemoEnterprise
       security_policy_name: Intrazone-West
+      domain_type: l3domain
       domain_name: L3-Domain-US
       policy_priority: 1000
       default_allow_ip: False
@@ -67,8 +68,7 @@ This example creates a single security policy. security-bd-sec-policy-flat.yaml
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create security-bd-sec-policy-flat.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             IngressACLTemplate
@@ -96,6 +96,7 @@ This example creates a series of security policies, using groups for repeated co
 - group: policy_options1
   values:
     enterprise_name: DemoEnterprise
+    domain_type: l3domain
     default_allow_ip: False
     default_allow_non_ip: False
     allow_address_spoof: False
@@ -116,8 +117,7 @@ This example creates a series of security policies, using groups for repeated co
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create security-bd-sec-policy-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             IngressACLTemplate

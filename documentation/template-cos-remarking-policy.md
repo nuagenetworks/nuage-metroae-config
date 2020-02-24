@@ -54,8 +54,7 @@ This example sets the COS Bits based on a service provider 3 class model. The pr
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create nsg-qos-cos-remarking-profile.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     COSRemarkingPolicyTable
         name = 'MPLS-Provider-1-COS'
         description = 'CoS remarking policy MPLS-Provider-1-COS'

@@ -65,6 +65,7 @@ This example adds a bridge port from a VRS-G to a DC subnet.  network-bridge-por
 - template: Bridge Port
   values:
     - enterprise_name: "DemoEnterprise"
+      domain_type: l3domain
       domain_name: "L3-Domain-US"
       zone_name: "West-Zone"
       subnet_name: "West-Subnet-001"
@@ -76,8 +77,7 @@ This example adds a bridge port from a VRS-G to a DC subnet.  network-bridge-por
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-bridge-port-dcgateway.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Gateway (name of 10.0.1.20)]
         [store id to name gateway_id]
         [select Port (name of eth2)]
@@ -108,6 +108,7 @@ This example adds a bridge port from an NSG to a WAN subnet for a LAN connection
 - template: Bridge Port
   values:
     - enterprise_name: "DemoEnterprise"
+      domain_type: l3domain
       domain_name: "L3-Domain-US"
       zone_name: "West-Zone"
       subnet_name: "West-Subnet-001"
@@ -120,8 +121,7 @@ This example adds a bridge port from an NSG to a WAN subnet for a LAN connection
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bridge-port-nsg-wired.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select NSGateway (name of West-Branch-001)]
             [store id to name gateway_id]
@@ -152,6 +152,7 @@ This example adds a bridge port from an NSG to a WAN subnet for a wireless conne
 - template: Bridge Port
   values:
     - enterprise_name: "DemoEnterprise"
+      domain_type: l3domain
       domain_name: "L3-Domain-US"
       zone_name: "West-Zone"
       subnet_name: "West-Subnet-001"
@@ -164,8 +165,7 @@ This example adds a bridge port from an NSG to a WAN subnet for a wireless conne
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create network-bridge-port-nsg-wireless.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select NSGateway (name of West-Branch-001)]
             [store id to name gateway_id]

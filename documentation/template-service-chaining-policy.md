@@ -100,9 +100,7 @@ This examples creates a redirection target and ingress forwarding policy and its
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network/service-chaining-flat.yaml
-
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -130,6 +128,6 @@ Device: Nuage Networks VSD 5.4.1
                     locationType = 'ANY'
                     sourcePort = '*'
                     networkType = 'ZONE'
-                    flowLoggingEnabled = Falsemetroae config create nsg-qos-cos-remarking-profile.yaml
+                    flowLoggingEnabled = False
 
 ```

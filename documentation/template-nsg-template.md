@@ -55,8 +55,7 @@ This example creates an NSG Template, and attaches the Infrastructure Gateway an
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-template.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select InfrastructureGatewayProfile (name of West-NSG-profile-default)]
         [store id to name infrastructure_gateway_profile_id]
     [select InfrastructureAccessProfile (name of access-key)]

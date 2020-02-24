@@ -55,7 +55,7 @@ This example adds permissions to a gateway.  dcgateway-enterprise-permission.yam
 
 ```
 ```
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [store id to name enterprise_id]
     [select Gateway (name of 10.0.1.20)]
@@ -78,8 +78,7 @@ This example adds permissions to a single port on a gateway.  dcgateway-enterpri
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create dcgateway-enterprise-permission-port.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [store id to name enterprise_id]
     [select Gateway (name of 10.0.1.20)]
@@ -108,8 +107,7 @@ This example adds permissions to multiple ports on a gateway and limits the data
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create dcgateway-enterprise-permission-port-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [store id to name enterprise_id]
         [store id to name enterprise_id]
@@ -165,5 +163,52 @@ This example adds permissions to multiple VLANs on multiple Ports.  dcgateway-en
 
 ```
 ```
+(example)$ metroae config create user-data.yml
+    [select Enterprise (name of DemoEnterprise)]
+        [store id to name enterprise_id]
+        [store id to name enterprise_id]
+        [store id to name enterprise_id]
+        [store id to name enterprise_id]
+        [store id to name enterprise_id]
+        [store id to name enterprise_id]
+    [select Gateway (name of 10.0.1.20)]
+        [select Port (name of eth2)]
+            [select Vlan (value of 21)]
+                EnterprisePermission
+                    permittedEntityDescription = 'EnterprisePermission DemoEnterprise'
+                    permittedEntityID = [retrieve enterprise_id (Enterprise:id)]
+                    permittedAction = 'USE'
+                    permittedEntityName = 'DemoEnterprise'
+            [select Vlan (value of 22)]
+                EnterprisePermission
+                    permittedEntityDescription = 'EnterprisePermission DemoEnterprise'
+                    permittedEntityID = [retrieve enterprise_id (Enterprise:id)]
+                    permittedAction = 'USE'
+                    permittedEntityName = 'DemoEnterprise'
+            [select Vlan (value of 23)]
+                EnterprisePermission
+                    permittedEntityDescription = 'EnterprisePermission DemoEnterprise'
+                    permittedEntityID = [retrieve enterprise_id (Enterprise:id)]
+                    permittedAction = 'USE'
+                    permittedEntityName = 'DemoEnterprise'
+        [select Port (name of eth3)]
+            [select Vlan (value of 31)]
+                EnterprisePermission
+                    permittedEntityDescription = 'EnterprisePermission DemoEnterprise'
+                    permittedEntityID = [retrieve enterprise_id (Enterprise:id)]
+                    permittedAction = 'USE'
+                    permittedEntityName = 'DemoEnterprise'
+            [select Vlan (value of 32)]
+                EnterprisePermission
+                    permittedEntityDescription = 'EnterprisePermission DemoEnterprise'
+                    permittedEntityID = [retrieve enterprise_id (Enterprise:id)]
+                    permittedAction = 'USE'
+                    permittedEntityName = 'DemoEnterprise'
+            [select Vlan (value of 33)]
+                EnterprisePermission
+                    permittedEntityDescription = 'EnterprisePermission DemoEnterprise'
+                    permittedEntityID = [retrieve enterprise_id (Enterprise:id)]
+                    permittedAction = 'USE'
+                    permittedEntityName = 'DemoEnterprise'
 
 ```

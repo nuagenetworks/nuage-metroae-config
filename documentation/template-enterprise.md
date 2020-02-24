@@ -75,8 +75,7 @@ In this example we will create a single Enterprise with default features enabled
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create enterprise-default.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     EnterpriseProfile
         VNFManagementEnabled = False
         allowedForwardingClasses = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
@@ -101,8 +100,7 @@ In this example we will create an Enterprise and link it to an existing Organiza
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create enterprise-reuse-org-profile.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select EnterpriseProfile (name of Existing Profile)]
         [store id to name enterprise_profile_id]
     Enterprise
@@ -132,10 +130,9 @@ In this example we will create an enterprise enabling specific features. enterpr
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create enterprise-options.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     EnterpriseProfile
-        allowedForwardingClasses = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        allowedForwardingClasses = ['A', 'B', 'C', 'D']
         allowGatewayManagement = True
         description = 'All the good stuff enabled'
         enableApplicationPerformanceManagement = True
@@ -179,8 +176,7 @@ In this example we will create two enterprises with similar configurations using
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create enterprise-demo.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     EnterpriseProfile
         allowedForwardingClasses = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
         allowGatewayManagement = True

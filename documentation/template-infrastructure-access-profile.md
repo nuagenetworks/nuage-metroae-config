@@ -61,8 +61,7 @@ This example creates a simple SSH profile using password authentication only.  n
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-infrastructure-access-profile-password.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     InfrastructureAccessProfile
         userName = 'opsadmin'
         name = 'access-password'
@@ -91,8 +90,7 @@ This example creates an SSH profile using RSA keys as the authentication method.
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-infrastructure-access-profile-sshkey.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     InfrastructureAccessProfile
         userName = 'opsadminkey'
         name = 'access-key'
@@ -101,9 +99,7 @@ Device: Nuage Networks VSD 5.4.1
         password = 'notarealpassword'
         description = 'Infrastructure Access Profile access-key'
         SSHKey
-            publicKey = 'AAAAB3NzaC1yc2EAAAADAQABAAABAQC6om+jJ5CZJDNj10sdlM6kzJerCgr19hXx+bWBRRaWXeqz2zshR/MAzoVpAB5m9/NE+j7R9tHsuSMqGSZ8x6QTpbqgovgH3nUQURQiKpbxlY92QvE+I7Ari0n52qdRJkPC7Uw3nCxP2T7GtWslyw5OOhYZbxlNe+09rz27EiCAqoqAHttafvT+QfVBI+I5Zkbnzu3MY2p0m6MiwbR0gWYgyRETpLmVKz1rNeOpEQ2asI8i1ufVmYwHXwwxhXK8Ql/v5STnyAze7KM+/65mmppJK6mZigPD75327JA- template: Infrastructure Access Profile
-CWGxJp8Z39UpSVaZb2nduhBh2qshATqFfmOCvGgqoZ5+i6O2R'
-- template: Infrastructure Access Profile
+            publicKey = 'AAAAB3NzaC1yc2EAAAADAQABAAABAQC6om+jJ5CZJDNj10sdlM6kzJerCgr19hXx+bWBRRaWXeqz2zshR/MAzoVpAB5m9/NE+j7R9tHsuSMqGSZ8x6QTpbqgovgH3nUQURQiKpbxlY92QvE+I7Ari0n52qdRJkPC7Uw3nCxP2T7GtWslyw5OOhYZbxlNe+09rz27EiCAqoqAHttafvT+QfVBI+I5Zkbnzu3MY2p0m6MiwbR0gWYgyRETpLmVKz1rNeOpEQ2asI8i1ufVmYwHXwwxhXK8Ql/v5STnyAze7KM+/65mmppJK6mZigPD75327JACWGxJp8Z39UpSVaZb2nduhBh2qshATqFfmOCvGgqoZ5+i6O2R'
             name = 'east'
         SSHKey
             publicKey = 'AAAAB3NzaC1yc2EAAAADAQABAAABAQDMfGiqdgyagyiwTnqoWu3kiWCOEelFtkN3dRkWG+Vn/S4dQpROKyRntyuz2G0CsyldNJigNCqg2HO+rABW9q2i7niOq0PQsFB4QxTB4yzGh3ipdmoB0TAKjtsWJYQoEDB8MtLCTShjxRszKaKMY4Ijjq3Ah74MP4/q0ZBeRw+6mdAawsM6TPX90vaTZiknGaNJNOXYh7EbZnGOlPVRDdRk8GkVvZ7qQRW//JbNeI1eijAfUoLTaDHLbRuVMnukurd4Yp+KDjZ+49Vlv8voiNec/F7Zl1AjrB4n/hNrh3/EyovGs6ydBll9TbuDsyafn/9y+8Mjt6cCPr6QID4Lzvj5'
@@ -130,8 +126,7 @@ This example creates an SSH profile that enables password and key authentication
 
 ```
 ```
-[metroae-user@metroae-host]# metroae config create nsg-infrastructure-access-profile-password-and-sshkey.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     InfrastructureAccessProfile
         userName = 'opsadmin'
         name = 'access-both'

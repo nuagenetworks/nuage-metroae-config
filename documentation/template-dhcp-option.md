@@ -66,8 +66,7 @@ In this example we are going to set DHCP Option 121 to return multiple classless
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-dhcp-option-routes.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -75,6 +74,7 @@ Device: Nuage Networks VSD 5.4.1
                     DHCPOption
                         actualType = 121
                         actualValues = ['10.0.0.0/16', '100.1.1.1', '11.0.0.0/16', '100.1.1.1']
+                        type = '79'
 
 ```
 
@@ -102,8 +102,7 @@ In this example we are going to set a DNS Server, MTU for the Interface and a de
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-dhcp-option-groups.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select Domain (name of L3-Domain-US)]
             [select Zone (name of West-Zone)]
@@ -111,12 +110,15 @@ Device: Nuage Networks VSD 5.4.1
                     DHCPOption
                         actualType = 6
                         actualValues = ['172.16.20.1']
+                        type = '06'
                     DHCPOption
                         actualType = 26
                         actualValues = ['1450']
+                        type = '1a'
                     DHCPOption
                         actualType = 33
                         actualValues = ['0.0.0.0', '100.1.1.254']
+                        type = '21'
 
 ```
 
@@ -135,12 +137,12 @@ In this example we will set DHCP Option for Default GW on a L2 Domain.  network-
 
 ```
 ```
-[root@oc-ebc-config-1 feature-samples]# metroae config create network-dhcp-option-l2domain.yaml
-Device: Nuage Networks VSD 5.4.1
+(example)$ metroae config create user-data.yml
     [select Enterprise (name of DemoEnterprise)]
         [select L2domain (name of L2-Domain-IPv4)]
             DHCPOption
                 actualType = 33
                 actualValues = ['0.0.0.0', '1.1.1.254']
+                type = '21'
 
 ```
