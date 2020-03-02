@@ -149,6 +149,7 @@ class Template(object):
                 "document_file" in self.documentation):
             file_name = self.documentation["document_file"]
 
+        # return file_name[:-3] + "-example" + file_name[-3:]
         return file_name
 
     def validate_template_data(self, **template_data):

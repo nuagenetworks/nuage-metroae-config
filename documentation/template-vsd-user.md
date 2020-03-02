@@ -42,4 +42,3 @@ If you do not provide values for the optional parameters listed below, then defa
 **revert:**
 * no restrictions
 
-#### Examples

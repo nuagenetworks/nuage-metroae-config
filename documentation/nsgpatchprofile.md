@@ -33,7 +33,3 @@ If you do not provide values for the optional parameters listed below, then defa
 * NSG Patch Profile name must be unique.
 * NSG Patch Profile URL must conform to patch name standard.
 
-#### Examples
-
-##### Create a Patch Profile for BGP update.
-This example creates a profile that will be used to update the NSG BGP package.
