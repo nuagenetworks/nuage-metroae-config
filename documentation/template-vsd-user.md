@@ -26,13 +26,15 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which user will be created.<br>
-*username:* username of the user.<br>
-*password:* password for the user.<br>
-*first_name:* first name of the user.<br>
-*last_name:* last name of the user.<br>
-*email:* email address of the user. This email is also used to receive nsg activation link as part of bootstrap process.<br>
-*mobile_number:* optional mobile number of the user to receive sms.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | optional | reference | name of the enterprise in which user will be created.
+username | required | string | username of the user.
+password | required | string | password for the user.
+first_name | required | string | first name of the user.
+last_name | required | string | last name of the user.
+email | required | string | email address of the user. This email is also used to receive nsg activation link as part of bootstrap process.
+mobile_number | optional | string | optional mobile number of the user to receive sms.
 
 
 #### Restrictions

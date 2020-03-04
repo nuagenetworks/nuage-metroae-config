@@ -27,14 +27,16 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which to create the DHCP Pool.<br>
-*domain_name:* name of the L3 domain in which to create the DHCP Pool.<br>
-*zone_name:* name of the L3 Zone in which to create the DHCP Pool.<br>
-*subnet_name:* name of the Subnet in which to create the DHCP Pool.<br>
-*min_address:* first address of the IP range for the DHCP Pool.<br>
-*max_address:* last address of the IP range for the DHCP Pool.<br>
-*dhcp_pool_type:* defines whether the Pool is to respond to multiple requests per port (Bridge) or a single request per port (Host)<br>
-*iptype:* IP Address type for the pool. IPv4 or IPv6.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which to create the DHCP Pool.
+domain_name | required | reference | name of the L3 domain in which to create the DHCP Pool.
+zone_name | required | reference | name of the L3 Zone in which to create the DHCP Pool.
+subnet_name | required | reference | name of the Subnet in which to create the DHCP Pool.
+min_address | required | string | first address of the IP range for the DHCP Pool.
+max_address | required | string | last address of the IP range for the DHCP Pool.
+dhcp_pool_type | required | choice | defines whether the Pool is to respond to multiple requests per port (Bridge) or a single request per port (Host)
+iptype | required | choice | IP Address type for the pool. IPv4 or IPv6.
 
 
 #### Restrictions

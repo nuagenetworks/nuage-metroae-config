@@ -37,24 +37,26 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*nsg_template_name:* NSG Template that the network port will be added to.<br>
-*nsg_name:* <br>
-*network_port_name:* name of the Network Port.<br>
-*description:* optional description of the network port.<br>
-*enterprise_name:* <br>
-*physical_name:* assigns which physical (or vnic) port will be used on the NSG. ie. port1, port2.<br>
-*speed:* optional speed setting for the port. Defaults to AUTONEGOTIATE.<br>
-*mtu:* optional MTU size for the port. Defaults to 1500.<br>
-*vlan_range:* optional supported range of VLAN values that can be configured on the port. Defaults to "0-4094"<br>
-*vlan_value:* VLAN ID to be used on the uplink, is set to "0" for no VLAN tagging.<br>
-*infrastructure_vsc_profile_name:* Each NSG uplink is assigned a pair of VSC's to use as its controller, an Infrastructure VSC Profile is attached to the VLAN.<br>
-*ingress_qos_policy_name:* optional attachment of a Ingress QOS policy to be configured on the port.<br>
-*egress_qos_policy_name:* optional attachment of a Egress QOS policy to be configured on the port.<br>
-*underlay_name:* optional assignment of an underlay tag to use on the uplink. Used when NSG UBR is deployed to interconnect discrete underlay/transport networks.<br>
-*uplink_role:* For NSGs with more than one uplink the priority of the uplink is assigned. Default is PRIMARY.<br>
-*download_rate_limit:* optional rate limiter that is applied on the download of NSG software updates. Defaults to 8Mbps.<br>
-*nat_enabled:* optional enablement of NAT on underlay traffic. Defaults to True.<br>
-*route_to_underlay:* optional enablement of direct underlay access. Defaults to True.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+nsg_template_name | optional | reference | NSG Template that the network port will be added to.
+nsg_name | optional | reference | 
+network_port_name | required | string | name of the Network Port.
+description | optional | string | optional description of the network port.
+enterprise_name | optional | reference | 
+physical_name | required | string | assigns which physical (or vnic) port will be used on the NSG. ie. port1, port2.
+speed | optional | choice | optional speed setting for the port. Defaults to AUTONEGOTIATE.
+mtu | optional | integer | optional MTU size for the port. Defaults to 1500.
+vlan_range | optional | string | optional supported range of VLAN values that can be configured on the port. Defaults to "0-4094"
+vlan_value | required | integer | VLAN ID to be used on the uplink, is set to "0" for no VLAN tagging.
+infrastructure_vsc_profile_name | required | reference | Each NSG uplink is assigned a pair of VSC's to use as its controller, an Infrastructure VSC Profile is attached to the VLAN.
+ingress_qos_policy_name | optional | reference | optional attachment of a Ingress QOS policy to be configured on the port.
+egress_qos_policy_name | optional | reference | optional attachment of a Egress QOS policy to be configured on the port.
+underlay_name | optional | reference | optional assignment of an underlay tag to use on the uplink. Used when NSG UBR is deployed to interconnect discrete underlay/transport networks.
+uplink_role | optional | choice | For NSGs with more than one uplink the priority of the uplink is assigned. Default is PRIMARY.
+download_rate_limit | optional | float | optional rate limiter that is applied on the download of NSG software updates. Defaults to 8Mbps.
+nat_enabled | optional | boolean | optional enablement of NAT on underlay traffic. Defaults to True.
+route_to_underlay | optional | boolean | optional enablement of direct underlay access. Defaults to True.
 
 
 #### Restrictions

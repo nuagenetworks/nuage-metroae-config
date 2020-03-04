@@ -41,27 +41,29 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* enterpise name where Redirection target will be created.<br>
-*domain_name:* l3 Domain where Redirection target will be created.<br>
-*chaining_policy_name:* name of the redirection target.<br>
-*policy_priority:* priority of the policy in ascending order.<br>
-*active:* enable or disable the Security Policy.<br>
-*description:* optional description for redirection target.<br>
-*endpoint_type:* endpoint for service redirection target. defaults to L3.<br>
-*location_type:* origination grouping for traffic in the entry.<br>
-*location_name:* name of the object for the source ie. Zone name, Subnet name.<br>
-*zone_name:* needed when location_type or net_type is set to subnet.<br>
-*network_type:* destination grouping for traffic in the entry.<br>
-*network_name:* name of the object for the destination ie. Zone name, Subnet name.<br>
-*entry_priority:* priority of the policy entry in ascending order.<br>
-*protocol:* well-known Protocol number or name of the traffic for the entry.<br>
-*source_port:* protocol Source port (required for all but applicable to TCP/UDP only).<br>
-*destination_port:* protocol Destination port (required for all applicable to TCP/UDP only).<br>
-*ether_type:* IPv4 (0x0800) or IPv6 (0x86DD), defaults to IPv4.<br>
-*dscp:* optional DSCP value to match in the IP header to identify traffic matching the rule. Defaults to all DSCP value.<br>
-*action:* action to take on any packets matching the rule being either to Allow (forward) or Deny (drop) matching traffic.<br>
-*flow_logging_enabled:* enable syslog logging of packets match ACL entry.<br>
-*stats_logging_enabled:* enable the collection of stats on ACL hits for this entry.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | enterpise name where Redirection target will be created.
+domain_name | required | reference | l3 Domain where Redirection target will be created.
+chaining_policy_name | required | string | name of the redirection target.
+policy_priority | required | integer | priority of the policy in ascending order.
+active | required | boolean | enable or disable the Security Policy.
+description | optional | string | optional description for redirection target.
+endpoint_type | required | choice | endpoint for service redirection target. defaults to L3.
+location_type | required | choice | origination grouping for traffic in the entry.
+location_name | optional | reference | name of the object for the source ie. Zone name, Subnet name.
+zone_name | optional | reference | needed when location_type or net_type is set to subnet.
+network_type | required | choice | destination grouping for traffic in the entry.
+network_name | required | reference | name of the object for the destination ie. Zone name, Subnet name.
+entry_priority | required | integer | priority of the policy entry in ascending order.
+protocol | required | string | well-known Protocol number or name of the traffic for the entry.
+source_port | required | string | protocol Source port (required for all but applicable to TCP/UDP only).
+destination_port | required | string | protocol Destination port (required for all applicable to TCP/UDP only).
+ether_type | optional | choice | IPv4 (0x0800) or IPv6 (0x86DD), defaults to IPv4.
+dscp | optional | string | optional DSCP value to match in the IP header to identify traffic matching the rule. Defaults to all DSCP value.
+action | required | choice | action to take on any packets matching the rule being either to Allow (forward) or Deny (drop) matching traffic.
+flow_logging_enabled | required | boolean | enable syslog logging of packets match ACL entry.
+stats_logging_enabled | required | boolean | enable the collection of stats on ACL hits for this entry.
 
 
 #### Restrictions

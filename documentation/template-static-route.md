@@ -26,11 +26,13 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which to create the Static Routes.<br>
-*domain_name:* name of the L3 domain in which to create the Static Routes.<br>
-*address:* network address of the static route being added.<br>
-*netmask:* netmask of the static route being added.<br>
-*next_hop:* IP address of the next hop for the static route.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which to create the Static Routes.
+domain_name | required | reference | name of the L3 domain in which to create the Static Routes.
+address | required | string | network address of the static route being added.
+netmask | required | string | netmask of the static route being added.
+next_hop | required | string | IP address of the next hop for the static route.
 
 
 #### Restrictions

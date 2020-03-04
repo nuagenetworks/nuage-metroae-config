@@ -22,9 +22,11 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*description:* Optional description of the NSG Patch Profile.<br>
-*name:* Name of the Patch Profile to create<br>
-*patch_url:* Full URL including rpm filename of the patch.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+description | optional | string | Optional description of the NSG Patch Profile.
+name | required | string | Name of the Patch Profile to create
+patch_url | required | string | Full URL including rpm filename of the patch.
 
 
 #### Restrictions

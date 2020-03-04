@@ -23,10 +23,12 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the existing enterprise where nsg exists.<br>
-*nsg_template_name:* name of the nsg tempalte created in the csproot account.<br>
-*download_file_path:* file name for downloaded iso.<br>
-*download_format:* <br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the existing enterprise where nsg exists.
+nsg_template_name | required | string | name of the nsg tempalte created in the csproot account.
+download_file_path | required | string | file name for downloaded iso.
+download_format | optional | choice | 
 
 
 #### Restrictions

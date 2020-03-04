@@ -35,22 +35,24 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which to create the subnet.<br>
-*domain_name:* name of the L3 domain in which to create the subnet.<br>
-*zone_name:* name of the L3 Zone in which to create the subnet.<br>
-*subnet_name:* name of the subnet being created.<br>
-*description:* optional description of the subnet. Defaults to "subnet " + subnet_name<br>
-*underlay_enabled:* optional enablement of underlay access from the overlay. Defaults to disabled if not provided.<br>
-*address_translation:* optional enablement of underlay NAT from the overlay. Defaults to disabled if not provided.<br>
-*use_global_mac:* optional enablement of global mac. Defaults to disabled.<br>
-*ip_address_type:* Type of subnet to be created. ipv4 or dualstack for IPv4 and IPv6. Defaults to ipv4.<br>
-*ipv4_network:* IPv4 network CIDR and prefix length of the subnet being created.<br>
-*ipv4_gateway:* IPv4 gateway address.<br>
-*ipv6_network:* IPv6 CIDR and netmask for the subnet. Only added if "dualstack" ip_address_type.<br>
-*ipv6_gateway:* IPv6 gateway address for the subnet. Only added if "dualstack" ip_address_type.<br>
-*route_target:* optional static assignment of the RT to be used for the subnet.<br>
-*route_distinguisher:* optional static assignment of the RD to be used for the subnet.<br>
-*vnid:* optional static assignment of the VNID to be used for the subnet.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which to create the subnet.
+domain_name | required | reference | name of the L3 domain in which to create the subnet.
+zone_name | required | reference | name of the L3 Zone in which to create the subnet.
+subnet_name | required | string | name of the subnet being created.
+description | optional | string | optional description of the subnet. Defaults to "subnet " + subnet_name
+underlay_enabled | optional | choice | optional enablement of underlay access from the overlay. Defaults to disabled if not provided.
+address_translation | optional | choice | optional enablement of underlay NAT from the overlay. Defaults to disabled if not provided.
+use_global_mac | optional | choice | optional enablement of global mac. Defaults to disabled.
+ip_address_type | optional | choice | Type of subnet to be created. ipv4 or dualstack for IPv4 and IPv6. Defaults to ipv4.
+ipv4_network | optional | string | IPv4 network CIDR and prefix length of the subnet being created.
+ipv4_gateway | optional | string | IPv4 gateway address.
+ipv6_network | optional | string | IPv6 CIDR and netmask for the subnet. Only added if "dualstack" ip_address_type.
+ipv6_gateway | optional | string | IPv6 gateway address for the subnet. Only added if "dualstack" ip_address_type.
+route_target | optional | string | optional static assignment of the RT to be used for the subnet.
+route_distinguisher | optional | string | optional static assignment of the RD to be used for the subnet.
+vnid | optional | string | optional static assignment of the VNID to be used for the subnet.
 
 
 #### Restrictions

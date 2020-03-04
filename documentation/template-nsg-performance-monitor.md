@@ -41,28 +41,30 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which performance monitor is created.<br>
-*performance_monitor_name:* name of performance monitor.<br>
-*probe_type:* type of test traffic.<br>
-*number_of_packets:* number of packets to send in a certain duration.<br>
-*duration:* number of packets to send in this duration in seconds.<br>
-*packet_size:* size of each probe packet in bytes.<br>
-*service_class:* service class.<br>
-*hold_down_timer:* defines timeout for http probe packet response to a url.<br>
-*description:* <br>
-*tier_description:* <br>
-*down_threshold_count:* <br>
-*packet_count:* <br>
-*probe_interval:* <br>
-*tier_type:* <br>
-*timeout:* <br>
-*destination_url_http_method:* <br>
-*destination_url:* <br>
-*destination_url_down_threshold_count:* <br>
-*destination_url_packet_count:* <br>
-*destination_url_percentage_weight:* <br>
-*destination_url_probe_interval:* <br>
-*destination_url_timeout:* <br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which performance monitor is created.
+performance_monitor_name | required | string | name of performance monitor.
+probe_type | optional | choice | type of test traffic.
+number_of_packets | optional | integer | number of packets to send in a certain duration.
+duration | optional | integer | number of packets to send in this duration in seconds.
+packet_size | optional | integer | size of each probe packet in bytes.
+service_class | optional | choice | service class.
+hold_down_timer | optional | integer | defines timeout for http probe packet response to a url.
+description | optional | string | 
+tier_description | optional | string | 
+down_threshold_count | optional | integer | 
+packet_count | optional | integer | 
+probe_interval | optional | integer | 
+tier_type | optional | choice | 
+timeout | optional | integer | 
+destination_url_http_method | optional | choice | 
+destination_url | optional | string | 
+destination_url_down_threshold_count | optional | integer | 
+destination_url_packet_count | optional | integer | 
+destination_url_percentage_weight | optional | integer | 
+destination_url_probe_interval | optional | integer | 
+destination_url_timeout | optional | integer | 
 
 
 #### Restrictions

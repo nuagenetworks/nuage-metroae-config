@@ -25,12 +25,14 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* A Rate Limiter can be configured in the Platform Configuration or within an Enterprise. Optional additional of the Enterprise Name to configure it within an Enterprise only.<br>
-*rate_limiter_name:* name of the rate limiter.<br>
-*description:* optional description of the Rate Limiter.<br>
-*committed_information_rate:* guaranteed or Committed Information Rate for the rate limiter in Mbps. Traffic above this threshold subject to real time queue conditions and available bandwidth on the port. IF PIR=CIR then any traffic above this rate will be dropped.<br>
-*peak_information_rate:* peak Information Rate for the rate limiter in Mbps. Any traffic above this rate with be dropped.<br>
-*peak_burst_size:* burst size in Kb applied to the rate limiter token bucket.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | optional | reference | A Rate Limiter can be configured in the Platform Configuration or within an Enterprise. Optional additional of the Enterprise Name to configure it within an Enterprise only.
+rate_limiter_name | required | string | name of the rate limiter.
+description | optional | string | optional description of the Rate Limiter.
+committed_information_rate | required | integer | guaranteed or Committed Information Rate for the rate limiter in Mbps. Traffic above this threshold subject to real time queue conditions and available bandwidth on the port. IF PIR=CIR then any traffic above this rate will be dropped.
+peak_information_rate | required | integer | peak Information Rate for the rate limiter in Mbps. Any traffic above this rate with be dropped.
+peak_burst_size | required | integer | burst size in Kb applied to the rate limiter token bucket.
 
 
 #### Restrictions

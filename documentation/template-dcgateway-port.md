@@ -27,12 +27,14 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*gateway_name:* name of the gateway to add the port. If dynamically discovered gateway it is typically an IP address.<br>
-*port_name:* name of the port to add to the Gateway. If VRS-G this would typically be the dev name (ie eth2 or ens5), if VSG/WBX then will follow the Slot/MDA/Port convention ie. 1/1/1.<br>
-*description:* optional description of the port being created.<br>
-*vlan_range:* range of allowable VLAN ID's that can be configured on the port. If this is a VSG/WBX then will match the VLAN range configured in the "dynamic-services port-profile vlan-range".<br>
-*physical_name:* name of the port on the actual gateway. If VRSG this would typically be the dev name (ie eth2 or ens5), if VSG/WBX then will follow the Slot/MDA/Port convention ie. 1/1/1.<br>
-*port_enterprise_name:* optional. It provides the ability to add Enterprise Permissions to the Port when it is created.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+gateway_name | required | reference | name of the gateway to add the port. If dynamically discovered gateway it is typically an IP address.
+port_name | required | string | name of the port to add to the Gateway. If VRS-G this would typically be the dev name (ie eth2 or ens5), if VSG/WBX then will follow the Slot/MDA/Port convention ie. 1/1/1.
+description | optional | string | optional description of the port being created.
+vlan_range | required | string | range of allowable VLAN ID's that can be configured on the port. If this is a VSG/WBX then will match the VLAN range configured in the "dynamic-services port-profile vlan-range".
+physical_name | required | string | name of the port on the actual gateway. If VRSG this would typically be the dev name (ie eth2 or ens5), if VSG/WBX then will follow the Slot/MDA/Port convention ie. 1/1/1.
+port_enterprise_name | optional | reference | optional. It provides the ability to add Enterprise Permissions to the Port when it is created.
 
 
 #### Restrictions
