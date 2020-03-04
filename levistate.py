@@ -43,6 +43,7 @@ UPDATE_ACTION = 'update'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
+DOCUMENT_ACTION = 'document'
 TEMPLATE_ACTION = 'templates'
 UPGRADE_TEMPLATE_ACTION = 'update'
 VERSION_ACTION = 'version'
@@ -51,6 +52,7 @@ TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/l
 VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
 TEMPLATE_DIR = "/metroae_data/standard-templates"
 SPECIFICATION_DIR = "/metroae_data/vsd-api-specifications"
+DOCUMENTATION_DIR = "documentation"
 LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
@@ -103,11 +105,11 @@ def main():
             print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
 
-    elif args.action == SCHEMA_ACTION or args.action == EXAMPLE_ACTION:
+    elif args.action in [SCHEMA_ACTION, EXAMPLE_ACTION, DOCUMENT_ACTION]:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
-        if len(args.template_names) == 0:
+        if args.action != DOCUMENT_ACTION and len(args.template_names) == 0:
             print "Please specify template names on command line"
             exit(1)
 
@@ -149,6 +151,9 @@ def get_parser():
 
     example_parser = sub_parser.add_parser(EXAMPLE_ACTION)
     add_template_parser_arguments(example_parser)
+
+    document_parser = sub_parser.add_parser(DOCUMENT_ACTION)
+    add_template_parser_arguments(document_parser)
 
     sub_parser.add_parser(VERSION_ACTION)
 
@@ -408,7 +413,41 @@ class Levistate(object):
                 print template.get_example()
             return True
 
+        if self.action == DOCUMENT_ACTION:
+            if len(self.args.template_names) == 0:
+                self.write_template_documentation()
+            else:
+                for template_name in self.args.template_names:
+                    template = self.store.get_template(
+                        template_name,
+                        self.get_software_type(),
+                        self.get_software_version())
+                    print template.get_documentation()
+            return True
+
         return False
+
+    def write_template_documentation(self):
+        print "Generating documentation"
+        if not os.path.exists(DOCUMENTATION_DIR):
+            os.makedirs(DOCUMENTATION_DIR)
+        template_names = self.store.get_template_names(
+            self.get_software_type(),
+            self.get_software_version())
+        for template_name in template_names:
+            template = self.store.get_template(
+                template_name,
+                self.get_software_type(),
+                self.get_software_version())
+
+            doc_file = template.get_doc_file_name()
+            if doc_file is not None:
+                full_path = os.path.join(DOCUMENTATION_DIR, doc_file)
+                print "Writing %s documentation to %s" % (template_name,
+                                                          full_path)
+                doc_text = template.get_documentation()
+                with open(full_path, "w") as f:
+                    f.write(doc_text)
 
     def setup_vsd_writer(self):
         self.writer = VsdWriter()

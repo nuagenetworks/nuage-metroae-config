@@ -281,6 +281,30 @@ class TestTemplateParsing(object):
 
         assert template.get_example() == expected_example
 
+    def test_get_doc_file_name__success(self):
+        store = TemplateStore()
+        store.read_templates(os.path.join(INVALID_TEMPLATE_DIRECTORY,
+                                          "variables.yaml"))
+
+        template = store.get_template("Variables Testing")
+
+        assert template.get_doc_file_name() == "template-unit-test.md"
+
+    def test_documentation__success(self):
+        store = TemplateStore()
+        store.read_templates(os.path.join(INVALID_TEMPLATE_DIRECTORY,
+                                          "variables.yaml"))
+
+        template = store.get_template("Variables Testing")
+        template.filename = (
+            "levistate/tests/fixtures/invalid_templates/variables.yaml")
+
+        with open(os.path.join(VALID_SCHEMA_DIRECTORY,
+                               "variables_documentation.yaml"), 'r') as file:
+            expected_doc = file.read()
+
+        assert template.get_documentation() == expected_doc
+
 
 class TestTemplateSubstitution(object):
 

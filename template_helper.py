@@ -20,6 +20,7 @@ parents = dict()
 template_info = {
     "name": "CHANGE ME",
     "description": "CHANGE ME",
+    "usage": "CHANGE ME",
     "version": "CHANGE ME",
     "template": "1.0",
     "levistate": "1.0",
@@ -197,6 +198,7 @@ def add_variable(attribute):
     snake = camel_to_snake_case(name)
 
     lines.append(INDENT_STR + "- name: " + snake)
+    lines.append(INDENT_STR + "  description: CHANGE ME")
 
     attr_type = attribute["type"]
     if attr_type == "enum":
@@ -263,6 +265,7 @@ def generate_template():
 
     generate_headers(lines)
     generate_variables(lines)
+    generate_examples(lines)
     generate_actions(lines)
 
     return "\n".join(lines)
@@ -271,6 +274,15 @@ def generate_template():
 def generate_headers(lines):
     lines.append("name: " + template_info["name"])
     lines.append("description: " + template_info["description"])
+    lines.append("usage: " + template_info["usage"])
+    lines.append("restrictions:")
+    lines.append("- operation: create")
+    lines.append("  restriction-list:")
+    lines.append("  - CHANGE ME")
+    doc_file_name = ("template-" +
+                     "-".join(template_info["name"].lower().split(" ")) +
+                     ".md")
+    lines.append("doc-file: " + doc_file_name)
     lines.append("template-version: " + template_info["template"])
     lines.append("levistate-version: " + template_info["levistate"])
     lines.append("software-type: " + template_info["software"])
@@ -282,6 +294,18 @@ def generate_variables(lines):
 
     for variable in template_variables:
         lines.extend(variable)
+
+
+def generate_examples(lines):
+    lines.append("examples:")
+    lines.append("- name: CHANGE ME")
+    lines.append("  description: CHANGE ME")
+    lines.append("  user-data: |")
+    lines.append("    - template: " + template_info["name"])
+    lines.append("      values:")
+    lines.append("        CHANGE_ME: CHANGE ME")
+    lines.append("  sample-run: |")
+    lines.append("      SAMPLE RUN OUTPUT")
 
 
 def generate_actions(lines):

@@ -1,5 +1,16 @@
 name: Variables Testing
 description: For testing variable validation and schemas
+usage: Test usage
+restrictions:
+- operation: create
+  restriction-list:
+  - The Zone feature template is only applicable to L3 domains (no L2).
+  - In order to create the Zone, the Enterprise and L3 Domain must exist or be created
+    within the same *create* function.
+- operation: revert
+  restriction-list:
+  - If vPorts are attached to a subnet, then a zone cannot be reverted.
+doc-file: template-unit-test.md
 template-version: 1.0
 software-type: Nuage Networks VSD
 software-version: 5.0.2
@@ -55,4 +66,56 @@ variables:
       - COKE
       - pepsi
       - Sprite
+examples:
+  - name: Creating Subnets in an Existing Enterprise and Domain
+    description: This example creates two Zones, both in the same Enterprise and Domain.
+      All parameters are listed for each Zone to be created.  network-zone-flat.yaml
+
+    user-data: |
+      - template: Zone
+        values:
+          enterprise_name: DemoEnterprise
+          domain_name: L3-Domain-US
+          zone_name: West-Zone
+      - template: Zone
+        values:
+          enterprise_name: DemoEnterprise
+          domain_name: L3-Domain-US
+          zone_name: East-Zone
+    sample-run: |
+      [root@oc-ebc-config-1 feature-samples]# metroae config create network-zone-flat.yaml
+      Device: Nuage Networks VSD 5.4.1
+          [select Enterprise (name of DemoEnterprise)]
+              [select Domain (name of L3-Domain-US)]
+                  Zone
+                      name = 'West-Zone'
+                      description = 'Zone West-Zone'
+                  Zone
+                      name = 'East-Zone'
+                      description = 'Zone East-Zone'
+  - name: Creating Zones in an existing Enterprise and Domain Using Group Inheritance
+    description: The common attributes (Enterprise and Domain) are listed under group,
+      and the Zones are created as children.  network-zone-groups.yaml
+
+    user-data: |
+      - group: DemoEnterprise
+        values:
+          enterprise_name: DemoEnterprise
+          domain_name: L3-Domain-US
+        children:
+          - template: Zone
+            values:
+              - zone_name: West-Zone
+              - zone_name: East-Zone
+    sample-run: |
+      [root@oc-ebc-config-1 feature-samples]# metroae config create network-zone-groups.yaml
+      Device: Nuage Networks VSD 5.4.1
+          [select Enterprise (name of DemoEnterprise)]
+              [select Domain (name of L3-Domain-US)]
+                  Zone
+                      name = 'West-Zone'
+                      description = 'Zone West-Zone'
+                  Zone
+                      name = 'East-Zone'
+                      description = 'Zone East-Zone'
 actions: []
