@@ -8,7 +8,7 @@ DESCRIPTION = """This tool is used to update the example ouput in templates"""
 ENV_TEMPLATE = 'TEMPLATE_PATH'
 ENV_SOFTWARE_VERSION = 'SOFTWARE_VERSION'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
-TEMP_FILE = "/tmp/levistate-example.yml"
+TEMP_FILE = "/tmp/metroae-config-example.yml"
 INDENT = 2
 EXAMPLE_COMMAND = "(example)$ metroae config create user-data.yml"
 
@@ -66,7 +66,7 @@ def update_template(contents, args):
                 return
 
             create_user_data("\n".join(lines[cur_line_num + 1:end_line_num]))
-            output = run_levistate(args)
+            output = run_metroae_config(args)
             replace_output(lines, output, end_line_num)
 
             cur_line_num += 1
@@ -88,8 +88,8 @@ def create_user_data(contents):
         f.write(contents)
 
 
-def run_levistate(args):
-    out = subprocess.Popen(['./levistate.py',
+def run_metroae_config(args):
+    out = subprocess.Popen(['./metroae_config.py',
                             'validate',
                             TEMP_FILE,
                             "-tp", args.template_path,

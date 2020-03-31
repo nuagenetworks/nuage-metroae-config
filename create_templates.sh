@@ -6,7 +6,7 @@
 COMMAND_FILE=names.txt
 if [ -z $1 ]; then
     echo "Please provide the path to the directory of VSD specs to parse"
-    echo "Usage: ./templates.sh spec_path [levistate_path]"
+    echo "Usage: ./templates.sh spec_path [metroae_config_path]"
 else
     export VSD_SPECIFICATIONS_PATH=$1
     for tname in $(grep "entity_name" $1/* | cut -d: -f3 | sed "s/\"//g" | sed "s/\,//g"); do
@@ -17,7 +17,7 @@ else
             echo "- create-root: $tname" > $COMMAND_FILE;
         fi
         if [ -z $2 ]; then
-            ./levistate/template_helper.py $COMMAND_FILE > $tname.yml
+            ./template_helper.py $COMMAND_FILE > $tname.yml
         else
             $2/template_helper.py $COMMAND_FILE > $tname.yml
         fi

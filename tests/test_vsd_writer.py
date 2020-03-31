@@ -4,18 +4,18 @@ import os
 import pytest
 
 from bambou.exceptions import BambouHTTPError
-from levistate.vsd_writer import (Context,
-                                  InvalidSpecification,
-                                  InvalidAttributeError,
-                                  InvalidObjectError,
-                                  InvalidValueError,
-                                  MissingSelectionError,
-                                  MissingSessionParamsError,
-                                  MultipleSelectionError,
-                                  SessionError,
-                                  SessionNotStartedError,
-                                  VsdError,
-                                  VsdWriter)
+from nuage_metro_config.vsd_writer import (Context,
+                                           InvalidSpecification,
+                                           InvalidAttributeError,
+                                           InvalidObjectError,
+                                           InvalidValueError,
+                                           MissingSelectionError,
+                                           MissingSessionParamsError,
+                                           MultipleSelectionError,
+                                           SessionError,
+                                           SessionNotStartedError,
+                                           VsdError,
+                                           VsdWriter)
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
 VALID_SPECS_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
@@ -138,7 +138,7 @@ VERSION_OUTPUT_5 = """
 """
 
 
-@patch("levistate.vsd_writer.Session")
+@patch("nuage_metro_config.vsd_writer.Session")
 def setup_standard_session(vsd_writer, mock_patch):
     vsd_writer.set_session_params(**SESSION_PARAMS)
     vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
@@ -162,7 +162,7 @@ def setup_standard_session(vsd_writer, mock_patch):
     return mock_session
 
 
-@patch("levistate.vsd_writer.Session")
+@patch("nuage_metro_config.vsd_writer.Session")
 def setup_authentication_less_session(vsd_writer, mock_patch):
     vsd_writer.set_session_params(**SESSION_PARAMS_NO_AUTH)
     vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
@@ -186,7 +186,7 @@ def setup_authentication_less_session(vsd_writer, mock_patch):
     return mock_session
 
 
-@patch("levistate.vsd_writer.Session")
+@patch("nuage_metro_config.vsd_writer.Session")
 def setup_authentication_no_certificate_session(vsd_writer, mock_patch):
     vsd_writer.set_session_params(**SESSION_PARAMS_NO_CERTIFICATE)
     vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
@@ -210,7 +210,7 @@ def setup_authentication_no_certificate_session(vsd_writer, mock_patch):
     return mock_session
 
 
-@patch("levistate.vsd_writer.Session")
+@patch("nuage_metro_config.vsd_writer.Session")
 def setup_authentication_no_certificate_key_session(vsd_writer, mock_patch):
     vsd_writer.set_session_params(**SESSION_PARAMS_NO_CERTIFICATE_KEY)
     vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
@@ -372,7 +372,7 @@ class TestVsdWriterSession(object):
 
         assert "No enterprise specification" in str(e)
 
-    @patch("levistate.vsd_writer.Session")
+    @patch("nuage_metro_config.vsd_writer.Session")
     def test_start__bambou_error(self, mock_patch):
         vsd_writer = VsdWriter()
         vsd_writer.set_session_params(**SESSION_PARAMS)
@@ -425,7 +425,7 @@ class TestVsdWriterCreateObject(object):
         assert "not started" in str(e)
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
-    @patch("levistate.vsd_writer.ConfigObject")
+    @patch("nuage_metro_config.vsd_writer.ConfigObject")
     def test_parent__success(self, mock_object, validate_only):
         vsd_writer = VsdWriter()
         vsd_writer.set_validate_only(validate_only)
@@ -440,7 +440,7 @@ class TestVsdWriterCreateObject(object):
         assert new_context.object_exists is False
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
-    @patch("levistate.vsd_writer.ConfigObject")
+    @patch("nuage_metro_config.vsd_writer.ConfigObject")
     def test_child__success(self, mock_object, validate_only):
         vsd_writer = VsdWriter()
         vsd_writer.set_validate_only(validate_only)
@@ -487,8 +487,8 @@ class TestVsdWriterSelectObject(object):
         assert "not started" in str(e)
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
-    @patch("levistate.vsd_writer.ConfigObject")
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.ConfigObject")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test_parent__success(self, mock_fetcher, mock_object, validate_only):
         vsd_writer = VsdWriter()
         vsd_writer.set_validate_only(validate_only)
@@ -516,8 +516,8 @@ class TestVsdWriterSelectObject(object):
         assert new_context.object_exists is True
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
-    @patch("levistate.vsd_writer.ConfigObject")
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.ConfigObject")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test_child__success(self, mock_fetcher, mock_object, validate_only):
         vsd_writer = VsdWriter()
         vsd_writer.set_validate_only(validate_only)
@@ -597,7 +597,7 @@ class TestVsdWriterSelectObject(object):
         assert ("Select object BridgeInterface Name = test_child" in
                 e.value.get_display_string())
 
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test__not_found(self, mock_fetcher):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
@@ -620,7 +620,7 @@ class TestVsdWriterSelectObject(object):
         assert ("Select object Enterprise Name = test_enterprise" in
                 e.value.get_display_string())
 
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test__multiple_found(self, mock_fetcher):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
@@ -643,7 +643,7 @@ class TestVsdWriterSelectObject(object):
         assert ("Select object Enterprise Name = test_enterprise" in
                 e.value.get_display_string())
 
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test__bambou_error(self, mock_fetcher):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
@@ -681,8 +681,8 @@ class TestVsdWriterGetObjectList(object):
         assert "not started" in str(e)
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
-    @patch("levistate.vsd_writer.ConfigObject")
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.ConfigObject")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test_parent__success(self, mock_fetcher, mock_object, validate_only):
         vsd_writer = VsdWriter()
         vsd_writer.set_validate_only(validate_only)
@@ -710,8 +710,8 @@ class TestVsdWriterGetObjectList(object):
             assert objects[0].object_exists is True
 
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
-    @patch("levistate.vsd_writer.ConfigObject")
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.ConfigObject")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test_child__success(self, mock_fetcher, mock_object, validate_only):
         vsd_writer = VsdWriter()
         vsd_writer.set_validate_only(validate_only)
@@ -789,7 +789,7 @@ class TestVsdWriterGetObjectList(object):
         assert ("Get object list BridgeInterface" in
                 e.value.get_display_string())
 
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test__not_found(self, mock_fetcher):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
@@ -805,7 +805,7 @@ class TestVsdWriterGetObjectList(object):
 
         assert len(objects) == 0
 
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test__multiple_found(self, mock_fetcher):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
@@ -828,7 +828,7 @@ class TestVsdWriterGetObjectList(object):
         assert objects[1].current_object == "enterprise_2"
         assert objects[1].object_exists is True
 
-    @patch("levistate.vsd_writer.Fetcher")
+    @patch("nuage_metro_config.vsd_writer.Fetcher")
     def test__bambou_error(self, mock_fetcher):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)

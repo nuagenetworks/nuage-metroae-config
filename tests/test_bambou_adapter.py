@@ -9,7 +9,7 @@ from bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
                                         SESSION_CREDS_REAL,
                                         SESSION_CREDS_TEST)
 from bambou.exceptions import BambouHTTPError
-from levistate.bambou_adapter import ConfigObject, Fetcher, Session
+from nuage_metro_config.bambou_adapter import ConfigObject, Fetcher, Session
 
 VALIDATION_ERROR_CASES = [
     ('name', None, "value is mandatory"),

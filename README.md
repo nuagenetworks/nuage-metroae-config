@@ -1,6 +1,6 @@
-# Levistate
+# Nuage MetroAE Configuration
 
-Levistate configuration template engine.
+Nuage MetroAE configuration template engine.
 
 Version 1.0
 
@@ -9,25 +9,26 @@ write a configuration to a VSD or to revert (remove) said configuration.
 
 ## Overview
 
-Levistate is a Python-based engine which can apply configuration to VSDs
+MetroAE config is a Python-based engine which can apply configuration to VSDs
 via templates.  The templates provide an abstraction around the VSD
 configuration model simplifying and validating the required data.  Data is
 provided by the user in the form of Yaml or JSON files and is transformed and
 applied to the VSD through the tool's templates.  The required data and proper
 format for each template is defined by standardized JSON schema specifications.
 
-## Installation of Levistate
+## Installation of MetroAE Config
 
 
-The primary requirements for running Levistate are:
+The primary requirements for running MetroAE config are:
 1. Installation of Python and the necessary packages.
-2. Installation of the Levistate engine python libraries
+2. Installation of the config engine python libraries
 3. Access to the Configuration templates
 4. Access to the VSD API Specification
 
 #### Installation of Python and required packages.
 
-Most linux distributions come with python bundled into the operating system. Python 2.7 is required. Currently Python 3.0 is not supported.
+Most linux distributions come with python bundled into the operating system.
+Python 2.7 is required. Currently Python 3.0 is not supported.
 
 To verify that python is available we can do the following:
 
@@ -45,7 +46,8 @@ Python 2.7.5
 Python 2.7.5
 ```
 
-To manage the python package installation we will use PIP. Install PIP via apt-get or yum:
+To manage the python package installation we will use PIP. Install PIP via
+apt-get or yum:
 
 *Ubuntu*
 
@@ -61,7 +63,8 @@ root@ubuntu:~# apt-get install python-pip
 ...
 ```
 
-Most packages required by Levistate are available as part of the base python functionality. However we will need to install the following:
+Most packages required by MetroAE config are available as part of the base
+python functionality. However we will need to install the following:
 
 - Bambou
 - Jinja2 (min version 2.10)
@@ -87,9 +90,10 @@ The following packages are installed via the same method on both Ubuntu and RHEL
 ...
 ```
 
-### Installation of Levistate engine
+### Installation of configuration engine
 
-Currently Levistate is available on github and will be installed via git clone. Check the levistate home page for latest master branch location.
+Currently MetroAE config is available on github and will be installed via git
+clone. Check the MetroAE home page for latest master branch location.
 
 First we need to install git.
 
@@ -105,7 +109,8 @@ root@ubuntu:~# apt-get install git
 [root@rhel]# yum install git
 ```
 
-Depending on the authentication method with github, ie. SSH Key, or Username/Password the git clone command line may change.
+Depending on the authentication method with github, ie. SSH Key, or
+Username/Password the git clone command line may change.
 
 
 For username/password authentication
@@ -128,7 +133,10 @@ Resolving deltas: 100% (398/398), done.
 
 ### Installation of the VSD API Specifications
 
-Levistate requires a description of the VSD API to create, read, update and delete the template contents into the VSD. We do this via reading the published VSD API Specification. This specificaiton is opensourced and is available on the public Nuage Networks github repository.
+MetroAE Config requires a description of the VSD API to create, read, update and
+delete the template contents into the VSD. We do this via reading the published
+VSD API Specification. This specificaiton is opensourced and is available on
+the public Nuage Networks github repository.
 
 
 
@@ -146,11 +154,11 @@ Resolving deltas: 100% (18163/18163), done.
 
 ## Parameters
 
-Levistate command-line tool usage:
+MetroAE Config command-line tool usage:
 
-    usage: levistate.py [-h]
-                        {create,revert,validate,list,schema,example,upgrade-templates,version,help}
-                        ...
+    usage: metroae_config.py [-h]
+                             {create,revert,validate,list,schema,example,upgrade-templates,version,help}
+                             ...
 
     Version 1.0 - This tool reads JSON or Yaml files of templates and user-data to
     write a configuration to a VSD or to revert (remove) said configuration. See
@@ -163,11 +171,11 @@ Levistate command-line tool usage:
       -h, --help            show this help message and exit
 
 
-    usage: levistate.py create [-h] [-tp TEMPLATE_PATH] [--version]
-                               [-sp SPEC_PATH] [-dp DATA_PATH] [-d DATA]
-                               [-v VSD_URL] [-u USERNAME] [-p PASSWORD]
-                               [-e ENTERPRISE] [-lg]
-                               [datafiles [datafiles ...]]
+    usage: metroae_config.py create [-h] [-tp TEMPLATE_PATH] [--version]
+                                    [-sp SPEC_PATH] [-dp DATA_PATH] [-d DATA]
+                                    [-v VSD_URL] [-u USERNAME] [-p PASSWORD]
+                                    [-e ENTERPRISE] [-lg]
+                                    [datafiles [datafiles ...]]
 
     positional arguments:
       datafiles             Optional datafile
@@ -204,7 +212,7 @@ Levistate command-line tool usage:
 
 Apply enterprise, domain and ACLs to VSD.
 
-    levistate$ python levistate.py create -tp sample/templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
+    $ python metroae_config.py create -tp sample/templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
 
     Configuration
         Enterprise
@@ -262,11 +270,11 @@ Apply enterprise, domain and ACLs to VSD.
 
 Revert (remove) objects configured during application, use -r option
 
-    levistate$ python levistate.py revert -tp sample/templates -sp ~/vsd-api-specifications sample/user_data/acls.yaml
+    $ python metroae_config.py revert -tp sample/templates -sp ~/vsd-api-specifications sample/user_data/acls.yaml
 
 ## User Data
 
-The templates within the Levistate tool are applied using data provided by the
+The templates within the MetroAE config tool are applied using data provided by the
 user.  Each set of data values provided allows the creation of an instance of
 configuration on the VSD.  The required format for the data of each template is
 defined by a JSON schema describing the required fields, types and other
@@ -274,7 +282,7 @@ constraints on the data.
 
 ### File Format
 
-The user data for Levistate can be in either Yaml or JSON format.  Each entry
+The user data for MetroAE config can be in either Yaml or JSON format.  Each entry
 in the file defines a template and the value sets to use against that template
 to instantiate configuration.
 
@@ -423,9 +431,10 @@ length as the fields list.
 
 ## Listing Templates
 
-The templates that have been loaded into the Levistate tool can be listed with the following:
+The templates that have been loaded into the MetroAE config tool can be listed
+with the following:
 
-    levistate$ python levistate.py -tp sample/templates --list
+    $ python metroae_config.py -tp sample/templates --list
 
     Domain
     Enterprise
@@ -436,7 +445,7 @@ The templates that have been loaded into the Levistate tool can be listed with t
 
 An example of user data for any template can be provided using the following:
 
-    python levistate.py example -tp sample/templates Domain
+    python metroae_config.py example -tp sample/templates Domain
 
     # First template set - Create a L3 Domain
     - template: Domain
@@ -449,13 +458,14 @@ An example of user data for any template can be provided using the following:
 
 ## Generating JSON Schemas
 
-A JSON schema can be generated for the user data required for any template.  These schemas conform to the json-schema.org standard specification:
+A JSON schema can be generated for the user data required for any template.
+These schemas conform to the json-schema.org standard specification:
 
-    python levistate.py schema -tp sample/templates Domain
+    python metroae_config.py schema -tp sample/templates Domain
 
     {
-      "title": "Schema validator for Nuage Metro Levistate template Domain",
-      "$id": "urn:nuage-metro:levistate:template:domain",
+      "title": "Schema validator for Nuage Metro config template Domain",
+      "$id": "urn:nuage-metro:config:template:domain",
       "required": [
         "enterprise_name",
         "domain_name",

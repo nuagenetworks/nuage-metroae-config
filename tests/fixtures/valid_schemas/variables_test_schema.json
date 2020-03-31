@@ -1,6 +1,6 @@
 {
-  "title": "Schema validator for Nuage Metro Levistate template Variables Testing",
-  "$id": "urn:nuage-metro:levistate:template:variables-testing",
+  "title": "Schema validator for Nuage Metro Config template Variables Testing",
+  "$id": "urn:nuage-metro:config:template:variables-testing",
   "required": [
     "name",
     "select_name",

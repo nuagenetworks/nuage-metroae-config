@@ -6,7 +6,7 @@ from bambou.exceptions import InternalConsitencyError
 
 class Session(NURESTSession):
     """
-    Wrapper class around Bambou session needed to override with levistate
+    Wrapper class around Bambou session needed to override with MetroAE config
     specific methods
     """
 
@@ -26,7 +26,7 @@ class Session(NURESTSession):
 
 class ConfigObject(NURESTObject):
     """
-    Wrapper class around Bambou object needed to override with levistate
+    Wrapper class around Bambou object needed to override with MetroAE config
     specific methods.  This class is effectively a generic config object of any
     type.
     """
@@ -229,7 +229,7 @@ class ConfigObject(NURESTObject):
 
 class Fetcher(NURESTFetcher):
     """
-    Wrapper class around Bambou fetcher needed to override with levistate
+    Wrapper class around Bambou fetcher needed to override with MetroAE config
     specific methods.  This class is effectively a generic fetcher of any type.
     """
 
@@ -250,8 +250,8 @@ class Fetcher(NURESTFetcher):
 
 class Root(NURESTRootObject):
     """
-    Wrapper class around Bambou root object needed to override with levistate
-    specific methods.
+    Wrapper class around Bambou root object needed to override with MetroAE
+    config specific methods.
     """
     __rest_name__ = "me"
     __resource_name__ = "me"

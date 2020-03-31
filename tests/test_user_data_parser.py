@@ -1,8 +1,8 @@
 import os
 import pytest
 
-from levistate.user_data_parser import (UserDataParseError,
-                                        UserDataParser)
+from nuage_metro_config.user_data_parser import (UserDataParseError,
+                                                 UserDataParser)
 from user_data_test_params import (EXPECTED_ACLS_DATA,
                                    EXPECTED_ACLS_GROUPS_DATA,
                                    EXPECTED_DOMAINS_DATA)

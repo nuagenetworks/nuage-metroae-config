@@ -6,7 +6,7 @@ For testing variable validation and schemas
 Test usage
 
 #### Template File Name
-levistate/tests/fixtures/invalid_templates/variables.yaml
+tests/fixtures/invalid_templates/variables.yaml
 
 #### User Data Requirements
 If you do not provide values for the optional parameters listed below, then default values are used.

@@ -23,7 +23,7 @@ template_info = {
     "usage": "CHANGE ME",
     "version": "CHANGE ME",
     "template": "1.0",
-    "levistate": "1.0",
+    "engine": "1.0",
     "software": "Nuage Networks VSD",
     "indent_level": 0}
 
@@ -284,7 +284,7 @@ def generate_headers(lines):
                      ".md")
     lines.append("doc-file: " + doc_file_name)
     lines.append("template-version: " + template_info["template"])
-    lines.append("levistate-version: " + template_info["levistate"])
+    lines.append("engine-version: " + template_info["engine"])
     lines.append("software-type: " + template_info["software"])
     lines.append("software-version: " + template_info["version"])
 
