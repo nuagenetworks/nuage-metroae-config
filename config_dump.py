@@ -5,7 +5,7 @@ import os
 import urllib3
 import yaml
 
-from nuage_metro_config.vsd_writer import VsdWriter
+from nuage_metroae_config.vsd_writer import VsdWriter
 
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()

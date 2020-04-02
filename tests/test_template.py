@@ -2,12 +2,12 @@ import json
 import os
 import pytest
 
-from nuage_metro_config.template import (MissingTemplateError,
-                                         Template,
-                                         TemplateParseError,
-                                         TemplateStore,
-                                         UndefinedVariableError,
-                                         VariableValueError)
+from nuage_metroae_config.template import (MissingTemplateError,
+                                           Template,
+                                           TemplateParseError,
+                                           TemplateStore,
+                                           UndefinedVariableError,
+                                           VariableValueError)
 from .template_test_params import (ACL_TEMPLATE_VARS,
                                    DOMAIN_TEMPLATE_VARS,
                                    ENTERPRISE_TEMPLATE_VARS,

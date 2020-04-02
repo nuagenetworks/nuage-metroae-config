@@ -7,11 +7,11 @@ import tarfile
 import urllib3
 import wget
 
-from nuage_metro_config.configuration import Configuration
-from nuage_metro_config.errors import MetroConfigError
-from nuage_metro_config.template import TemplateStore
-from nuage_metro_config.user_data_parser import UserDataParser
-from nuage_metro_config.vsd_writer import VsdWriter, SOFTWARE_TYPE
+from nuage_metroae_config.configuration import Configuration
+from nuage_metroae_config.errors import MetroConfigError
+from nuage_metroae_config.template import TemplateStore
+from nuage_metroae_config.user_data_parser import UserDataParser
+from nuage_metroae_config.vsd_writer import VsdWriter, SOFTWARE_TYPE
 
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
@@ -288,10 +288,10 @@ class MetroConfig(object):
             bambou_logger = logging.getLogger("bambou")
             bambou_logger.setLevel(logging.DEBUG)
 
-            self.logger = logging.getLogger("bambou.nuage_metro_config")
+            self.logger = logging.getLogger("bambou.nuage_metroae_config")
             self.logger.setLevel(logging.DEBUG)
         else:
-            self.logger = logging.getLogger("nuage_metro_config")
+            self.logger = logging.getLogger("nuage_metroae_config")
             level = logging.getLevelName(log_level)
             self.logger.setLevel(level)
 

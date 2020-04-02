@@ -1,7 +1,7 @@
 
 class MetroConfigError(Exception):
     """
-    Base exception class for all errors in nuage_metro_config module
+    Base exception class for all errors in nuage_metroae_config module
     """
     def __init__(self, message, location=None):
         super(MetroConfigError, self).__init__(message)

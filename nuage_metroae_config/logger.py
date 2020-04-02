@@ -1,6 +1,6 @@
 class Logger(object):
     """
-    Class to manage the logging and user output of the nuage_metro_config
+    Class to manage the logging and user output of the nuage_metroae_config
     module
     """
     def __init__(self):
