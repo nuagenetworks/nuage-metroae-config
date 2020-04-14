@@ -26,11 +26,13 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*gateway_name:* describe parameter_1 and its default value.<br>
-*port_name:* describe parameter_2 and its default value.<br>
-*access_vlan_numbers:* comma separated list of VLANs to be created that can include discontiguous ranges. ie. 1,2,4-10,21-30.<br>
-*description:* optional description for the VLAN or group of VLANs being created.<br>
-*vlan_enterprise_name:* optional. It provides the ability to add Enterprise Permissions to the VLAN when it is created.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+gateway_name | required | reference | describe parameter_1 and its default value.
+port_name | required | reference | describe parameter_2 and its default value.
+access_vlan_numbers | required | string | comma separated list of VLANs to be created that can include discontiguous ranges. ie. 1,2,4-10,21-30.
+description | optional | string | optional description for the VLAN or group of VLANs being created.
+vlan_enterprise_name | optional | reference | optional. It provides the ability to add Enterprise Permissions to the VLAN when it is created.
 
 
 #### Restrictions

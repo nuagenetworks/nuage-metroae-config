@@ -27,12 +27,14 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*permission_enterprise_name:* name of the enterprise that is added to the gateway permissions.<br>
-*gateway_name:* Required. name of the gateway to add the permissions. If dynamically discovered gateway it is typically an IP address.<br>
-*port_name:* name of the port in which to add the permissions. If not included in the data set then the permissions are added at the gateway level.<br>
-*access_vlan_number:* VLAN number in which to add the permissions. If port_name is included but not access_vlan_number in the data set then the permissions are added to the port.<br>
-*permitted_action:* specific authorization provided to the enterprise. Defaults to "use".<br>
-*description:* optional description included on the permissions.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+permission_enterprise_name | required | reference | name of the enterprise that is added to the gateway permissions.
+gateway_name | required | reference | Required. name of the gateway to add the permissions. If dynamically discovered gateway it is typically an IP address.
+port_name | optional | reference | name of the port in which to add the permissions. If not included in the data set then the permissions are added at the gateway level.
+access_vlan_number | optional | integer | VLAN number in which to add the permissions. If port_name is included but not access_vlan_number in the data set then the permissions are added to the port.
+permitted_action | optional | choice | specific authorization provided to the enterprise. Defaults to "use".
+description | optional | string | optional description included on the permissions.
 
 
 #### Restrictions

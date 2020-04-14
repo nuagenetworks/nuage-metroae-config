@@ -24,11 +24,13 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* CoS Remarking Policy can be configured in the Platform Configuration or within an Enterprise. Optional additional of the Enterprise Name to configure it within an Enterprise only.<br>
-*description:* optional description of the CoS Remarking Policy.<br>
-*cos_remarking_policy_name:* name of the CoS Remarking Policy.<br>
-*forwarding_classes:* list of forwarding classes that will have COS Bits marked. Length of forwarding_classes must match length of remarking_cos_list.<br>
-*remarking_cos_list:* matching list of markings to be used per Forwarding Class. CoS is a 3 bit field and decimal values from 0 to 7 are valid.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | optional | reference | CoS Remarking Policy can be configured in the Platform Configuration or within an Enterprise. Optional additional of the Enterprise Name to configure it within an Enterprise only.
+description | optional | string | optional description of the CoS Remarking Policy.
+cos_remarking_policy_name | required | string | name of the CoS Remarking Policy.
+forwarding_classes | optional | list | list of forwarding classes that will have COS Bits marked. Length of forwarding_classes must match length of remarking_cos_list.
+remarking_cos_list | optional | list | matching list of markings to be used per Forwarding Class. CoS is a 3 bit field and decimal values from 0 to 7 are valid.
 
 
 #### Restrictions

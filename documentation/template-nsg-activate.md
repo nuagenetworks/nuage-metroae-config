@@ -29,16 +29,18 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*nsg_name:* name of the nsg device that needs to be activated.<br>
-*enterprise_name:* name of the enterprise in which the nsg is part of.<br>
-*installer_username:* username of the installer.<br>
-*bootstrap_match_type:* match field for identifying NSG.<br>
-*shipping_address:* pyhsical address where nsg will be activated.<br>
-*locality:* pyhsical address where nsg will be activated.<br>
-*state:* pyhsical address where nsg will be activated.<br>
-*country:* pyhsical address where nsg will be activted.<br>
-*timezone:* timezone where nsg will be activated.<br>
-*send_activation:* send activation email to the installer.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+nsg_name | required | string | name of the nsg device that needs to be activated.
+enterprise_name | required | reference | name of the enterprise in which the nsg is part of.
+installer_username | required | string | username of the installer.
+bootstrap_match_type | required | choice | match field for identifying NSG.
+shipping_address | optional | string | pyhsical address where nsg will be activated.
+locality | optional | string | pyhsical address where nsg will be activated.
+state | optional | string | pyhsical address where nsg will be activated.
+country | optional | string | pyhsical address where nsg will be activted.
+timezone | optional | string | timezone where nsg will be activated.
+send_activation | optional | boolean | send activation email to the installer.
 
 
 #### Restrictions

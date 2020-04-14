@@ -27,14 +27,16 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*infrastructure_access_profile_name:* name of the access profile. Must be unique.<br>
-*description:* optional description of the profile.<br>
-*ssh_auth_mode:* choice of authentication modes supported by the user account on the NSG. Defaults to SSH Key only (KEY_BASED).<br>
-*user_name:* username of the user account to be configured on the NSG.<br>
-*password:* regardless of the auth mode selected a password is required. It is the password that will be configured for the user account.<br>
-*source_ip_filters:* optional list of IP addresses that are used to whitelist the IP source of any SSH session requests.<br>
-*ssh_key_names:* If KEY_BASED or PASSWORD_AND_KEY_BASED is selected as the auth mode then an SSH key must be provided. The keys are created as a name/key-value pair. The is a list of Key Names. For each key name in the list an SSH key must be provided.<br>
-*ssh_keys:* If KEY_BASED or PASSWORD_AND_KEY_BASED is selected as the auth mode then an SSH key must be provided. The keys are created as a name/key-value pair. This is a list of SSH Keys. For each key in the list an SSH key name must be provided.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+infrastructure_access_profile_name | required | string | name of the access profile. Must be unique.
+description | optional | string | optional description of the profile.
+ssh_auth_mode | required | choice | choice of authentication modes supported by the user account on the NSG. Defaults to SSH Key only (KEY_BASED).
+user_name | required | string | username of the user account to be configured on the NSG.
+password | required | string | regardless of the auth mode selected a password is required. It is the password that will be configured for the user account.
+source_ip_filters | optional | list | optional list of IP addresses that are used to whitelist the IP source of any SSH session requests.
+ssh_key_names | optional | list | If KEY_BASED or PASSWORD_AND_KEY_BASED is selected as the auth mode then an SSH key must be provided. The keys are created as a name/key-value pair. The is a list of Key Names. For each key name in the list an SSH key must be provided.
+ssh_keys | optional | list | If KEY_BASED or PASSWORD_AND_KEY_BASED is selected as the auth mode then an SSH key must be provided. The keys are created as a name/key-value pair. This is a list of SSH Keys. For each key in the list an SSH key name must be provided.
 
 
 #### Restrictions

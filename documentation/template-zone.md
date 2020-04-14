@@ -23,10 +23,12 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which to create the Zone.<br>
-*domain_name:* name of the L3 domain in which to create the Zone.<br>
-*zone_name:* name of the L3 Zone being created.<br>
-*description:* optional description of the zone. Defaults to "Zone " + zone_name.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which to create the Zone.
+domain_name | required | reference | name of the L3 domain in which to create the Zone.
+zone_name | required | string | name of the L3 Zone being created.
+description | optional | string | optional description of the zone. Defaults to "Zone " + zone_name.
 
 
 #### Restrictions

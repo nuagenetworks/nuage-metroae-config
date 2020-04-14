@@ -21,8 +21,10 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*underlay_name:* name of the network to be used as the underlay tag.<br>
-*description:* optional description of the underlay network.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+underlay_name | required | string | name of the network to be used as the underlay tag.
+description | optional | string | optional description of the underlay network.
 
 
 #### Restrictions

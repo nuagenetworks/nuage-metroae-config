@@ -39,26 +39,28 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the Enterprise where the BGP peer will be created.<br>
-*bgp_neighbor_name:* name of the BGP peer to be created.<br>
-*description:* optional description for the BGP peer.<br>
-*deployment_type:* type of deployment where the BGP peer will be added. Choices are datacenter, wan or vsg. When datacenter is chosen then VM attributes are required to identify the vport to configure.<br>
-*vport_uuid:* optional vport identification for datacenter or VSG deployment.<br>
-*domain_name:* name of the domain in which the BGP peer will be created.<br>
-*zone_name:* name of the zone in which the BGP peer will be created.<br>
-*subnet_name:* name of the subnet in which the BGP peer will be created.<br>
-*gateway_name:* If WAN or VSG deployment type name of the Gateway (NSG or WBX/VSG) to create the BGP peer.<br>
-*port_name:* If WAN or VSG deployment type name of the Access Port to create the BGP peer.<br>
-*vlan_value:* If WAN or VSG deployment type the VLAN to create the BGP peer.<br>
-*match_ip_address:* If datacenter deployment type IPv4 address of the VM to create the BGP peer. The VM IPv4 address or MAC or both can be provided for the match criteria.<br>
-*match_mac_address:* If datacenter deployment type MAC address of the VM to create the BGP peer. The VM MAC address or IPv4 or both can be provided for the match criteria.<br>
-*peer_as:* AS number of the Peer.<br>
-*peer_address:* Neighbor IPv4 or IPv6 address.<br>
-*bfd_enabled:* Optional enablement of BFD on the BGP peer. Default is disabled.<br>
-*dampening_enabled:* Optional enablement of session dampening on the BGP peer. Default is disabled.<br>
-*import_routing_policy_name:* Optional attachment of an Import Routing Policy for the BGP session.<br>
-*export_routing_policy_name:* Optional attachment of an Export Routing Policy for the BGP session.<br>
-*session_xml:* XML blob for additional configuration to be added to the BGP neighbor configuration. For multiline page text a YAML multiline Block Style Indicator is required (pipe "|").<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the Enterprise where the BGP peer will be created.
+bgp_neighbor_name | required | string | name of the BGP peer to be created.
+description | optional | string | optional description for the BGP peer.
+deployment_type | required | choice | type of deployment where the BGP peer will be added. Choices are datacenter, wan or vsg. When datacenter is chosen then VM attributes are required to identify the vport to configure.
+vport_uuid | optional | string | optional vport identification for datacenter or VSG deployment.
+domain_name | optional | reference | name of the domain in which the BGP peer will be created.
+zone_name | optional | reference | name of the zone in which the BGP peer will be created.
+subnet_name | optional | reference | name of the subnet in which the BGP peer will be created.
+gateway_name | optional | reference | If WAN or VSG deployment type name of the Gateway (NSG or WBX/VSG) to create the BGP peer.
+port_name | optional | reference | If WAN or VSG deployment type name of the Access Port to create the BGP peer.
+vlan_value | optional | reference | If WAN or VSG deployment type the VLAN to create the BGP peer.
+match_ip_address | optional | string | If datacenter deployment type IPv4 address of the VM to create the BGP peer. The VM IPv4 address or MAC or both can be provided for the match criteria.
+match_mac_address | optional | string | If datacenter deployment type MAC address of the VM to create the BGP peer. The VM MAC address or IPv4 or both can be provided for the match criteria.
+peer_as | required | integer | AS number of the Peer.
+peer_address | required | string | Neighbor IPv4 or IPv6 address.
+bfd_enabled | optional | boolean | Optional enablement of BFD on the BGP peer. Default is disabled.
+dampening_enabled | optional | boolean | Optional enablement of session dampening on the BGP peer. Default is disabled.
+import_routing_policy_name | optional | reference | Optional attachment of an Import Routing Policy for the BGP session.
+export_routing_policy_name | optional | reference | Optional attachment of an Export Routing Policy for the BGP session.
+session_xml | optional | string | XML blob for additional configuration to be added to the BGP neighbor configuration. For multiline page text a YAML multiline Block Style Indicator is required (pipe "|").
 
 
 #### Restrictions

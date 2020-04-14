@@ -30,17 +30,19 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which nsg will be created.<br>
-*nsg_name:* name of the nsg.<br>
-*nsg_template_name:* NSG Gateway Template to use for the instance.<br>
-*description:* optional description of the NSG instance.<br>
-*upgrade_profile_name:* existing upgrade profile to be attached to nsg for upgrade.<br>
-*bootstrap_match_type:* optional match field for identifying NSG when using ZFB.<br>
-*bootstrap_match_value:* optional match value of the field selected in bootstrap_match_type when using ZFB.<br>
-*ssh_service:* optional local override of template SSH setting.<br>
-*control_traffic_cos_value:* optional COS value to mark control traffic with, defaults to 7.<br>
-*control_traffic_dscp_value:* optional DSCO value to mark control traffic with, defaults to 56.<br>
-*tcp_mss_enabled:* <br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which nsg will be created.
+nsg_name | required | string | name of the nsg.
+nsg_template_name | required | reference | NSG Gateway Template to use for the instance.
+description | optional | string | optional description of the NSG instance.
+upgrade_profile_name | optional | reference | existing upgrade profile to be attached to nsg for upgrade.
+bootstrap_match_type | optional | choice | optional match field for identifying NSG when using ZFB.
+bootstrap_match_value | optional | string | optional match value of the field selected in bootstrap_match_type when using ZFB.
+ssh_service | optional | choice | optional local override of template SSH setting.
+control_traffic_cos_value | optional | integer | optional COS value to mark control traffic with, defaults to 7.
+control_traffic_dscp_value | optional | integer | optional DSCO value to mark control traffic with, defaults to 56.
+tcp_mss_enabled | optional | boolean | 
 
 
 #### Restrictions

@@ -37,20 +37,22 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the Enterprise being created.<br>
-*description:* optional description of the enterprise. Defaults to "enterprise <enterprise_name>".<br>
-*enterprise_profile_name:* optional for attaching an existing Organization Profile to the new Enterprise.<br>
-*forwarding_classes:* optional list of enabled forwarding classes. Defaults to all classes.<br>
-*routing_protocols_enabled:* optional enablement of Routing protocols in the Enterprise. Defaults to disabled.<br>
-*local_as:* <br>
-*dhcp_lease_interval:* optional lease time which is returned in DHCP Offers. Defaults to 24.<br>
-*vnf_management_enabled:* optional enablement VNF hosting on VNS NSGs. Defaults to disabled.<br>
-*allow_advanced_qos_configuration:* optional enablement of Advanced QoS features. Defaults to disabled.<br>
-*allow_gateway_management:* optional enablement of gateway management within the Enterprise (not csproot). Defaults to disabled.<br>
-*allow_trusted_forwarding_classes:* optional enablement of DSCP trust. Defaults to disabled.<br>
-*enable_application_performance_management:* optional enablement of the AAR feature suite. Defaults to disabled.<br>
-*encryption_management_mode:* optional enablement of Encryption features within the Enterprise. Defaults to disabled.<br>
-*floating_ips_quota:* optional number of floating IPs that can be assigned within the Enterprise. Defaults to 0.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | string | name of the Enterprise being created.
+description | optional | string | optional description of the enterprise. Defaults to "enterprise <enterprise_name>".
+enterprise_profile_name | optional | reference | optional for attaching an existing Organization Profile to the new Enterprise.
+forwarding_classes | optional | list | optional list of enabled forwarding classes. Defaults to all classes.
+routing_protocols_enabled | optional | boolean | optional enablement of Routing protocols in the Enterprise. Defaults to disabled.
+local_as | optional | integer | 
+dhcp_lease_interval | optional | integer | optional lease time which is returned in DHCP Offers. Defaults to 24.
+vnf_management_enabled | optional | boolean | optional enablement VNF hosting on VNS NSGs. Defaults to disabled.
+allow_advanced_qos_configuration | optional | boolean | optional enablement of Advanced QoS features. Defaults to disabled.
+allow_gateway_management | optional | boolean | optional enablement of gateway management within the Enterprise (not csproot). Defaults to disabled.
+allow_trusted_forwarding_classes | optional | boolean | optional enablement of DSCP trust. Defaults to disabled.
+enable_application_performance_management | optional | boolean | optional enablement of the AAR feature suite. Defaults to disabled.
+encryption_management_mode | optional | choice | optional enablement of Encryption features within the Enterprise. Defaults to disabled.
+floating_ips_quota | optional | integer | optional number of floating IPs that can be assigned within the Enterprise. Defaults to 0.
 
 
 #### Restrictions

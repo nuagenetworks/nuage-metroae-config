@@ -26,13 +26,15 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise where  NPM binding will be created.<br>
-*domain_name:* name of the L3 or L2 domain where NPM binding will be created.<br>
-*domain_name_list:* list of L3 or L2 domains where NPM binding will be created.<br>
-*l2_domain_name:* <br>
-*l2_domain_name_list:* <br>
-*network_performance_measurement_name:* name of the NPM.<br>
-*priority:* An integer value identifying the priority if multiple NPM bindings exist.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise where  NPM binding will be created.
+domain_name | optional | reference | name of the L3 or L2 domain where NPM binding will be created.
+domain_name_list | optional | list | list of L3 or L2 domains where NPM binding will be created.
+l2_domain_name | optional | reference | 
+l2_domain_name_list | optional | list | 
+network_performance_measurement_name | required | reference | name of the NPM.
+priority | optional | integer | An integer value identifying the priority if multiple NPM bindings exist.
 
 
 #### Restrictions

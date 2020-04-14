@@ -24,9 +24,11 @@ for the purpose of measuring One-Way loss, delay, jitter.
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterpirse where NPM is created.<br>
-*network_performance_measurement_name:* name to identify NPM.<br>
-*performance_monitor_name:* name of the probe that needs to be run via Performance Monitor.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterpirse where NPM is created.
+network_performance_measurement_name | required | string | name to identify NPM.
+performance_monitor_name | required | reference | name of the probe that needs to be run via Performance Monitor.
 
 
 #### Restrictions

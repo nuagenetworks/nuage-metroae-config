@@ -29,12 +29,14 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*gateway_name:* name of gateway to create.<br>
-*description:* optional description of gateway. Defaults to "Gateway <gateway_name>".<br>
-*personality:* type of gateway being created. Use other for 3rd party.<br>
-*system_id:* system IP address of the gateway. This is the VTEP IP.<br>
-*gateway_enterprise_name:* optional. Provides the ability to add Enterprise Permissions to the Gateway when it is created.<br>
-*permitted_action:* enterprise Permissions authorization, defaults to "use".<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+gateway_name | required | string | name of gateway to create.
+description | optional | string | optional description of gateway. Defaults to "Gateway <gateway_name>".
+personality | optional | choice | type of gateway being created. Use other for 3rd party.
+system_id | required | string | system IP address of the gateway. This is the VTEP IP.
+gateway_enterprise_name | optional | reference | optional. Provides the ability to add Enterprise Permissions to the Gateway when it is created.
+permitted_action | optional | choice | enterprise Permissions authorization, defaults to "use".
 
 
 #### Restrictions
