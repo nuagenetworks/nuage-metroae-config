@@ -463,10 +463,11 @@ class Levistate(object):
                                        )
         if self.device_version is None:
             self.device_version = self.writer.get_version()
-            if (int(self.device_version["software_version"].split(".")[0]) < 6):
+            major_version = int(self.device_version["software_version"].split(".")[0])
+            if ( major_version < 6):
                 self.writer.version = "5.0"
             else:
-             self.writer.version = self.device_version["software_version"].split(".")[0]
+             self.writer.version = major_version
 
 
     def setup_template_store(self):
