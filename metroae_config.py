@@ -7,16 +7,16 @@ import tarfile
 import urllib3
 import wget
 
-from configuration import Configuration
-from errors import LevistateError
-from template import TemplateStore
-from user_data_parser import UserDataParser
-from vsd_writer import VsdWriter, SOFTWARE_TYPE
+from nuage_metroae_config.configuration import Configuration
+from nuage_metroae_config.errors import MetroConfigError
+from nuage_metroae_config.template import TemplateStore
+from nuage_metroae_config.user_data_parser import UserDataParser
+from nuage_metroae_config.vsd_writer import VsdWriter, SOFTWARE_TYPE
 
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
 
-LEVISTATE_VERSION = "1.0"
+ENGINE_VERSION = "1.0"
 
 PROG_NAME = "metroae config"
 DEFAULT_VSD_USERNAME = 'csproot'
@@ -58,9 +58,9 @@ LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
 DESCRIPTION = """Version %s - This tool reads JSON or Yaml files of templates
 and user-data to write a configuration to a VSD or to revert (remove) said
-configuration.""" % LEVISTATE_VERSION
+configuration.""" % ENGINE_VERSION
 
-VERSION_OUTPUT = "Levistate Engine version %s" % LEVISTATE_VERSION
+VERSION_OUTPUT = "MetroAE Config Engine version %s" % ENGINE_VERSION
 
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
 Please specify template path using -tp on command line or set an environment variable %s
@@ -117,8 +117,8 @@ def main():
             print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
 
-    levistate = Levistate(args, args.action)
-    levistate.run()
+    metro_config = MetroConfig(args, args.action)
+    metro_config.run()
 
 
 def get_parser():
@@ -258,7 +258,7 @@ class CustomLogHandler(logging.StreamHandler):
         record.msg = saved_message
 
 
-class Levistate(object):
+class MetroConfig(object):
 
     def __init__(self, args, action):
         self.args = args
@@ -288,10 +288,10 @@ class Levistate(object):
             bambou_logger = logging.getLogger("bambou")
             bambou_logger.setLevel(logging.DEBUG)
 
-            self.logger = logging.getLogger("bambou.levistate")
+            self.logger = logging.getLogger("bambou.nuage_metroae_config")
             self.logger.setLevel(logging.DEBUG)
         else:
-            self.logger = logging.getLogger("levistate")
+            self.logger = logging.getLogger("nuage_metroae_config")
             level = logging.getLevelName(log_level)
             self.logger.setLevel(level)
 
@@ -342,7 +342,7 @@ class Levistate(object):
         error_output = ""
         try:
             self.apply_templates()
-        except LevistateError as e:
+        except MetroConfigError as e:
             error_output = e.get_display_string()
             self.logger.error(error_output)
             self.logger.exception("Stack trace")
@@ -472,7 +472,7 @@ class Levistate(object):
 
 
     def setup_template_store(self):
-        self.store = TemplateStore(LEVISTATE_VERSION)
+        self.store = TemplateStore(ENGINE_VERSION)
 
         if self.args.software_version is not None:
             self.device_version = {

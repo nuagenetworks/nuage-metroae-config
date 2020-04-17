@@ -2,11 +2,11 @@ from mock import call, patch, MagicMock
 import os
 import pytest
 
-from levistate.actions import TemplateActionError
-from levistate.configuration import Configuration
-from levistate.template import (MissingTemplateError,
-                                TemplateStore,
-                                VariableValueError)
+from nuage_metroae_config.actions import TemplateActionError
+from nuage_metroae_config.configuration import Configuration
+from nuage_metroae_config.template import (MissingTemplateError,
+                                           TemplateStore,
+                                           VariableValueError)
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
 VALID_TEMPLATE_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
@@ -284,7 +284,7 @@ class TestConfigurationApplyRevert(object):
         self.mock_root_action.execute.assert_called_once_with(self.mock_writer)
         self.mock_writer.stop_session.assert_called_once()
 
-    @patch('levistate.configuration.Action')
+    @patch('nuage_metroae_config.configuration.Action')
     def test_apply__success(self, mock_patch):
         self.setup_mock(mock_patch)
 
@@ -301,7 +301,7 @@ class TestConfigurationApplyRevert(object):
             call(False), call(False), call(False), call(False)])
         self.verify_mock_calls(mock_patch)
 
-    @patch('levistate.configuration.Action')
+    @patch('nuage_metroae_config.configuration.Action')
     def test_apply__action_error(self, mock_patch):
         self.setup_mock(mock_patch)
         self.mock_root_action.execute.side_effect = \
@@ -331,7 +331,7 @@ class TestConfigurationApplyRevert(object):
 
         assert "Mock reading error" in str(e)
 
-    @patch('levistate.configuration.Action')
+    @patch('nuage_metroae_config.configuration.Action')
     def test_revert__success(self, mock_patch):
         self.setup_mock(mock_patch)
 
@@ -348,7 +348,7 @@ class TestConfigurationApplyRevert(object):
             call(True), call(True), call(True), call(True)])
         self.verify_mock_calls(mock_patch)
 
-    @patch('levistate.configuration.Action')
+    @patch('nuage_metroae_config.configuration.Action')
     def test_revert__action_error(self, mock_patch):
         self.setup_mock(mock_patch)
         self.mock_root_action.execute.side_effect = \

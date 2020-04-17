@@ -1,10 +1,10 @@
 
-class LevistateError(Exception):
+class MetroConfigError(Exception):
     """
-    Base exception class for all errors in Levistate module
+    Base exception class for all errors in nuage_metroae_config module
     """
     def __init__(self, message, location=None):
-        super(LevistateError, self).__init__(message)
+        super(MetroConfigError, self).__init__(message)
         self.locations = list()
         self.add_location(message)
         if location is not None:
@@ -28,7 +28,7 @@ class LevistateError(Exception):
 # Template level errors
 #
 
-class TemplateError(LevistateError):
+class TemplateError(MetroConfigError):
     """
     Base exception class for all template level errors
     """
@@ -81,7 +81,7 @@ class TemplateActionError(TemplateError):
 # Template writing errors
 #
 
-class DeviceWriterError(LevistateError):
+class DeviceWriterError(MetroConfigError):
     """
     Exception class for all template writing errors
     """
@@ -141,7 +141,7 @@ class InvalidObjectError(DeviceWriterError):
 # User data parsing errors
 #
 
-class UserDataParseError(LevistateError):
+class UserDataParseError(MetroConfigError):
     """
     Exception class for errors parsing user data files
     """

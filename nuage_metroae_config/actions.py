@@ -1,7 +1,7 @@
 from errors import (ConflictError,
                     MissingSelectionError,
                     MultipleSelectionError,
-                    LevistateError,
+                    MetroConfigError,
                     TemplateActionError,
                     TemplateParseError)
 from logger import Logger
@@ -113,7 +113,7 @@ class Action(object):
 
         try:
             new_action.read(action_dict[action_key])
-        except LevistateError as e:
+        except MetroConfigError as e:
             e.reraise_with_location(new_action._get_location())
 
         return new_action
@@ -153,7 +153,7 @@ class Action(object):
             for child in ordered_list:
                 try:
                     child.execute(writer, context)
-                except LevistateError as e:
+                except MetroConfigError as e:
                     e.reraise_with_location(child._get_location())
         else:
             for child in self.children:
@@ -161,7 +161,7 @@ class Action(object):
                     child.log.output(child._to_string(child.level))
                 try:
                     child.execute(writer, context)
-                except LevistateError as e:
+                except MetroConfigError as e:
                     e.reraise_with_location(child._get_location())
 
     def is_set_values(self):
@@ -228,7 +228,7 @@ class Action(object):
                 else:
                     self.children.append(new_action)
 
-        except LevistateError as e:
+        except MetroConfigError as e:
             e.reraise_with_location(new_action._get_location())
 
     def find_same_object_indicies_in_children(self, new_action):
@@ -347,10 +347,11 @@ class CreateObjectAction(Action):
                                                           context)
 
                     if len(context_list) < 1:
-                        new_context = writer.update_object(self.object_type,
-                                                           self.select_by_field,
-                                                           self.get_select_value(),
-                                                           context)
+                        new_context = writer.update_object(
+                            self.object_type,
+                            self.select_by_field,
+                            self.get_select_value(),
+                            context)
                     else:
                         new_context = context_list[0]
                 else:

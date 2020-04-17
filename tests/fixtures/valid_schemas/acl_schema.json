@@ -1,6 +1,6 @@
 {
-  "title": "Schema validator for Nuage Metro Levistate template Bidirectional ACL",
-  "$id": "urn:nuage-metro:levistate:template:bidirectional-acl",
+  "title": "Schema validator for Nuage Metro Config template Bidirectional ACL",
+  "$id": "urn:nuage-metro:config:template:bidirectional-acl",
   "required": [
     "enterprise_name",
     "domain_name",

@@ -70,13 +70,13 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 UPDATE_ROOT_OBJECT,
                                 UPDATE_ROOT_UPDATE_NOT_SUPPORTED_OBJECT,
                                 UPDATE_SELECT_ROOT_OBJECT)
-from levistate.actions import Action
-from levistate.errors import (ConflictError,
-                              InvalidAttributeError,
-                              InvalidObjectError,
-                              MissingSelectionError,
-                              TemplateActionError,
-                              TemplateParseError)
+from nuage_metroae_config.actions import Action
+from nuage_metroae_config.errors import (ConflictError,
+                                         InvalidAttributeError,
+                                         InvalidObjectError,
+                                         MissingSelectionError,
+                                         TemplateActionError,
+                                         TemplateParseError)
 from mock_writer import MockWriter
 from template_test_params import (EXPECTED_ACL_TEMPLATE,
                                   EXPECTED_DOMAIN_TEMPLATE,

@@ -2,12 +2,12 @@ import json
 import os
 import pytest
 
-from levistate.template import (MissingTemplateError,
-                                Template,
-                                TemplateParseError,
-                                TemplateStore,
-                                UndefinedVariableError,
-                                VariableValueError)
+from nuage_metroae_config.template import (MissingTemplateError,
+                                           Template,
+                                           TemplateParseError,
+                                           TemplateStore,
+                                           UndefinedVariableError,
+                                           VariableValueError)
 from .template_test_params import (ACL_TEMPLATE_VARS,
                                    DOMAIN_TEMPLATE_VARS,
                                    ENTERPRISE_TEMPLATE_VARS,
@@ -297,7 +297,7 @@ class TestTemplateParsing(object):
 
         template = store.get_template("Variables Testing")
         template.filename = (
-            "levistate/tests/fixtures/invalid_templates/variables.yaml")
+            "tests/fixtures/invalid_templates/variables.yaml")
 
         with open(os.path.join(VALID_SCHEMA_DIRECTORY,
                                "variables_documentation.md"), 'r') as file:

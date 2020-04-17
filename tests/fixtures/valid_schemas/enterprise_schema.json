@@ -1,6 +1,6 @@
 {
-  "title": "Schema validator for Nuage Metro Levistate template Enterprise",
-  "$id": "urn:nuage-metro:levistate:template:enterprise",
+  "title": "Schema validator for Nuage Metro Config template Enterprise",
+  "$id": "urn:nuage-metro:config:template:enterprise",
   "required": [
     "enterprise_name"
   ],

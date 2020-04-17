@@ -1,6 +1,6 @@
 import pytest
 
-from levistate.logger import Logger
+from nuage_metroae_config.logger import Logger
 
 LOGGING_CASES = ["LOG", "ERROR", "OUTPUT", "DEBUG"]
 
