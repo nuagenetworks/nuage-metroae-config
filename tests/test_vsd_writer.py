@@ -37,7 +37,7 @@ EXPECTED_SESSION_PARAMS = {
     "password": SESSION_PARAMS['password'],
     "enterprise": SESSION_PARAMS['enterprise'],
     "certificate": SESSION_PARAMS['certificate'],
-    "version": "5.0",
+    "version": "6",
     "api_prefix": "nuage/api"
 }
 
@@ -54,7 +54,7 @@ EXPECTED_SESSION_PARAMS_NO_AUTH = {
     "username": SESSION_PARAMS_NO_AUTH['username'],
     "password": SESSION_PARAMS_NO_AUTH['password'],
     "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
-    "version": "5.0",
+    "version": "6",
     "api_prefix": "nuage/api"
 }
 
@@ -72,7 +72,7 @@ EXPECTED_SESSION_PARAMS_NO_CERTIFICATE = {
     "password": SESSION_PARAMS_NO_AUTH['password'],
     "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
     "certificate": SESSION_PARAMS_NO_CERTIFICATE['certificate'],
-    "version": "5.0",
+    "version": "6",
     "api_prefix": "nuage/api"
 }
 
@@ -90,7 +90,7 @@ EXPECTED_SESSION_PARAMS_NO_CERTIFICATE_KEY = {
     "password": SESSION_PARAMS_NO_AUTH['password'],
     "enterprise": SESSION_PARAMS_NO_AUTH['enterprise'],
     "certificate": SESSION_PARAMS_NO_CERTIFICATE_KEY['certificate'],
-    "version": "5.0",
+    "version": "6",
     "api_prefix": "nuage/api"
 }
 
@@ -136,6 +136,8 @@ VERSION_OUTPUT_5 = """
 {"version":"V1.0","status":"UNSUPPORTED","updated":"2014-07-15T11:30:00Z",
 "url":"https://vsd1.example.com:8443/nuage/api/v1_0"}]}
 """
+
+API_VERSION_6 = "6"
 
 
 @patch("levistate.vsd_writer.Session")
@@ -1518,3 +1520,10 @@ class TestVsdWriterVersion(object):
         assert version == {
             "software_type": None,
             "software_version": None}
+
+    def test_set_api_version(self):
+
+        vsd_writer = VsdWriter()
+        vsd_writer.set_api_version(API_VERSION_6)
+
+        assert vsd_writer.version == API_VERSION_6
