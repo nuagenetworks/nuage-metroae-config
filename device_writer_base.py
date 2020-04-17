@@ -37,13 +37,6 @@ class DeviceWriterBase(object):
     # All types of device writer classes will need to implement these
     # functions in order to apply the configurations to the device.
 
-    def set_api_version(self, version):
-        """
-        Sets the api version for the device:
-        """
-        # Abstract prototype function
-        raise NotImplementedError("Abstract base function not implemented")
-
     def get_version(self):
         """
         Returns the version running on the device in format:

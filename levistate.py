@@ -468,7 +468,7 @@ class Levistate(object):
         if ( major_version < 6):
             self.writer.set_api_version("5.0")
         else:
-         self.writer.set_api_version(str(major_version))
+            self.writer.set_api_version(str(major_version))
 
 
     def setup_template_store(self):
