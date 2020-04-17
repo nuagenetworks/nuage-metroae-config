@@ -34,21 +34,23 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise to create the bridge port.<br>
-*domain_name:* name of the L3 Domain to create the bridge port.<br>
-*zone_name:* name of the Zone to create the bridge port.<br>
-*subnet_name:* name of the Subnet to create the bridge port.<br>
-*vport_name:* name of the bridge port being created.<br>
-*description:* optional description of the Bridge Port.<br>
-*domain_type:* <br>
-*gateway_type:* type of gateway being used for the Bridge Port, this could be 'gateway' for a DC gateway or 'nsgateway' for WAN.<br>
-*gateway_name:* name of the gateway being used for the Bridge Port.<br>
-*access_port_name:* name of the access port being used for the Bridge Port. This will change depending on DC (along with Hardware or Software gateway) or WAN type gateway.<br>
-*interface_type:* when gateway_type is nsg, interface type can be wired or wireless.<br>
-*vlan:* VLAN to be used for the Bridge Port. For untagged ports it will be 0.<br>
-*ssid_connection_name:* name of the ssid connection when interface_type is wireless for nsg.<br>
-*dpi:* optional override of Domain level setting for DPI, only applicable to WAN/NSG Bridge Ports.<br>
-*address_spoofing:* optional Override of security policy settings for address spoofing, only applicable to software gateway ports.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise to create the bridge port.
+domain_name | required | reference | name of the L3 Domain to create the bridge port.
+zone_name | optional | reference | name of the Zone to create the bridge port.
+subnet_name | optional | reference | name of the Subnet to create the bridge port.
+vport_name | required | string | name of the bridge port being created.
+description | optional | string | optional description of the Bridge Port.
+domain_type | required | choice | 
+gateway_type | required | choice | type of gateway being used for the Bridge Port, this could be 'gateway' for a DC gateway or 'nsgateway' for WAN.
+gateway_name | required | reference | name of the gateway being used for the Bridge Port.
+access_port_name | required | reference | name of the access port being used for the Bridge Port. This will change depending on DC (along with Hardware or Software gateway) or WAN type gateway.
+interface_type | optional | choice | when gateway_type is nsg, interface type can be wired or wireless.
+vlan | optional | integer | VLAN to be used for the Bridge Port. For untagged ports it will be 0.
+ssid_connection_name | optional | string | name of the ssid connection when interface_type is wireless for nsg.
+dpi | optional | choice | optional override of Domain level setting for DPI, only applicable to WAN/NSG Bridge Ports.
+address_spoofing | optional | choice | optional Override of security policy settings for address spoofing, only applicable to software gateway ports.
 
 
 #### Restrictions

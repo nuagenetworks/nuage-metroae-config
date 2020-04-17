@@ -23,10 +23,12 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the Enteprise where the Captive Portal Profile is being created.<br>
-*captive_portal_profile_name:* name of the Captive Portal Profile.<br>
-*description:* optional description of the Captive Portal Profile.<br>
-*captive_portal_page:* webpage based Text to be displayed to the user accessing the WiFi network as the "Network Access Agreement". No formatting is necessary and supports basic HTML tags. For multiline page text a YAML multiline Block Style Indicator is required (pipe "|").<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the Enteprise where the Captive Portal Profile is being created.
+captive_portal_profile_name | required | string | name of the Captive Portal Profile.
+description | optional | string | optional description of the Captive Portal Profile.
+captive_portal_page | required | string | webpage based Text to be displayed to the user accessing the WiFi network as the "Network Access Agreement". No formatting is necessary and supports basic HTML tags. For multiline page text a YAML multiline Block Style Indicator is required (pipe "|").
 
 
 #### Restrictions

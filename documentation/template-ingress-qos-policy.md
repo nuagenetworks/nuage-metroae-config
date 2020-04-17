@@ -31,18 +31,20 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* ingress QoS Policy can be configured in the Platform Configuration or within an Enterprise. Optional addition of the Enterprise Name to configure it within an Enterprise only.<br>
-*description:* optional description of the Ingress QoS Policy.<br>
-*ingress_qos_policy_name:* name of the Ingress QoS Policy.<br>
-*parent_rate_limiter_name:* optional assigned name of a rate limiter for the port.<br>
-*priority_queue_1_classes:* list of the Forwarding Classes assigned to the Priority Queue.<br>
-*priority_queue_1_rate_limiter_name:* rate limiter attached to priority queue.<br>
-*wrr_queue_2_classes:* list of the Forwarding Classes assigned to the WRR Q2.<br>
-*wrr_queue_2_rate_limiter_name:* rate limiter attached to WRR Q2.<br>
-*wrr_queue_3_classes:* list of the Forwarding Classes assigned to the WRR Q3.<br>
-*wrr_queue_3_rate_limiter_name:* rate limiter attached to WRR Q3.<br>
-*wrr_queue_4_classes:* list of the Forwarding Classes assigned to the WRR Q4.<br>
-*wrr_queue_4_rate_limiter_name:* rate limiter attached to WRR Q4.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | optional | reference | ingress QoS Policy can be configured in the Platform Configuration or within an Enterprise. Optional addition of the Enterprise Name to configure it within an Enterprise only.
+description | optional | string | optional description of the Ingress QoS Policy.
+ingress_qos_policy_name | required | reference | name of the Ingress QoS Policy.
+parent_rate_limiter_name | required | reference | optional assigned name of a rate limiter for the port.
+priority_queue_1_classes | optional | list | list of the Forwarding Classes assigned to the Priority Queue.
+priority_queue_1_rate_limiter_name | optional | reference | rate limiter attached to priority queue.
+wrr_queue_2_classes | optional | list | list of the Forwarding Classes assigned to the WRR Q2.
+wrr_queue_2_rate_limiter_name | optional | reference | rate limiter attached to WRR Q2.
+wrr_queue_3_classes | optional | list | list of the Forwarding Classes assigned to the WRR Q3.
+wrr_queue_3_rate_limiter_name | optional | reference | rate limiter attached to WRR Q3.
+wrr_queue_4_classes | optional | list | list of the Forwarding Classes assigned to the WRR Q4.
+wrr_queue_4_rate_limiter_name | optional | reference | rate limiter attached to WRR Q4.
 
 
 #### Restrictions

@@ -40,27 +40,29 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*infrastructure_gateway_profile_name:* name of the Infrastructure Profile.<br>
-*description:* optional description of the infrastructure profile.<br>
-*proxy_dns_fqdn:* FQDN of the Proxy server that is used for VSD communication.<br>
-*use_two_factor_authentication:* optional enablement of two factor authentication.<br>
-*enable_auto_deactivation:* enable NSG to be de-activated if connectivity to the controller is lost. Default is disabled.<br>
-*auto_deactivation_time:* duration of time in which NSG will be de-activated once timer starts (loss of connectivity to controllers). Default is 7 days. Format follows ISO 8601 Duration format P<#ofDays>DT<##ofHrs>H<#ofMins>M.<br>
-*controllerless_forwarding_mode:* forwarding mode after NSG has lost connectivity with all controllers. Defaults to DISABLED.<br>
-*controllerless_local_duration:* duration in which limited forwarding (local flows only) is maintained by the NSG when it has lost connectivity to all controllers.  Default is 7 days. Format follows ISO 8601 Duration format P<#ofDays>DT<##ofHrs>H<#ofMins>M.<br>
-*controllerless_remote_duration:* duration in which normal forwarding (local and remote flows) is maintained by the NSG when it has lost connectivity to all controllers.  Default is 3 days. Format follows ISO 8601 Duration format P<#ofDays>DT<##ofHrs>H<#ofMins>M.<br>
-*openflow_fastpath_sync_timeout:* interval at which the kernel flows are optimized using an algorithm for evicting flows. Default is 1000 ms.<br>
-*openflow_eviction_threshold:* <br>
-*openflow_audit_timer:* duration in seconds for which full operational state is maintained after an NSG loses connectivity to all its controllers. Default is 180 s.<br>
-*system_sync_time:* optional Upgrade and Configuration Time in crontab format. "Min Hr * * DaysofWeek".<br>
-*upgrade_policy:* defaults to NONE. Policy on when to apply NSG upgrades.<br>
-*upgrade_metadata_url:* location/Path to the upgrade metadata file.<br>
-*stats_collector_port:* port on which the NSG will export stats to the Proxy. Defaults to 39090.<br>
-*ntp_server_key_id:* NTP Key ID as defined in VSC for NTP sync.<br>
-*ntp_server_key:* <br>
-*remote_logging_mode:* defaults to Disabled. Optional enablement of rsyslog.<br>
-*remote_log_server_address:* If remote logging is enabled, IP address of rsyslog server.<br>
-*remote_log_server_port:* If remote logging is enabled,  Protocol port of the rsyslog server.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+infrastructure_gateway_profile_name | required | string | name of the Infrastructure Profile.
+description | optional | string | optional description of the infrastructure profile.
+proxy_dns_fqdn | required | string | FQDN of the Proxy server that is used for VSD communication.
+use_two_factor_authentication | optional | boolean | optional enablement of two factor authentication.
+enable_auto_deactivation | optional | boolean | enable NSG to be de-activated if connectivity to the controller is lost. Default is disabled.
+auto_deactivation_time | optional | string | duration of time in which NSG will be de-activated once timer starts (loss of connectivity to controllers). Default is 7 days. Format follows ISO 8601 Duration format P<#ofDays>DT<##ofHrs>H<#ofMins>M.
+controllerless_forwarding_mode | optional | choice | forwarding mode after NSG has lost connectivity with all controllers. Defaults to DISABLED.
+controllerless_local_duration | optional | string | duration in which limited forwarding (local flows only) is maintained by the NSG when it has lost connectivity to all controllers.  Default is 7 days. Format follows ISO 8601 Duration format P<#ofDays>DT<##ofHrs>H<#ofMins>M.
+controllerless_remote_duration | optional | string | duration in which normal forwarding (local and remote flows) is maintained by the NSG when it has lost connectivity to all controllers.  Default is 3 days. Format follows ISO 8601 Duration format P<#ofDays>DT<##ofHrs>H<#ofMins>M.
+openflow_fastpath_sync_timeout | optional | integer | interval at which the kernel flows are optimized using an algorithm for evicting flows. Default is 1000 ms.
+openflow_eviction_threshold | optional | integer | 
+openflow_audit_timer | optional | integer | duration in seconds for which full operational state is maintained after an NSG loses connectivity to all its controllers. Default is 180 s.
+system_sync_time | optional | string | optional Upgrade and Configuration Time in crontab format. "Min Hr * * DaysofWeek".
+upgrade_policy | optional | choice | defaults to NONE. Policy on when to apply NSG upgrades.
+upgrade_metadata_url | optional | string | location/Path to the upgrade metadata file.
+stats_collector_port | optional | integer | port on which the NSG will export stats to the Proxy. Defaults to 39090.
+ntp_server_key_id | optional | integer | NTP Key ID as defined in VSC for NTP sync.
+ntp_server_key | optional | string | 
+remote_logging_mode | optional | choice | defaults to Disabled. Optional enablement of rsyslog.
+remote_log_server_address | optional | string | If remote logging is enabled, IP address of rsyslog server.
+remote_log_server_port | optional | integer | If remote logging is enabled,  Protocol port of the rsyslog server.
 
 
 #### Restrictions

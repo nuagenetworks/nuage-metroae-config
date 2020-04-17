@@ -30,17 +30,19 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*nsg_name:* <br>
-*nsg_template_name:* the NSG Template that the access port will be added to.<br>
-*access_port_name:* name of the access port.<br>
-*description:* optional description of the access port.<br>
-*enterprise_name:* <br>
-*physical_name:* used to assign which physical (or vnic) port will be used on the NSG. ie. port3, port4.<br>
-*speed:* optional speed setting for the port. Defaults to AUTONEGOTIATE.<br>
-*mtu:* optional MTU size for the port. Defaults to 1500.<br>
-*vlan_range:* optional supported range of VLAN values that can be configured on the port. Defaults to "0-4094"<br>
-*vlan_value_list:* list of VLANs to be created that can include discontiguous ranges. ie. 101,102,103.<br>
-*egress_qos_policy_names:* optional attachment of a Egress QOS policy to be configured on the port.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+nsg_name | optional | reference | 
+nsg_template_name | optional | reference | the NSG Template that the access port will be added to.
+access_port_name | required | string | name of the access port.
+description | optional | string | optional description of the access port.
+enterprise_name | optional | reference | 
+physical_name | required | string | used to assign which physical (or vnic) port will be used on the NSG. ie. port3, port4.
+speed | optional | choice | optional speed setting for the port. Defaults to AUTONEGOTIATE.
+mtu | optional | integer | optional MTU size for the port. Defaults to 1500.
+vlan_range | optional | string | optional supported range of VLAN values that can be configured on the port. Defaults to "0-4094"
+vlan_value_list | optional | list | list of VLANs to be created that can include discontiguous ranges. ie. 101,102,103.
+egress_qos_policy_names | optional | list | optional attachment of a Egress QOS policy to be configured on the port.
 
 
 #### Restrictions

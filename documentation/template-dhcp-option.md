@@ -26,13 +26,15 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which to create the DHCP Pool.<br>
-*domain_name:* If configuring on L3 Domain the name of the domain in which to add the DHCP Option.<br>
-*zone_name:* If configuring on L3 Domain the name of the zone in which to add the DHCP Option.<br>
-*subnet_name:* If configuring on L3 Domain the name of the subnet in which to add the DHCP Option.<br>
-*l2_domain_name:* If configuring on L2 Domain the name of the domain in which to add the DHCP Option.<br>
-*type:* DHCP Option as defined by IANA https://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml.<br>
-*values:* Value for DHCP Option, format is a list but defined by the Option type.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which to create the DHCP Pool.
+domain_name | optional | reference | If configuring on L3 Domain the name of the domain in which to add the DHCP Option.
+zone_name | optional | reference | If configuring on L3 Domain the name of the zone in which to add the DHCP Option.
+subnet_name | optional | reference | If configuring on L3 Domain the name of the subnet in which to add the DHCP Option.
+l2_domain_name | optional | reference | If configuring on L2 Domain the name of the domain in which to add the DHCP Option.
+type | required | integer | DHCP Option as defined by IANA https://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml.
+values | required | list | Value for DHCP Option, format is a list but defined by the Option type.
 
 
 #### Restrictions
