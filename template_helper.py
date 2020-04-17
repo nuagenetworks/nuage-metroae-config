@@ -265,7 +265,6 @@ def generate_template():
 
     generate_headers(lines)
     generate_variables(lines)
-    generate_examples(lines)
     generate_actions(lines)
 
     return "\n".join(lines)
@@ -294,18 +293,6 @@ def generate_variables(lines):
 
     for variable in template_variables:
         lines.extend(variable)
-
-
-def generate_examples(lines):
-    lines.append("examples:")
-    lines.append("- name: CHANGE ME")
-    lines.append("  description: CHANGE ME")
-    lines.append("  user-data: |")
-    lines.append("    - template: " + template_info["name"])
-    lines.append("      values:")
-    lines.append("        CHANGE_ME: CHANGE ME")
-    lines.append("  sample-run: |")
-    lines.append("      SAMPLE RUN OUTPUT")
 
 
 def generate_actions(lines):

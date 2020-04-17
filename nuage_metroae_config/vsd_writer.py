@@ -66,7 +66,7 @@ class VsdWriter(DeviceWriterBase):
         super(VsdWriter, self).__init__()
         self.session_params = None
         self.session = None
-        self.version = "5.0"
+        self.version = "6"
         self.api_prefix = "nuage/api"
         self.specs = dict()
         self.root_spec_name = None
@@ -86,6 +86,9 @@ class VsdWriter(DeviceWriterBase):
 
         if certificate is not None and certificate[0] is not None:
             self.session_params['certificate'] = certificate
+
+    def set_api_version(self, version="6"):
+        self.version = version
 
     def read_api_specifications(self, path_or_file_name):
         """
