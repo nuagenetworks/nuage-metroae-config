@@ -28,15 +28,17 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*nsg_name:* name of the nsg where wifi port will be created.<br>
-*enterprise_name:* name of the enterpise where nsg exists.<br>
-*wifi_port_name:* name of the wifi port.<br>
-*description:* optional description of the wifi port.<br>
-*wifi_band:* frequency band for wifi port. defaults to 2.4GHz.<br>
-*country_code:* country where wifi is operated. defaults to US.<br>
-*wifi_mode:* defaults to 'a'.<br>
-*frequency_channel:* channel for wifi frequency. defaults to 36.<br>
-*generic_config:* include those attributes that are not essential for beaconing as akey value pair.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+nsg_name | required | reference | name of the nsg where wifi port will be created.
+enterprise_name | required | reference | name of the enterpise where nsg exists.
+wifi_port_name | required | string | name of the wifi port.
+description | optional | string | optional description of the wifi port.
+wifi_band | required | choice | frequency band for wifi port. defaults to 2.4GHz.
+country_code | optional | choice | country where wifi is operated. defaults to US.
+wifi_mode | required | choice | defaults to 'a'.
+frequency_channel | optional | integer | channel for wifi frequency. defaults to 36.
+generic_config | optional | string | include those attributes that are not essential for beaconing as akey value pair.
 
 
 #### Restrictions

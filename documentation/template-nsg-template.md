@@ -25,12 +25,14 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*nsg_template_name:* unique name of the NSG Template.<br>
-*infrastructure_gateway_profile_name:* attached Infrastructure Gateway Profile that will be used by the NSG Template.<br>
-*description:* optional description for the NSG Template.<br>
-*infrastructure_access_profile_name:* attached Infrastructure Access Profile that will be used by the NSG Template.<br>
-*ssh_service:* optional enablement of SSH access to the NSG as defined by the Access Profile. Defaults to ENABLED.<br>
-*instance_ssh_override:* optional enablement of the NSG instance to override the Template SSH settings. Defaults to DISALLOWED.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+nsg_template_name | required | string | unique name of the NSG Template.
+infrastructure_gateway_profile_name | required | reference | attached Infrastructure Gateway Profile that will be used by the NSG Template.
+description | optional | string | optional description for the NSG Template.
+infrastructure_access_profile_name | optional | reference | attached Infrastructure Access Profile that will be used by the NSG Template.
+ssh_service | optional | choice | optional enablement of SSH access to the NSG as defined by the Access Profile. Defaults to ENABLED.
+instance_ssh_override | optional | choice | optional enablement of the NSG instance to override the Template SSH settings. Defaults to DISALLOWED.
 
 
 #### Restrictions

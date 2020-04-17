@@ -25,12 +25,14 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the Enterprise where the Routing Policy will be created.<br>
-*routing_policy_name:* name of the Routing Policy to be created to be created.<br>
-*description:* optional description for the Routing Policy.<br>
-*default_action:* default action to take on Routes that do not have a specific match in the policy.<br>
-*policy_definition_xml:* XML blob for he policy optional vport identification for datacenter or VSG deployment. For multiline page text a YAML multiline Block Style Indicator is required (pipe "|").<br>
-*content_type:* <br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the Enterprise where the Routing Policy will be created.
+routing_policy_name | required | string | name of the Routing Policy to be created to be created.
+description | optional | string | optional description for the Routing Policy.
+default_action | required | choice | default action to take on Routes that do not have a specific match in the policy.
+policy_definition_xml | optional | string | XML blob for he policy optional vport identification for datacenter or VSG deployment. For multiline page text a YAML multiline Block Style Indicator is required (pipe "|").
+content_type | optional | choice | 
 
 
 #### Restrictions

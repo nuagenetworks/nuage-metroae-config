@@ -16,8 +16,10 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
 {% for variable in variables -%}
-*{{ variable.name }}:* {{ variable.description | default("") }}<br>
+{{ variable.name }} | {% if variable.optional | default(False) %}optional{% else %}required{% endif %} | {{ variable.type }} | {{ variable.description | default("") }}
 {% endfor %}
 
 #### Restrictions
@@ -27,20 +29,4 @@ If you do not provide values for the optional parameters listed below, then defa
 * {{ item }}
 {% endfor %}
 {% endfor -%}
-#### Examples
-{% for example in examples %}
-##### {{ example.name }}
-{{ example.description }}
-{% if 'user-data' in example -%}
-```
-{{ example['user-data'] }}
-```
-{% endif -%}
-{% if 'sample-run' in example -%}
-
-```
-{{ example['sample-run'] }}
-```
-{% endif -%}
-{% endfor %}
 """

@@ -300,8 +300,10 @@ class TestTemplateParsing(object):
             "tests/fixtures/invalid_templates/variables.yaml")
 
         with open(os.path.join(VALID_SCHEMA_DIRECTORY,
-                               "variables_documentation.yaml"), 'r') as file:
+                               "variables_documentation.md"), 'r') as file:
             expected_doc = file.read()
+
+        print template.get_documentation()
 
         assert template.get_documentation() == expected_doc
 

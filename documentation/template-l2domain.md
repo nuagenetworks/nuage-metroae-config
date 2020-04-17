@@ -38,19 +38,21 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which to create the L2 Domain.<br>
-*l2_domain_name:* name of the L2 Domain being created.<br>
-*description:* optional description of the L2 Domain. Defaults to "L2 Domain <domain_name>".<br>
-*managed_dhcp:* enablement of VSD Management DHCP. If set to true then network address information must be provided below.<br>
-*use_global_mac:* optional enablement of using the globally-defined GW MAC address. Default to disabled.<br>
-*ip_address_type:* if DHCP is set to True, then type of network to create. This can be either IPv4 or Dualstack (IPv4 and IPv6).<br>
-*ipv4_network:* IPv4 network to create in CIDR format. ie. 10.0.0.0/24. Must be included if managed_dhcp is set.<br>
-*ipv4_gateway:* IPv4 default gateway, typically first valid address within the CIDR. ie. 10.0.0.1. Must be included if managed_dhcp is set.<br>
-*ipv6_network:* IPv6 network to create in IPv6 CIDR format. ie. 10::0/64. Must be included if ip_address_type is set to Dualstack.<br>
-*ipv6_gateway:* IPv6 default gateway ie. 10::1. Must be included if ip_address_type is set to Dualstack.<br>
-*route_target:* optional explicit RT assignment in extended community format. ie. 65000:100. Typically only included in specific use cases (interconnection to DCGW etc).<br>
-*route_distinguisher:* optional explicit RD assignment in extended community format. ie. 65000:101. Typically only included in specific use cases (interconnection to DCGW etc).<br>
-*vnid:* optional explicit VXLAN ID assignment.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which to create the L2 Domain.
+l2_domain_name | required | string | name of the L2 Domain being created.
+description | optional | string | optional description of the L2 Domain. Defaults to "L2 Domain <domain_name>".
+managed_dhcp | required | boolean | enablement of VSD Management DHCP. If set to true then network address information must be provided below.
+use_global_mac | optional | choice | optional enablement of using the globally-defined GW MAC address. Default to disabled.
+ip_address_type | optional | choice | if DHCP is set to True, then type of network to create. This can be either IPv4 or Dualstack (IPv4 and IPv6).
+ipv4_network | optional | string | IPv4 network to create in CIDR format. ie. 10.0.0.0/24. Must be included if managed_dhcp is set.
+ipv4_gateway | optional | string | IPv4 default gateway, typically first valid address within the CIDR. ie. 10.0.0.1. Must be included if managed_dhcp is set.
+ipv6_network | optional | string | IPv6 network to create in IPv6 CIDR format. ie. 10::0/64. Must be included if ip_address_type is set to Dualstack.
+ipv6_gateway | optional | string | IPv6 default gateway ie. 10::1. Must be included if ip_address_type is set to Dualstack.
+route_target | optional | string | optional explicit RT assignment in extended community format. ie. 65000:100. Typically only included in specific use cases (interconnection to DCGW etc).
+route_distinguisher | optional | string | optional explicit RD assignment in extended community format. ie. 65000:101. Typically only included in specific use cases (interconnection to DCGW etc).
+vnid | optional | string | optional explicit VXLAN ID assignment.
 
 
 #### Restrictions

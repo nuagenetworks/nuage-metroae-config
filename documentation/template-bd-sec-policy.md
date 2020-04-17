@@ -30,17 +30,19 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise where the Security Policy will be created.<br>
-*domain_name:* name of the domain where the Security Policy will be applied.<br>
-*security_policy_name:* name of the Security Policy to be created.<br>
-*domain_type:* <br>
-*description:* optional description of the Security Policy.<br>
-*default_allow_ip:* enablement of allowing all IP traffic.<br>
-*default_allow_non_ip:* enablement of allowing all non IP traffic.<br>
-*policy_priority:* priority of the policy in ascending order.<br>
-*allow_address_spoof:* enablement of address spoofing for packets hitting the Ingress Security Policy.<br>
-*default_install_acl_implicit_rules:* add implicit denies to end of the Egress Security Policy.<br>
-*active:* enable or disable the Security Policy.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise where the Security Policy will be created.
+domain_name | required | reference | name of the domain where the Security Policy will be applied.
+security_policy_name | required | string | name of the Security Policy to be created.
+domain_type | required | choice | 
+description | optional | string | optional description of the Security Policy.
+default_allow_ip | required | boolean | enablement of allowing all IP traffic.
+default_allow_non_ip | required | boolean | enablement of allowing all non IP traffic.
+policy_priority | required | integer | priority of the policy in ascending order.
+allow_address_spoof | required | boolean | enablement of address spoofing for packets hitting the Ingress Security Policy.
+default_install_acl_implicit_rules | required | boolean | add implicit denies to end of the Egress Security Policy.
+active | optional | boolean | enable or disable the Security Policy.
 
 
 #### Restrictions

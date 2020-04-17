@@ -42,29 +42,31 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise where the Security Policy Entry will be added.<br>
-*domain_name:* name of the domain where the Security Policy entry will be applied.<br>
-*security_policy_name:* name of the Security Policy where the entry will be added.<br>
-*acl_entry_name:* name of the Security Policy Entry.<br>
-*description:* optional description for the Security Policy Entry.<br>
-*location_type:* origination grouping for traffic in the entry.<br>
-*location_name:* name of the object for the source ie. Zone name, Subnet name.<br>
-*zone_name:* <br>
-*network_type:* destination grouping for traffic in the entry.<br>
-*network_name:* name of the object for the destination ie. Zone name, Subnet name.<br>
-*domain_type:* <br>
-*application_signature_name:* for VNS/WAN domains only where DPI is enabled. L7 Application Signature name for traffic match.<br>
-*mirror_destination_name:* Name of the vport or mirror destination when mirroring is enabled.<br>
-*entry_priority:* priority of the policy entry in ascending order.<br>
-*protocol:* well-known Protocol number or name of the traffic for the entry.<br>
-*source_port:* protocol Source port (applicable to TCP/UDP only).<br>
-*destination_port:* protocol Destination port (applicable to TCP/UDP only).<br>
-*ether_type:* IPv4 (0x0800) or IPv6 (0x86DD), defaults to IPv4.<br>
-*dscp:* optional DSCP value to match in the IP header to identify traffic matching the rule. Defaults to all DSCP value.<br>
-*action:* action to take on any packets matching the rule being either to Allow (forward) or Deny (drop) matching traffic.<br>
-*stateful:* policies entries can either be stateful or non-stateful.<br>
-*flow_logging_enabled:* enable syslog logging of packets match ACL entry.<br>
-*stats_logging_enabled:* enable the collection of stats on ACL hits for this entry.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise where the Security Policy Entry will be added.
+domain_name | required | reference | name of the domain where the Security Policy entry will be applied.
+security_policy_name | required | reference | name of the Security Policy where the entry will be added.
+acl_entry_name | required | string | name of the Security Policy Entry.
+description | optional | string | optional description for the Security Policy Entry.
+location_type | required | choice | origination grouping for traffic in the entry.
+location_name | optional | reference | name of the object for the source ie. Zone name, Subnet name.
+zone_name | optional | reference | 
+network_type | required | choice | destination grouping for traffic in the entry.
+network_name | required | reference | name of the object for the destination ie. Zone name, Subnet name.
+domain_type | required | choice | 
+application_signature_name | optional | reference | for VNS/WAN domains only where DPI is enabled. L7 Application Signature name for traffic match.
+mirror_destination_name | optional | reference | Name of the vport or mirror destination when mirroring is enabled.
+entry_priority | required | integer | priority of the policy entry in ascending order.
+protocol | required | string | well-known Protocol number or name of the traffic for the entry.
+source_port | optional | string | protocol Source port (applicable to TCP/UDP only).
+destination_port | optional | string | protocol Destination port (applicable to TCP/UDP only).
+ether_type | optional | choice | IPv4 (0x0800) or IPv6 (0x86DD), defaults to IPv4.
+dscp | optional | string | optional DSCP value to match in the IP header to identify traffic matching the rule. Defaults to all DSCP value.
+action | required | choice | action to take on any packets matching the rule being either to Allow (forward) or Deny (drop) matching traffic.
+stateful | required | boolean | policies entries can either be stateful or non-stateful.
+flow_logging_enabled | required | boolean | enable syslog logging of packets match ACL entry.
+stats_logging_enabled | required | boolean | enable the collection of stats on ACL hits for this entry.
 
 
 #### Restrictions

@@ -32,13 +32,15 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*enterprise_name:* name of the enterprise in which to create the Domain.<br>
-*domain_name:* name of the L3 domain being created.<br>
-*description:* optional description of the Domain. Defaults to "Domain <domain_name>".<br>
-*underlay_enabled:* optional enablement of underlay access from the overlay. Defaults to disabled.<br>
-*flow_collection_enabled:* <br>
-*aggregate_flows_enabled:* <br>
-*address_translation:* optional enablement of underlay NAT from the overlay. Defaults to disabled.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+enterprise_name | required | reference | name of the enterprise in which to create the Domain.
+domain_name | required | string | name of the L3 domain being created.
+description | optional | string | optional description of the Domain. Defaults to "Domain <domain_name>".
+underlay_enabled | optional | choice | optional enablement of underlay access from the overlay. Defaults to disabled.
+flow_collection_enabled | optional | choice | 
+aggregate_flows_enabled | optional | boolean | 
+address_translation | optional | choice | optional enablement of underlay NAT from the overlay. Defaults to disabled.
 
 
 #### Restrictions

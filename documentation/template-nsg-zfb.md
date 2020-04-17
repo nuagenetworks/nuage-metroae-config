@@ -27,12 +27,14 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*zfb_auto_assignment_name:* name to identify zfb auto assignment.<br>
-*description:* optional description of the zfb auto assignment.<br>
-*priority:* specifies an order in which multiple attributes must be matched.A lower value implies a higher preference.<br>
-*zfb_match_attribute:* match field for identifying NSG when using ZFB.<br>
-*zfb_match_attribute_values:* match value of the field selected in zfb_match_attribute when using ZFB.<br>
-*enterprise_name:* name of the enterprise where incoming auto-bootstraping requests will be assigned.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+zfb_auto_assignment_name | required | string | name to identify zfb auto assignment.
+description | optional | string | optional description of the zfb auto assignment.
+priority | required | integer | specifies an order in which multiple attributes must be matched.A lower value implies a higher preference.
+zfb_match_attribute | required | choice | match field for identifying NSG when using ZFB.
+zfb_match_attribute_values | optional | list | match value of the field selected in zfb_match_attribute when using ZFB.
+enterprise_name | required | reference | name of the enterprise where incoming auto-bootstraping requests will be assigned.
 
 
 #### Restrictions

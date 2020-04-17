@@ -24,11 +24,13 @@ If you do not provide values for the optional parameters listed below, then defa
 ```
 
 #### Parameters
-*infrastructure_vsc_profile_name:* name of the VSC Profile.<br>
-*description:* optional description for the VSC Profile.<br>
-*primary_controller_address:* IPv4 address of the primary controller.<br>
-*secondary_controller_address:* optional IPv4 address of the secondary controller.<br>
-*probe_interval_msec:* optional interval in ms of probes sent to VSC to verify OF connectivity.<br>
+Name | Required | Type | Description
+---- | -------- | ---- | -----------
+infrastructure_vsc_profile_name | required | string | name of the VSC Profile.
+description | optional | string | optional description for the VSC Profile.
+primary_controller_address | required | string | IPv4 address of the primary controller.
+secondary_controller_address | optional | string | optional IPv4 address of the secondary controller.
+probe_interval_msec | optional | integer | optional interval in ms of probes sent to VSC to verify OF connectivity.
 
 
 #### Restrictions
