@@ -148,7 +148,11 @@ def set_values(lines, spec):
         if attribute["required"] is False:
             lines.append("%s{%% if %s is defined %%}" % (indent, snake))
 
-        lines.append("%s%s: {{ %s }}" % (indent, name, snake))
+        filter = ""
+        if attribute["type"] == "enum":
+            filter = " | upper"
+
+        lines.append("%s%s: {{ %s%s }}" % (indent, name, snake, filter))
 
         if attribute["required"] is False:
             lines.append("%s{%% endif %%}" % indent)
