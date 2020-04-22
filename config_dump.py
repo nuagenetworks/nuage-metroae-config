@@ -31,7 +31,7 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'vrsaddressrange', 'job', 'containerresync',
                   'ingressexternalservicetemplate',
                   'applicationperformancemanagement', 'l4service',
-                  'ltestatistics', 'eventlog']
+                  'ltestatistics', 'eventlog', 'testdefinition']
 
 
 class MissingSubset(Exception):
