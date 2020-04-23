@@ -9,6 +9,7 @@ from util import get_dict_field_no_case
 
 DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
+LAST_SELECTOR = "$last"
 POSITION_SELECTOR = "$position"
 CHILD_SELECTOR = "$child"
 RETRIEVE_VALUE_SELECTOR = "$retrieve-value"
@@ -361,8 +362,7 @@ class CreateObjectAction(Action):
                                                        context)
             self.execute_children(writer, new_context)
         else:
-            if not self.is_store_only():
-                self.delete_object(writer, context)
+            self.delete_object(writer, context)
 
     def delete_object(self, writer, context=None):
         select_value = self.get_select_value()
@@ -378,6 +378,11 @@ class CreateObjectAction(Action):
 
                     new_context = context_list[0]
                 else:
+                    if isinstance(select_value, Action):
+                        if self.is_store_only():
+                            return
+                        select_value = select_value.get_stored_value()
+
                     new_context = writer.select_object(self.object_type,
                                                        self.select_by_field,
                                                        select_value,
@@ -386,16 +391,17 @@ class CreateObjectAction(Action):
                 # Always delete children first
                 self.execute_children(writer, new_context)
 
-                if not writer.is_validate_only():
-                    self.log.output(self._get_location("Revert "))
+                if not self.is_store_only():
+                    if not writer.is_validate_only():
+                        self.log.output(self._get_location("Revert "))
 
-                writer.delete_object(new_context)
+                    writer.delete_object(new_context)
             except MissingSelectionError:
                 # Skip deletion if object is not present (not created)
-                pass
+                self.log.debug("Selection failed for revert")
 
     def get_select_value(self):
-        return self.get_child_value(self.select_by_field)
+        return self.get_child_value(self.select_by_field.lower())
 
     def get_object_selector(self):
         if self.select_by_field.lower() == FIRST_SELECTOR:
