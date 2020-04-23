@@ -4,6 +4,7 @@ import pytest
 from action_test_params import (CREATE_OBJECTS_DICT,
                                 CREATE_OBJECTS_NO_TYPE,
                                 CREATE_OBJECTS_SELECT_FIRST,
+                                CREATE_OBJECTS_SELECT_LAST,
                                 FIND_NO_SELECT,
                                 FIND_SINGLE_LEVEL,
                                 FIND_TREE,
@@ -67,6 +68,7 @@ from action_test_params import (CREATE_OBJECTS_DICT,
                                 STORE_SAME_TWICE,
                                 UPDATE_CREATE_CHILD_OBJECT,
                                 UPDATE_CHILD_OBJECT_WITH_FIRST_SELECTOR,
+                                UPDATE_CHILD_OBJECT_WITH_LAST_SELECTOR,
                                 UPDATE_ROOT_OBJECT,
                                 UPDATE_ROOT_UPDATE_NOT_SUPPORTED_OBJECT,
                                 UPDATE_SELECT_ROOT_OBJECT)
@@ -1375,6 +1377,20 @@ class TestActionsExecute(object):
         self.run_execute_test(CREATE_OBJECTS_SELECT_FIRST,
                               expected_actions, is_revert=True)
 
+    def test_create_objects_select_last__revert(self):
+
+        expected_actions = """
+            start-session
+            get-object-list Level1 [None]
+            select-object Level2 name = L2-O1 [context_2]
+            delete-object [context_3]
+            delete-object [context_2]
+            stop-session
+        """
+
+        self.run_execute_test(CREATE_OBJECTS_SELECT_LAST,
+                              expected_actions, is_revert=True)
+
     def test_select_objects_by_position__first(self):
 
         expected_actions = """
@@ -1892,6 +1908,21 @@ class TestActionsExecute(object):
                               expected_actions,
                               is_update=True)
 
+    def test_update_action__update_child_with_last_selector(self):
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-O1 [None]
+            update-object Level1 name = L1-O1 [None]
+            set-values name=L1-O1 [context_2]
+            get-object-list Level2 [context_2]
+            set-values value=L2 [context_5]
+            stop-session
+        """
+
+        self.run_execute_test(UPDATE_CHILD_OBJECT_WITH_LAST_SELECTOR,
+                              expected_actions,
+                              is_update=True)
+
     def test_update_action__create_child_with_first_selector(self):
         expected_actions = """
             start-session
@@ -1909,6 +1940,27 @@ class TestActionsExecute(object):
                                         expected_actions,
                                         MissingSelectionError("test exception"),
                                         'select-object Level2 $first = None [context_2]',
+                                        expect_error=False,
+                                        is_update=True,
+                                        return_empty_select_list=True)
+
+    def test_update_action__create_child_with_last_selector(self):
+        expected_actions = """
+            start-session
+            select-object Level1 name = L1-O1 [None]
+            update-object Level1 name = L1-O1 [None]
+            set-values name=L1-O1 [context_2]
+            get-object-list Level2 [context_2]
+            select-object Level2 $last = None [context_2]
+            create-object Level2 [context_2]
+            set-values value=L2 [context_4]
+            stop-session
+        """
+
+        self.run_execute_with_exception(UPDATE_CHILD_OBJECT_WITH_LAST_SELECTOR,
+                                        expected_actions,
+                                        MissingSelectionError("test exception"),
+                                        'select-object Level2 $last = None [context_2]',
                                         expect_error=False,
                                         is_update=True,
                                         return_empty_select_list=True)
