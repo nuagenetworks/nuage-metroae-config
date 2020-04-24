@@ -9,6 +9,7 @@ from util import get_dict_field_no_case
 
 DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
+LAST_SELECTOR = "$last"
 POSITION_SELECTOR = "$position"
 CHILD_SELECTOR = "$child"
 RETRIEVE_VALUE_SELECTOR = "$retrieve-value"
@@ -342,7 +343,8 @@ class CreateObjectAction(Action):
             if not self.is_update():
                 new_context = writer.create_object(self.object_type, context)
             else:
-                if self.select_by_field.lower() == FIRST_SELECTOR:
+                if self.select_by_field.lower() in [FIRST_SELECTOR,
+                                                    LAST_SELECTOR]:
                     context_list = writer.get_object_list(self.object_type,
                                                           context)
 
@@ -353,7 +355,10 @@ class CreateObjectAction(Action):
                             self.get_select_value(),
                             context)
                     else:
-                        new_context = context_list[0]
+                        if self.select_by_field.lower() == FIRST_SELECTOR:
+                            new_context = context_list[0]
+                        else:
+                            new_context = context_list[-1]
                 else:
                     new_context = writer.update_object(self.object_type,
                                                        self.select_by_field,
@@ -367,16 +372,21 @@ class CreateObjectAction(Action):
     def delete_object(self, writer, context=None):
         select_value = self.get_select_value()
         if (select_value is not None or
-                self.select_by_field.lower() == FIRST_SELECTOR):
+            self.select_by_field.lower() in [FIRST_SELECTOR,
+                                             LAST_SELECTOR]):
             try:
-                if self.select_by_field.lower() == FIRST_SELECTOR:
+                if self.select_by_field.lower() in [FIRST_SELECTOR,
+                                                    LAST_SELECTOR]:
                     context_list = writer.get_object_list(self.object_type,
                                                           context)
 
                     if len(context_list) < 1:
                         raise MissingSelectionError("No objects selected")
 
-                    new_context = context_list[0]
+                    if self.select_by_field.lower() == FIRST_SELECTOR:
+                        new_context = context_list[0]
+                    else:
+                        new_context = context_list[-1]
                 else:
                     new_context = writer.select_object(self.object_type,
                                                        self.select_by_field,
@@ -402,6 +412,10 @@ class CreateObjectAction(Action):
             return {'type': self.object_type.lower(),
                     'field': POSITION_SELECTOR,
                     'value': 0}
+        elif self.select_by_field.lower() == LAST_SELECTOR:
+            return {'type': self.object_type.lower(),
+                    'field': POSITION_SELECTOR,
+                    'value': -1}
         else:
             select_value = self.get_select_value()
             return {'type': self.object_type.lower(),
