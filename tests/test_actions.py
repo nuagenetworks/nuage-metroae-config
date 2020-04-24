@@ -1021,7 +1021,8 @@ class TestActionsExecute(object):
         expected_actions = """
             start-session
             select-object Enterprise name = test_enterprise [None]
-            delete-object [context_1]
+            select-object Enterprise name = test_enterprise [None]
+            delete-object [context_2]
             stop-session
         """
 
@@ -1049,11 +1050,14 @@ class TestActionsExecute(object):
         expected_actions = """
             start-session
             select-object Enterprise name = test_enterprise [None]
+            select-object DomainTemplate name = template_test_domain [context_1]
+            get-value id [context_2]
+            select-object Domain name = test_domain [context_1]
             select-object Enterprise name = test_enterprise [None]
-            select-object Domain name = test_domain [context_2]
-            delete-object [context_3]
-            select-object DomainTemplate name = template_test_domain [context_2]
+            select-object Domain name = test_domain [context_4]
             delete-object [context_5]
+            select-object DomainTemplate name = template_test_domain [context_4]
+            delete-object [context_7]
             stop-session
         """
 
@@ -1090,13 +1094,15 @@ class TestActionsExecute(object):
             select-object Domain name = test_domain [context_1]
             select-object Subnet name = test_subnet [context_2]
             get-value id [context_3]
+            select-object IngressACLTemplate name = test_acl [context_2]
+            select-object EgressACLTemplate name = test_acl [context_2]
             select-object Enterprise name = test_enterprise [None]
-            select-object Domain name = test_domain [context_4]
-            select-object EgressACLTemplate name = test_acl [context_5]
-            delete-object [context_6]
-            select-object IngressACLTemplate name = test_acl [context_5]
+            select-object Domain name = test_domain [context_6]
+            select-object EgressACLTemplate name = test_acl [context_7]
             delete-object [context_8]
-            select-object Subnet name = test_subnet [context_5]
+            select-object IngressACLTemplate name = test_acl [context_7]
+            delete-object [context_10]
+            select-object Subnet name = test_subnet [context_7]
             stop-session
         """
 
@@ -1234,7 +1240,8 @@ class TestActionsExecute(object):
         expected_actions = """
             start-session
             select-object Enterprise field1 = value1 [None]
-            delete-object [context_1]
+            select-object Enterprise field1 = value1 [None]
+            delete-object [context_2]
             stop-session
         """
 
@@ -1283,13 +1290,18 @@ class TestActionsExecute(object):
         expected_actions = """
             start-session
             select-object Enterprise name = enterprise1 [None]
-            select-object Domain name = domain2 [context_1]
-            delete-object [context_2]
-            select-object Domain name = domain1 [context_1]
-            delete-object [context_4]
             select-object DomainTemplate name = domain_template [context_1]
+            get-value id [context_2]
+            select-object Domain name = domain1 [context_1]
+            select-object Domain name = domain2 [context_1]
+            select-object Enterprise name = enterprise1 [None]
+            select-object Domain name = domain2 [context_5]
             delete-object [context_6]
-            delete-object [context_1]
+            select-object Domain name = domain1 [context_5]
+            delete-object [context_8]
+            select-object DomainTemplate name = domain_template [context_5]
+            delete-object [context_10]
+            delete-object [context_5]
             stop-session
         """
 
@@ -1369,8 +1381,10 @@ class TestActionsExecute(object):
             start-session
             get-object-list Level1 [None]
             select-object Level2 name = L2-O1 [context_1]
-            delete-object [context_3]
-            delete-object [context_1]
+            get-object-list Level1 [None]
+            select-object Level2 name = L2-O1 [context_4]
+            delete-object [context_6]
+            delete-object [context_4]
             stop-session
         """
 
@@ -1383,8 +1397,10 @@ class TestActionsExecute(object):
             start-session
             get-object-list Level1 [None]
             select-object Level2 name = L2-O1 [context_2]
-            delete-object [context_3]
-            delete-object [context_2]
+            get-object-list Level1 [None]
+            select-object Level2 name = L2-O1 [context_5]
+            delete-object [context_6]
+            delete-object [context_5]
             stop-session
         """
 
@@ -1462,12 +1478,13 @@ class TestActionsExecute(object):
             start-session
             get-object-list Level1 [None]
             select-object Find name = L2-O2 [context_1]
+            select-object Level2 name = L2-O1 [context_1]
             select-object Find name = L2-O2 [context_1]
             get-object-list Level1 [None]
-            select-object Find name = L2-O2 [context_5]
-            select-object Find name = L2-O2 [context_5]
-            select-object Level2 name = L2-O1 [context_5]
-            delete-object [context_9]
+            select-object Find name = L2-O2 [context_6]
+            select-object Find name = L2-O2 [context_6]
+            select-object Level2 name = L2-O1 [context_6]
+            delete-object [context_10]
             stop-session
         """
 
@@ -1500,15 +1517,16 @@ class TestActionsExecute(object):
             select-object Find name = L3-O2 [context_3]
             get-object-list Level2 [context_1]
             select-object Find name = L3-O2 [context_6]
+            select-object Level3 name = L3-O1 [context_6]
             select-object Find name = L3-O2 [context_6]
             get-object-list Level1 [None]
-            get-object-list Level2 [context_10]
-            select-object Find name = L3-O2 [context_12]
-            get-object-list Level2 [context_10]
-            select-object Find name = L3-O2 [context_15]
-            select-object Find name = L3-O2 [context_15]
-            select-object Level3 name = L3-O1 [context_15]
-            delete-object [context_19]
+            get-object-list Level2 [context_11]
+            select-object Find name = L3-O2 [context_13]
+            get-object-list Level2 [context_11]
+            select-object Find name = L3-O2 [context_16]
+            select-object Find name = L3-O2 [context_16]
+            select-object Level3 name = L3-O1 [context_16]
+            delete-object [context_20]
             stop-session
         """
 
@@ -1540,13 +1558,13 @@ class TestActionsExecute(object):
             start-session
             get-object-list Level1 [None]
             select-object Find name = L2-O2 [context_1]
+            select-object Level2 name = L2-O1 [context_1]
             select-object Find name = L2-O2 [context_1]
             get-object-list Level1 [None]
-            select-object Find name = L2-O2 [context_5]
             select-object Find name = L2-O2 [context_6]
             select-object Find name = L2-O2 [context_6]
             select-object Level2 name = L2-O1 [context_6]
-            delete-object [context_9]
+            delete-object [context_10]
             stop-session
         """
 
@@ -1708,9 +1726,10 @@ class TestActionsExecute(object):
             select-object Object1 name = value_1 [None]
             get-value objectId [context_1]
             select-object Object2 id = value_1 [None]
+            select-object Level2 name = L2-O1 [context_2]
             select-object Object2 id = value_1 [None]
-            select-object Level2 name = L2-O1 [context_3]
-            delete-object [context_4]
+            select-object Level2 name = L2-O1 [context_4]
+            delete-object [context_5]
             select-object Object1 name = value_1 [None]
             stop-session
         """
