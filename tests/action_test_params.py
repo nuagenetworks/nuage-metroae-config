@@ -48,6 +48,21 @@ actions:
 """)
 
 
+CREATE_OBJECTS_SELECT_LAST = yaml.safe_load("""
+actions:
+- Create-object:
+    Select-By-field: $Last
+    Type: Level1
+    Actions:
+    - Create-object:
+        Type: Level2
+        Actions:
+        - Set-values:
+            name: L2-O1
+
+""")
+
+
 FIND_NO_SELECT = yaml.safe_load("""
 actions:
 - Select-object:
@@ -1378,6 +1393,22 @@ actions:
     - Create-object:
         type: Level2
         select-by-field: $first
+        Actions:
+        - Set-values:
+            value: L2
+""")
+
+UPDATE_CHILD_OBJECT_WITH_LAST_SELECTOR = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    update-supported: False
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - Create-object:
+        type: Level2
+        select-by-field: $last
         Actions:
         - Set-values:
             value: L2
