@@ -1,7 +1,8 @@
 import os
 import pytest
 
-from action_test_params import (CREATE_OBJECTS_DICT,
+from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
+                                CREATE_OBJECTS_DICT,
                                 CREATE_OBJECTS_NO_TYPE,
                                 CREATE_OBJECTS_SELECT_FIRST,
                                 CREATE_OBJECTS_SELECT_LAST,
@@ -1758,6 +1759,27 @@ class TestActionsExecute(object):
 
         assert "Action not retrieve-value" in str(e)
         assert "id" in str(e)
+
+    def test_create_field_retrieve__revert(self):
+
+        expected_actions = """
+            start-session
+            select-object Object1 name = L1-O1 [None]
+            select-object Object2 name = other_name [context_1]
+            get-value objectId [context_2]
+            select-object Object3 other_id = value_1 [None]
+            select-object Level2 name = L2-O1 [context_3]
+            delete-object [context_4]
+            delete-object [context_3]
+            select-object Object1 name = L1-O1 [None]
+            select-object Object2 name = other_name [context_7]
+            delete-object [context_8]
+            delete-object [context_7]
+            stop-session
+        """
+
+        self.run_execute_test(CREATE_FIELD_RETRIEVE_VALUE, expected_actions,
+                              is_revert=True)
 
     def test_save_to_file__success(self, capsys):
 

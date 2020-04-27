@@ -1032,6 +1032,38 @@ actions:
 """)
 
 
+CREATE_FIELD_RETRIEVE_VALUE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Object1
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - Create-object:
+        Type: Object2
+        Value: value_1
+        Actions:
+        - Set-values:
+            name: other_name
+        - Store-value:
+            As-name: object_id
+            From-field: objectId
+- Create-object:
+    Type: Object3
+    Select-By-field: other_id
+    Actions:
+    - Retrieve-value:
+        From-name: object_id
+        To-field: other_id
+    - Create-object:
+        Type: Level2
+        Actions:
+        - Set-values:
+            name: L2-O1
+
+""")
+
+
 SET_VALUES_DICT = yaml.safe_load("""
 actions:
 - Create-object:
