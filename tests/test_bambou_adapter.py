@@ -851,3 +851,19 @@ class TestValidate(object):
         assert obj.validate() is False
         attr_error = obj.errors[attr]
         assert message in attr_error['description']
+
+    @pytest.mark.parametrize("attr, value, message", VALIDATION_ERROR_CASES)
+    def test__invalid_without_required(self, attr, value, message):
+        obj = ConfigObject(ENTERPRISE_SPEC_VALIDATE)
+
+        # Name is required value, make sure it is set
+        obj.name = 'a'
+
+        setattr(obj, attr, value)
+
+        if (message == "value is mandatory"):
+            assert obj.validate(skip_required_check=True) is True
+        else:
+            assert obj.validate(skip_required_check=True) is False
+            attr_error = obj.errors[attr]
+            assert message in attr_error['description']

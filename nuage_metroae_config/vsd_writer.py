@@ -21,6 +21,7 @@ LEGACY_VERSION_ENDPOINT = "/Resources/app-version.js"
 VERSION_ENDPOINT_6 = "/nuage"
 VERSION_ENDPOINT_5 = "/architect" + LEGACY_VERSION_ENDPOINT
 VERSION_TOKEN = "APP_BUILDVERSION"
+ASSIGN_TOKEN = "assign("
 
 
 class MissingSessionParamsError(DeviceWriterError):
@@ -69,6 +70,7 @@ class VsdWriter(DeviceWriterBase):
         self.version = "6"
         self.api_prefix = "nuage/api"
         self.specs = dict()
+        self.specs_by_restname = dict()
         self.root_spec_name = None
 
     def set_session_params(self, url, username="csproot",
@@ -374,7 +376,8 @@ class VsdWriter(DeviceWriterBase):
 
         try:
             self._set_attributes(context.current_object, **kwargs)
-            self._validate_values(context.current_object)
+            self._validate_values(context.current_object,
+                                  skip_required_check=context.object_exists)
         except DeviceWriterError as e:
             e.reraise_with_location(location)
 
@@ -399,6 +402,29 @@ class VsdWriter(DeviceWriterBase):
             context.object_exists = True
 
         self.log.debug("Saved [%s]" % context)
+
+        try:
+            self._assign_attributes(context.current_object, **kwargs)
+        except BambouHTTPError as e:
+            raise VsdError(e, location)
+        except DeviceWriterError as e:
+            e.reraise_with_location(location)
+
+        return context
+
+    def unset_values(self, context, **kwargs):
+        """
+        Unsets values of a selected object when being reverted
+        """
+        location = "Unset value [%s] = %s" % (context, kwargs)
+        self.log.debug(location)
+
+        try:
+            self._unassign_attributes(context.current_object, **kwargs)
+        except BambouHTTPError as e:
+            raise VsdError(e, location)
+        except DeviceWriterError as e:
+            e.reraise_with_location(location)
 
         return context
 
@@ -457,6 +483,9 @@ class VsdWriter(DeviceWriterBase):
 
         name_key = spec['model']['entity_name'].lower()
         self.specs[name_key] = spec
+        if "rest_name" in spec['model']:
+            rest_name_key = spec['model']['rest_name'].lower()
+            self.specs_by_restname[rest_name_key] = spec
 
         if 'root' in spec['model'] and spec['model']['root'] is True:
             self.root_spec_name = name_key
@@ -471,7 +500,8 @@ class VsdWriter(DeviceWriterBase):
 
     def _validate_specification_field(self, field, section):
         if field not in section or section[field] is None:
-            raise InvalidSpecification("'%s' missing in specification %s " % (field, section))
+            raise InvalidSpecification("'%s' missing in specification %s " % (
+                                       field, section))
 
     def _get_specification(self, object_name):
         name_key = object_name.lower()
@@ -479,6 +509,13 @@ class VsdWriter(DeviceWriterBase):
             raise InvalidObjectError("No specification for " + object_name)
 
         return self.specs[name_key]
+
+    def _get_specification_by_rest_name(self, rest_name):
+        name_key = rest_name.lower()
+        if name_key not in self.specs_by_restname:
+            raise InvalidObjectError("No specification for " + rest_name)
+
+        return self.specs_by_restname[name_key]
 
     def _get_attribute_name(self, spec, local_name):
         if local_name.lower() == "id":
@@ -590,8 +627,9 @@ class VsdWriter(DeviceWriterBase):
     def _set_attributes(self, obj, **kwargs):
         for field, value in kwargs.iteritems():
             local_name = field.lower()
-            self._get_attribute_name(obj.spec, field)
-            setattr(obj, local_name, value)
+            if not self._is_assign_attribute(local_name):
+                self._get_attribute_name(obj.spec, field)
+                setattr(obj, local_name, value)
 
     def _get_attribute(self, obj, field):
         self._get_attribute_name(obj.spec, field)
@@ -610,6 +648,97 @@ class VsdWriter(DeviceWriterBase):
         else:
             raise SessionError("Missing field %s in %s object" %
                                (field, obj.get_name()))
+
+    def _assign_attributes(self, obj, **kwargs):
+        for field, value in kwargs.iteritems():
+            local_name = field.lower()
+            if self._is_assign_attribute(local_name):
+                self._assign_attribute(obj, local_name, value)
+
+    def _is_assign_attribute(self, field):
+        return field.startswith(ASSIGN_TOKEN)
+
+    def _assign_attribute(self, parent_object, local_name, new_ids):
+        rest_name = local_name[len(ASSIGN_TOKEN):-1]
+        child_spec = self._find_child_assign_spec(parent_object.spec,
+                                                  rest_name)
+        child_name = child_spec['model']['entity_name']
+        existing_objects = self._get_object_list(child_name, parent_object)
+
+        new_objects = self._create_assign_objects(existing_objects, new_ids,
+                                                  child_name)
+
+        if (self.validate_only is not True and
+                len(new_objects) > len(existing_objects)):
+            parent_object.current_child_name = (
+                child_spec['model']['resource_name'])
+            parent_object.assign(new_objects, nurest_object_type=None)
+
+    def _create_assign_objects(self, existing_objects, new_ids, child_name):
+        if type(new_ids) != list:
+            new_ids = [new_ids]
+
+        new_objects = list(existing_objects)
+        for new_id in new_ids:
+            if not self._is_object_in_list(existing_objects, new_id):
+                self.log.debug("Assigning %s ID = %s" % (child_name, new_id))
+                child_object = self._get_new_config_object(child_name)
+                child_object.id = new_id
+                new_objects.append(child_object)
+
+        return new_objects
+
+    def _is_object_in_list(self, object_list, object_id):
+        for obj in object_list:
+            if obj.id == object_id:
+                return True
+
+        return False
+
+    def _unassign_attributes(self, obj, **kwargs):
+        for field, value in kwargs.iteritems():
+            local_name = field.lower()
+            if self._is_assign_attribute(local_name):
+                self._unassign_attribute(obj, local_name, value)
+
+    def _unassign_attribute(self, parent_object, local_name, new_ids):
+        rest_name = local_name[len(ASSIGN_TOKEN):-1]
+        child_spec = self._find_child_assign_spec(parent_object.spec,
+                                                  rest_name)
+        child_name = child_spec['model']['entity_name']
+        existing_objects = self._get_object_list(child_name, parent_object)
+
+        new_objects = self._create_unassign_objects(existing_objects, new_ids,
+                                                    child_name)
+
+        if (self.validate_only is not True and
+                len(new_objects) < len(existing_objects)):
+            parent_object.current_child_name = (
+                child_spec['model']['resource_name'])
+            parent_object.assign(new_objects, nurest_object_type=None)
+
+    def _create_unassign_objects(self, existing_objects, new_ids, child_name):
+        if type(new_ids) != list:
+            new_ids = [new_ids]
+
+        new_objects = list()
+        for existing_object in existing_objects:
+            if existing_object.id not in new_ids:
+                new_objects.append(existing_object)
+            else:
+                self.log.debug("Unassigning %s ID = %s" %
+                               (child_name, existing_object.id))
+
+        return new_objects
+
+    def _find_child_assign_spec(self, parent_spec, child_rest_name):
+        for child_section in parent_spec['children']:
+            if child_section['rest_name'] == child_rest_name:
+                return self._get_specification_by_rest_name(child_rest_name)
+
+        raise InvalidObjectError(
+            "Parent object %s has no member assignment child %s" %
+            (parent_spec['model']['entity_name'], child_rest_name))
 
     def _get_placeholder_validation_value(self, attr_type):
         # For validation, we don't have a real object to work with, but we
@@ -630,8 +759,8 @@ class VsdWriter(DeviceWriterBase):
         else:
             return None
 
-    def _validate_values(self, obj):
-        if not obj.validate():
+    def _validate_values(self, obj, skip_required_check):
+        if not obj.validate(skip_required_check):
             messages = []
             for attr_name, message in obj.errors.iteritems():
                 messages.append("%s: %s" % (attr_name, message))

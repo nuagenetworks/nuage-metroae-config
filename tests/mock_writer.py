@@ -114,6 +114,18 @@ class MockWriter(object):
                                                     str(context)))
         return self._new_context()
 
+    def unset_values(self, context, **kwargs):
+        """
+        Unsets values of a selected object when being reverted
+        """
+        values = []
+        for key in sorted(kwargs.keys()):
+            values.append("%s=%s" % (key, str(kwargs[key])))
+
+        self._record_action("unset-values %s [%s]" % (','.join(values),
+                                                      str(context)))
+        return self._new_context()
+
     def get_value(self, field, context):
         """
         Gets a value from the object selected in the current context

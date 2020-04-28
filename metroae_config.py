@@ -78,9 +78,8 @@ def main():
                                            args.version):
         print VERSION_OUTPUT
         exit(0)
-    elif (args.action == VALIDATE_ACTION or
-          args.action == CREATE_ACTION or
-          args.action == REVERT_ACTION):
+    elif (args.action in [VALIDATE_ACTION, CREATE_ACTION, UPDATE_ACTION,
+                          REVERT_ACTION]):
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 

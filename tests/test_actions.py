@@ -1023,6 +1023,7 @@ class TestActionsExecute(object):
             start-session
             select-object Enterprise name = test_enterprise [None]
             select-object Enterprise name = test_enterprise [None]
+            unset-values name=test_enterprise [context_2]
             delete-object [context_2]
             stop-session
         """
@@ -1056,9 +1057,11 @@ class TestActionsExecute(object):
             select-object Domain name = test_domain [context_1]
             select-object Enterprise name = test_enterprise [None]
             select-object Domain name = test_domain [context_4]
+            unset-values name=test_domain,templateID=value_1 [context_5]
             delete-object [context_5]
             select-object DomainTemplate name = template_test_domain [context_4]
-            delete-object [context_7]
+            unset-values name=template_test_domain [context_8]
+            delete-object [context_8]
             stop-session
         """
 
@@ -1100,9 +1103,11 @@ class TestActionsExecute(object):
             select-object Enterprise name = test_enterprise [None]
             select-object Domain name = test_domain [context_6]
             select-object EgressACLTemplate name = test_acl [context_7]
+            unset-values defaultAllowIP=True,defaultAllowNonIP=False,defaultInstallACLImplicitRules=True,name=test_acl,priority=100 [context_8]
             delete-object [context_8]
             select-object IngressACLTemplate name = test_acl [context_7]
-            delete-object [context_10]
+            unset-values allowAddressSpoof=False,defaultAllowIP=True,defaultAllowNonIP=False,name=test_acl,priority=100 [context_11]
+            delete-object [context_11]
             select-object Subnet name = test_subnet [context_7]
             stop-session
         """
@@ -1242,6 +1247,7 @@ class TestActionsExecute(object):
             start-session
             select-object Enterprise field1 = value1 [None]
             select-object Enterprise field1 = value1 [None]
+            unset-values field1=value1,field2=True,field4=4 [context_2]
             delete-object [context_2]
             stop-session
         """
@@ -1297,11 +1303,15 @@ class TestActionsExecute(object):
             select-object Domain name = domain2 [context_1]
             select-object Enterprise name = enterprise1 [None]
             select-object Domain name = domain2 [context_5]
+            unset-values name=domain2,templateID=value_1 [context_6]
             delete-object [context_6]
             select-object Domain name = domain1 [context_5]
-            delete-object [context_8]
+            unset-values name=domain1,templateID=value_1 [context_9]
+            delete-object [context_9]
             select-object DomainTemplate name = domain_template [context_5]
-            delete-object [context_10]
+            unset-values name=domain_template [context_12]
+            delete-object [context_12]
+            unset-values name=enterprise1 [context_5]
             delete-object [context_5]
             stop-session
         """
@@ -1384,6 +1394,7 @@ class TestActionsExecute(object):
             select-object Level2 name = L2-O1 [context_1]
             get-object-list Level1 [None]
             select-object Level2 name = L2-O1 [context_4]
+            unset-values name=L2-O1 [context_6]
             delete-object [context_6]
             delete-object [context_4]
             stop-session
@@ -1400,6 +1411,7 @@ class TestActionsExecute(object):
             select-object Level2 name = L2-O1 [context_2]
             get-object-list Level1 [None]
             select-object Level2 name = L2-O1 [context_5]
+            unset-values name=L2-O1 [context_6]
             delete-object [context_6]
             delete-object [context_5]
             stop-session
@@ -1485,6 +1497,7 @@ class TestActionsExecute(object):
             select-object Find name = L2-O2 [context_6]
             select-object Find name = L2-O2 [context_6]
             select-object Level2 name = L2-O1 [context_6]
+            unset-values name=L2-O1 [context_10]
             delete-object [context_10]
             stop-session
         """
@@ -1527,6 +1540,7 @@ class TestActionsExecute(object):
             select-object Find name = L3-O2 [context_16]
             select-object Find name = L3-O2 [context_16]
             select-object Level3 name = L3-O1 [context_16]
+            unset-values name=L3-O1 [context_20]
             delete-object [context_20]
             stop-session
         """
@@ -1565,6 +1579,7 @@ class TestActionsExecute(object):
             select-object Find name = L2-O2 [context_6]
             select-object Find name = L2-O2 [context_6]
             select-object Level2 name = L2-O1 [context_6]
+            unset-values name=L2-O1 [context_10]
             delete-object [context_10]
             stop-session
         """
@@ -1630,6 +1645,7 @@ class TestActionsExecute(object):
             get-value field1 [context_4]
             get-value field2 [context_4]
             select-object Level2 name = L2-O1 [context_3]
+            unset-values name=L2-O1 [context_5]
             delete-object [context_5]
             stop-session
         """
@@ -1669,6 +1685,7 @@ class TestActionsExecute(object):
             get-value field1 [context_4]
             get-value field2 [context_4]
             select-object Level2 name = L2-O1 [context_4]
+            unset-values name=L2-O1 [context_5]
             delete-object [context_5]
             stop-session
         """
@@ -1730,6 +1747,7 @@ class TestActionsExecute(object):
             select-object Level2 name = L2-O1 [context_2]
             select-object Object2 id = value_1 [None]
             select-object Level2 name = L2-O1 [context_4]
+            unset-values name=L2-O1 [context_5]
             delete-object [context_5]
             select-object Object1 name = value_1 [None]
             stop-session
@@ -1769,12 +1787,16 @@ class TestActionsExecute(object):
             get-value objectId [context_2]
             select-object Object3 other_id = value_1 [None]
             select-object Level2 name = L2-O1 [context_3]
+            unset-values name=L2-O1 [context_4]
             delete-object [context_4]
+            unset-values other_id=value_1 [context_3]
             delete-object [context_3]
             select-object Object1 name = L1-O1 [None]
-            select-object Object2 name = other_name [context_7]
-            delete-object [context_8]
-            delete-object [context_7]
+            select-object Object2 name = other_name [context_9]
+            unset-values name=other_name [context_10]
+            delete-object [context_10]
+            unset-values name=L1-O1 [context_9]
+            delete-object [context_9]
             stop-session
         """
 

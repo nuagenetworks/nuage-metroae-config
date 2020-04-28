@@ -85,6 +85,12 @@ class DeviceWriterBase(object):
         """
         raise NotImplementedError("Abstract base function not implemented")
 
+    def unset_values(self, context, **kwargs):
+        """
+        Unsets values of a selected object when being reverted
+        """
+        raise NotImplementedError("Abstract base function not implemented")
+
     def get_value(self, field, context):
         """
         Gets a value from the object selected in the current context

@@ -124,7 +124,7 @@ class ConfigObject(NURESTObject):
     def fetcher_for_rest_name(self, rest_name):
         return list()
 
-    def validate(self):
+    def validate(self, skip_required_check=False):
         # Unfortunately, the Bambou validation function is not working
         # properly. It has the following problems and thus it is being
         # overridden here in the adapter:
@@ -137,11 +137,13 @@ class ConfigObject(NURESTObject):
 
             value = getattr(self, local_name, None)
 
-            if attribute.is_required and (value is None or value == ""):
-                self._attribute_errors[local_name] = {
-                    'title': 'Invalid input',
-                    'description': 'This value is mandatory.',
-                    'remote_name': attribute.remote_name}
+            if (attribute.is_required and
+                    (value is None or value == "")):
+                if not skip_required_check:
+                    self._attribute_errors[local_name] = {
+                        'title': 'Invalid input',
+                        'description': 'This value is mandatory.',
+                        'remote_name': attribute.remote_name}
                 continue
 
             if value is None:
