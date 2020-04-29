@@ -1315,6 +1315,339 @@ class TestVsdWriterSetValues(object):
         assert new_context.current_object == mock_object
         assert new_context.object_exists is True
 
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("nuage_metroae_config.vsd_writer.ConfigObject")
+    @patch("nuage_metroae_config.vsd_writer.Fetcher")
+    def test_assign_update__success(self, mock_fetcher, mock_object,
+                                    validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = []
+
+        child_object = MagicMock()
+        mock_object.return_value = child_object
+
+        if validate_only is True:
+            mock_session.root_object = MagicMock()
+            mock_session.root_object.spec = vsd_writer.specs['me']
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
+        mock_object.assign.return_value = True
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        values = {
+            "name": "test_enterprise",
+            "assign(domain)": "abcd-1234"
+        }
+
+        new_context = vsd_writer.set_values(context, **values)
+
+        assert mock_object.name == 'test_enterprise'
+        mock_object.validate.assert_called_once()
+
+        if validate_only is True:
+            mock_session.root_object.save.assert_not_called()
+            mock_object.assign.assert_not_called()
+        else:
+            mock_session.root_object.current_child_name == "enterprises"
+            mock_object.save.assert_called_once_with()
+            mock_object.assign.assert_called_once_with([child_object],
+                                                       nurest_object_type=None)
+            assert mock_object.current_child_name == "domains"
+            assert child_object.id == "abcd-1234"
+
+        assert new_context.parent_object is None
+        assert new_context.current_object == mock_object
+        assert new_context.object_exists is True
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("nuage_metroae_config.vsd_writer.ConfigObject")
+    @patch("nuage_metroae_config.vsd_writer.Fetcher")
+    def test_assign_multiple__success(self, mock_fetcher, mock_object,
+                                      validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(vsd_writer)
+
+        existing_object_1 = MagicMock()
+        existing_object_1.id = "existing1"
+        existing_object_2 = MagicMock()
+        existing_object_2.id = "existing2"
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = [existing_object_1, existing_object_2]
+
+        new_object_1 = MagicMock()
+        new_object_2 = MagicMock()
+        new_object_3 = MagicMock()
+        new_object_4 = MagicMock()
+        mock_object.side_effect = [new_object_1,
+                                   new_object_2,
+                                   new_object_3,
+                                   new_object_4]
+
+        if validate_only is True:
+            mock_session.root_object = MagicMock()
+            mock_session.root_object.spec = vsd_writer.specs['me']
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
+        mock_object.assign.return_value = True
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        values = {
+            "name": "test_enterprise",
+            "assign(domain)": ["existing2", "new1", "new2"]
+        }
+
+        new_context = vsd_writer.set_values(context, **values)
+
+        assert mock_object.name == 'test_enterprise'
+        mock_object.validate.assert_called_once()
+
+        if validate_only is True:
+            mock_session.root_object.save.assert_not_called()
+            mock_object.assign.assert_not_called()
+        else:
+            mock_session.root_object.current_child_name == "enterprises"
+            mock_object.save.assert_called_once_with()
+            mock_object.assign.assert_called_once_with([existing_object_1,
+                                                        existing_object_2,
+                                                        new_object_1,
+                                                        new_object_2],
+                                                       nurest_object_type=None)
+            assert mock_object.current_child_name == "domains"
+            assert new_object_1.id == "new1"
+            assert new_object_2.id == "new2"
+
+        assert new_context.parent_object is None
+        assert new_context.current_object == mock_object
+        assert new_context.object_exists is True
+
+    @patch("nuage_metroae_config.vsd_writer.ConfigObject")
+    @patch("nuage_metroae_config.vsd_writer.Fetcher")
+    def test_assign__bambou_error(self, mock_fetcher, mock_object):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = []
+
+        child_object = MagicMock()
+        mock_object.return_value = child_object
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
+
+        fake_exception = get_mock_bambou_error(404, "not found")
+        mock_object.assign.side_effect = fake_exception
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        values = {
+            "name": "test_enterprise",
+            "assign(domain)": "abcd-1234"
+        }
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.set_values(context, **values)
+
+        assert "404" in str(e)
+        assert "not found" in str(e)
+
+        assert "Saving" in e.value.get_display_string()
+        assert "HTTP 404" in e.value.get_display_string()
+
+        assert mock_object.name == 'test_enterprise'
+        mock_object.validate.assert_called_once()
+
+        mock_session.root_object.current_child_name == "enterprises"
+        mock_object.save.assert_called_once_with()
+
+
+class TestVsdWriterUnsetValues(object):
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    def test__no_session(self, validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+
+        with pytest.raises(SessionNotStartedError) as e:
+            vsd_writer.unset_values("context", name="test_enterprise")
+
+        assert "not started" in str(e)
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("nuage_metroae_config.vsd_writer.ConfigObject")
+    @patch("nuage_metroae_config.vsd_writer.Fetcher")
+    def test_unassign__success(self, mock_fetcher, mock_object,
+                               validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(vsd_writer)
+
+        existing_object_1 = MagicMock()
+        existing_object_1.id = "abcd-1234"
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = [existing_object_1]
+
+        child_object = MagicMock()
+        mock_object.return_value = child_object
+
+        if validate_only is True:
+            mock_session.root_object = MagicMock()
+            mock_session.root_object.spec = vsd_writer.specs['me']
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
+        mock_object.assign.return_value = True
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        values = {
+            "name": "test_enterprise",
+            "assign(domain)": "abcd-1234"
+        }
+
+        new_context = vsd_writer.unset_values(context, **values)
+
+        if validate_only is True:
+            mock_object.assign.assert_not_called()
+        else:
+            mock_object.assign.assert_called_once_with([],
+                                                       nurest_object_type=None)
+            assert mock_object.current_child_name == "domains"
+
+        assert new_context.parent_object is None
+        assert new_context.current_object == mock_object
+        assert new_context.object_exists is True
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("nuage_metroae_config.vsd_writer.ConfigObject")
+    @patch("nuage_metroae_config.vsd_writer.Fetcher")
+    def test_unassign_multiple__success(self, mock_fetcher, mock_object,
+                                        validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(vsd_writer)
+
+        existing_object_1 = MagicMock()
+        existing_object_1.id = "existing1"
+        existing_object_2 = MagicMock()
+        existing_object_2.id = "existing2"
+        existing_object_3 = MagicMock()
+        existing_object_3.id = "existing3"
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = [existing_object_1,
+                                         existing_object_2,
+                                         existing_object_3]
+
+        child_object = MagicMock()
+        mock_object.return_value = child_object
+
+        if validate_only is True:
+            mock_session.root_object = MagicMock()
+            mock_session.root_object.spec = vsd_writer.specs['me']
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
+        mock_object.assign.return_value = True
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        values = {
+            "name": "test_enterprise",
+            "assign(domain)": ["noexist", "existing1", "existing3"]
+        }
+
+        new_context = vsd_writer.unset_values(context, **values)
+
+        if validate_only is True:
+            mock_object.assign.assert_not_called()
+        else:
+            mock_object.assign.assert_called_once_with([existing_object_2],
+                                                       nurest_object_type=None)
+            assert mock_object.current_child_name == "domains"
+
+        assert new_context.parent_object is None
+        assert new_context.current_object == mock_object
+        assert new_context.object_exists is True
+
+    @patch("nuage_metroae_config.vsd_writer.ConfigObject")
+    @patch("nuage_metroae_config.vsd_writer.Fetcher")
+    def test_unassign__bambou_error(self, mock_fetcher, mock_object):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        existing_object_1 = MagicMock()
+        existing_object_1.id = "abcd-1234"
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = [existing_object_1]
+
+        child_object = MagicMock()
+        mock_object.return_value = child_object
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
+
+        fake_exception = get_mock_bambou_error(404, "not found")
+        mock_object.assign.side_effect = fake_exception
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        values = {
+            "name": "test_enterprise",
+            "assign(domain)": "abcd-1234"
+        }
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.unset_values(context, **values)
+
+        assert "404" in str(e)
+        assert "not found" in str(e)
+
+        assert "Unset" in e.value.get_display_string()
+        assert "HTTP 404" in e.value.get_display_string()
+
 
 class TestVsdWriterGetValue(object):
 

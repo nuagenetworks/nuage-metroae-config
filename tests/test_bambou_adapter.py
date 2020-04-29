@@ -5,6 +5,8 @@ import requests_mock
 from bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
                                         ENTERPRISE_SPEC_TEST,
                                         ENTERPRISE_SPEC_VALIDATE,
+                                        ENTERPRISENET_SPEC_TEST,
+                                        NETMACGRP_SPEC_TEST,
                                         ROOT_SPEC_TEST,
                                         SESSION_CREDS_REAL,
                                         SESSION_CREDS_TEST)
@@ -201,6 +203,95 @@ class TestConfigObject(object):
         assert '409' in str(e)
         assert 'duplicate' in str(e)
         assert 'test_enterprise exists' in str(e)
+
+    @requests_mock.mock()
+    def test_assign__success(self, mock):
+        start_session(mock)
+        parent_id = "bff6a2a3-0ac2-4891-b4e5-099741e6826d"
+        child_id = "0d4a68c5-b351-45a2-80e4-fdb880016ef5"
+
+        resource_name = NETMACGRP_SPEC_TEST["model"]["resource_name"]
+        child_resource_name = ENTERPRISENET_SPEC_TEST["model"]["resource_name"]
+
+        mock.put(build_standard_mock_url(resource_name + "/" +
+                                         parent_id + "/" +
+                                         child_resource_name),
+                 status_code=204)
+
+        obj = ConfigObject(NETMACGRP_SPEC_TEST)
+        obj.id = parent_id
+        obj.current_child_name = child_resource_name
+
+        child_obj = ConfigObject(ENTERPRISENET_SPEC_TEST)
+        child_obj.id = child_id
+        obj.assign([child_obj], nurest_object_type=None)
+
+        last_request = mock.last_request
+        json_data = last_request.json()
+        assert json_data == [child_id]
+
+    @requests_mock.mock()
+    def test_assign__invalid_id(self, mock):
+        start_session(mock)
+        parent_id = "bff6a2a3-0ac2-4891-b4e5-099741e6826d"
+        child_id = "foobar"
+
+        resource_name = NETMACGRP_SPEC_TEST["model"]["resource_name"]
+        child_resource_name = ENTERPRISENET_SPEC_TEST["model"]["resource_name"]
+
+        mock.put(build_standard_mock_url(resource_name + "/" +
+                                         parent_id + "/" +
+                                         child_resource_name),
+                 status_code=409,
+                 json={"errors": [
+                     {"property": "",
+                      "descriptions": [
+                          {"title": "Invalid id list for entity "
+                                    "enterprisenetwork",
+                           "description": "Invalid id list for entity "
+                                          "enterprisenetwork , invalid ids "
+                                          "[foobar]"}]}],
+                     "internalErrorCode": 9450})
+
+        obj = ConfigObject(NETMACGRP_SPEC_TEST)
+        obj.id = parent_id
+        obj.current_child_name = child_resource_name
+
+        child_obj = ConfigObject(ENTERPRISENET_SPEC_TEST)
+        child_obj.id = child_id
+
+        with pytest.raises(BambouHTTPError) as e:
+            obj.assign([child_obj], nurest_object_type=None)
+
+        last_request = mock.last_request
+        json_data = last_request.json()
+        assert json_data == [child_id]
+
+        assert 'HTTP 409' in str(e)
+        assert 'invalid id' in str(e)
+        assert child_id in str(e)
+
+    @requests_mock.mock()
+    def test_unassign__success(self, mock):
+        start_session(mock)
+        test_id = "bff6a2a3-0ac2-4891-b4e5-099741e6826d"
+
+        resource_name = NETMACGRP_SPEC_TEST["model"]["resource_name"]
+        child_resource_name = ENTERPRISENET_SPEC_TEST["model"]["resource_name"]
+
+        mock.put(build_standard_mock_url(resource_name + "/" +
+                                         test_id + "/" +
+                                         child_resource_name),
+                 status_code=204)
+
+        obj = ConfigObject(NETMACGRP_SPEC_TEST)
+        obj.id = test_id
+        obj.current_child_name = child_resource_name
+        obj.assign([], nurest_object_type=None)
+
+        last_request = mock.last_request
+        json_data = last_request.json()
+        assert json_data == list()
 
     @requests_mock.mock()
     def test_save_parent__success(self, mock):

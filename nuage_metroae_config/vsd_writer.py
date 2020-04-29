@@ -418,6 +418,7 @@ class VsdWriter(DeviceWriterBase):
         """
         location = "Unset value [%s] = %s" % (context, kwargs)
         self.log.debug(location)
+        self._check_session()
 
         try:
             self._unassign_attributes(context.current_object, **kwargs)
@@ -650,7 +651,6 @@ class VsdWriter(DeviceWriterBase):
                                (field, obj.get_name()))
 
     def _assign_attributes(self, obj, **kwargs):
-        print str(obj)
         for field, value in kwargs.iteritems():
             local_name = field.lower()
             if self._is_assign_attribute(local_name):
