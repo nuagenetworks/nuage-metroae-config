@@ -650,6 +650,7 @@ class VsdWriter(DeviceWriterBase):
                                (field, obj.get_name()))
 
     def _assign_attributes(self, obj, **kwargs):
+        print str(obj)
         for field, value in kwargs.iteritems():
             local_name = field.lower()
             if self._is_assign_attribute(local_name):
@@ -672,6 +673,7 @@ class VsdWriter(DeviceWriterBase):
                 len(new_objects) > len(existing_objects)):
             parent_object.current_child_name = (
                 child_spec['model']['resource_name'])
+            print str(parent_object)
             parent_object.assign(new_objects, nurest_object_type=None)
 
     def _create_assign_objects(self, existing_objects, new_ids, child_name):
