@@ -673,7 +673,6 @@ class VsdWriter(DeviceWriterBase):
                 len(new_objects) > len(existing_objects)):
             parent_object.current_child_name = (
                 child_spec['model']['resource_name'])
-            print str(parent_object)
             parent_object.assign(new_objects, nurest_object_type=None)
 
     def _create_assign_objects(self, existing_objects, new_ids, child_name):
