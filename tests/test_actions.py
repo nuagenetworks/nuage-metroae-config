@@ -64,6 +64,7 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 STORE_RETRIEVE_DICT,
                                 STORE_RETRIEVE_TO_OBJECT,
                                 STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
+                                STORE_RETRIEVE_TO_OBJECT_ALREADY_SAMEVALUE,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
                                 STORE_SAME_TWICE,
@@ -1375,6 +1376,21 @@ class TestActionsExecute(object):
         assert "is already set" in str(e)
         assert "parameters" in str(e)
         assert "Job" in str(e)
+
+    def test_store_retrieve_to_object__already_samevalue(self):
+
+        expected_actions = """        
+            start-session
+            create-object Enterprise [None]
+            set-values name=enterprise1 [context_1]
+            create-object Infrastructure Access Profile [context_1]
+            set-values infrastructure_access_profile_name=access1,password=abcd1234,source_ip_filters=['1.1.1.1', '2.2.2.2', '3.3.3.3'],ssh_auth_mode=password_and_key_based,ssh_key_names=['key1'],ssh_keys=['japudofiuasdfoiudpfou'],user_name=admin [context_3]
+            create-object SSHKey [context_1]
+            set-values infrastructure_access_profile_name=access1,ssh_key=japudofiuasdfoiudpfou,ssh_key_name=key1 [context_5]
+            stop-session
+        """
+        self.run_execute_test(STORE_RETRIEVE_TO_OBJECT_ALREADY_SAMEVALUE,
+                              expected_actions)
 
     def test_create_objects_select_first__revert(self):
 

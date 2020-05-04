@@ -1318,6 +1318,33 @@ actions:
 
 """)
 
+STORE_RETRIEVE_TO_OBJECT_ALREADY_SAMEVALUE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Enterprise
+    Actions:
+    - Set-values:
+        name: enterprise1
+    - Create-object:
+        Type: Infrastructure Access Profile
+        Actions:
+            - Set-values:
+                infrastructure_access_profile_name: access1
+                ssh_auth_mode: password_and_key_based
+                user_name: admin
+                password: abcd1234
+                source_ip_filters: ["1.1.1.1", "2.2.2.2", "3.3.3.3"]
+                ssh_key_names: ["key1"]
+                ssh_keys: ["japudofiuasdfoiudpfou"]
+    - Create-object:
+        Type: SSHKey
+        Actions:
+            - Set-values:
+                infrastructure_access_profile_name: access1
+                ssh_key_name: key1
+                ssh_key: japudofiuasdfoiudpfou
+""")
+
 
 SAVE_TO_FILE = yaml.safe_load("""
 actions:
