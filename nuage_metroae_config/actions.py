@@ -781,7 +781,7 @@ class SetValuesAction(Action):
                 self.add_attribute(key, value)
 
     def execute(self, writer, context=None):
-        if self.is_revert() is False:
+        if self.is_store_only() is False:
             resolved_attributes = None
             if (self.parent.is_select() and
                     self.parent.field.lower() == RETRIEVE_VALUE_SELECTOR):
@@ -792,11 +792,14 @@ class SetValuesAction(Action):
                 resolved_attributes = attributes_copy
             else:
                 resolved_attributes = self.resolve_attributes()
-            if ((not self.parent.is_update() or
-                    self.parent.is_updatable or
-                    not writer.does_object_exist(context)) and
-                    resolved_attributes != dict()):
-                writer.set_values(context, **resolved_attributes)
+            if resolved_attributes != dict():
+                if self.is_revert() is False:
+                    if (not self.parent.is_update() or
+                            self.parent.is_updatable or
+                            not writer.does_object_exist(context)):
+                        writer.set_values(context, **resolved_attributes)
+                else:
+                    writer.unset_values(context, **resolved_attributes)
 
     def resolve_attributes(self):
         attributes_copy = dict()
