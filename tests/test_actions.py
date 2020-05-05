@@ -812,23 +812,6 @@ class TestActionsOrdering(object):
 
         assert "In Level1" in e.value.get_display_string()
 
-    @pytest.mark.parametrize("read_order", ATTR_CONFLICT_ORDERING_CASES)
-    def test_attribute__conflict(self, read_order):
-        root_action = Action(None)
-
-        with pytest.raises(ConflictError) as e:
-            for template in read_order:
-                root_action.read_children_actions(template)
-
-        root_action.reorder_retrieve()
-
-        assert "already set" in str(e)
-        assert "Level1" in str(e)
-
-        assert ("In [select Level1 (name of L1-O1)]" in
-                e.value.get_display_string())
-        assert "In [set values]" in e.value.get_display_string()
-
     @pytest.mark.parametrize("read_order", STORE_ORDERING_CASES)
     def test_store__success(self, read_order):
         root_action = Action(None)
