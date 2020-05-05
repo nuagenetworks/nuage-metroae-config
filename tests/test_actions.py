@@ -1367,9 +1367,9 @@ class TestActionsExecute(object):
             create-object Enterprise [None]
             set-values name=enterprise1 [context_1]
             create-object Infrastructure Access Profile [context_1]
-            set-values infrastructure_access_profile_name=access1,password=abcd1234,source_ip_filters=['1.1.1.1', '2.2.2.2', '3.3.3.3'],ssh_auth_mode=password_and_key_based,ssh_key_names=['key1'],ssh_keys=['japudofiuasdfoiudpfou'],user_name=admin [context_3]
-            create-object SSHKey [context_1]
-            set-values infrastructure_access_profile_name=access1,ssh_key=japudofiuasdfoiudpfou,ssh_key_name=key1 [context_5]
+            set-values name=access1,ssh_key_names=['key1'],ssh_keys=['japudofiuasdfoiudpfou'] [context_3]
+            select-object SSHKey name = access1 [context_1]
+            set-values name=access1,ssh_key=japudofiuasdfoiudpfou,ssh_key_name=key1 [context_5]
             stop-session
         """
         self.run_execute_test(SET_VALUES_FIELD_SAME_VALUE,

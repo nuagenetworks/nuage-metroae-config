@@ -1329,18 +1329,16 @@ actions:
         Type: Infrastructure Access Profile
         Actions:
             - Set-values:
-                infrastructure_access_profile_name: access1
-                ssh_auth_mode: password_and_key_based
-                user_name: admin
-                password: abcd1234
-                source_ip_filters: ["1.1.1.1", "2.2.2.2", "3.3.3.3"]
+                name: access1
                 ssh_key_names: ["key1"]
                 ssh_keys: ["japudofiuasdfoiudpfou"]
-    - Create-object:
+    - Select-object:
         Type: SSHKey
+        By-field: name
+        Value: access1
         Actions:
             - Set-values:
-                infrastructure_access_profile_name: access1
+                name: access1
                 ssh_key_name: key1
                 ssh_key: japudofiuasdfoiudpfou
 """)
