@@ -64,7 +64,7 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 STORE_RETRIEVE_DICT,
                                 STORE_RETRIEVE_TO_OBJECT,
                                 STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
-                                STORE_RETRIEVE_TO_OBJECT_ALREADY_SAMEVALUE,
+                                SET_VALUES_FIELD_SAME_VALUE,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
                                 STORE_SAME_TWICE,
@@ -1360,7 +1360,7 @@ class TestActionsExecute(object):
         assert "parameters" in str(e)
         assert "Job" in str(e)
 
-    def test_store_retrieve_to_object__already_samevalue(self):
+    def test_set_values_field__same_value(self):
 
         expected_actions = """        
             start-session
@@ -1372,7 +1372,7 @@ class TestActionsExecute(object):
             set-values infrastructure_access_profile_name=access1,ssh_key=japudofiuasdfoiudpfou,ssh_key_name=key1 [context_5]
             stop-session
         """
-        self.run_execute_test(STORE_RETRIEVE_TO_OBJECT_ALREADY_SAMEVALUE,
+        self.run_execute_test(SET_VALUES_FIELD_SAME_VALUE,
                               expected_actions)
 
     def test_create_objects_select_first__revert(self):

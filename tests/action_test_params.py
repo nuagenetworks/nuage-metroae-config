@@ -1318,7 +1318,7 @@ actions:
 
 """)
 
-STORE_RETRIEVE_TO_OBJECT_ALREADY_SAMEVALUE = yaml.safe_load("""
+SET_VALUES_FIELD_SAME_VALUE = yaml.safe_load("""
 actions:
 - Create-object:
     Type: Enterprise
