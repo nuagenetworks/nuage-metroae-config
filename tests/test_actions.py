@@ -20,6 +20,7 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 ORDER_MULTI_SELECT_2,
                                 ORDER_SELECT_1,
                                 ORDER_SELECT_2,
+                                ORDER_SELECT_CONFLICT1,
                                 ORDER_STORE_1,
                                 ORDER_STORE_2,
                                 ORDER_STORE_3,
@@ -65,6 +66,7 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 STORE_RETRIEVE_TO_OBJECT,
                                 STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
                                 SET_VALUES_FIELD_SAME_VALUE,
+                                SET_VALUES_FIELD_DIFFERENT_VALUE,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
                                 STORE_SAME_TWICE,
@@ -111,12 +113,12 @@ CREATE_CONFLICT_ORDERING_CASES = [
     (ORDER_CREATE, ORDER_CREATE, ORDER_SELECT_2)]
 
 ATTR_CONFLICT_ORDERING_CASES = [
-    (ORDER_CREATE, ORDER_SELECT_1, ORDER_SELECT_1),
-    (ORDER_SELECT_1, ORDER_SELECT_1, ORDER_CREATE),
-    (ORDER_SELECT_1, ORDER_CREATE, ORDER_SELECT_1),
-    (ORDER_SELECT_2, ORDER_SELECT_1, ORDER_SELECT_1),
-    (ORDER_SELECT_1, ORDER_SELECT_1, ORDER_SELECT_2),
-    (ORDER_SELECT_1, ORDER_SELECT_2, ORDER_SELECT_1)]
+    (ORDER_CREATE, ORDER_SELECT_1, ORDER_SELECT_CONFLICT1),
+    (ORDER_SELECT_1, ORDER_SELECT_CONFLICT1, ORDER_CREATE),
+    (ORDER_SELECT_1, ORDER_CREATE, ORDER_SELECT_CONFLICT1),
+    (ORDER_SELECT_2, ORDER_SELECT_CONFLICT1, ORDER_SELECT_1),
+    (ORDER_SELECT_1, ORDER_SELECT_CONFLICT1, ORDER_SELECT_2),
+    (ORDER_SELECT_1, ORDER_SELECT_2, ORDER_SELECT_CONFLICT1)]
 
 STORE_ORDERING_CASES = [
     (ORDER_STORE_1, ORDER_STORE_2, ORDER_STORE_3),
@@ -812,6 +814,23 @@ class TestActionsOrdering(object):
 
         assert "In Level1" in e.value.get_display_string()
 
+    @pytest.mark.parametrize("read_order", ATTR_CONFLICT_ORDERING_CASES)
+    def test_attribute__conflict(self, read_order):
+        root_action = Action(None)
+
+        with pytest.raises(ConflictError) as e:
+            for template in read_order:
+                root_action.read_children_actions(template)
+
+        root_action.reorder_retrieve()
+
+        assert "already set" in str(e)
+        assert "Level1" in str(e)
+
+        assert ("In [select Level1 (name of L1-O1)]" in
+                e.value.get_display_string())
+        assert "In [set values]" in e.value.get_display_string()
+
     @pytest.mark.parametrize("read_order", STORE_ORDERING_CASES)
     def test_store__success(self, read_order):
         root_action = Action(None)
@@ -1368,12 +1387,18 @@ class TestActionsExecute(object):
             set-values name=enterprise1 [context_1]
             create-object Infrastructure Access Profile [context_1]
             set-values name=access1,ssh_key_names=['key1'],ssh_keys=['japudofiuasdfoiudpfou'] [context_3]
-            select-object SSHKey name = access1 [context_1]
-            set-values name=access1,ssh_key=japudofiuasdfoiudpfou,ssh_key_name=key1 [context_5]
             stop-session
         """
         self.run_execute_test(SET_VALUES_FIELD_SAME_VALUE,
                               expected_actions)
+
+    def test_set_values_field__different_value(self):
+
+        with pytest.raises(ConflictError) as e:
+            self.run_execute_test(SET_VALUES_FIELD_DIFFERENT_VALUE,
+                                  list())
+        assert "is already set" in str(e)
+        assert "ConflictError" in str(e)
 
     def test_create_objects_select_first__revert(self):
 

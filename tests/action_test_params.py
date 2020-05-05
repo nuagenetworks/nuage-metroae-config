@@ -374,7 +374,38 @@ actions:
         - Set-values:
             field1: L2-O3
     - Set-values:
-        field2: value2
+        field2: value3
+
+""")
+
+ORDER_SELECT_CONFLICT1 = yaml.safe_load("""
+actions:
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O1
+    Actions:
+    - Select-object:
+        By-field: field1
+        Type: Level2
+        Value: L2-O2
+        Actions:
+        - Set-values:
+            field2: value2
+        - Create-object:
+            Select-by-field: field1
+            Type: Level3
+            Actions:
+            - Set-values:
+                field1: L3-O1
+    - Create-object:
+        Select-by-field: field1
+        Type: Level2
+        Actions:
+        - Set-values:
+            field1: L2-O3
+    - Set-values:
+        field2: value4
 
 """)
 
@@ -398,13 +429,13 @@ actions:
             Type: Level3
             Actions:
             - Set-values:
-                field1: L3-O2
+                field1: L3-O1
     - Create-object:
         Select-by-field: field1
         Type: Level2
         Actions:
         - Set-values:
-            field1: L2-O4
+            field1: L2-O3
     - Set-values:
         field3: value3
 
@@ -1333,14 +1364,39 @@ actions:
                 ssh_key_names: ["key1"]
                 ssh_keys: ["japudofiuasdfoiudpfou"]
     - Select-object:
-        Type: SSHKey
+        Type: Infrastructure Access Profile
         By-field: name
         Value: access1
         Actions:
             - Set-values:
                 name: access1
-                ssh_key_name: key1
-                ssh_key: japudofiuasdfoiudpfou
+                ssh_key_names: ["key1"]
+                ssh_keys: ["japudofiuasdfoiudpfou"]
+""")
+
+SET_VALUES_FIELD_DIFFERENT_VALUE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Enterprise
+    Actions:
+    - Set-values:
+        name: enterprise1
+    - Create-object:
+        Type: Infrastructure Access Profile
+        Actions:
+            - Set-values:
+                name: access1
+                ssh_key_names: ["key1"]
+                ssh_keys: ["japudofiuasdfoiudpfou"]
+    - Select-object:
+        Type: Infrastructure Access Profile
+        By-field: name
+        Value: access1
+        Actions:
+            - Set-values:
+                name: access1
+                ssh_key_names: ["key2"]
+                ssh_keys: ["japudofiuasdfoiudpfou"]
 """)
 
 
