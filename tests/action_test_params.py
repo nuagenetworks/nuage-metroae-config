@@ -374,7 +374,7 @@ actions:
         - Set-values:
             field1: L2-O3
     - Set-values:
-        field2: value3
+        field2: value2
 
 """)
 
