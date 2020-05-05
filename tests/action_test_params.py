@@ -429,13 +429,13 @@ actions:
             Type: Level3
             Actions:
             - Set-values:
-                field1: L3-O1
+                field1: L3-O2
     - Create-object:
         Select-by-field: field1
         Type: Level2
         Actions:
         - Set-values:
-            field1: L2-O3
+            field1: L2-O4
     - Set-values:
         field3: value3
 
