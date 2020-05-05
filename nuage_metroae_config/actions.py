@@ -744,7 +744,7 @@ class SetValuesAction(Action):
         if value is not None:
             existing_value = Action.get_dict_field(self.attributes,
                                                    field.lower())
-            if existing_value is not None:
+            if existing_value is not None and existing_value != value:
                 raise ConflictError("Setting field '%s' of object %s to '%s' "
                                     "when it is already set to '%s'" %
                                     (str(field), str(self.parent.object_type),

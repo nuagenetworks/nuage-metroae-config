@@ -20,6 +20,7 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 ORDER_MULTI_SELECT_2,
                                 ORDER_SELECT_1,
                                 ORDER_SELECT_2,
+                                ORDER_SELECT_CONFLICT1,
                                 ORDER_STORE_1,
                                 ORDER_STORE_2,
                                 ORDER_STORE_3,
@@ -64,6 +65,8 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 STORE_RETRIEVE_DICT,
                                 STORE_RETRIEVE_TO_OBJECT,
                                 STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
+                                SET_VALUES_FIELD_SAME_VALUE,
+                                SET_VALUES_FIELD_DIFFERENT_VALUE,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
                                 STORE_SAME_TWICE,
@@ -110,12 +113,12 @@ CREATE_CONFLICT_ORDERING_CASES = [
     (ORDER_CREATE, ORDER_CREATE, ORDER_SELECT_2)]
 
 ATTR_CONFLICT_ORDERING_CASES = [
-    (ORDER_CREATE, ORDER_SELECT_1, ORDER_SELECT_1),
-    (ORDER_SELECT_1, ORDER_SELECT_1, ORDER_CREATE),
-    (ORDER_SELECT_1, ORDER_CREATE, ORDER_SELECT_1),
-    (ORDER_SELECT_2, ORDER_SELECT_1, ORDER_SELECT_1),
-    (ORDER_SELECT_1, ORDER_SELECT_1, ORDER_SELECT_2),
-    (ORDER_SELECT_1, ORDER_SELECT_2, ORDER_SELECT_1)]
+    (ORDER_CREATE, ORDER_SELECT_1, ORDER_SELECT_CONFLICT1),
+    (ORDER_SELECT_1, ORDER_SELECT_CONFLICT1, ORDER_CREATE),
+    (ORDER_SELECT_1, ORDER_CREATE, ORDER_SELECT_CONFLICT1),
+    (ORDER_SELECT_2, ORDER_SELECT_CONFLICT1, ORDER_SELECT_1),
+    (ORDER_SELECT_1, ORDER_SELECT_CONFLICT1, ORDER_SELECT_2),
+    (ORDER_SELECT_1, ORDER_SELECT_2, ORDER_SELECT_CONFLICT1)]
 
 STORE_ORDERING_CASES = [
     (ORDER_STORE_1, ORDER_STORE_2, ORDER_STORE_3),
@@ -1385,6 +1388,27 @@ class TestActionsExecute(object):
         assert "is already set" in str(e)
         assert "parameters" in str(e)
         assert "Job" in str(e)
+
+    def test_set_values_field__same_value(self):
+
+        expected_actions = """        
+            start-session
+            create-object Enterprise [None]
+            set-values name=enterprise1 [context_1]
+            create-object Infrastructure Access Profile [context_1]
+            set-values name=access1,ssh_key_names=['key1'],ssh_keys=['japudofiuasdfoiudpfou'] [context_3]
+            stop-session
+        """
+        self.run_execute_test(SET_VALUES_FIELD_SAME_VALUE,
+                              expected_actions)
+
+    def test_set_values_field__different_value(self):
+
+        with pytest.raises(ConflictError) as e:
+            self.run_execute_test(SET_VALUES_FIELD_DIFFERENT_VALUE,
+                                  list())
+        assert "is already set" in str(e)
+        assert "ConflictError" in str(e)
 
     def test_create_objects_select_first__revert(self):
 
