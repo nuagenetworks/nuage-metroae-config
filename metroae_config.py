@@ -357,6 +357,11 @@ class MetroConfig(object):
             print "-----"
             print error_output
             exit(1)
+        else:
+            if self.action == VALIDATE_ACTION:
+                print ">>> All actions valid"
+            else:
+                print ">>> All actions successfully applied"
 
     def parse_extra_vars(self):
         if self.args.data is not None:

@@ -1610,7 +1610,7 @@ class TestVsdWriterUnsetValues(object):
     @patch("nuage_metroae_config.vsd_writer.Fetcher")
     def test_unassign__bambou_error(self, mock_fetcher, mock_object):
         vsd_writer = VsdWriter()
-        mock_session = setup_standard_session(vsd_writer)
+        setup_standard_session(vsd_writer)
 
         existing_object_1 = MagicMock()
         existing_object_1.id = "abcd-1234"
