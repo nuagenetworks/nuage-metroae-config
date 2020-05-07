@@ -1391,7 +1391,7 @@ class TestActionsExecute(object):
 
     def test_set_values_field__same_value(self):
 
-        expected_actions = """        
+        expected_actions = """
             start-session
             create-object Enterprise [None]
             set-values name=enterprise1 [context_1]
