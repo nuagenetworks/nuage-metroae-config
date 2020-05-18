@@ -162,7 +162,7 @@ def get_parser():
 
 
 def add_template_path_parser_argument(parser):
-    parser.add_argument('-tp', '--template-path', dest='template_path',
+    parser.add_argument('-tp', '--template_path', dest='template_path',
                         action='append', required=False,
                         default=None,
                         help='Path containing template files. Can also set using environment variable %s' % (ENV_TEMPLATE))
@@ -185,17 +185,17 @@ def add_template_parser_arguments(parser):
 
 def add_parser_arguments(parser):
     add_template_path_parser_argument(parser)
-    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+    parser.add_argument('-sp', '--spec_path', dest='spec_path',
                         action='append', required=False,
                         help='Path containing object specifications. Can also set using environment variable %s' % (ENV_VSD_SPECIFICATIONS))
-    parser.add_argument('-dp', '--data-path', dest='data_path',
+    parser.add_argument('-dp', '--data_path', dest='data_path',
                         action='append', required=False,
                         default=None,
                         help='Path containing user data. Can also set using environment variable %s' % (ENV_USER_DATA))
     parser.add_argument('-d', '--data', dest='data',
                         action='append', required=False,
                         help='Specify user data as key=value')
-    parser.add_argument('-v', '--vsd-url', dest='vsd_url',
+    parser.add_argument('-v', '--vsd_url', dest='vsd_url',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_URL, DEFAULT_URL),
                         help='URL to VSD REST API. Can also set using environment variable %s' % (ENV_VSD_URL))
@@ -228,11 +228,11 @@ def add_parser_arguments(parser):
     parser.add_argument('--debug', dest='debug',
                         action='store_true', required=False,
                         help='Output in debug mode')
-    parser.add_argument('-lf', '--log-file', dest='log_file',
+    parser.add_argument('-lf', '--log_file', dest='log_file',
                         action='store', required=False,
                         default=os.getenv(ENV_LOG_FILE, ""),
                         help='Write logs to specified file. Can also set using environment variable %s' % (ENV_LOG_FILE))
-    parser.add_argument('-ll', '--log-level', dest='log_level',
+    parser.add_argument('-ll', '--log_level', dest='log_level',
                         action='store', required=False,
                         default=os.getenv(ENV_LOG_LEVEL, DEFAULT_LOG_LEVEL),
                         help='Specify log level (%s) Can also set using environment variable %s' % (", ".join(LOG_LEVEL_STRS), ENV_LOG_LEVEL))

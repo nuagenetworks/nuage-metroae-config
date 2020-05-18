@@ -312,7 +312,7 @@ def parse_args():
     parser.add_argument('command_file', action='store',
                         help="File containing template creation commands.")
 
-    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+    parser.add_argument('-sp', '--spec_path', dest='spec_path',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_SPECIFICATIONS,
                                           DEFAULT_VSD_SPECS),

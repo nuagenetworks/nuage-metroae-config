@@ -182,18 +182,18 @@ MetroAE Config command-line tool usage:
 
     optional arguments:
       -h, --help            show this help message and exit
-      -tp TEMPLATE_PATH, --template-path TEMPLATE_PATH
+      -tp TEMPLATE_PATH, --template_path TEMPLATE_PATH
                             Path containing template files. Can also set using
                             environment variable TEMPLATE_PATH
       --version             Displays version information
-      -sp SPEC_PATH, --spec-path SPEC_PATH
+      -sp SPEC_PATH, --spec_path SPEC_PATH
                             Path containing object specifications. Can also set
                             using environment variable VSD_SPECIFICATIONS_PATH
-      -dp DATA_PATH, --data-path DATA_PATH
+      -dp DATA_PATH, --data_path DATA_PATH
                             Path containing user data. Can also set using
                             environment variable USER_DATA_PATH
       -d DATA, --data DATA  Specify user data as key=value
-      -v VSD_URL, --vsd-url VSD_URL
+      -v VSD_URL, --vsd_url VSD_URL
                             URL to VSD REST API. Can also set using environment
                             variable VSD_URL
       -u USERNAME, --username USERNAME

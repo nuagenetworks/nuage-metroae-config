@@ -239,13 +239,13 @@ def compare_objects(superset_obj, subset_obj):
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
-    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+    parser.add_argument('-sp', '--spec_path', dest='spec_path',
                         action='store', required=False,
                         help=('Path containing object specifications. Can also'
                               ' set using environment variable %s') % (
                                   ENV_VSD_SPECIFICATIONS))
 
-    parser.add_argument('-v', '--vsd-url', dest='vsd_url',
+    parser.add_argument('-v', '--vsd_url', dest='vsd_url',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_URL, DEFAULT_URL),
                         help=('URL to VSD REST API. Can also set using '

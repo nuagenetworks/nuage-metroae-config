@@ -16,13 +16,13 @@ EXAMPLE_COMMAND = "(example)$ metroae config create user-data.yml"
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
-    parser.add_argument('-tp', '--template-path', dest='template_path',
+    parser.add_argument('-tp', '--template_path', dest='template_path',
                         action='append', required=False,
                         default=os.getenv(ENV_TEMPLATE, None),
                         help='Path containing template files. Can also set '
                              'using environment variable %s' % (ENV_TEMPLATE))
 
-    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+    parser.add_argument('-sp', '--spec_path', dest='spec_path',
                         action='append', required=False,
                         default=os.getenv(ENV_VSD_SPECIFICATIONS, None),
                         help='Path containing object specifications. Can also'
@@ -134,11 +134,11 @@ def main():
     args = parse_args()
 
     if args.template_path is None:
-        print("Please specify template-path argument")
+        print("Please specify template_path argument")
         exit(1)
 
     if args.spec_path is None:
-        print("Please specify spec-path argument")
+        print("Please specify spec_path argument")
         exit(1)
 
     if args.software_version is None:
