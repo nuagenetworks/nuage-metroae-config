@@ -245,7 +245,7 @@ def parse_args():
                               ' set using environment variable %s') % (
                                   ENV_VSD_SPECIFICATIONS))
 
-    parser.add_argument('-v', '--vsd-url', dest='vsd_url',
+    parser.add_argument('-v', '--vsd_url', dest='vsd_url',
                         action='store', required=False,
                         default=os.getenv(ENV_VSD_URL, DEFAULT_URL),
                         help=('URL to VSD REST API. Can also set using '
