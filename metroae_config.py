@@ -185,7 +185,7 @@ def add_template_parser_arguments(parser):
 
 def add_parser_arguments(parser):
     add_template_path_parser_argument(parser)
-    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+    parser.add_argument('-sp', '--spec_path', dest='spec_path',
                         action='append', required=False,
                         help='Path containing object specifications. Can also set using environment variable %s' % (ENV_VSD_SPECIFICATIONS))
     parser.add_argument('-dp', '--data-path', dest='data_path',

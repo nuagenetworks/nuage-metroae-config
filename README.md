@@ -186,7 +186,7 @@ MetroAE Config command-line tool usage:
                             Path containing template files. Can also set using
                             environment variable TEMPLATE_PATH
       --version             Displays version information
-      -sp SPEC_PATH, --spec-path SPEC_PATH
+      -sp SPEC_PATH, --spec_path SPEC_PATH
                             Path containing object specifications. Can also set
                             using environment variable VSD_SPECIFICATIONS_PATH
       -dp DATA_PATH, --data-path DATA_PATH

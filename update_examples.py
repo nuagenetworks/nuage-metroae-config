@@ -22,7 +22,7 @@ def parse_args():
                         help='Path containing template files. Can also set '
                              'using environment variable %s' % (ENV_TEMPLATE))
 
-    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+    parser.add_argument('-sp', '--spec_path', dest='spec_path',
                         action='append', required=False,
                         default=os.getenv(ENV_VSD_SPECIFICATIONS, None),
                         help='Path containing object specifications. Can also'
@@ -138,7 +138,7 @@ def main():
         exit(1)
 
     if args.spec_path is None:
-        print("Please specify spec-path argument")
+        print("Please specify spec_path argument")
         exit(1)
 
     if args.software_version is None:

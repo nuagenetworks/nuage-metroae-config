@@ -239,7 +239,7 @@ def compare_objects(superset_obj, subset_obj):
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
 
-    parser.add_argument('-sp', '--spec-path', dest='spec_path',
+    parser.add_argument('-sp', '--spec_path', dest='spec_path',
                         action='store', required=False,
                         help=('Path containing object specifications. Can also'
                               ' set using environment variable %s') % (
