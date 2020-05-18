@@ -52,7 +52,7 @@ TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/l
 VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
 TEMPLATE_DIR = "/metroae_data/standard-templates"
 SPECIFICATION_DIR = "/metroae_data/vsd-api-specifications"
-DOCUMENTATION_DIR = "documentation"
+DOCUMENTATION_DIR = "/metroae_data/documentation"
 LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
