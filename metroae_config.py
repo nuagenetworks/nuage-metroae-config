@@ -162,7 +162,7 @@ def get_parser():
 
 
 def add_template_path_parser_argument(parser):
-    parser.add_argument('-tp', '--template-path', dest='template_path',
+    parser.add_argument('-tp', '--template_path', dest='template_path',
                         action='append', required=False,
                         default=None,
                         help='Path containing template files. Can also set using environment variable %s' % (ENV_TEMPLATE))

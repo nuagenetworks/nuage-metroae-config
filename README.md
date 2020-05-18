@@ -182,7 +182,7 @@ MetroAE Config command-line tool usage:
 
     optional arguments:
       -h, --help            show this help message and exit
-      -tp TEMPLATE_PATH, --template-path TEMPLATE_PATH
+      -tp TEMPLATE_PATH, --template_path TEMPLATE_PATH
                             Path containing template files. Can also set using
                             environment variable TEMPLATE_PATH
       --version             Displays version information
