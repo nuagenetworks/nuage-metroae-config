@@ -56,10 +56,6 @@ DOCUMENTATION_DIR = "/metroae_data/documentation"
 LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
-DESCRIPTION = """Version %s - This tool reads JSON or Yaml files of templates
-and user-data to write a configuration to a VSD or to revert (remove) said
-configuration.""" % ENGINE_VERSION
-
 VERSION_OUTPUT = "MetroAE Config Engine version %s" % ENGINE_VERSION
 
 REQUIRED_FIELDS_ERROR = """Template path or Data path or VSD specification path are not provided.
@@ -121,8 +117,7 @@ def main():
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(prog=PROG_NAME,
-                                     description=DESCRIPTION)
+    parser = argparse.ArgumentParser(prog=PROG_NAME)
 
     sub_parser = parser.add_subparsers(dest='action')
 
