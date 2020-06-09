@@ -32,7 +32,9 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'ingressexternalservicetemplate',
                   'applicationperformancemanagement', 'l4service',
                   'ltestatistics', 'eventlog', 'testdefinition']
-DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id']
+DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
+                      'last_updated_date', 'associatedl7applicationsignatureid',
+                      'associatedenterprisesecurityid']
 
 
 class MissingSubset(Exception):
