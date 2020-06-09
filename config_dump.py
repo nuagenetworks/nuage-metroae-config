@@ -33,8 +33,19 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'applicationperformancemanagement', 'l4service',
                   'ltestatistics', 'eventlog', 'testdefinition']
 DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
-                      'last_updated_date', 'associatedl7applicationsignatureid',
-                      'associatedenterprisesecurityid']
+                      'last_updated_date',
+                      'associatedl7applicationsignatureid',
+                      'associatedenterprisesecurityid', 'sequence',
+                      'customerid', 'appid', 'starttime', 'creationtime',
+                      'associatedkeyservermonitorseedcreationtime',
+                      'associatedkeyservermonitorsekcreationtime',
+                      'enterprisesecureddataid',
+                      'keyservercertificateserialnumber',
+                      'sekcreationtime', 'statsid', 'policygroupid',
+                      'associatedapplicationperformancemanagementid',
+                      'vnid', 'serviceid', 'gatewaymacaddress',
+                      'domainservicelabel', 'domainid', 'backhaulserviceid',
+                      'backhaulvnid', 'labelid', 'virtualnetworkid']
 
 
 class MissingSubset(Exception):
