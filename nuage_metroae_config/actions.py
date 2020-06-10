@@ -841,7 +841,7 @@ class SetValuesAction(Action):
                                          str(obj_name),
                                          str(self.parent.object_type)))
                 attributes_copy[obj_name][param] = resolved_value
-            elif key.startswith(DEPENDENCY_ONLY):
+            elif key.lower().startswith(DEPENDENCY_ONLY):
                 pass
             else:
                 if (type(resolved_value) is not dict or
