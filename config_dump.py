@@ -45,7 +45,8 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'associatedapplicationperformancemanagementid',
                       'vnid', 'serviceid', 'gatewaymacaddress',
                       'domainservicelabel', 'domainid', 'backhaulserviceid',
-                      'backhaulvnid', 'labelid', 'virtualnetworkid']
+                      'backhaulvnid', 'labelid', 'virtualnetworkid',
+                      'globalmacaddress', 'customerkey']
 
 
 class MissingSubset(Exception):
