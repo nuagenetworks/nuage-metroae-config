@@ -13,6 +13,7 @@ LAST_SELECTOR = "$last"
 POSITION_SELECTOR = "$position"
 CHILD_SELECTOR = "$child"
 RETRIEVE_VALUE_SELECTOR = "$retrieve-value"
+DEPENDENCY_ONLY = "$dependency-only"
 
 
 class Action(object):
@@ -840,6 +841,8 @@ class SetValuesAction(Action):
                                          str(obj_name),
                                          str(self.parent.object_type)))
                 attributes_copy[obj_name][param] = resolved_value
+            elif key.startswith(DEPENDENCY_ONLY):
+                pass
             else:
                 if (type(resolved_value) is not dict or
                         key not in attributes_copy):
