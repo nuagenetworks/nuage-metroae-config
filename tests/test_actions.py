@@ -27,9 +27,10 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 ORDER_STORE_4,
                                 ORDER_STORE_5,
                                 RETRIEVE_AS_LIST,
+                                RETRIEVE_BEFORE_STORE,
                                 RETRIEVE_CONFLICT_1,
                                 RETRIEVE_CONFLICT_2,
-                                RETRIEVE_BEFORE_STORE,
+                                RETRIEVE_DEPENDENCY_ONLY,
                                 RETRIEVE_NO_FIELD,
                                 RETRIEVE_NO_OBJECT,
                                 RETRIEVE_NO_NAME,
@@ -1493,6 +1494,21 @@ class TestActionsExecute(object):
         """
 
         self.run_execute_test(RETRIEVE_AS_LIST,
+                              expected_actions)
+
+    def test_retrieve_depend_only__success(self):
+
+        expected_actions = """
+            start-session
+            create-object Level1 [None]
+            set-values name=L1-O1 [context_1]
+            get-value name [context_1]
+            create-object Level1 [None]
+            set-values name=L1-O2 [context_3]
+            stop-session
+        """
+
+        self.run_execute_test(RETRIEVE_DEPENDENCY_ONLY,
                               expected_actions)
 
     def test_find_single_level__success(self):

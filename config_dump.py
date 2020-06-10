@@ -32,6 +32,21 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'ingressexternalservicetemplate',
                   'applicationperformancemanagement', 'l4service',
                   'ltestatistics', 'eventlog', 'testdefinition']
+DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
+                      'last_updated_date',
+                      'associatedl7applicationsignatureid',
+                      'associatedenterprisesecurityid', 'sequence',
+                      'customerid', 'appid', 'starttime', 'creationtime',
+                      'associatedkeyservermonitorseedcreationtime',
+                      'associatedkeyservermonitorsekcreationtime',
+                      'enterprisesecureddataid',
+                      'keyservercertificateserialnumber',
+                      'sekcreationtime', 'statsid', 'policygroupid',
+                      'associatedapplicationperformancemanagementid',
+                      'vnid', 'serviceid', 'gatewaymacaddress',
+                      'domainservicelabel', 'domainid', 'backhaulserviceid',
+                      'backhaulvnid', 'labelid', 'virtualnetworkid',
+                      'globalmacaddress', 'customerkey']
 
 
 class MissingSubset(Exception):
@@ -145,6 +160,16 @@ def resolve_references(children, guid_map):
                     obj['attributes'][attr_name] = guid_map[attr_value]
 
             resolve_references(obj['children'], guid_map)
+
+
+def trim_dynamic(children):
+    for child in children:
+        for obj_type, obj in child.items():
+            for attr_name, attr_value in obj['attributes'].items():
+                if attr_name in DYNAMIC_ATTRIBUTES:
+                    del obj['attributes'][attr_name]
+
+            trim_dynamic(obj['children'])
 
 
 def read_configuration(filename):
@@ -285,6 +310,11 @@ def parse_args():
                         help=('Resolve any ID references in the config to'
                               ' name based tokens'))
 
+    parser.add_argument('-td', '--trim-dynamic',
+                        dest='trim_dynamic',
+                        action='store_true', required=False, default=False,
+                        help=('Trim out any dynamic fields'))
+
     parser.add_argument('-i', '--ignore-errors',
                         dest='ignore_errors',
                         action='store_true', required=False, default=False,
@@ -327,6 +357,9 @@ def main():
     if args.resolve_references is True or args.compare_file is not None:
         guid_map = get_guid_map(config)
         resolve_references(config, guid_map)
+
+    if args.trim_dynamic is True:
+        trim_dynamic(config)
 
     print yaml.safe_dump(config, default_flow_style=False, default_style='')
 

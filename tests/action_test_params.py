@@ -605,6 +605,27 @@ actions:
 """)
 
 
+RETRIEVE_DEPENDENCY_ONLY = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Level1
+    Actions:
+    - Set-values:
+        name: L1-O1
+    - Store-value:
+        As-name: store_1
+        from-field: name
+- Create-object:
+    Type: Level1
+    Actions:
+    - Set-values:
+        name: L1-O2
+    - Retrieve-value:
+        From-name: store_1
+        To-field: $Dependency-Only
+""")
+
+
 RETRIEVE_CONFLICT_1 = yaml.safe_load("""
 actions:
 - Create-object:
