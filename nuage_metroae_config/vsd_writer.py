@@ -5,6 +5,7 @@ import requests
 
 from bambou.exceptions import BambouHTTPError
 from bambou_adapter import ConfigObject, Fetcher, Root, Session
+from device_reader_base import DeviceReaderBase
 from device_writer_base import DeviceWriterBase
 from errors import (DeviceWriterError,
                     InvalidAttributeError,
@@ -54,7 +55,7 @@ class VsdError(SessionError):
             self.add_location(location)
 
 
-class VsdWriter(DeviceWriterBase):
+class VsdWriter(DeviceWriterBase, DeviceReaderBase):
     """
     Writes configuration to a VSD.  This class is a derived class from
     the DeviceWriterBase Abstract Base Class.
@@ -455,6 +456,16 @@ class VsdWriter(DeviceWriterBase):
     def does_object_exist(self, context=None):
         return context is not None and context.object_exists
 
+    def query(self, attributes):
+        """
+        Reads attributes from device
+        """
+        location = "Query %s" % (attributes)
+        self.log.debug(location)
+        self._check_session()
+
+        return self._query(attributes)
+
     #
     # Private functions to do the work
     #
@@ -766,6 +777,36 @@ class VsdWriter(DeviceWriterBase):
             for attr_name, message in obj.errors.iteritems():
                 messages.append("%s: %s" % (attr_name, message))
             raise InvalidValueError("Invalid values: " + ', '.join(messages))
+
+    def _query(self, attributes):
+        if len(attributes) > 0:
+            return self._query_attribute(attributes, 0, None)
+        else:
+            return list()
+
+    def _query_attribute(self, attributes, index, parent_object):
+        if parent_object is None:
+            parent_object = self.session.root_object
+
+        attribute = attributes[index]
+
+        if index + 1 < len(attributes):
+            object_name = attribute["name"]
+            spec = self._get_specification(object_name)
+            self._check_child_object(parent_object.spec, spec)
+            object_list = self._get_object_list(object_name,
+                                                parent_object)
+            values = list()
+            for parent_object in object_list:
+                values.extend(self._query_attribute(attributes,
+                                                    index + 1,
+                                                    parent_object))
+            return values
+
+        else:
+            field_name = attribute["name"]
+            return [self._get_attribute(parent_object, field_name)]
+
 
 #
 # Private classes to do the work
