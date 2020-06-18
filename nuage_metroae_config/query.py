@@ -2,6 +2,7 @@
 # = () +-*/ & |
 # identifier[] . function()
 
+import jinja2
 from lark import Lark, Transformer
 from logger import Logger
 import os
@@ -28,11 +29,13 @@ query_grammer = Lark(r"""
     _function       : count
     count           : "count(" _expression ")"
 
-    _action          : connect_action
+    _action          : connect_action | redirect_action | render_action
     _argument_list   : argument _comma_arg*
     _comma_arg       : "," argument
     argument         : variable | string | SIGNED_INT
     connect_action   : "connect(" _argument_list ")"
+    redirect_action  : "redirect_to_file(" argument ")"
+    render_action    : "render_template(" argument ")"
 
     string            : STRING_SQ | STRING_DQ | STRING_BLOCK_SQ | STRING_BLOCK_DQ
     _STRING_INNER     : /.*?/
@@ -64,13 +67,15 @@ class QueryExecutor(Transformer):
         self.reader = reader
         self.override_variables = override_variables
         self.variables = dict(override_variables)
+        self.redirect_file = None
 
     def query_set(self, qs):
+        if self.redirect_file is not None:
+            self.redirect_file.close()
         return filter(lambda x: x is not None, qs)
 
     def query(self, q):
         (result,) = q
-        self.log.output(self._format_result(result))
         return result
 
     def assignment(self, t):
@@ -78,11 +83,15 @@ class QueryExecutor(Transformer):
         var_name = token.value
         if var_name not in self.override_variables:
             self.variables[var_name] = value
-        return {var_name: value}
+        result = {var_name: value}
+        self._write_output(self._format_result(result))
+        return result
 
     def retrieve(self, t):
         attributes = list(t)
-        return self.reader.query(attributes)
+        result = self.reader.query(attributes)
+        self._write_output(self._format_result(result))
+        return result
 
     def attribute(self, t):
         token = t[0]
@@ -99,6 +108,23 @@ class QueryExecutor(Transformer):
         args = list(t)
         print "connect " + ", ".join(args)
         return None
+
+    def redirect_action(self, t):
+        args = list(t)
+        self.log.debug("Redirecting output to file: " + args[0])
+        self.redirect_file = open(args[0], "w")
+        return None
+
+    def render_action(self, t):
+        args = list(t)
+        self.log.debug("Rendering template")
+        template = jinja2.Template(args[0],
+                                   autoescape=False,
+                                   undefined=jinja2.StrictUndefined)
+
+        output = template.render(**self.variables)
+        self._write_output(output)
+        return output
 
     def count(self, t):
         (values,) = t
@@ -124,9 +150,16 @@ class QueryExecutor(Transformer):
     def _set_logger(self, logger):
         self.log = logger
 
+    def _write_output(self, output):
+        self.log.output(output)
+        if self.redirect_file is not None:
+            self.redirect_file.write(output + "\n")
+
     def _format_result(self, result):
         output = ""
-        if type(result) == dict:
+        if result is None:
+            output += "null"
+        elif type(result) == dict:
             for key in result:
                 output += "%s: %s\n" % (key, self._format_result(result[key]))
 

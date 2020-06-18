@@ -349,6 +349,7 @@ class MetroConfig(object):
 
         if self.action == QUERY_ACTION:
             self.setup_vsd_writer()
+            self.parse_extra_vars()
             if self.args.query is None:
                 self.parse_user_data()
         else:
