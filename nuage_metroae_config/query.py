@@ -6,6 +6,7 @@ import jinja2
 from lark import Lark, Transformer
 from logger import Logger
 import os
+import time
 
 
 query_grammer = Lark(r"""
@@ -66,6 +67,7 @@ class QueryExecutor(Transformer):
 
         self.reader = reader
         self.override_variables = override_variables
+        self.override_variables["now"] = int(time.time())
         self.variables = dict(override_variables)
         self.redirect_file = None
 
@@ -81,8 +83,14 @@ class QueryExecutor(Transformer):
     def assignment(self, t):
         (token, value) = t
         var_name = token.value
-        if var_name not in self.override_variables:
+        if var_name in self.override_variables:
+            override = self.override_variables[var_name]
+            self.log.debug("Override variable %s value %s with %s" % (
+                var_name, value, override))
+            value = override
+        else:
             self.variables[var_name] = value
+
         result = {var_name: value}
         self._write_output(self._format_result(result))
         return result
