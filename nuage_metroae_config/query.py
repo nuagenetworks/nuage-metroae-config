@@ -20,13 +20,19 @@ query_grammer = Lark(r"""
     query         : _expression | assignment | _action
 
     _expression     : retrieve | _function | variable
-    assignment      : CNAME "=" ( _expression | string )
+    assignment      : CNAME "=" ( _expression | string | list )
     variable        : "$" CNAME
-    retrieve        : attribute _dot_attribute*
-    _dot_attribute  : "." attribute
-    attribute       : CNAME _filter?
-    _filter          : "[" ( variable | string | SIGNED_INT | all_filter ) "]"
-    all_filter      : "*"
+    retrieve        : objects attributes
+    objects         : object _dot_object*
+    object          : CNAME _filter?
+    _dot_object     : "." object
+    attributes      : _dot_attr | attr_set
+    _dot_attr       : "." attribute
+    attr_set        : ".{" ( all | _attr_set_list | variable ) "}"
+    _attr_set_list  : attribute ( "," attribute )* ","?
+    attribute       : CNAME
+    _filter         : "[" ( variable | string | SIGNED_INT | all ) "]"
+    all             : "*"
     _function       : count
     count           : "count(" _expression ")"
 
@@ -38,6 +44,9 @@ query_grammer = Lark(r"""
     redirect_action  : "redirect_to_file(" argument ")"
     render_action    : "render_template(" argument ")"
 
+    list              : "[" _list_item_comma* _list_item? "]"
+    _list_item        : variable | string | SIGNED_INT
+    _list_item_comma  : _list_item ","
     string            : STRING_SQ | STRING_DQ | STRING_BLOCK_SQ | STRING_BLOCK_DQ
     _STRING_INNER     : /.*?/
     _STRING_ESC_INNER : _STRING_INNER /(?<!\\)(\\\\)*?/
@@ -97,11 +106,15 @@ class QueryExecutor(Transformer):
         return result
 
     def retrieve(self, t):
-        attributes = list(t)
-        result = self.reader.query(attributes)
+        objects = t[0]
+        attributes = t[1]
+        result = self.reader.query(objects, attributes)
         return result
 
-    def attribute(self, t):
+    def objects(self, t):
+        return list(t)
+
+    def object(self, t):
         token = t[0]
         filter = None
         if len(t) > 1:
@@ -109,7 +122,20 @@ class QueryExecutor(Transformer):
         return {"name": token.value,
                 "filter": filter}
 
-    def all_filter(self, t):
+    def attributes(self, t):
+        return t[0]
+
+    def attribute(self, t):
+        return t[0].value
+
+    def attr_set(self, t):
+        attributes = list(t)
+        if len(attributes) > 0 and type(attributes[0]) == list:
+            return attributes[0]
+        else:
+            return attributes
+
+    def all(self, t):
         return "*"
 
     def connect_action(self, t):
@@ -147,6 +173,9 @@ class QueryExecutor(Transformer):
             raise Exception("Unassigned variable " + var_name)
         return self.variables[var_name]
 
+    def list(self, t):
+        return list(t)
+
     def string(self, t):
         (s,) = t
         if s[0] == "'":
@@ -163,28 +192,53 @@ class QueryExecutor(Transformer):
         if self.redirect_file is not None:
             self.redirect_file.write(output + "\n")
 
-    def _format_result(self, result, escape_string=False):
+    def _format_result(self, result, top_level=True):
         output = ""
         if result is None:
             output += "null"
         elif type(result) == dict:
-            for key in result:
-                output += "%s: %s\n" % (
-                    key, self._format_result(result[key], escape_string=True))
+            if top_level:
+                for key in result:
+                    output += "%s: %s\n" % (
+                        key, self._format_result(result[key], top_level=False))
+                output = output.strip("\n")
+            else:
+                output += "{"
+                first = True
+                for key in result:
+                    if not first:
+                        output += ", "
+                        first = False
+                    output += "%s: %s" % (
+                        key, self._format_result(result[key], top_level=False))
+                output += "}"
 
-            output = output.strip("\n")
         elif type(result) == list:
-            output += "["
-            output += ", ".join(
-                [self._format_result(x, escape_string=True) for x in result])
-            output += "]"
+            if len(result) > 0 and type(result[0]) == dict:
+                for item in result:
+                    first = True
+                    for key in item:
+                        if first:
+                            output += "\n- "
+                            first = False
+                        else:
+                            output += "  "
+                        output += "%s: %s\n" % (
+                            key, self._format_result(item[key],
+                                                     top_level=False))
+            else:
+                output += "["
+                output += ", ".join(
+                    [self._format_result(
+                        x, top_level=False) for x in result])
+                output += "]"
         elif isinstance(result, basestring):
-            if escape_string:
+            if top_level:
+                output += result
+            else:
                 output += "'"
                 output += result.replace("'", "''")
                 output += "'"
-            else:
-                output += result
         else:
             output += str(result)
 
@@ -262,6 +316,7 @@ enterprise = "csp"
 connect("vsd", "http://vsd1.example.met:8443", "csproot", "csproot", enterprise)
 enterprise[*].domain; # inline comment
 domain_count = count(enterprise[*].domain[*])
+connect("ES", "http://vstat1.example.met", "csproot", "csproot", enterprise)
 
 '''
 # text = 'test = "test string"'

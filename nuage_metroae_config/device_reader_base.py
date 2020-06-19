@@ -39,7 +39,7 @@ class DeviceReaderBase(object):
         # Abstract prototype function
         raise NotImplementedError("Abstract base function not implemented")
 
-    def query(self, attributes):
+    def query(self, objects, attributes):
         """
         Reads attributes from device
         """

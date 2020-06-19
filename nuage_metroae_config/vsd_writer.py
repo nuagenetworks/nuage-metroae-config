@@ -456,15 +456,15 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
     def does_object_exist(self, context=None):
         return context is not None and context.object_exists
 
-    def query(self, attributes):
+    def query(self, objects, attributes):
         """
         Reads attributes from device
         """
-        location = "Query %s" % (attributes)
+        location = "Query %s : %s" % (objects, attributes)
         self.log.debug(location)
         self._check_session()
 
-        return self._query(attributes)
+        return self._query(objects, attributes)
 
     #
     # Private functions to do the work
@@ -778,34 +778,49 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
                 messages.append("%s: %s" % (attr_name, message))
             raise InvalidValueError("Invalid values: " + ', '.join(messages))
 
-    def _query(self, attributes):
+    def _query(self, objects, attributes):
         if len(attributes) > 0:
-            return self._query_attribute(attributes, 0, None)
+            return self._query_objects(objects, attributes, 0, None)
         else:
             return list()
 
-    def _query_attribute(self, attributes, index, parent_object):
+    def _query_objects(self, objects, attributes, index, parent_object):
         if parent_object is None:
             parent_object = self.session.root_object
 
-        attribute = attributes[index]
-
-        if index + 1 < len(attributes):
-            object_name = attribute["name"]
+        if index < len(objects):
+            object_set = objects[index]
+            object_name = object_set["name"]
             spec = self._get_specification(object_name)
             self._check_child_object(parent_object.spec, spec)
             object_list = self._get_object_list(object_name,
                                                 parent_object)
             values = list()
             for parent_object in object_list:
-                values.extend(self._query_attribute(attributes,
-                                                    index + 1,
-                                                    parent_object))
+                values.extend(self._query_objects(objects,
+                                                  attributes,
+                                                  index + 1,
+                                                  parent_object))
             return values
 
         else:
-            field_name = attribute["name"]
-            return [self._get_attribute(parent_object, field_name)]
+            return self._query_attributes(parent_object, attributes)
+
+    def _query_attributes(self, parent_object, attributes):
+        if type(attributes) == list:
+            attribute_dict = dict()
+            if attributes[0] == "*":
+                for attr_name, attr in parent_object._attributes.items():
+                    if hasattr(parent_object, attr_name):
+                        attribute_dict[attr_name] = getattr(parent_object,
+                                                            attr_name)
+            else:
+                for attribute in attributes:
+                    attribute_dict[attribute] = self._get_attribute(
+                        parent_object, attribute)
+            return [attribute_dict]
+        else:
+            return [self._get_attribute(parent_object, attributes)]
 
 
 #
