@@ -78,6 +78,8 @@ class QueryExecutor(Transformer):
 
     def query(self, q):
         (result,) = q
+        if result is not None:
+            self._write_output(result)
         return result
 
     def assignment(self, t):
@@ -92,13 +94,11 @@ class QueryExecutor(Transformer):
             self.variables[var_name] = value
 
         result = {var_name: value}
-        self._write_output(self._format_result(result))
         return result
 
     def retrieve(self, t):
         attributes = list(t)
         result = self.reader.query(attributes)
-        self._write_output(self._format_result(result))
         return result
 
     def attribute(self, t):
@@ -114,7 +114,7 @@ class QueryExecutor(Transformer):
 
     def connect_action(self, t):
         args = list(t)
-        print "connect " + ", ".join(args)
+        print "Connect to " + ", ".join(args)
         return None
 
     def redirect_action(self, t):
@@ -131,7 +131,6 @@ class QueryExecutor(Transformer):
                                    undefined=jinja2.StrictUndefined)
 
         output = template.render(**self.variables)
-        self._write_output(output)
         return output
 
     def count(self, t):
@@ -159,27 +158,33 @@ class QueryExecutor(Transformer):
         self.log = logger
 
     def _write_output(self, output):
+        output = self._format_result(output)
         self.log.output(output)
         if self.redirect_file is not None:
             self.redirect_file.write(output + "\n")
 
-    def _format_result(self, result):
+    def _format_result(self, result, escape_string=False):
         output = ""
         if result is None:
             output += "null"
         elif type(result) == dict:
             for key in result:
-                output += "%s: %s\n" % (key, self._format_result(result[key]))
+                output += "%s: %s\n" % (
+                    key, self._format_result(result[key], escape_string=True))
 
             output = output.strip("\n")
         elif type(result) == list:
             output += "["
-            output += ", ".join([self._format_result(x) for x in result])
+            output += ", ".join(
+                [self._format_result(x, escape_string=True) for x in result])
             output += "]"
         elif isinstance(result, basestring):
-            output += "'"
-            output += result.replace("'", "''")
-            output += "'"
+            if escape_string:
+                output += "'"
+                output += result.replace("'", "''")
+                output += "'"
+            else:
+                output += result
         else:
             output += str(result)
 
