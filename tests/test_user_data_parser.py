@@ -66,6 +66,9 @@ class TestUserDataParser(object):
                                       'acls.yaml'))
 
         parser.read_data(os.path.join(VALID_USER_DATA_DIRECTORY,
+                                      'empty.yml'))
+
+        parser.read_data(os.path.join(VALID_USER_DATA_DIRECTORY,
                                       'acls_groups.yaml'))
 
         data_pairs = parser.get_template_name_data_pairs()
