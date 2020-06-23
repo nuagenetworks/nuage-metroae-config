@@ -967,8 +967,6 @@ class TestActionsOrdering(object):
 
         root_action.reorder_orders()
 
-        print str(root_action)
-
         for i in range(9):
 
             current_action = root_action.children[i]
