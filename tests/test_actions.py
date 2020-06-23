@@ -15,6 +15,9 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 ORDER_CREATE,
                                 ORDER_DISABLE_COMBINE_1,
                                 ORDER_DISABLE_COMBINE_2,
+                                ORDER_OVERRIDE_1,
+                                ORDER_OVERRIDE_2,
+                                ORDER_OVERRIDE_3,
                                 ORDER_MULTI_CREATE,
                                 ORDER_MULTI_SELECT_1,
                                 ORDER_MULTI_SELECT_2,
@@ -128,6 +131,14 @@ STORE_ORDERING_CASES = [
     (ORDER_STORE_3, ORDER_STORE_1, ORDER_STORE_2),
     (ORDER_STORE_2, ORDER_STORE_3, ORDER_STORE_1),
     (ORDER_STORE_3, ORDER_STORE_2, ORDER_STORE_1)]
+
+OVERRIDE_ORDERING_CASES = [
+    (ORDER_OVERRIDE_1, ORDER_OVERRIDE_2, ORDER_OVERRIDE_3),
+    (ORDER_OVERRIDE_1, ORDER_OVERRIDE_3, ORDER_OVERRIDE_2),
+    (ORDER_OVERRIDE_2, ORDER_OVERRIDE_1, ORDER_OVERRIDE_3),
+    (ORDER_OVERRIDE_3, ORDER_OVERRIDE_1, ORDER_OVERRIDE_2),
+    (ORDER_OVERRIDE_2, ORDER_OVERRIDE_3, ORDER_OVERRIDE_1),
+    (ORDER_OVERRIDE_3, ORDER_OVERRIDE_2, ORDER_OVERRIDE_1)]
 
 
 class TestActionsRead(object):
@@ -682,7 +693,7 @@ class TestActionsOrdering(object):
         for template in read_order:
             root_action.read_children_actions(template)
 
-        root_action.reorder_retrieve()
+        root_action.reorder()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -743,7 +754,7 @@ class TestActionsOrdering(object):
         for template in read_order:
             root_action.read_children_actions(template)
 
-        root_action.reorder_retrieve()
+        root_action.reorder()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -808,7 +819,7 @@ class TestActionsOrdering(object):
             for template in read_order:
                 root_action.read_children_actions(template)
 
-        root_action.reorder_retrieve()
+        root_action.reorder()
 
         assert "same object twice" in str(e)
         assert "Level1" in str(e)
@@ -823,7 +834,7 @@ class TestActionsOrdering(object):
             for template in read_order:
                 root_action.read_children_actions(template)
 
-        root_action.reorder_retrieve()
+        root_action.reorder()
 
         assert "already set" in str(e)
         assert "Level1" in str(e)
@@ -840,7 +851,7 @@ class TestActionsOrdering(object):
             root_action.reset_state()
             root_action.read_children_actions(template)
 
-        root_action.reorder_retrieve()
+        root_action.reorder()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -895,7 +906,7 @@ class TestActionsOrdering(object):
         root_action.reset_state()
         root_action.read_children_actions(ORDER_STORE_5)
 
-        root_action.reorder_retrieve()
+        root_action.reorder()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -928,7 +939,7 @@ class TestActionsOrdering(object):
 
         root_action.read_children_actions(ORDER_DISABLE_COMBINE_2)
 
-        root_action.reorder_retrieve()
+        root_action.reorder()
 
         current_action = root_action.children[0]
         assert current_action.object_type == "Level1"
@@ -946,6 +957,25 @@ class TestActionsOrdering(object):
         assert current_action.object_type == "Level1"
         assert current_action.field == "name"
         assert current_action.value == "L1-O1"
+
+    @pytest.mark.parametrize("read_order", OVERRIDE_ORDERING_CASES)
+    def test_override__success(self, read_order):
+        root_action = Action(None)
+
+        for template in read_order:
+            root_action.read_children_actions(template)
+
+        root_action.reorder_orders()
+
+        print str(root_action)
+
+        for i in range(9):
+
+            current_action = root_action.children[i]
+            assert current_action.value == "L1-O" + str(i + 1)
+
+            current_action = root_action.children[i].children[0]
+            assert current_action.value == "L2-O" + str(i + 1)
 
 
 class TestActionsExecute(object):

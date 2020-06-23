@@ -569,6 +569,137 @@ actions:
 
 """)
 
+ORDER_OVERRIDE_1 = yaml.safe_load("""
+actions:
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O1
+    Actions:
+    - Select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O1
+        Actions:
+        - Store-value:
+            As-name: store_1
+            from-field: field1
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O2
+    Actions:
+    - Select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O2
+        Actions:
+        - Set-values:
+            name: L2-O2
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O3
+    Actions:
+    - select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O3
+        Actions:
+        - Retrieve-value:
+            From-name: store_1
+            To-field: field1
+""")
+
+ORDER_OVERRIDE_2 = yaml.safe_load("""
+actions:
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O4
+    Order: 1
+    Actions:
+    - Select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O4
+        Actions:
+        - Store-value:
+            As-name: store_2
+            from-field: field1
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O5
+    Order: 1
+    Actions:
+    - Select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O5
+        Actions:
+        - Set-values:
+            name: L2-O5
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O6
+    Order: 1
+    Actions:
+    - select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O6
+        Actions:
+        - Retrieve-value:
+            From-name: store_2
+            To-field: field1
+""")
+
+ORDER_OVERRIDE_3 = yaml.safe_load("""
+actions:
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O7
+    Order: 9
+    Actions:
+    - Select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O7
+        Actions:
+        - Store-value:
+            As-name: store_3
+            from-field: field1
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O8
+    Order: 9
+    Actions:
+    - Select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O8
+        Actions:
+        - Set-values:
+            name: L2-O8
+- Select-object:
+    By-field: name
+    Type: Level1
+    Value: L1-O9
+    Order: 9
+    Actions:
+    - select-object:
+        By-field: name
+        Type: Level2
+        Value: L2-O9
+        Actions:
+        - Retrieve-value:
+            From-name: store_3
+            To-field: field1
+""")
 
 RETRIEVE_AS_LIST = yaml.safe_load("""
 actions:
