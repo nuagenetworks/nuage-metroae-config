@@ -70,6 +70,28 @@ class EsReader(DeviceReaderBase):
         """
         self.log.debug("Session stopping")
 
+    def connect(self, *args):
+        """
+        Creates a new connection with another device
+        """
+        if len(args) < 1:
+            raise Exception("address parameter is required for connect")
+        address = args[0]
+
+        if len(args) < 2:
+            port = DEFAULT_PORT
+        else:
+            port = int(args[1])
+
+        if len(args) > 2:
+            raise SessionError("Too many arguments to connect")
+
+        self.stop_session()
+
+        self.set_session_params(address, port)
+
+        self.start_session()
+
     def query(self, objects, attributes):
         """
         Reads attributes from device

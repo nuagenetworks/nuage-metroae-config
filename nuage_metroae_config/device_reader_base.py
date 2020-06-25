@@ -39,6 +39,13 @@ class DeviceReaderBase(object):
         # Abstract prototype function
         raise NotImplementedError("Abstract base function not implemented")
 
+    def connect(self, *args):
+        """
+        Creates a new connection with another device
+        """
+        # Abstract prototype function
+        raise NotImplementedError("Abstract base function not implemented")
+
     def query(self, objects, attributes):
         """
         Reads attributes from device

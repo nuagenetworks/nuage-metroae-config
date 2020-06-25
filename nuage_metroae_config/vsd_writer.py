@@ -73,6 +73,8 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         self.specs = dict()
         self.specs_by_restname = dict()
         self.root_spec_name = None
+        self.spec_paths = list()
+        self.read_spec_paths = list()
 
     def set_session_params(self, url, username="csproot",
                            password=None, enterprise="csp",
@@ -90,8 +92,12 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         if certificate is not None and certificate[0] is not None:
             self.session_params['certificate'] = certificate
 
-    def set_api_version(self, version="6"):
-        self.version = version
+    def set_software_version(self, software_version):
+        major_version = int(software_version.split(".")[0])
+        if (major_version < 6):
+            self.version = "5.0"
+        else:
+            self.version = str(major_version)
 
     def read_api_specifications(self, path_or_file_name):
         """
@@ -99,6 +105,9 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         in the specified path or file name.  This must be called before
         writing or an exception will be raised.
         """
+        if path_or_file_name in self.read_spec_paths:
+            return
+
         if (os.path.isdir(path_or_file_name)):
             for file_name in os.listdir(path_or_file_name):
                 if (file_name.endswith(SPEC_EXTENSION) and
@@ -117,6 +126,11 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         else:
             raise InvalidSpecification("File or path not found: " +
                                        path_or_file_name)
+
+        self.read_spec_paths.append(path_or_file_name)
+
+    def add_api_specification_path(self, path):
+        self.spec_paths.append(path)
 
     #
     # Implement all required Abstract Base Class prototype functions.
@@ -455,6 +469,50 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
     def does_object_exist(self, context=None):
         return context is not None and context.object_exists
+
+    def connect(self, *args):
+        """
+        Creates a new connection with another device
+        """
+        for path in self.spec_paths:
+            self.read_api_specifications(path)
+
+        if len(args) < 1:
+            raise SessionError("url parameter is required for connect")
+        url = args[0]
+
+        if len(args) < 2:
+            username = "csproot"
+        else:
+            username = args[1]
+
+        if len(args) < 3:
+            password = "csproot"
+        else:
+            password = args[2]
+
+        if len(args) < 4:
+            enterprise = "csp"
+        else:
+            enterprise = args[3]
+
+        certificate = None
+        if len(args) == 6:
+            certificate = (args[4], args[5])
+            password = None
+        elif len(args) == 5:
+            raise SessionError("certificate key parameter is required when"
+                               " using certificate for connect")
+        elif len(args) > 6:
+            raise SessionError("Too many arguments to connect")
+
+        if self.session is not None:
+            self.stop_session()
+
+        self.set_session_params(url, username, password, enterprise,
+                                certificate)
+
+        self.start_session()
 
     def query(self, objects, attributes):
         """

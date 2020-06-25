@@ -7,7 +7,9 @@ from lark import Lark, Transformer
 from logger import Logger
 import os
 import time
+import yaml
 
+OUTPUT_INDENT = " " * 4
 
 query_grammer = Lark(r"""
 
@@ -31,21 +33,23 @@ query_grammer = Lark(r"""
     attr_set        : ".{" ( all | _attr_set_list | variable ) "}"
     _attr_set_list  : attribute ( "," attribute )* ","?
     attribute       : CNAME
-    _filter         : "[" ( variable | string | SIGNED_INT | all ) "]"
+    _filter         : "[" ( variable | string | integer | all ) "]"
     all             : "*"
     _function       : count
     count           : "count(" _expression ")"
 
-    _action          : connect_action | redirect_action | render_action
+    _action          : connect_action | redirect_action | render_action | echo_action | output_action
     _argument_list   : argument _comma_arg*
     _comma_arg       : "," argument
-    argument         : variable | string | SIGNED_INT
+    argument         : variable | string | integer
     connect_action   : "connect(" _argument_list ")"
     redirect_action  : "redirect_to_file(" argument ")"
     render_action    : "render_template(" argument ")"
+    echo_action      : "echo(" argument ")"
+    output_action    : "output(" argument ")"
 
     list              : "[" _list_item_comma* _list_item? "]"
-    _list_item        : variable | string | SIGNED_INT
+    _list_item        : variable | string | integer
     _list_item_comma  : _list_item ","
     string            : STRING_SQ | STRING_DQ | STRING_BLOCK_SQ | STRING_BLOCK_DQ
     _STRING_INNER     : /.*?/
@@ -56,6 +60,7 @@ query_grammer = Lark(r"""
     STRING_DQ         : "\"" _STRING_ESC_INNER "\""
     STRING_BLOCK_SQ   : "'''" _STRING_ESC_BLOCK "'''"
     STRING_BLOCK_DQ   : "\"\"\"" _STRING_ESC_BLOCK "\"\"\""
+    integer           : SIGNED_INT
 
     _NEWLINE          : NEWLINE
 
@@ -72,13 +77,16 @@ query_grammer = Lark(r"""
 
 class QueryExecutor(Transformer):
 
-    def __init__(self, reader, override_variables):
+    def __init__(self, reader, override_variables, reader_dict):
 
         self.reader = reader
+        self.reader_dict = reader_dict
         self.override_variables = override_variables
         self.override_variables["now"] = int(time.time())
         self.variables = dict(override_variables)
         self.redirect_file = None
+        self.echo = True
+        self.output = True
 
     def query_set(self, qs):
         if self.redirect_file is not None:
@@ -89,7 +97,10 @@ class QueryExecutor(Transformer):
         (result,) = q
         if result is not None:
             self._write_output(result)
-        return result
+        if self.output:
+            return result
+        else:
+            return None
 
     def assignment(self, t):
         (token, value) = t
@@ -140,7 +151,16 @@ class QueryExecutor(Transformer):
 
     def connect_action(self, t):
         args = list(t)
-        print "Connect to " + ", ".join(args)
+        self.log.debug("Connect to " + ", ".join(args))
+        if len(args) < 1 or args[0].lower() not in self.reader_dict:
+            raise Exception("Invalid type for connection")
+
+        if self.reader is not None:
+            self.reader.stop_session()
+
+        self.reader = self.reader_dict[args[0].lower()]
+        self.reader.connect(*args[1:])
+
         return None
 
     def redirect_action(self, t):
@@ -158,6 +178,40 @@ class QueryExecutor(Transformer):
 
         output = template.render(**self.variables)
         return output
+
+    def echo_action(self, t):
+        args = list(t)
+        if len(args) != 1:
+            raise Exception("Invalid number of arguments to "
+                            "echo('true' | 'false')")
+        if args[0].lower() in ["true", "on", "yes", "t", "y"]:
+            self.echo = True
+            self.log.debug("Echo on")
+        elif args[0].lower() in ["false", "off", "no", "f", "n"]:
+            self.echo = False
+            self.log.debug("Echo off")
+        else:
+            raise Exception("Invalid argument to "
+                            "echo('true' | 'false'): %s" % args[0])
+
+        return None
+
+    def output_action(self, t):
+        args = list(t)
+        if len(args) != 1:
+            raise Exception("Invalid number of arguments to "
+                            "output('true' | 'false')")
+        if args[0].lower() in ["true", "on", "yes", "t", "y"]:
+            self.output = True
+            self.log.debug("Output on")
+        elif args[0].lower() in ["false", "off", "no", "f", "n"]:
+            self.output = False
+            self.log.debug("Output off")
+        else:
+            raise Exception("Invalid argument to "
+                            "output('true' | 'false'): %s" % args[0])
+
+        return None
 
     def count(self, t):
         (values,) = t
@@ -183,24 +237,44 @@ class QueryExecutor(Transformer):
         else:
             return s.strip('"')
 
+    def integer(self, t):
+        (i,) = t
+        return int(i)
+
     def _set_logger(self, logger):
         self.log = logger
 
     def _write_output(self, output):
         output = self._format_result(output)
-        self.log.output(output)
-        if self.redirect_file is not None:
-            self.redirect_file.write(output + "\n")
+        if self.output:
+            if self.echo:
+                self.log.output(output)
+            else:
+                self.log.debug(output)
+            if self.redirect_file is not None:
+                self.redirect_file.write(output + "\n")
+        else:
+            self.log.debug(output)
 
-    def _format_result(self, result, top_level=True):
+    def _format_result(self, result):
+        if result is None:
+            return "null"
+        elif type(result) == dict or type(result) == list:
+            return yaml.safe_dump(result)
+        elif isinstance(result, basestring):
+            return result
+        else:
+            return str(result)
+
+    def _format_result_old(self, result, indent=0):
         output = ""
         if result is None:
             output += "null"
         elif type(result) == dict:
-            if top_level:
+            if indent == 0:
                 for key in result:
                     output += "%s: %s\n" % (
-                        key, self._format_result(result[key], top_level=False))
+                        key, self._format_result(result[key], indent + 1))
                 output = output.strip("\n")
             else:
                 output += "{"
@@ -208,13 +282,14 @@ class QueryExecutor(Transformer):
                 for key in result:
                     if not first:
                         output += ", "
+                    else:
                         first = False
                     output += "%s: %s" % (
-                        key, self._format_result(result[key], top_level=False))
+                        key, self._format_result(result[key], indent + 1))
                 output += "}"
 
         elif type(result) == list:
-            if len(result) > 0 and type(result[0]) == dict:
+            if len(result) > 0 and type(result[0]) == dict and indent < 2:
                 for item in result:
                     first = True
                     for key in item:
@@ -225,15 +300,15 @@ class QueryExecutor(Transformer):
                             output += "  "
                         output += "%s: %s\n" % (
                             key, self._format_result(item[key],
-                                                     top_level=False))
+                                                     indent + 1))
             else:
                 output += "["
                 output += ", ".join(
                     [self._format_result(
-                        x, top_level=False) for x in result])
+                        x, indent + 1) for x in result])
                 output += "]"
         elif isinstance(result, basestring):
-            if top_level:
+            if indent == 0:
                 output += result
             else:
                 output += "'"
@@ -249,6 +324,7 @@ class Query():
 
     def __init__(self):
         self.reader = None
+        self.reader_dict = dict()
         self.query_files = list()
         self.log = Logger()
         self.log.set_to_stdout("ERROR", enabled=True)
@@ -258,6 +334,9 @@ class Query():
 
     def set_reader(self, reader):
         self.reader = reader
+
+    def register_reader(self, reader_type, reader):
+        self.reader_dict[reader_type.lower()] = reader
 
     def add_query_file(self, path_or_file_name):
         """
@@ -278,7 +357,8 @@ class Query():
 
     def execute(self, query_text=None, **override_variables):
 
-        self.reader.start_session()
+        if self.reader is not None:
+            self.reader.start_session()
 
         if query_text is None:
             results = list()
@@ -296,14 +376,15 @@ class Query():
         else:
             results = self._perform_query(query_text, override_variables)
 
-        self.reader.stop_session()
+        if self.reader is not None:
+            self.reader.stop_session()
 
         return results
 
     def _perform_query(self, query_text, override_variables):
         tree = query_grammer.parse(query_text)
         self.log.debug(tree.pretty())
-        qe = QueryExecutor(self.reader, override_variables)
+        qe = QueryExecutor(self.reader, override_variables, self.reader_dict)
         qe._set_logger(self.log)
         return qe.transform(tree)
 

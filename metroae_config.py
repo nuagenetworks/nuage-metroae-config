@@ -9,6 +9,7 @@ import wget
 
 from nuage_metroae_config.configuration import Configuration
 from nuage_metroae_config.errors import MetroConfigError
+from nuage_metroae_config.es_reader import EsReader
 from nuage_metroae_config.query import Query
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.user_data_parser import UserDataParser
@@ -32,6 +33,7 @@ ENV_VSD_PASSWORD = 'VSD_PASSWORD'
 ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+ENV_ES_ADDRESS = 'ES_ADDRESS'
 ENV_SOFTWARE_VERSION = 'SOFTWARE_VERSION'
 ENV_LOG_FILE = 'LOG_FILE'
 ENV_LOG_LEVEL = 'LOG_LEVEL'
@@ -237,6 +239,10 @@ def add_parser_arguments(parser):
                         default=os.getenv(ENV_VSD_ENTERPRISE,
                                           DEFAULT_VSD_ENTERPRISE),
                         help='Enterprise for VSD. Can also set using environment variable %s' % (ENV_VSD_ENTERPRISE))
+    parser.add_argument('-es', '--es_address', dest='es_address',
+                        action='store', required=False,
+                        default=os.getenv(ENV_ES_ADDRESS, None),
+                        help='Address with optional ":<port>" for ElasticSearch. Can also set using environment variable %s' % (ENV_ES_ADDRESS))
     parser.add_argument('-q', '--query', dest='query',
                         action='store', required=False,
                         help='Query string to perform in query action'),
@@ -348,7 +354,7 @@ class MetroConfig(object):
         self.setup_logging()
 
         if self.action == QUERY_ACTION:
-            self.setup_vsd_writer()
+            self.setup_reader()
             self.parse_extra_vars()
             if self.args.query is None:
                 self.parse_user_data()
@@ -483,6 +489,25 @@ class MetroConfig(object):
                 with open(full_path, "w") as f:
                     f.write(doc_text)
 
+    def setup_reader(self):
+        if self.args.es_address is not None:
+            self.setup_es_reader()
+        else:
+            self.setup_vsd_writer()
+
+    def setup_es_reader(self):
+        self.writer = EsReader()
+        self.writer.set_logger(self.logger)
+        if ":" in self.args.es_address:
+            addr_pair = self.args.es_address.split(":")
+            address = addr_pair[0]
+            port = addr_pair[1]
+        else:
+            address = self.args.es_address
+            port = None
+
+        self.writer.set_session_params(address, port)
+
     def setup_vsd_writer(self):
         self.writer = VsdWriter()
         self.writer.set_logger(self.logger)
@@ -499,11 +524,7 @@ class MetroConfig(object):
             self.device_version = self.writer.get_version()
 
         if self.get_software_version() is not None:
-            major_version = int(self.get_software_version().split(".")[0])
-            if (major_version < 6):
-                self.writer.set_api_version("5.0")
-            else:
-                self.writer.set_api_version(str(major_version))
+            self.writer.set_software_version(self.get_software_version())
 
     def setup_template_store(self):
         self.store = TemplateStore(ENGINE_VERSION)
@@ -580,10 +601,25 @@ class MetroConfig(object):
         query = Query()
         query.set_logger(self.logger)
         query.set_reader(self.writer)
+        self.register_query_readers(query)
+
         if self.args.query is None:
             for file in self.query_files:
                 query.add_query_file(file)
-        query.execute(self.args.query, **self.query_variables)
+        results = query.execute(self.args.query, **self.query_variables)
+        self.logger.debug("Query results")
+        self.logger.debug(str(results))
+
+    def register_query_readers(self, query):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_logger(self.logger)
+        for path in self.args.spec_path:
+            vsd_writer.add_api_specification_path(path)
+        query.register_reader("vsd", vsd_writer)
+
+        es_reader = EsReader()
+        es_reader.set_logger(self.logger)
+        query.register_reader("es", es_reader)
 
     def get_software_type(self):
         if self.device_version is not None:
