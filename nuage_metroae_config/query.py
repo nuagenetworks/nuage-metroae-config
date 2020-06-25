@@ -1,15 +1,9 @@
-# # ; "" '' """ '''
-# = () +-*/ & |
-# identifier[] . function()
-
 import jinja2
 from lark import Lark, Transformer
 from logger import Logger
 import os
 import time
 import yaml
-
-OUTPUT_INDENT = " " * 4
 
 query_grammer = Lark(r"""
 
@@ -21,22 +15,27 @@ query_grammer = Lark(r"""
     COMMENT       : "#" /[^\n\r]+/? _NEWLINE
     query         : _expression | assignment | _action
 
-    _expression     : retrieve | _function | variable
-    assignment      : CNAME "=" ( _expression | string | list )
-    variable        : "$" CNAME
-    retrieve        : objects attributes
-    objects         : object _dot_object*
-    object          : CNAME _filter?
-    _dot_object     : "." object
-    attributes      : _dot_attr | attr_set
-    _dot_attr       : "." attribute
-    attr_set        : ".{" ( all | _attr_set_list | variable ) "}"
-    _attr_set_list  : attribute ( "," attribute )* ","?
-    attribute       : CNAME
-    _filter         : "[" ( variable | string | integer | all ) "]"
-    all             : "*"
-    _function       : count
-    count           : "count(" _expression ")"
+    _expression      : retrieve | _function | variable
+    assignment       : CNAME "=" ( _expression | string | list | integer )
+    variable         : "$" CNAME
+    retrieve         : objects attributes
+    objects          : object _dot_object*
+    object           : CNAME _filter?
+    _dot_object      : "." object
+    attributes       : _dot_attr | attr_set
+    _dot_attr        : "." attribute
+    attr_set         : ".{" ( all | _attr_set_list | variable ) "}"
+    _attr_set_list   : attribute ( "," attribute )* ","?
+    attribute        : CNAME
+    _filter          : "[" ( variable | filter_attr_set | integer | all ) "]"
+    filter_attr_set  : filter_attr ( "&" filter_attr )*
+    filter_attr      : ( filter_special | filter_attr_name ) "=" ( variable | string | filter_attr_name | integer )
+    filter_special   : "%" CNAME
+    filter_attr_name : CNAME
+    all              : "*"
+    _function        : count | reverse
+    count            : "count(" _expression ")"
+    reverse          : "reverse(" _expression ")"
 
     _action          : connect_action | redirect_action | render_action | echo_action | output_action
     _argument_list   : argument _comma_arg*
@@ -149,6 +148,24 @@ class QueryExecutor(Transformer):
     def all(self, t):
         return "*"
 
+    def filter_attr_set(self, t):
+        filter_dict = dict()
+        for add_filter in t:
+            filter_dict.update(add_filter)
+        return filter_dict
+
+    def filter_attr(self, t):
+        (name, value) = t
+        return {name: value}
+
+    def filter_special(self, t):
+        (name,) = t
+        return str("%" + name.lower())
+
+    def filter_attr_name(self, t):
+        (name,) = t
+        return name.value
+
     def connect_action(self, t):
         args = list(t)
         self.log.debug("Connect to " + ", ".join(args))
@@ -216,6 +233,10 @@ class QueryExecutor(Transformer):
     def count(self, t):
         (values,) = t
         return len(values)
+
+    def reverse(self, t):
+        (values,) = t
+        return list(reversed(values))
 
     def argument(self, t):
         (arg,) = t
@@ -389,17 +410,17 @@ class Query():
         return qe.transform(tree)
 
 
-text = '''
+# text = '''
 
-# This is a test
+# # This is a test
 
-enterprise = "csp"
-connect("vsd", "http://vsd1.example.met:8443", "csproot", "csproot", enterprise)
-enterprise[*].domain; # inline comment
-domain_count = count(enterprise[*].domain[*])
-connect("ES", "http://vstat1.example.met", "csproot", "csproot", enterprise)
+# enterprise = "csp"
+# connect("vsd", "http://vsd1.example.met:8443", "csproot", "csproot", enterprise)
+# enterprise[*].domain; # inline comment
+# domain_count = count(enterprise[*].domain[*])
+# connect("ES", "http://vstat1.example.met", "csproot", "csproot", enterprise)
 
-'''
+# '''
 # text = 'test = "test string"'
 # text = 'connect("vsd", "http://vsd1.example.met:8443", "csproot", "csproot", enterprise); enterprise[*].domain'
 # tree = query_grammer.parse(text)

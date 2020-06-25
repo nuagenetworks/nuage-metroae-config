@@ -3,6 +3,7 @@
 import argparse
 import logging
 import os
+import sys
 import tarfile
 import urllib3
 import wget
@@ -340,7 +341,7 @@ class MetroConfig(object):
             else:
                 self.logger.addHandler(debug_handler)
         else:
-            output_handler = logging.StreamHandler()
+            output_handler = logging.StreamHandler(sys.stdout)
             output_handler.setLevel(OUTPUT_LEVEL_NUM)
             self.logger.addHandler(output_handler)
 

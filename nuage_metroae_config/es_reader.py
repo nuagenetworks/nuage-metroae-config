@@ -1,5 +1,5 @@
-import json
 import requests
+import sys
 
 from device_reader_base import DeviceReaderBase
 from errors import (DeviceWriterError,
@@ -12,6 +12,7 @@ from errors import (DeviceWriterError,
                     SessionNotStartedError)
 
 PAGE_SIZE = 100
+MAX_RESULTS = 10000
 DEFAULT_PORT = 9200
 
 
@@ -113,34 +114,104 @@ class EsReader(DeviceReaderBase):
 
     def _query(self, objects, attributes):
         search_url = self._build_search_url(objects)
-        self.log.debug(search_url)
-        raw_results = self._query_to_es(search_url)
+        query_filter = objects[0]["filter"]
+        (max, start) = self._get_filter_max_index_pair(query_filter)
+        raw_results = self._query_to_es(search_url, max, start)
         return self._filter_results(raw_results, objects, attributes)
 
     def _build_search_url(self, objects):
-        # print str(objects)
         index = objects[0]["name"]
-        url_base = "http://%s:%s/%s/_search" % (self.session_params["address"],
-                                                self.session_params["port"],
-                                                index)
+        query_filter = objects[0]["filter"]
+        query_params = self._build_search_query_url_params(query_filter)
+        url = "http://%s:%s/%s/_search?%s" % (self.session_params["address"],
+                                              self.session_params["port"],
+                                              index,
+                                              query_params)
 
-        return url_base
+        return url
 
-    def _query_to_es(self, search_url):
-        results = self._query_page_from_es(search_url, 0, PAGE_SIZE)
+    def _build_search_query_url_params(self, query_filter):
+        query_params = ""
+        if query_filter is None:
+            pass
+        elif type(query_filter) == int:
+            pass
+        elif type(query_filter) == dict:
+            fields = list()
+            for field_name in query_filter:
+                if field_name.startswith("%"):
+                    if field_name in ["%max", "%start"]:
+                        pass
+                    elif field_name in ["%sort", "%sort_asc"]:
+                        query_params += "sort=%s:asc&" % (
+                            query_filter[field_name])
+                    elif field_name == "%sort_desc":
+                        query_params += "sort=%s:desc&" % (
+                            query_filter[field_name])
+                    else:
+                        raise Exception(
+                            "Invalid filter %s for ES index query" %
+                            field_name)
+                else:
+                    fields.append("%s:%s" % (field_name,
+                                             query_filter[field_name]))
+            if len(fields) > 0:
+                query_params += "q="
+                query_params += " AND ".join(fields)
+                query_params += "&"
+
+        elif query_filter == "*":
+            pass
+        else:
+            raise Exception("Invalid filter for ES index query")
+
+        return query_params
+
+    def _get_filter_max_index_pair(self, filter):
+        if type(filter) == dict:
+            start = 0
+            if "%start" in filter:
+                start = int(filter["%start"])
+            max = MAX_RESULTS
+            if "%max" in filter:
+                max = int(filter["%max"])
+            return (max, start)
+        if type(filter) == int:
+            raise Exception("Cannot use position for ES index query, use "
+                            "[%%max=1 & %%start=%s & %%sort=<field>] filters"
+                            " instead" % filter)
+        else:
+            return (MAX_RESULTS, 0)
+
+    def _query_to_es(self, search_url, max=MAX_RESULTS, start=0):
+
+        results = list()
+        if max < 0:
+            size = PAGE_SIZE
+        else:
+            size = min(max, PAGE_SIZE)
+        while start < max:
+            result_page = self._query_page_from_es(search_url, start, size)
+            if len(result_page) == 0:
+                break
+            results.extend(result_page)
+            start += size
         return results
 
-    def _query_page_from_es(self, search_url, page, size):
+    def _query_page_from_es(self, search_url, start, size):
+        search_url += "from=%d&size=%d" % (start, size)
+        self.log.debug("GET " + search_url)
+
+
         resp = requests.get(search_url, verify=False)
 
         results = dict()
+        self.log.debug("Status: %d" % resp.status_code)
         if resp.status_code == 200:
             results = resp.json()
         else:
             raise Exception("Status code %d from URL %s" % (
                             resp.status_code, search_url))
-
-        # print str(results)
 
         return self._extract_results(results)
 
@@ -153,8 +224,6 @@ class EsReader(DeviceReaderBase):
 
     def _filter_results(self, results, objects, attributes):
         filtered = list()
-
-        print str(objects)
 
         for result in results:
             current = result
