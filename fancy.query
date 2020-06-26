@@ -7,13 +7,13 @@ connect("VSD", "https://localhost:12001")
 
 report_file = "fancy.html"
 num_records = 10
-app_names = SaaSApplicationType[*].name
+app_names = SaaSApplicationType.name
 app_count = count($app_names)
 licenses_expires = License.expirytimestamp
 
 connect("ES", "localhost")
 
-vsc_info = reverse(nuage_sysmon[%max=$num_records & %sort_desc=timestamp].{*})
+vsc_info = reverse(nuage_sysmon[:$num_records & %sort_desc=timestamp].{*})
 
 redirect_to_file($report_file)
 
@@ -66,8 +66,6 @@ render_template(
     src: local("Ubuntu Light Italic"), local("Ubuntu-LightItalic"), url("http://themes.googleusercontent.com/static/fonts/ubuntu/v4/DZ_YjBPqZ88vcZCcIXm6VqfTCPadK0KLfdEfFtGWCYw.woff") format("woff");
 }
 
-
-
 html {
     font-size: 100%;
 }
@@ -91,7 +89,6 @@ body, textarea {
     line-height: 1.4;
 }
 
-
 body:after {
     clear: both;
     content: "";
@@ -106,8 +103,6 @@ body {
     max-width: 50rem;
     display: block;
 }
-
-
 
 h1, h2, h3, dt {
     color: #423F37;
@@ -152,7 +147,6 @@ a:hover {
     color: #739544;
 }
 
-
 p, pre {
     margin: 1em 0;
 }
@@ -188,13 +182,11 @@ code {
     color: #423F37;
 }
 
-
 aside {
     display: block;
     float: right;
     width: 390px;
 }
-
 
 b, strong {
     font-weight: bold;
@@ -221,7 +213,6 @@ figure {
     margin-top: 2em;
 }
 
-
 hr {
     -moz-border-bottom-colors: none;
     -moz-border-left-colors: none;
@@ -235,13 +226,11 @@ hr {
     page-break-after: always;
 }
 
-
 img {
     max-width: 100%;
     display: block;
     border: 0 none;
 }
-
 
 ol > li:before {
     color: #423F37;
@@ -287,7 +276,6 @@ li {
     list-style: none outside none;
 }
 
-
 figure > figcaption {
     margin-top: 0.5em;
 }
@@ -298,7 +286,6 @@ small, dd, figcaption {
     font-style: italic;
     line-height: 1.2;
 }
-
 
 tbody{display:table-row-group}
 tfoot{display:table-footer-group}
@@ -326,13 +313,11 @@ caption{display:table-caption;font-weight:300;font-size:1.3em;text-transform:upp
   color: #bfbfbf;
 }
 
-
 .article-date {
     color: #C7C2B8;
     display: block;
     font-size: 0.8rem;
 }
-
 
 </style>
 <body>

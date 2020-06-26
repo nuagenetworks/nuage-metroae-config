@@ -103,6 +103,15 @@ class EsReader(DeviceReaderBase):
 
         return self._query(objects, attributes)
 
+    def query_attribute(self, obj, attribute):
+        """
+        Reads an attribute from an object
+        """
+        if type(obj) == dict and attribute in obj:
+            return obj[attribute]
+
+        return None
+
     #
     # Private functions to do the work
     #
@@ -115,9 +124,9 @@ class EsReader(DeviceReaderBase):
     def _query(self, objects, attributes):
         search_url = self._build_search_url(objects)
         query_filter = objects[0]["filter"]
-        (max, start) = self._get_filter_max_index_pair(query_filter)
-        raw_results = self._query_to_es(search_url, max, start)
-        return self._filter_results(raw_results, objects, attributes)
+        (start, end) = self._get_filter_index_pair(query_filter)
+        es_results = self._query_to_es(search_url, start, end)
+        return self._filter_es_results(es_results, objects, attributes)
 
     def _build_search_url(self, objects):
         index = objects[0]["name"]
@@ -134,13 +143,11 @@ class EsReader(DeviceReaderBase):
         query_params = ""
         if query_filter is None:
             pass
-        elif type(query_filter) == int:
-            pass
         elif type(query_filter) == dict:
             fields = list()
             for field_name in query_filter:
                 if field_name.startswith("%"):
-                    if field_name in ["%max", "%start"]:
+                    if field_name in ["%end", "%start"]:
                         pass
                     elif field_name in ["%sort", "%sort_asc"]:
                         query_params += "sort=%s:asc&" % (
@@ -160,48 +167,50 @@ class EsReader(DeviceReaderBase):
                 query_params += " AND ".join(fields)
                 query_params += "&"
 
-        elif query_filter == "*":
-            pass
         else:
             raise Exception("Invalid filter for ES index query")
 
         return query_params
 
-    def _get_filter_max_index_pair(self, filter):
+    def _get_filter_index_pair(self, filter):
         if type(filter) == dict:
             start = 0
             if "%start" in filter:
                 start = int(filter["%start"])
-            max = MAX_RESULTS
-            if "%max" in filter:
-                max = int(filter["%max"])
-            return (max, start)
-        if type(filter) == int:
-            raise Exception("Cannot use position for ES index query, use "
-                            "[%%max=1 & %%start=%s & %%sort=<field>] filters"
-                            " instead" % filter)
-        else:
-            return (MAX_RESULTS, 0)
+                if start < 0:
+                    raise Exception("ES index queries do not support negative"
+                                    " indexes, use positive indexes and "
+                                    "reverse sort")
+            end = MAX_RESULTS
+            if "%end" in filter:
+                end = int(filter["%end"])
+                if end < 0:
+                    raise Exception("ES index queries do not support negative"
+                                    " indexes, use positive indexes and "
+                                    "reverse sort")
 
-    def _query_to_es(self, search_url, max=MAX_RESULTS, start=0):
+            return (start, end)
+        else:
+            return (0, MAX_RESULTS)
+
+    def _query_to_es(self, search_url, start=0, end=MAX_RESULTS):
+
+        self.log.debug("%d %d" % (end, start))
 
         results = list()
-        if max < 0:
-            size = PAGE_SIZE
-        else:
-            size = min(max, PAGE_SIZE)
-        while start < max:
-            result_page = self._query_page_from_es(search_url, start, size)
+        current = start
+        while current < end:
+            size = min(end - current, PAGE_SIZE)
+            result_page = self._query_page_from_es(search_url, current, size)
             if len(result_page) == 0:
                 break
             results.extend(result_page)
-            start += size
+            current += size
         return results
 
     def _query_page_from_es(self, search_url, start, size):
         search_url += "from=%d&size=%d" % (start, size)
         self.log.debug("GET " + search_url)
-
 
         resp = requests.get(search_url, verify=False)
 
@@ -222,31 +231,46 @@ class EsReader(DeviceReaderBase):
         hits = results["hits"]["hits"]
         return [x["_source"] for x in hits]
 
-    def _filter_results(self, results, objects, attributes):
+    def _filter_es_results(self, results, objects, attributes):
+
+        filtered = list()
+        for next in results:
+            filtered.extend(self._filter_es_results_level(next,
+                                                          objects,
+                                                          attributes))
+
+        return filtered
+
+    def _filter_es_results_level(self, results, objects, attributes, level=1):
         filtered = list()
 
-        for result in results:
-            current = result
-            for obj in objects[1:]:
-                if type(current) == dict and obj["name"] in current:
-                    current = current[obj["name"]]
-                    if type(obj["filter"]) == int:
-                        if type(current) != list:
-                            raise Exception("Object %s is not a list" %
-                                            obj["name"])
-                        current = current[obj["filter"]]
-                else:
-                    raise Exception("Missing object %s in result" %
-                                    obj["name"])
+        if level >= len(objects):
+            return self._filter_attributes(results, attributes)
+        else:
+            obj_name = objects[level]["name"]
+            filter = objects[level]["filter"]
+            if type(results) == list:
 
-            filtered.append(self._filter_attributes(current, attributes))
+                for next in self.filter_results(results, filter):
+                    filtered.extend(self._filter_es_results_level(next,
+                                                                  objects,
+                                                                  attributes,
+                                                                  level + 1))
+
+            elif type(results) == dict and obj_name in results:
+                next = results[obj_name]
+                filtered.extend(self._filter_es_results_level(next,
+                                                              objects,
+                                                              attributes,
+                                                              level))
 
         return filtered
 
     def _filter_attributes(self, current, attributes):
         if type(current) != dict:
-            raise Exception("Attempting to get attributes from a result that"
+            self.log.debug("Attempting to get attributes from a result that"
                             " is not an object")
+            return list()
         if type(attributes) == list:
             attr_dict = dict()
             if attributes[0] == "*":
@@ -256,12 +280,14 @@ class EsReader(DeviceReaderBase):
                     if attribute in current:
                         attr_dict[attribute] = current[attribute]
                     else:
-                        raise Exception("Missing attribute %s in result" %
-                                        attribute)
-            return attr_dict
+                        self.log.debug("Missing attribute %s in result" %
+                                       attribute)
+                        return list()
+            return [attr_dict]
         else:
             if attributes in current:
-                return current[attributes]
+                return [current[attributes]]
             else:
-                raise Exception("Missing attribute %s in result" % attributes)
+                self.log.debug("Missing attribute %s in result" % attributes)
+                return list()
 

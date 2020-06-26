@@ -5,16 +5,16 @@ output("off")
 connect("VSD", "https://localhost:12001")
 
 report_file = "report.txt"
-num_records = 15
-app_names = SaaSApplicationType[*].name
+num_records = 10
+app_names = SaaSApplicationType.name
 app_count = count($app_names)
 licenses_expires = License.expirytimestamp
 
 connect("ES", "localhost")
 
-vsc_memory = nuage_sysmon[%max=$num_records & %sort_desc=timestamp].memory
-vsc_cpu = nuage_sysmon[%max=$num_records & %sort_desc=timestamp].cpu
-vsc_disk = nuage_sysmon[%max=$num_records & %sort_desc=timestamp].disks[0].{*}
+vsc_memory = nuage_sysmon[:$num_records & %sort_desc=timestamp].memory
+vsc_cpu = nuage_sysmon[:$num_records & %sort_desc=timestamp].cpu
+vsc_disk = nuage_sysmon[:$num_records & %sort_desc=timestamp].disks[0].{*}
 
 redirect_to_file($report_file)
 

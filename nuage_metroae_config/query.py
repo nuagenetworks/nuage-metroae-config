@@ -15,27 +15,32 @@ query_grammer = Lark(r"""
     COMMENT       : "#" /[^\n\r]+/? _NEWLINE
     query         : _expression | assignment | _action
 
-    _expression      : retrieve | _function | variable
-    assignment       : CNAME "=" ( _expression | string | list | integer )
-    variable         : "$" CNAME
-    retrieve         : objects attributes
-    objects          : object _dot_object*
-    object           : CNAME _filter?
-    _dot_object      : "." object
-    attributes       : _dot_attr | attr_set
-    _dot_attr        : "." attribute
-    attr_set         : ".{" ( all | _attr_set_list | variable ) "}"
-    _attr_set_list   : attribute ( "," attribute )* ","?
-    attribute        : CNAME
-    _filter          : "[" ( variable | filter_attr_set | integer | all ) "]"
-    filter_attr_set  : filter_attr ( "&" filter_attr )*
-    filter_attr      : ( filter_special | filter_attr_name ) "=" ( variable | string | filter_attr_name | integer )
-    filter_special   : "%" CNAME
-    filter_attr_name : CNAME
-    all              : "*"
-    _function        : count | reverse
-    count            : "count(" _expression ")"
-    reverse          : "reverse(" _expression ")"
+    _expression        : retrieve | _function | variable
+    assignment         : CNAME "=" ( _expression | string | list | integer )
+    variable           : "$" CNAME
+    retrieve           : objects attributes
+    objects            : object _dot_object*
+    object             : CNAME _filter?
+    _dot_object        : "." object
+    attributes         : _dot_attr | attr_set
+    _dot_attr          : "." attribute
+    attr_set           : ".{" ( all | _attr_set_list | variable ) "}"
+    _attr_set_list     : attribute ( "," attribute )* ","?
+    attribute          : CNAME
+    _filter            : "[" filter_set "]"
+    filter_set         : _filter_item ( "&" _filter_item )*
+    _filter_item       : filter_attr | _filter_range | variable | integer
+    filter_attr        : ( filter_special | filter_attr_name ) "=" ( variable | string | filter_attr_name | integer )
+    filter_special     : "%" CNAME
+    _filter_range      : filter_range_both | filter_range_start | filter_range_end
+    filter_range_both  : ( integer | variable ) ":" ( integer | variable )
+    filter_range_start : ( integer | variable ) ":"
+    filter_range_end   : ":" ( integer | variable )
+    filter_attr_name   : CNAME
+    all                : "*"
+    _function          : count | reverse
+    count              : "count(" _expression ")"
+    reverse            : "reverse(" _expression ")"
 
     _action          : connect_action | redirect_action | render_action | echo_action | output_action
     _argument_list   : argument _comma_arg*
@@ -148,10 +153,29 @@ class QueryExecutor(Transformer):
     def all(self, t):
         return "*"
 
-    def filter_attr_set(self, t):
+    def filter_set(self, t):
         filter_dict = dict()
         for add_filter in t:
-            filter_dict.update(add_filter)
+            if type(add_filter) == dict:
+                filter_dict.update(add_filter)
+            elif type(add_filter) == list:
+                if len(add_filter) != 2:
+                    raise Exception("Invalid range specified for filter")
+                if add_filter[0] is None:
+                    filter_dict["%end"] = add_filter[1]
+                elif add_filter[1] is None:
+                    filter_dict["%start"] = add_filter[0]
+                else:
+                    filter_dict["%start"] = add_filter[0]
+                    filter_dict["%end"] = add_filter[1]
+            elif type(add_filter) == int:
+                filter_dict["%start"] = add_filter
+                filter_dict["%end"] = add_filter + 1
+            elif add_filter == "*":
+                filter_dict["%all"] = True
+            else:
+                raise Exception("Invalid filter type")
+
         return filter_dict
 
     def filter_attr(self, t):
@@ -165,6 +189,15 @@ class QueryExecutor(Transformer):
     def filter_attr_name(self, t):
         (name,) = t
         return name.value
+
+    def filter_range_both(self, t):
+        return list(t)
+
+    def filter_range_start(self, t):
+        return [t[0], None]
+
+    def filter_range_end(self, t):
+        return [None, t[0]]
 
     def connect_action(self, t):
         args = list(t)
