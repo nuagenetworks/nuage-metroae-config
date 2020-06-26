@@ -410,6 +410,13 @@ class Query():
         return qe.transform(tree)
 
 
+def jinja_date_format(value, format):
+    return time.strftime(format, time.localtime(value))
+
+
+jinja2.filters.FILTERS['date_format'] = jinja_date_format
+
+
 # text = '''
 
 # # This is a test

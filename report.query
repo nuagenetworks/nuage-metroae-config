@@ -1,0 +1,35 @@
+# This is a demonstration report generation
+
+output("off")
+
+connect("VSD", "https://localhost:12001")
+
+report_file = "report.txt"
+num_records = 15
+app_names = SaaSApplicationType[*].name
+app_count = count($app_names)
+licenses_expires = License.expirytimestamp
+
+connect("ES", "localhost")
+
+vsc_memory = nuage_sysmon[%max=$num_records & %sort_desc=timestamp].memory
+vsc_cpu = nuage_sysmon[%max=$num_records & %sort_desc=timestamp].cpu
+vsc_disk = nuage_sysmon[%max=$num_records & %sort_desc=timestamp].disks[0].{*}
+
+redirect_to_file($report_file)
+
+output("on")
+
+render_template(
+"""============== VSD Health Report ===========
+VSD:
+    Applications: {{ app_names | join(', ') }} ({{ app_count }})
+    License expiry: {{ ((licenses_expires[0] / 1000 - now) / (3600 * 24)) | int }} days
+VSC:
+    Memory: {{ vsc_memory | join(', ') }}
+    CPU: {{ vsc_cpu | join(', ') }}
+    Disk:
+        Name: {{ vsc_disk[0].name }}
+        Available: {{ vsc_disk[0].available }} GB / {{ vsc_disk[0].total }} GB
+===========================================
+""")
