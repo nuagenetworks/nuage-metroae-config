@@ -23,7 +23,7 @@ class DeviceReaderBase(object):
 
     def filter_results(self, results, filter):
         filtered = list()
-        sort_asc = True
+        sort_desc = False
         sort_field = None
         start = None
         end = None
@@ -39,10 +39,10 @@ class DeviceReaderBase(object):
                         end = filter[field_name]
                     elif field_name in ["%sort", "%sort_asc"]:
                         sort_field = filter[field_name]
-                        sort_asc = True
+                        sort_desc = False
                     elif field_name == "%sort_desc":
                         sort_field = filter[field_name]
-                        sort_asc = False
+                        sort_desc = True
                     else:
                         raise Exception(
                             "Invalid filter %s for query" % field_name)
@@ -52,6 +52,12 @@ class DeviceReaderBase(object):
         for result in results:
             if self._should_keep_result(result, filter):
                 filtered.append(result)
+
+        if sort_field is not None:
+            def sort_func(result):
+                return self.query_attribute(result, sort_field)
+
+            filtered.sort(reverse=sort_desc, key=sort_func)
 
         return filtered[slice(start, end)]
 

@@ -524,6 +524,18 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
         return self._query(objects, attributes)
 
+    def query_attribute(self, obj, attribute):
+        """
+        Reads an attribute from an object
+        """
+        local_name = attribute.lower()
+
+        value = None
+        if hasattr(obj, local_name):
+            value = getattr(obj, local_name)
+
+        return value
+
     #
     # Private functions to do the work
     #
@@ -842,22 +854,23 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         else:
             return list()
 
-    def _query_objects(self, objects, attributes, index, parent_object):
+    def _query_objects(self, objects, attributes, level, parent_object):
         if parent_object is None:
             parent_object = self.session.root_object
 
-        if index < len(objects):
-            object_set = objects[index]
+        if level < len(objects):
+            object_set = objects[level]
             object_name = object_set["name"]
+            filter = object_set["filter"]
             spec = self._get_specification(object_name)
             self._check_child_object(parent_object.spec, spec)
             object_list = self._get_object_list(object_name,
                                                 parent_object)
             values = list()
-            for parent_object in object_list:
+            for parent_object in self.filter_results(object_list, filter):
                 values.extend(self._query_objects(objects,
                                                   attributes,
-                                                  index + 1,
+                                                  level + 1,
                                                   parent_object))
             return values
 
@@ -874,12 +887,15 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
                                                             attr_name)
             else:
                 for attribute in attributes:
-                    attribute_dict[attribute] = self._get_attribute(
+                    attribute_dict[attribute] = self.query_attribute(
                         parent_object, attribute)
             return [attribute_dict]
         else:
-            return [self._get_attribute(parent_object, attributes)]
-
+            value = self.query_attribute(parent_object, attributes)
+            if value is not None:
+                return [value]
+            else:
+                return list()
 
 #
 # Private classes to do the work

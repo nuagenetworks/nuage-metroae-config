@@ -259,6 +259,8 @@ class EsReader(DeviceReaderBase):
 
             elif type(results) == dict and obj_name in results:
                 next = results[obj_name]
+                if type(next) != list:
+                    level += 1
                 filtered.extend(self._filter_es_results_level(next,
                                                               objects,
                                                               attributes,
