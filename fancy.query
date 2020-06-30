@@ -353,7 +353,7 @@ var chart = new Chart(ctx, {
 
         labels: [
             {% for info in vsc_info %}
-            "{{ info.timestamp | date_format("%m/%d %H:%M") }}"{{ "," if not loop.last }}
+            "{{ (info.timestamp / 1000) | date_format("%m/%d %H:%M") }}"{{ "," if not loop.last }}
             {% endfor %}
         ],
         datasets: [
@@ -438,7 +438,7 @@ var chart = new Chart(ctx, {
 <thead>
 <tr><td>Resource</td>
 {% for info in vsc_info %}
-<td>{{ info.timestamp | date_format("%m/%d %H:%M") }}</td>
+<td>{{ (info.timestamp / 1000) | date_format("%m/%d %H:%M") }}</td>
 {% endfor %}
 <!-- <td colspan="{{ num_records }}">Samples</td> -->
 </tr>

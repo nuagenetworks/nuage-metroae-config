@@ -5,6 +5,8 @@ import os
 import time
 import yaml
 
+from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
+
 query_grammer = Lark(r"""
 
     query_set     : _single_line | _multi_line
@@ -436,11 +438,18 @@ class Query():
         return results
 
     def _perform_query(self, query_text, override_variables):
-        tree = query_grammer.parse(query_text)
+        try:
+            tree = query_grammer.parse(query_text)
+        except Exception as e:
+            raise QueryParseError(str(e))
         self.log.debug(tree.pretty())
         qe = QueryExecutor(self.reader, override_variables, self.reader_dict)
         qe._set_logger(self.log)
-        return qe.transform(tree)
+        try:
+            results = qe.transform(tree)
+        except Exception as e:
+            raise QueryExecutionError(str(e))
+        return results
 
 
 def jinja_date_format(value, format):
@@ -448,23 +457,3 @@ def jinja_date_format(value, format):
 
 
 jinja2.filters.FILTERS['date_format'] = jinja_date_format
-
-
-# text = '''
-
-# # This is a test
-
-# enterprise = "csp"
-# connect("vsd", "http://vsd1.example.met:8443", "csproot", "csproot", enterprise)
-# enterprise[*].domain; # inline comment
-# domain_count = count(enterprise[*].domain[*])
-# connect("ES", "http://vstat1.example.met", "csproot", "csproot", enterprise)
-
-# '''
-# text = 'test = "test string"'
-# text = 'connect("vsd", "http://vsd1.example.met:8443", "csproot", "csproot", enterprise); enterprise[*].domain'
-# tree = query_grammer.parse(text)
-
-# print tree.pretty()
-
-# print str(Query().execute(text))
