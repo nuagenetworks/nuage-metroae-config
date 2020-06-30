@@ -162,7 +162,8 @@ class QueryExecutor(Transformer):
                 filter_dict.update(add_filter)
             elif type(add_filter) == list:
                 if len(add_filter) != 2:
-                    raise Exception("Invalid range specified for filter")
+                    raise QueryExecutionError("Invalid range specified for "
+                                              "filter")
                 if add_filter[0] is None:
                     filter_dict["%end"] = add_filter[1]
                 elif add_filter[1] is None:
@@ -176,7 +177,7 @@ class QueryExecutor(Transformer):
             elif add_filter == "*":
                 filter_dict["%all"] = True
             else:
-                raise Exception("Invalid filter type")
+                raise QueryExecutionError("Invalid filter type")
 
         return filter_dict
 
@@ -205,7 +206,7 @@ class QueryExecutor(Transformer):
         args = list(t)
         self.log.debug("Connect to " + ", ".join(args))
         if len(args) < 1 or args[0].lower() not in self.reader_dict:
-            raise Exception("Invalid type for connection")
+            raise QueryExecutionError("Invalid type for connection")
 
         if self.reader is not None:
             self.reader.stop_session()
@@ -234,8 +235,8 @@ class QueryExecutor(Transformer):
     def echo_action(self, t):
         args = list(t)
         if len(args) != 1:
-            raise Exception("Invalid number of arguments to "
-                            "echo('true' | 'false')")
+            raise QueryExecutionError("Invalid number of arguments to "
+                                      "echo('true' | 'false')")
         if args[0].lower() in ["true", "on", "yes", "t", "y"]:
             self.echo = True
             self.log.debug("Echo on")
@@ -243,16 +244,16 @@ class QueryExecutor(Transformer):
             self.echo = False
             self.log.debug("Echo off")
         else:
-            raise Exception("Invalid argument to "
-                            "echo('true' | 'false'): %s" % args[0])
+            raise QueryExecutionError("Invalid argument to "
+                                      "echo('true' | 'false'): %s" % args[0])
 
         return None
 
     def output_action(self, t):
         args = list(t)
         if len(args) != 1:
-            raise Exception("Invalid number of arguments to "
-                            "output('true' | 'false')")
+            raise QueryExecutionError("Invalid number of arguments to "
+                                      "output('true' | 'false')")
         if args[0].lower() in ["true", "on", "yes", "t", "y"]:
             self.output = True
             self.log.debug("Output on")
@@ -260,8 +261,8 @@ class QueryExecutor(Transformer):
             self.output = False
             self.log.debug("Output off")
         else:
-            raise Exception("Invalid argument to "
-                            "output('true' | 'false'): %s" % args[0])
+            raise QueryExecutionError("Invalid argument to "
+                                      "output('true' | 'false'): %s" % args[0])
 
         return None
 
@@ -280,7 +281,7 @@ class QueryExecutor(Transformer):
     def variable(self, t):
         (var_name,) = t
         if var_name not in self.variables:
-            raise Exception("Unassigned variable " + var_name)
+            raise QueryExecutionError("Unassigned variable " + var_name)
         return self.variables[var_name]
 
     def list(self, t):
@@ -322,58 +323,8 @@ class QueryExecutor(Transformer):
         else:
             return str(result)
 
-    def _format_result_old(self, result, indent=0):
-        output = ""
-        if result is None:
-            output += "null"
-        elif type(result) == dict:
-            if indent == 0:
-                for key in result:
-                    output += "%s: %s\n" % (
-                        key, self._format_result(result[key], indent + 1))
-                output = output.strip("\n")
-            else:
-                output += "{"
-                first = True
-                for key in result:
-                    if not first:
-                        output += ", "
-                    else:
-                        first = False
-                    output += "%s: %s" % (
-                        key, self._format_result(result[key], indent + 1))
-                output += "}"
-
-        elif type(result) == list:
-            if len(result) > 0 and type(result[0]) == dict and indent < 2:
-                for item in result:
-                    first = True
-                    for key in item:
-                        if first:
-                            output += "\n- "
-                            first = False
-                        else:
-                            output += "  "
-                        output += "%s: %s\n" % (
-                            key, self._format_result(item[key],
-                                                     indent + 1))
-            else:
-                output += "["
-                output += ", ".join(
-                    [self._format_result(
-                        x, indent + 1) for x in result])
-                output += "]"
-        elif isinstance(result, basestring):
-            if indent == 0:
-                output += result
-            else:
-                output += "'"
-                output += result.replace("'", "''")
-                output += "'"
-        else:
-            output += str(result)
-
-        return output
+    def _get_variables(self):
+        return self.variables
 
 
 class Query():
@@ -384,12 +335,16 @@ class Query():
         self.query_files = list()
         self.log = Logger()
         self.log.set_to_stdout("ERROR", enabled=True)
+        self.variables = None
 
     def set_logger(self, logger):
         self.log = logger
 
     def set_reader(self, reader):
         self.reader = reader
+
+    def get_variables(self):
+        return self.variables
 
     def register_reader(self, reader_type, reader):
         self.reader_dict[reader_type.lower()] = reader
@@ -408,8 +363,8 @@ class Query():
         elif os.path.isfile(path_or_file_name):
             self.query_files.append(path_or_file_name)
         else:
-            raise Exception("File or path not found: " +
-                            path_or_file_name)
+            raise QueryExecutionError("File or path not found: " +
+                                      path_or_file_name)
 
     def execute(self, query_text=None, **override_variables):
 
@@ -447,6 +402,7 @@ class Query():
         qe._set_logger(self.log)
         try:
             results = qe.transform(tree)
+            self.variables = qe._get_variables()
         except Exception as e:
             raise QueryExecutionError(str(e))
         return results

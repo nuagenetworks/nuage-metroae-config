@@ -29,10 +29,6 @@ class MockReader(object):
                 self.raise_exception_on in action_str):
             raise self.mock_exception
 
-    def _new_get_value(self):
-        self.current_get_value_index += 1
-        return "value_" + str(self.current_get_value_index)
-
     def set_validate_only(self, value=True):
         pass
 
@@ -88,8 +84,9 @@ class MockReader(object):
                                                  ','.join(attributes)))
 
         if len(self.mock_results) > self.mock_result_index:
-            return self.mock_results[self.mock_result_index]
+            result = self.mock_results[self.mock_result_index]
             self.mock_result_index += 1
+            return result
         else:
             raise Exception("No more mock results to provide")
 
