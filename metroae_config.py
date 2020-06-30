@@ -464,11 +464,7 @@ class MetroConfig(object):
             self.device_version = self.writer.get_version()
 
         if self.get_software_version() is not None:
-            major_version = int(self.get_software_version().split(".")[0])
-            if (major_version < 6):
-                self.writer.set_api_version("5.0")
-            else:
-                self.writer.set_api_version(str(major_version))
+            self.writer.set_software_version(self.get_software_version())
 
     def setup_template_store(self):
         self.store = TemplateStore(ENGINE_VERSION)

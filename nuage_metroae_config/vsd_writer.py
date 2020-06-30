@@ -89,8 +89,12 @@ class VsdWriter(DeviceWriterBase):
         if certificate is not None and certificate[0] is not None:
             self.session_params['certificate'] = certificate
 
-    def set_api_version(self, version="6"):
-        self.version = version
+    def set_software_version(self, software_version):
+        major_version = int(software_version.split(".")[0])
+        if (major_version < 6):
+            self.version = "5.0"
+        else:
+            self.version = "6"
 
     def read_api_specifications(self, path_or_file_name):
         """
