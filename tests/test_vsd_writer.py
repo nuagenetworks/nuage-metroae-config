@@ -137,8 +137,6 @@ VERSION_OUTPUT_5 = """
 "url":"https://vsd1.example.com:8443/nuage/api/v1_0"}]}
 """
 
-API_VERSION_6 = "6"
-
 
 @patch("nuage_metroae_config.vsd_writer.Session")
 def setup_standard_session(vsd_writer, mock_patch):
@@ -1910,9 +1908,18 @@ class TestVsdWriterVersion(object):
             "software_type": None,
             "software_version": None}
 
-    def test_set_api_version(self):
+    def test_set_software_version__success(self):
 
         vsd_writer = VsdWriter()
-        vsd_writer.set_api_version(API_VERSION_6)
 
-        assert vsd_writer.version == API_VERSION_6
+        vsd_writer.set_software_version("4.0.R11")
+        assert vsd_writer.version == "5.0"
+
+        vsd_writer.set_software_version("5.4.1")
+        assert vsd_writer.version == "5.0"
+
+        vsd_writer.set_software_version("6.0.3")
+        assert vsd_writer.version == "6"
+
+        vsd_writer.set_software_version("20.5.R1")
+        assert vsd_writer.version == "6"
