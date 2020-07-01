@@ -94,9 +94,15 @@ class QueryExecutor(Transformer):
         self.echo = True
         self.output = True
 
+        if self.reader is not None:
+            self.reader.start_session()
+
     def query_set(self, qs):
+        if self.reader is not None:
+            self.reader.stop_session()
         if self.redirect_file is not None:
             self.redirect_file.close()
+
         return filter(lambda x: x is not None, qs)
 
     def query(self, q):
@@ -125,6 +131,8 @@ class QueryExecutor(Transformer):
     def retrieve(self, t):
         objects = t[0]
         attributes = t[1]
+        if self.reader is None:
+            raise QueryExecutionError("No reader for query")
         result = self.reader.query(objects, attributes)
         return result
 
@@ -268,10 +276,16 @@ class QueryExecutor(Transformer):
 
     def count(self, t):
         (values,) = t
+        if type(values) != list:
+            raise QueryExecutionError("Invalid data type for count")
+
         return len(values)
 
     def reverse(self, t):
         (values,) = t
+        if type(values) != list:
+            raise QueryExecutionError("Invalid data type for reverse")
+
         return list(reversed(values))
 
     def argument(self, t):
@@ -281,7 +295,7 @@ class QueryExecutor(Transformer):
     def variable(self, t):
         (var_name,) = t
         if var_name not in self.variables:
-            raise QueryExecutionError("Unassigned variable " + var_name)
+            raise Exception("Unassigned variable " + var_name)
         return self.variables[var_name]
 
     def list(self, t):
@@ -368,9 +382,6 @@ class Query():
 
     def execute(self, query_text=None, **override_variables):
 
-        if self.reader is not None:
-            self.reader.start_session()
-
         if query_text is None:
             results = list()
             for query_file in self.query_files:
@@ -386,9 +397,6 @@ class Query():
 
         else:
             results = self._perform_query(query_text, override_variables)
-
-        if self.reader is not None:
-            self.reader.stop_session()
 
         return results
 

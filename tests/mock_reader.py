@@ -60,7 +60,7 @@ class MockReader(object):
         Creates a new connection with another device
         """
         # Abstract prototype function
-        raise NotImplementedError("Abstract base function not implemented")
+        self._record_action("connect [%s]" % ",".join(args))
 
     def query(self, objects, attributes):
         """

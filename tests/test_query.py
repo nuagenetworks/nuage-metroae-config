@@ -1,7 +1,7 @@
 import pytest
 
 from mock_reader import MockReader
-from nuage_metroae_config.errors import QueryParseError
+from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
 from nuage_metroae_config.query import Query
 
 PARSE_ERROR_CASES = [
@@ -12,6 +12,8 @@ PARSE_ERROR_CASES = [
     ("Enterprise[field=].name", 18),
     ("Enterprise[field=test field2=other].name", 23),
     ("Enterprise.{}", 13),
+    ("count()", 7),
+    ("reverse()", 9),
 ]
 
 
@@ -28,8 +30,8 @@ class TestQuery(object):
 
         results = query.execute(query_text, **override_vars)
 
-        expected_actions_formatted = filter(
-            None, [x.strip() for x in expected_actions.split("\n")])
+        expected_actions_formatted = self.format_expected_actions(
+            expected_actions)
 
         print "\nExpected actions:"
         print "\n".join(expected_actions_formatted)
@@ -61,8 +63,8 @@ class TestQuery(object):
         else:
             results = query.execute(query_text, **override_vars)
 
-        expected_actions_formatted = filter(
-            None, [x.strip() for x in expected_actions.split("\n")])
+        expected_actions_formatted = self.format_expected_actions(
+            expected_actions)
 
         print "\nExpected actions:"
         print "\n".join(expected_actions_formatted)
@@ -76,6 +78,9 @@ class TestQuery(object):
         if expect_error:
             assert e.value == exception
             return e
+
+    def format_expected_actions(self, expected_actions):
+        return filter(None, [x.strip() for x in expected_actions.split("\n")])
 
     @pytest.mark.parametrize("query_text, col", PARSE_ERROR_CASES)
     def test__parse_errors(self, query_text, col):
@@ -363,3 +368,197 @@ multiline
         assert variables["test1"] == expected_results[2]["test1"]
         assert variables["test2"] == expected_results[3]["test2"]
 
+    def test_variables__undefined(self):
+
+        query_text = """
+            test = $unset_variable
+        """
+
+        query = Query()
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "Unassigned variable" in str(e.value)
+
+    def test_count_1__success(self):
+
+        query_text = """
+            count(Enterprise.id)
+        """
+
+        mock_results = [[1, 2, 3, 4, 5]]
+        expected_results = [5]
+
+        expected_actions = """
+            start-session
+            query [Enterprise (None)] {id}
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    def test_count_2__success(self):
+
+        query_text = """
+            list = []
+            count($list)
+        """
+
+        mock_results = [[]]
+        expected_results = [{'list': []}, 0]
+
+        expected_actions = """
+            start-session
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    def test_count__invalid_type(self):
+
+        query_text = """
+            list = "not a list"
+            count($list)
+        """
+
+        query = Query()
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "Invalid data type" in str(e.value)
+
+    def test_reverse_1__success(self):
+
+        query_text = """
+            reverse(Enterprise.id)
+        """
+
+        mock_results = [[1, 2, 3, 4, 5]]
+        expected_results = [[5, 4, 3, 2, 1]]
+
+        expected_actions = """
+            start-session
+            query [Enterprise (None)] {id}
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    def test_reverse_2__success(self):
+
+        query_text = """
+            list = []
+            reverse($list)
+        """
+
+        mock_results = [[]]
+        expected_results = [{'list': []}, []]
+
+        expected_actions = """
+            start-session
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    def test_reverse__invalid_type(self):
+
+        query_text = """
+            list = "not a list"
+            reverse($list)
+        """
+
+        query = Query()
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "Invalid data type" in str(e.value)
+
+    def test_connect__success(self):
+
+        query_text = """
+            first_reader_object.name
+            connect("VSD", "https://localhost:8443", "csproot", "csproot", "csp")
+            vsd_reader_object.name
+            connect("ES", "localhost")
+            es_reader_object.name
+        """
+
+        expected_results = [
+            ["first reader object"],
+            ["vsd reader object"],
+            ["es reader object"],
+        ]
+
+        first_expected_actions = self.format_expected_actions("""
+            start-session
+            query [first_reader_object (None)] {name}
+            stop-session
+        """)
+
+        vsd_expected_actions = self.format_expected_actions("""
+            connect [https://localhost:8443,csproot,csproot,csp]
+            query [vsd_reader_object (None)] {name}
+            stop-session
+        """)
+
+        es_expected_actions = self.format_expected_actions("""
+            connect [localhost]
+            query [es_reader_object (None)] {name}
+            stop-session
+        """)
+
+        query = Query()
+        first_reader = MockReader()
+        first_reader.add_mock_result(["first reader object"])
+        query.set_reader(first_reader)
+
+        vsd_reader = MockReader()
+        vsd_reader.add_mock_result(["vsd reader object"])
+        query.register_reader("Vsd", vsd_reader)
+
+        es_reader = MockReader()
+        es_reader.add_mock_result(["es reader object"])
+        query.register_reader("Es", es_reader)
+
+        results = query.execute(query_text)
+
+        assert results == expected_results
+
+        assert first_reader.get_recorded_actions() == first_expected_actions
+        assert vsd_reader.get_recorded_actions() == vsd_expected_actions
+        assert es_reader.get_recorded_actions() == es_expected_actions
+
+    def test_connect__no_reader(self):
+
+        query_text = """
+            reader_object.name
+        """
+
+        query = Query()
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "No reader for query" in str(e.value)
+
+    def test_connect__wrong_reader(self):
+
+        query_text = """
+            first_reader.name
+            connect("invalid", "user", "pass")
+        """
+
+        query = Query()
+        first_reader = MockReader()
+        first_reader.add_mock_result(["first reader object"])
+
+        query.set_reader(first_reader)
+
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "Invalid type for connection" in str(e.value)
