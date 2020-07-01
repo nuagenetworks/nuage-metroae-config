@@ -4,6 +4,16 @@ from mock_reader import MockReader
 from nuage_metroae_config.errors import QueryParseError
 from nuage_metroae_config.query import Query
 
+PARSE_ERROR_CASES = [
+    ("Enterprise.name Enterprise.Domain.name", 17),
+    ("test = ;", 8),
+    ("test = enterprise;", 18),
+    ("Enterprise[:].name", 13),
+    ("Enterprise[field=].name", 18),
+    ("Enterprise[field=test field2=other].name", 23),
+    ("Enterprise.{}", 13),
+]
+
 
 class TestQuery(object):
 
@@ -67,6 +77,14 @@ class TestQuery(object):
             assert e.value == exception
             return e
 
+    @pytest.mark.parametrize("query_text, col", PARSE_ERROR_CASES)
+    def test__parse_errors(self, query_text, col):
+        query = Query()
+        with pytest.raises(QueryParseError) as e:
+            query.execute(query_text)
+
+        assert ("line 1 col " + str(col)) in str(e)
+
     def test_simple__success(self):
 
         query_text = "Enterprise.name"
@@ -99,16 +117,6 @@ class TestQuery(object):
 
         self.run_execute_test(query_text, expected_actions, mock_results,
                               expected_results)
-
-    def test_missing_semi__parse_error(self):
-
-        query_text = "Enterprise.name Enterprise.Domain.name"
-
-        query = Query()
-        with pytest.raises(QueryParseError) as e:
-            query.execute(query_text)
-
-        assert "line 1 col 17" in str(e)
 
     def test_multi_line__success(self):
 
@@ -246,16 +254,6 @@ multiline
         self.run_execute_test(query_text, expected_actions, mock_results,
                               expected_results)
 
-    def test_invalid_range__parse_error(self):
-
-        query_text = "Enterprise[:].name"
-
-        query = Query()
-        with pytest.raises(QueryParseError) as e:
-            query.execute(query_text)
-
-        assert "line 1 col 13" in str(e)
-
     def test_attributes_1__success(self):
 
         query_text = """
@@ -275,6 +273,44 @@ multiline
         self.run_execute_test(query_text, expected_actions, mock_results,
                               expected_results)
 
+    def test_filter_sort__success(self):
+
+        query_text = """
+            sort_field = "id"
+            Enterprise[:10 & %sort=creationtime].Domain[%sort_desc=$sort_field].Subnet[%sort_asc="name" & 3].Zone.name
+        """
+
+        mock_results = [["value1", "value2"]]
+        expected_results = [{"sort_field": "id"}, ["value1", "value2"]]
+
+        expected_actions = """
+            start-session
+            query [Enterprise (%end=10,%sort=creationtime),Domain (%sort_desc=id),Subnet (%end=4,%sort_asc=name,%start=3),Zone (None)] {name}
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    def test_filter_attrs__success(self):
+
+        query_text = """
+            field_value = "value"
+            Enterprise[:10 & %sort=creationtime & field1=test].Domain[%sort_desc=id & field1=$field_value & field2="test"].Subnet[field="name"].Zone.name
+        """
+
+        mock_results = [["value1", "value2"]]
+        expected_results = [{"field_value": "value"}, ["value1", "value2"]]
+
+        expected_actions = """
+            start-session
+            query [Enterprise (%end=10,%sort=creationtime,field1=test),Domain (%sort_desc=id,field1=value,field2=test),Subnet (field=name),Zone (None)] {name}
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
     def test_attributes_2__success(self):
 
         query_text = """
@@ -282,7 +318,7 @@ multiline
         """
 
         mock_results = [[{"name": "value1", "desc": "desc1"},
-                         {"name": "value2", "desc": "desc1"}]]
+                         {"name": "value2", "desc": "desc2"}]]
         expected_results = mock_results
 
         expected_actions = """
@@ -294,12 +330,36 @@ multiline
         self.run_execute_test(query_text, expected_actions, mock_results,
                               expected_results)
 
-    def test_invalid_attributes__parse_error(self):
+    def test_variables__override(self):
 
-        query_text = "Enterprise.{}"
+        query_text = """
+            given_var = "try override"
+            normal_var = "should set"
+            test1 = $given_var
+            test2 = $normal_var
+        """
 
-        query = Query()
-        with pytest.raises(QueryParseError) as e:
-            query.execute(query_text)
+        mock_results = []
+        expected_results = [
+            {"given_var": "cannot override"},
+            {"normal_var": "should set"},
+            {"test1": "cannot override"},
+            {"test2": "should set"},
+        ]
 
-        assert "line 1 col 13" in str(e)
+        expected_actions = """
+            start-session
+            stop-session
+        """
+
+        query = self.run_execute_test(query_text, expected_actions,
+                                      mock_results,
+                                      expected_results,
+                                      {"given_var": "cannot override"})
+
+        variables = query.get_variables()
+        assert variables["given_var"] == expected_results[0]["given_var"]
+        assert variables["normal_var"] == expected_results[1]["normal_var"]
+        assert variables["test1"] == expected_results[2]["test1"]
+        assert variables["test2"] == expected_results[3]["test2"]
+
