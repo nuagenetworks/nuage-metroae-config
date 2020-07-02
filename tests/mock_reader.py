@@ -72,7 +72,10 @@ class MockReader(object):
             if filter is not None:
                 pairs = list()
                 for key in sorted(filter.keys()):
-                    pairs.append("%s=%s" % (key, str(filter[key])))
+                    value = filter[key]
+                    if type(value) == list:
+                        value = "[" + ",".join(value) + "]"
+                    pairs.append("%s=%s" % (key, str(value)))
                 filters.append("%s (%s)" % (obj["name"], ",".join(pairs)))
             else:
                 filters.append("%s (None)" % obj["name"])

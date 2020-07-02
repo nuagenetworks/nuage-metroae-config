@@ -1,8 +1,16 @@
+import os
 import pytest
 
 from mock_reader import MockReader
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
 from nuage_metroae_config.query import Query
+
+FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
+
+VALID_QUERY_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
+                                     'valid_queries')
+
+TEST_FILE = "/tmp/pytest-query.txt"
 
 PARSE_ERROR_CASES = [
     ("Enterprise.name Enterprise.Domain.name", 17),
@@ -14,6 +22,10 @@ PARSE_ERROR_CASES = [
     ("Enterprise.{}", 13),
     ("count()", 7),
     ("reverse()", 9),
+    ("echo()", 6),
+    ("output()", 8),
+    ("echo('true', 'extra')", 12),
+    ("output('true', 'extra')", 14),
 ]
 
 
@@ -259,25 +271,6 @@ multiline
         self.run_execute_test(query_text, expected_actions, mock_results,
                               expected_results)
 
-    def test_attributes_1__success(self):
-
-        query_text = """
-            Enterprise.{name, desc}
-        """
-
-        mock_results = [[{"name": "value1", "desc": "desc1"},
-                         {"name": "value2", "desc": "desc1"}]]
-        expected_results = mock_results
-
-        expected_actions = """
-            start-session
-            query [Enterprise (None)] {name,desc}
-            stop-session
-        """
-
-        self.run_execute_test(query_text, expected_actions, mock_results,
-                              expected_results)
-
     def test_filter_sort__success(self):
 
         query_text = """
@@ -310,6 +303,45 @@ multiline
         expected_actions = """
             start-session
             query [Enterprise (%end=10,%sort=creationtime,field1=test),Domain (%sort_desc=id,field1=value,field2=test),Subnet (field=name),Zone (None)] {name}
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    def test_filter_attr_list__success(self):
+
+        query_text = """
+            ent_names = Enterprise.name
+            Enterprise[name=$ent_names].Domain[name=["public", "private"]].Subnet.name
+        """
+
+        mock_results = [["value1", "value2"], ["value3", "value4"]]
+        expected_results = [{"ent_names": ["value1", "value2"]}, ["value3", "value4"]]
+
+        expected_actions = """
+            start-session
+            query [Enterprise (None)] {name}
+            query [Enterprise (name=[value1,value2]),Domain (name=[public,private]),Subnet (None)] {name}
+            stop-session
+        """
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    def test_attributes_1__success(self):
+
+        query_text = """
+            Enterprise.{name, desc}
+        """
+
+        mock_results = [[{"name": "value1", "desc": "desc1"},
+                         {"name": "value2", "desc": "desc1"}]]
+        expected_results = mock_results
+
+        expected_actions = """
+            start-session
+            query [Enterprise (None)] {name,desc}
             stop-session
         """
 
@@ -562,3 +594,217 @@ multiline
             query.execute(query_text)
 
         assert "Invalid type for connection" in str(e.value)
+
+    def test_redirect__success(self):
+
+        query_text = """
+            file_name = "%s"
+            before_redirect.msg
+            redirect_to_file($file_name)
+            after_redirect.msg
+        """ % TEST_FILE
+
+        mock_results = [["not written to file"],
+                        ["is written to file"]]
+        expected_results = list(mock_results)
+        expected_results.insert(0, {"file_name": TEST_FILE})
+
+        expected_actions = """
+            start-session
+            query [before_redirect (None)] {msg}
+            query [after_redirect (None)] {msg}
+            stop-session
+        """
+
+        if os.path.isfile(TEST_FILE):
+            os.remove(TEST_FILE)
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+        with open(TEST_FILE, "r") as f:
+            file_contents = f.read()
+
+        if os.path.isfile(TEST_FILE):
+            os.remove(TEST_FILE)
+
+        assert "- is written to file\n" == file_contents
+
+    def test_render__success(self):
+
+        query_text = """
+            template = '### {{ variable }} ###'
+            variable = 'value'
+            redirect_to_file("%s")
+            render_template($template)
+        """ % TEST_FILE
+
+        mock_results = []
+        expected_results = [
+            {"template": "### {{ variable }} ###"},
+            {"variable": "value"},
+            "### value ###"]
+
+        expected_actions = """
+            start-session
+            stop-session
+        """
+
+        if os.path.isfile(TEST_FILE):
+            os.remove(TEST_FILE)
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+        with open(TEST_FILE, "r") as f:
+            file_contents = f.read()
+
+        if os.path.isfile(TEST_FILE):
+            os.remove(TEST_FILE)
+
+        assert "### value ###\n" == file_contents
+
+    def test_render__missing_var(self):
+
+        query_text = """
+            template = '### {{ variable }} ###'
+            render_template($template)
+        """
+
+        query = Query()
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "undefined" in str(e.value)
+
+    def test_echo_output__success(self, capsys):
+
+        query_text = """
+            redirect_to_file("%s")
+            test_1 = "output and echo"
+            echo("false")
+            test_2 = "output only"
+            output("off")
+            test_3 = "neither"
+            echo("on")
+            test_4 = "echo only"
+            output("true")
+            test_5 = "both again"
+        """ % TEST_FILE
+
+        mock_results = []
+        expected_results = [
+            {"test_1": "output and echo"},
+            {"test_2": "output only"},
+            {"test_5": "both again"},
+        ]
+
+        expected_actions = """
+            start-session
+            stop-session
+        """
+
+        if os.path.isfile(TEST_FILE):
+            os.remove(TEST_FILE)
+
+        query = self.run_execute_test(query_text, expected_actions,
+                                      mock_results,
+                                      expected_results)
+
+        with open(TEST_FILE, "r") as f:
+            file_contents = f.read()
+
+        if os.path.isfile(TEST_FILE):
+            os.remove(TEST_FILE)
+
+        expected_contents = [
+            "test_1: output and echo",
+            "test_2: output only",
+            "test_5: both again",
+            "",
+        ]
+        assert "\n".join(expected_contents) == file_contents
+
+        captured_stdout = capsys.readouterr().out
+
+        assert "test_1: output and echo" in captured_stdout
+        assert "test_2" not in captured_stdout
+        assert "test_3" not in captured_stdout
+        assert "test_4" not in captured_stdout
+        assert "test_5: both again" in captured_stdout
+
+        variables = query.get_variables()
+        assert variables["test_1"] == "output and echo"
+        assert variables["test_2"] == "output only"
+        assert variables["test_3"] == "neither"
+        assert variables["test_4"] == "echo only"
+        assert variables["test_5"] == "both again"
+
+    def test_echo__invalid_arg(self):
+
+        query_text = """
+            echo("foobar")
+        """
+
+        query = Query()
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "Invalid argument" in str(e.value)
+
+    def test_output__invalid_arg(self):
+
+        query_text = """
+            output("foobar")
+        """
+
+        query = Query()
+        with pytest.raises(QueryExecutionError) as e:
+            query.execute(query_text)
+
+        assert "Invalid argument" in str(e.value)
+
+    def test_directory___success(self):
+
+        query = Query()
+
+        expected_results = [
+            {"query_1": "query 1"},
+            {"query_2": "query 2"},
+            {"query_3": "query 3"},
+        ]
+
+        query.add_query_file(VALID_QUERY_DIRECTORY)
+
+        results = query.execute()
+
+        assert results == expected_results
+
+    def test_files___success(self):
+
+        query = Query()
+
+        expected_results = [
+            {"query_3": "query 3"},
+            {"query_1": "query 1"},
+        ]
+
+        query.add_query_file(os.path.join(VALID_QUERY_DIRECTORY,
+                                          "query_3.query"))
+        query.add_query_file(os.path.join(VALID_QUERY_DIRECTORY,
+                                          "query_1.query"))
+
+        results = query.execute()
+
+        assert results == expected_results
+
+    def test_files__missing_file(self):
+
+        query = Query()
+
+        with pytest.raises(QueryExecutionError) as e:
+            query.add_query_file(os.path.join(VALID_QUERY_DIRECTORY,
+                                              "not_exist.query"))
+
+        assert "File or path not found" in str(e.value)
+

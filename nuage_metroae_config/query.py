@@ -32,7 +32,7 @@ query_grammer = Lark(r"""
     _filter            : "[" filter_set "]"
     filter_set         : _filter_item ( "&" _filter_item )*
     _filter_item       : filter_attr | _filter_range | variable | integer
-    filter_attr        : ( filter_special | filter_attr_name ) "=" ( variable | string | filter_attr_name | integer )
+    filter_attr        : ( filter_special | filter_attr_name ) "=" ( variable | string | filter_attr_name | integer | list )
     filter_special     : "%" CNAME
     _filter_range      : filter_range_both | filter_range_start | filter_range_end
     filter_range_both  : ( integer | variable ) ":" ( integer | variable )
@@ -331,7 +331,7 @@ class QueryExecutor(Transformer):
         if result is None:
             return "null"
         elif type(result) == dict or type(result) == list:
-            return yaml.safe_dump(result)
+            return yaml.safe_dump(result).strip("\n")
         elif isinstance(result, basestring):
             return result
         else:
@@ -370,7 +370,7 @@ class Query():
         Query files are expected to have .query extension
         """
         if (os.path.isdir(path_or_file_name)):
-            for file_name in os.listdir(path_or_file_name):
+            for file_name in sorted(os.listdir(path_or_file_name)):
                 if file_name.endswith(".query"):
                     full_path = os.path.join(path_or_file_name, file_name)
                     self.query_files.append(full_path)
@@ -387,7 +387,7 @@ class Query():
             for query_file in self.query_files:
 
                 with open(query_file, "r") as f:
-                    results.append(self._perform_query(f.read(),
+                    results.extend(self._perform_query(f.read(),
                                                        override_variables))
 
             if len(results) == 1:

@@ -65,7 +65,12 @@ class DeviceReaderBase(object):
         for attr_name in filter:
             if not attr_name.startswith("%"):
                 result_value = self.query_attribute(result, attr_name)
-                if result_value != filter[attr_name]:
+                if type(filter[attr_name]) == list:
+                    value_list = filter[attr_name]
+                else:
+                    value_list = [filter[attr_name]]
+
+                if result_value not in value_list:
                     return False
 
         return True

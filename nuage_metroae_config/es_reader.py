@@ -1,5 +1,4 @@
 import requests
-import sys
 
 from device_reader_base import DeviceReaderBase
 from errors import (DeviceWriterError,
@@ -160,6 +159,9 @@ class EsReader(DeviceReaderBase):
                             "Invalid filter %s for ES index query" %
                             field_name)
                 else:
+                    if type(query_filter[field_name]) == list:
+                        raise Exception("ES index query does not support"
+                                        " attribute value lists")
                     fields.append("%s:%s" % (field_name,
                                              query_filter[field_name]))
             if len(fields) > 0:
@@ -271,7 +273,7 @@ class EsReader(DeviceReaderBase):
     def _filter_attributes(self, current, attributes):
         if type(current) != dict:
             self.log.debug("Attempting to get attributes from a result that"
-                            " is not an object")
+                           " is not an object")
             return list()
         if type(attributes) == list:
             attr_dict = dict()
