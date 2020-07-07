@@ -1,4 +1,4 @@
-from mock import patch, MagicMock
+from mock import call, patch, MagicMock
 import json
 import os
 import pytest
@@ -1923,3 +1923,694 @@ class TestVsdWriterVersion(object):
 
         vsd_writer.set_software_version("20.5.R1")
         assert vsd_writer.version == "20"
+
+
+class TestVsdWriterQuery(object):
+
+    def create_mock_query_object(self, attr_dict):
+        mock_object = MagicMock()
+        mock_object._attributes = attr_dict
+        mock_object.unknown = None
+        for attr_name, value in attr_dict.items():
+            setattr(mock_object, attr_name, value)
+
+        return mock_object
+
+    def add_mock_objects_to_vsd_writer(self, vsd_writer, get_object_calls):
+        mock_get_object_list = MagicMock()
+        mock_get_object_list.side_effect = get_object_calls
+        vsd_writer._get_object_list = mock_get_object_list
+        return mock_get_object_list
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect__success(self, mock_patch):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        mock_session = MagicMock()
+        mock_session.root_object = MagicMock()
+        mock_patch.return_value = mock_session
+
+        vsd_writer.connect(SESSION_PARAMS["url"],
+                           SESSION_PARAMS["username"],
+                           SESSION_PARAMS["password"],
+                           SESSION_PARAMS["enterprise"])
+
+        expected_params = dict(EXPECTED_SESSION_PARAMS)
+        del expected_params["certificate"]
+
+        mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                           **expected_params)
+
+        mock_session.start.assert_called_once()
+
+        mock_session.set_enterprise_spec.assert_called_once_with(
+            vsd_writer.specs['enterprise'])
+        assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+        mock_session.start.assert_called_once()
+
+        mock_session.set_enterprise_spec.assert_called_once_with(
+            vsd_writer.specs['enterprise'])
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect_certificate__success(self, mock_patch):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        mock_session = MagicMock()
+        mock_session.root_object = MagicMock()
+        mock_patch.return_value = mock_session
+
+        vsd_writer.connect(SESSION_PARAMS["url"],
+                           SESSION_PARAMS["username"],
+                           SESSION_PARAMS["password"],
+                           SESSION_PARAMS["enterprise"],
+                           SESSION_PARAMS["certificate"][0],
+                           SESSION_PARAMS["certificate"][1])
+
+        mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                           **EXPECTED_SESSION_PARAMS)
+
+        mock_session.start.assert_called_once()
+
+        mock_session.set_enterprise_spec.assert_called_once_with(
+            vsd_writer.specs['enterprise'])
+        assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+        mock_session.start.assert_called_once()
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect_existing__success(self, mock_patch):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+        vsd_writer.set_session_params(**SESSION_PARAMS)
+
+        mock_session_old = MagicMock()
+        mock_session_old.root_object = MagicMock()
+        mock_patch.return_value = mock_session_old
+
+        vsd_writer.start_session()
+
+        mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                           **EXPECTED_SESSION_PARAMS)
+
+        mock_session = MagicMock()
+        mock_session.root_object = MagicMock()
+        mock_patch.return_value = mock_session
+
+        vsd_writer.connect("https://newurl:8443", "newuser", "newpass",
+                           "newent")
+
+        mock_patch.assert_called_with(spec=vsd_writer.specs['me'],
+                                      **{"api_url": "https://newurl:8443",
+                                         "username": "newuser",
+                                         "password": "newpass",
+                                         "enterprise": "newent",
+                                         "version": "6",
+                                         "api_prefix": "nuage/api"})
+
+        mock_session.start.assert_called_once()
+
+        mock_session.set_enterprise_spec.assert_called_once_with(
+            vsd_writer.specs['enterprise'])
+        assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+        mock_session.start.assert_called_once()
+
+        mock_session.set_enterprise_spec.assert_called_once_with(
+            vsd_writer.specs['enterprise'])
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect_defaults__success(self, mock_patch):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        mock_session = MagicMock()
+        mock_session.root_object = MagicMock()
+        mock_patch.return_value = mock_session
+
+        vsd_writer.connect(SESSION_PARAMS["url"])
+
+        expected_params = dict(EXPECTED_SESSION_PARAMS)
+        del expected_params["certificate"]
+        expected_params["username"] = "csproot"
+        expected_params["password"] = "csproot"
+        expected_params["enterprise"] = "csp"
+
+        mock_patch.assert_called_once_with(spec=vsd_writer.specs['me'],
+                                           **expected_params)
+
+        mock_session.start.assert_called_once()
+
+        mock_session.set_enterprise_spec.assert_called_once_with(
+            vsd_writer.specs['enterprise'])
+        assert mock_session.root_object.spec == vsd_writer.specs['me']
+
+        mock_session.start.assert_called_once()
+
+        mock_session.set_enterprise_spec.assert_called_once_with(
+            vsd_writer.specs['enterprise'])
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect__no_args(self, mock_patch):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        mock_session = MagicMock()
+        mock_session.root_object = MagicMock()
+        mock_patch.return_value = mock_session
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.connect()
+
+        assert "parameter is required" in str(e)
+
+        mock_patch.assert_not_called()
+        mock_session.start.assert_not_called()
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect__missing_cert_key(self, mock_patch):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        mock_session = MagicMock()
+        mock_session.root_object = MagicMock()
+        mock_patch.return_value = mock_session
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.connect(SESSION_PARAMS["url"],
+                               SESSION_PARAMS["username"],
+                               SESSION_PARAMS["password"],
+                               SESSION_PARAMS["enterprise"],
+                               SESSION_PARAMS["certificate"][0])
+
+        assert "key parameter is required" in str(e)
+
+        mock_patch.assert_not_called()
+        mock_session.start.assert_not_called()
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect__extra_args(self, mock_patch):
+        vsd_writer = VsdWriter()
+
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        mock_session = MagicMock()
+        mock_session.root_object = MagicMock()
+        mock_patch.return_value = mock_session
+
+        with pytest.raises(SessionError) as e:
+            vsd_writer.connect(SESSION_PARAMS["url"],
+                               SESSION_PARAMS["username"],
+                               SESSION_PARAMS["password"],
+                               SESSION_PARAMS["enterprise"],
+                               SESSION_PARAMS["certificate"][0],
+                               SESSION_PARAMS["certificate"][1],
+                               "too many")
+
+        assert "Too many arguments" in str(e)
+
+        mock_patch.assert_not_called()
+        mock_session.start.assert_not_called()
+
+    @patch("nuage_metroae_config.vsd_writer.Session")
+    def test_connect__bambou_error(self, mock_patch):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_session_params(**SESSION_PARAMS)
+        vsd_writer.read_api_specifications(VALID_SPECS_DIRECTORY)
+
+        mock_session = MagicMock()
+        mock_patch.return_value = mock_session
+        fake_exception = get_mock_bambou_error(403, 'forbidden')
+        mock_session.start.side_effect = fake_exception
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.connect(SESSION_PARAMS["url"])
+
+        assert "403" in str(e)
+        assert "forbidden" in str(e)
+
+        assert "Session start" in e.value.get_display_string()
+        assert "HTTP 403" in e.value.get_display_string()
+
+    def test_query__no_session(self):
+        vsd_writer = VsdWriter()
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None}
+        ]
+
+        attributes = "name"
+
+        with pytest.raises(SessionNotStartedError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "not started" in str(e)
+
+    def test_query_attrs_single__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None}
+        ]
+
+        attributes = "Name"
+
+        mock_ent = self.create_mock_query_object({"name": "enterprise_1",
+                                                  "bgpenabled": True,
+                                                  "dhcpleaseinterval": 600})
+
+        calls = [
+            [mock_ent]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == ["enterprise_1"]
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_attrs_single__unknown(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None}
+        ]
+
+        attributes = "unknown"
+
+        mock_ent = self.create_mock_query_object({"name": "enterprise_1",
+                                                  "bgpenabled": True,
+                                                  "dhcpleaseinterval": 600})
+
+        calls = [
+            [mock_ent]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == []
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_attrs_multiple__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None}
+        ]
+
+        attributes = ["Name", "DHCPLeaseInterval"]
+
+        mock_ent = self.create_mock_query_object({"name": "enterprise_1",
+                                                  "bgpenabled": True,
+                                                  "dhcpleaseinterval": 600})
+
+        calls = [
+            [mock_ent]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [{"Name": "enterprise_1", "DHCPLeaseInterval": 600}]
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_attrs_multiple__unknown(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None}
+        ]
+
+        attributes = ["Name", "DHCPLeaseInterval", "unknown"]
+
+        mock_ent = self.create_mock_query_object({"name": "enterprise_1",
+                                                  "bgpenabled": True,
+                                                  "dhcpleaseinterval": 600})
+
+        calls = [
+            [mock_ent]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [{"Name": "enterprise_1", "DHCPLeaseInterval": 600}]
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_attrs_all__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None}
+        ]
+
+        attributes = ["*"]
+
+        mock_ent = self.create_mock_query_object({"name": "enterprise_1",
+                                                  "bgpenabled": True,
+                                                  "dhcpleaseinterval": 600})
+
+        calls = [
+            [mock_ent]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [{"name": "enterprise_1",
+                            "bgpenabled": True,
+                            "dhcpleaseinterval": 600}]
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_object_single__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        mock_ent = self.create_mock_query_object({"name": "enterprise_1"})
+
+        calls = [
+            [mock_ent]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == ["enterprise_1"]
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_object_single__none_found(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        calls = [
+            []
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == []
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_object_single__bambou_error(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        calls = [
+            get_mock_bambou_error(403, "forbidden")
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "403" in str(e)
+        assert "forbidden" in str(e)
+
+        assert "Query" in e.value.get_display_string()
+        assert "HTTP 403" in e.value.get_display_string()
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_object_multiple__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1"})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2"})
+        mock_ent_3 = self.create_mock_query_object({"name": "enterprise_3"})
+
+        calls = [
+            [mock_ent_1, mock_ent_2, mock_ent_3]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == ["enterprise_1", "enterprise_2", "enterprise_3"]
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_object_multiple_2__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+        ]
+
+        attributes = ["Name", "DHCPLeaseInterval"]
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1",
+                                                    "dhcpleaseinterval": 100})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2",
+                                                    "dhcpleaseinterval": 200})
+        mock_ent_3 = self.create_mock_query_object({"name": "enterprise_3",
+                                                    "dhcpleaseinterval": 300})
+
+        calls = [
+            [mock_ent_1, mock_ent_2, mock_ent_3]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [{"Name": "enterprise_1",
+                            "DHCPLeaseInterval": 100},
+                           {"Name": "enterprise_2",
+                            "DHCPLeaseInterval": 200},
+                           {"Name": "enterprise_3",
+                            "DHCPLeaseInterval": 300}]
+
+        mock_get.assert_has_calls([call("Enterprise",
+                                        mock_session.root_object)])
+
+    def test_query_nested_object_multiple__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1"})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2"})
+        mock_dom_1 = self.create_mock_query_object({"name": "domain_1"})
+        mock_dom_2 = self.create_mock_query_object({"name": "domain_2"})
+        mock_dom_3 = self.create_mock_query_object({"name": "domain_3"})
+        mock_dom_4 = self.create_mock_query_object({"name": "domain_4"})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1, mock_ent_2],
+            [mock_dom_1, mock_dom_2],
+            [mock_dom_3, mock_dom_4]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == ["domain_1", "domain_2", "domain_3", "domain_4"]
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1),
+            call("Domain", mock_ent_2),
+        ])
+
+    def test_query_nested_object_multiple__empty_child(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        attributes = ["*"]
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1"})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2"})
+        mock_dom_3 = self.create_mock_query_object({"name": "domain_3",
+                                                    "bgpenabled": True})
+        mock_dom_4 = self.create_mock_query_object({"name": "domain_4",
+                                                    "bgpenabled": False})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1, mock_ent_2],
+            [],
+            [mock_dom_3, mock_dom_4]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [{"name": "domain_3",
+                            "bgpenabled": True},
+                           {"name": "domain_4",
+                            "bgpenabled": False}]
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1),
+            call("Domain", mock_ent_2),
+        ])
+
+    def test_query_nested_object_multiple__bad_child(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "NotChild",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1"})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1],
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        with pytest.raises(InvalidObjectError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "No specification" in str(e)
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object)
+        ])
+
+    def test_query_nested_object__bambou_error(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1"})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1],
+            get_mock_bambou_error(403, "forbidden")
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "403" in str(e)
+        assert "forbidden" in str(e)
+
+        assert "Query" in e.value.get_display_string()
+        assert "HTTP 403" in e.value.get_display_string()
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1)
+        ])

@@ -807,4 +807,3 @@ multiline
                                               "not_exist.query"))
 
         assert "File or path not found" in str(e.value)
-

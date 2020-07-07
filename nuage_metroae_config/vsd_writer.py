@@ -499,7 +499,6 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         certificate = None
         if len(args) == 6:
             certificate = (args[4], args[5])
-            password = None
         elif len(args) == 5:
             raise SessionError("certificate key parameter is required when"
                                " using certificate for connect")
@@ -522,7 +521,12 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         self.log.debug(location)
         self._check_session()
 
-        return self._query(objects, attributes)
+        try:
+            return self._query(objects, attributes)
+        except BambouHTTPError as e:
+            raise VsdError(e, location)
+        except DeviceWriterError as e:
+            e.reraise_with_location(location)
 
     def query_attribute(self, obj, attribute):
         """
@@ -887,8 +891,9 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
                                                             attr_name)
             else:
                 for attribute in attributes:
-                    attribute_dict[attribute] = self.query_attribute(
-                        parent_object, attribute)
+                    value = self.query_attribute(parent_object, attribute)
+                    if value is not None:
+                        attribute_dict[attribute] = value
             return [attribute_dict]
         else:
             value = self.query_attribute(parent_object, attributes)
