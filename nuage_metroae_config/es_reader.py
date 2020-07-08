@@ -38,7 +38,7 @@ class EsReader(DeviceReaderBase):
 
     def set_session_params(self, address, port=None):
         """
-        Sets the parameters necessary to connect to the VSD.  This must
+        Sets the parameters necessary to connect to the ES.  This must
         be called before writing or an exception will be raised.
         """
         if port is None:
@@ -50,7 +50,7 @@ class EsReader(DeviceReaderBase):
 
     def start_session(self):
         """
-        Starts a session with the VSD
+        Starts a session with the ES
         """
         location = "Session start %s" % str(self.session_params)
 
@@ -60,7 +60,7 @@ class EsReader(DeviceReaderBase):
 
     def stop_session(self):
         """
-        Stops the session with the VSD
+        Stops the session with the ES
         """
         self.log.debug("Session stopping")
 
@@ -149,13 +149,13 @@ class EsReader(DeviceReaderBase):
                         query_params += "sort=%s:desc&" % (
                             query_filter[field_name])
                     else:
-                        raise Exception(
+                        raise EsError(
                             "Invalid filter %s for ES index query" %
                             field_name)
                 else:
                     if type(query_filter[field_name]) == list:
-                        raise Exception("ES index query does not support"
-                                        " attribute value lists")
+                        raise EsError("ES index query does not support"
+                                      " attribute value lists")
                     fields.append("%s:%s" % (field_name,
                                              query_filter[field_name]))
             if len(fields) > 0:
@@ -164,7 +164,7 @@ class EsReader(DeviceReaderBase):
                 query_params += "&"
 
         else:
-            raise Exception("Invalid filter for ES index query")
+            raise EsError("Invalid filter for ES index query")
 
         return query_params
 
@@ -174,16 +174,16 @@ class EsReader(DeviceReaderBase):
             if "%start" in filter:
                 start = int(filter["%start"])
                 if start < 0:
-                    raise Exception("ES index queries do not support negative"
-                                    " indexes, use positive indexes and "
-                                    "reverse sort")
+                    raise EsError("ES index queries do not support negative"
+                                  " indexes, use positive indexes and "
+                                  "reverse sort")
             end = MAX_RESULTS
             if "%end" in filter:
                 end = int(filter["%end"])
                 if end < 0:
-                    raise Exception("ES index queries do not support negative"
-                                    " indexes, use positive indexes and "
-                                    "reverse sort")
+                    raise EsError("ES index queries do not support negative"
+                                  " indexes, use positive indexes and "
+                                  "reverse sort")
 
             return (start, end)
         else:
@@ -215,8 +215,8 @@ class EsReader(DeviceReaderBase):
         if resp.status_code == 200:
             results = resp.json()
         else:
-            raise Exception("Status code %d from URL %s" % (
-                            resp.status_code, search_url))
+            raise EsError("Status code %d from URL %s" % (
+                          resp.status_code, search_url))
 
         return self._extract_results(results)
 
@@ -280,7 +280,6 @@ class EsReader(DeviceReaderBase):
                     else:
                         self.log.debug("Missing attribute %s in result" %
                                        attribute)
-                        return list()
             return [attr_dict]
         else:
             if attributes in current:

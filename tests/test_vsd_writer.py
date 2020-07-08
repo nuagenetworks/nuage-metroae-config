@@ -2428,32 +2428,6 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_object_single__success(self):
-        vsd_writer = VsdWriter()
-        mock_session = setup_standard_session(vsd_writer)
-
-        objects = [
-            {"name": "Enterprise",
-             "filter": None},
-        ]
-
-        attributes = "Name"
-
-        mock_ent = self.create_mock_query_object({"name": "enterprise_1"})
-
-        calls = [
-            [mock_ent]
-        ]
-
-        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
-
-        results = vsd_writer.query(objects, attributes)
-
-        assert results == ["enterprise_1"]
-
-        mock_get.assert_has_calls([call("Enterprise",
-                                        mock_session.root_object)])
-
     def test_object_single__none_found(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
