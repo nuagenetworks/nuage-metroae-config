@@ -5,6 +5,7 @@ import pytest
 
 from bambou.exceptions import BambouHTTPError
 from nuage_metroae_config.vsd_writer import (Context,
+                                             DeviceWriterError,
                                              InvalidSpecification,
                                              InvalidAttributeError,
                                              InvalidObjectError,
@@ -106,6 +107,116 @@ PARSE_ERROR_CASES = [
 ]
 
 VALIDATE_ONLY_CASES = [False, True]
+
+QUERY_RANGE_SORT_CASES = [
+    ({}, ["a1", "a3", "a5", "a2", "a4"]),
+    ({"%end": 3}, ["a1", "a3", "a5"]),
+    ({"%end": 99}, ["a1", "a3", "a5", "a2", "a4"]),
+    ({"%end": 0}, []),
+    ({"%end": -2}, ["a1", "a3", "a5"]),
+    ({"%end": -5}, []),
+    ({"%start": 0}, ["a1", "a3", "a5", "a2", "a4"]),
+    ({"%start": 3}, ["a2", "a4"]),
+    ({"%start": 99}, []),
+    ({"%start": -1}, ["a4"]),
+    ({"%start": -2}, ["a2", "a4"]),
+    ({"%start": -6}, ["a1", "a3", "a5", "a2", "a4"]),
+    ({"%start": 0, "%end": 5}, ["a1", "a3", "a5", "a2", "a4"]),
+    ({"%start": 1, "%end": 3}, ["a3", "a5"]),
+    ({"%start": 3, "%end": 99}, ["a2", "a4"]),
+    ({"%start": 3, "%end": 4}, ["a2"]),
+    ({"%start": 3, "%end": 3}, []),
+    ({"%start": 4, "%end": 3}, []),
+    ({"%start": -5, "%end": -1}, ["a1", "a3", "a5", "a2"]),
+    ({"%start": -1, "%end": 0}, []),
+    ({"%start": -3, "%end": -1}, ["a5", "a2"]),
+    ({"%start": -3, "%end": -2}, ["a5"]),
+    ({"%start": -3, "%end": 5}, ["a5", "a2", "a4"]),
+
+    ({"%sort": "name"}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort": "name", "%end": 3}, ["a1", "a2", "a3"]),
+    ({"%sort": "name", "%end": 99}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort": "name", "%end": 0}, []),
+    ({"%sort": "name", "%end": -2}, ["a1", "a2", "a3"]),
+    ({"%sort": "name", "%end": -5}, []),
+    ({"%sort": "name", "%start": 0}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort": "name", "%start": 3}, ["a4", "a5"]),
+    ({"%sort": "name", "%start": 99}, []),
+    ({"%sort": "name", "%start": -1}, ["a5"]),
+    ({"%sort": "name", "%start": -2}, ["a4", "a5"]),
+    ({"%sort": "name", "%start": -6}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort": "name", "%start": 0, "%end": 5}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort": "name", "%start": 1, "%end": 3}, ["a2", "a3"]),
+    ({"%sort": "name", "%start": 3, "%end": 99}, ["a4", "a5"]),
+    ({"%sort": "name", "%start": 3, "%end": 4}, ["a4"]),
+    ({"%sort": "name", "%start": 3, "%end": 3}, []),
+    ({"%sort": "name", "%start": 4, "%end": 3}, []),
+    ({"%sort": "name", "%start": -5, "%end": -1}, ["a1", "a2", "a3", "a4"]),
+    ({"%sort": "name", "%start": -1, "%end": 0}, []),
+    ({"%sort": "name", "%start": -3, "%end": -1}, ["a3", "a4"]),
+    ({"%sort": "name", "%start": -3, "%end": -2}, ["a3"]),
+    ({"%sort": "name", "%start": -3, "%end": 5}, ["a3", "a4", "a5"]),
+
+    ({"%sort_asc": "name"}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort_asc": "name", "%end": 3}, ["a1", "a2", "a3"]),
+    ({"%sort_asc": "name", "%end": 99}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort_asc": "name", "%end": 0}, []),
+    ({"%sort_asc": "name", "%end": -2}, ["a1", "a2", "a3"]),
+    ({"%sort_asc": "name", "%end": -5}, []),
+    ({"%sort_asc": "name", "%start": 0}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort_asc": "name", "%start": 3}, ["a4", "a5"]),
+    ({"%sort_asc": "name", "%start": 99}, []),
+    ({"%sort_asc": "name", "%start": -1}, ["a5"]),
+    ({"%sort_asc": "name", "%start": -2}, ["a4", "a5"]),
+    ({"%sort_asc": "name", "%start": -6}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort_asc": "name", "%start": 0, "%end": 5}, ["a1", "a2", "a3", "a4", "a5"]),
+    ({"%sort_asc": "name", "%start": 1, "%end": 3}, ["a2", "a3"]),
+    ({"%sort_asc": "name", "%start": 3, "%end": 99}, ["a4", "a5"]),
+    ({"%sort_asc": "name", "%start": 3, "%end": 4}, ["a4"]),
+    ({"%sort_asc": "name", "%start": 3, "%end": 3}, []),
+    ({"%sort_asc": "name", "%start": 4, "%end": 3}, []),
+    ({"%sort_asc": "name", "%start": -5, "%end": -1}, ["a1", "a2", "a3", "a4"]),
+    ({"%sort_asc": "name", "%start": -1, "%end": 0}, []),
+    ({"%sort_asc": "name", "%start": -3, "%end": -1}, ["a3", "a4"]),
+    ({"%sort_asc": "name", "%start": -3, "%end": -2}, ["a3"]),
+    ({"%sort_asc": "name", "%start": -3, "%end": 5}, ["a3", "a4", "a5"]),
+
+    ({"%sort_desc": "name"}, ["a5", "a4", "a3", "a2", "a1"]),
+    ({"%sort_desc": "name", "%end": 3}, ["a5", "a4", "a3"]),
+    ({"%sort_desc": "name", "%end": 99}, ["a5", "a4", "a3", "a2", "a1"]),
+    ({"%sort_desc": "name", "%end": 0}, []),
+    ({"%sort_desc": "name", "%end": -2}, ["a5", "a4", "a3"]),
+    ({"%sort_desc": "name", "%end": -5}, []),
+    ({"%sort_desc": "name", "%start": 0}, ["a5", "a4", "a3", "a2", "a1"]),
+    ({"%sort_desc": "name", "%start": 3}, ["a2", "a1"]),
+    ({"%sort_desc": "name", "%start": 99}, []),
+    ({"%sort_desc": "name", "%start": -1}, ["a1"]),
+    ({"%sort_desc": "name", "%start": -2}, ["a2", "a1"]),
+    ({"%sort_desc": "name", "%start": -6}, ["a5", "a4", "a3", "a2", "a1"]),
+    ({"%sort_desc": "name", "%start": 0, "%end": 5}, ["a5", "a4", "a3", "a2", "a1"]),
+    ({"%sort_desc": "name", "%start": 1, "%end": 3}, ["a4", "a3"]),
+    ({"%sort_desc": "name", "%start": 3, "%end": 99}, ["a2", "a1"]),
+    ({"%sort_desc": "name", "%start": 3, "%end": 4}, ["a2"]),
+    ({"%sort_desc": "name", "%start": 3, "%end": 3}, []),
+    ({"%sort_desc": "name", "%start": 4, "%end": 3}, []),
+    ({"%sort_desc": "name", "%start": -5, "%end": -1}, ["a5", "a4", "a3", "a2"]),
+    ({"%sort_desc": "name", "%start": -1, "%end": 0}, []),
+    ({"%sort_desc": "name", "%start": -3, "%end": -1}, ["a3", "a2"]),
+    ({"%sort_desc": "name", "%start": -3, "%end": -2}, ["a3"]),
+    ({"%sort_desc": "name", "%start": -3, "%end": 5}, ["a3", "a2", "a1"]),
+]
+
+QUERY_ATTR_FILTER_CASES = [
+    ({}, ["a1", "a3", "a5", "a2", "a4"]),
+    ({"AvatarType": "URL"}, ["a1", "a3", "a5"]),
+    ({"AvatarType": "URL", "%sort_desc": "DHCPLeaseInterval"}, ["a5", "a3", "a1"]),
+    ({"AvatarType": "URL", "%start": 1, "%end": 2}, ["a3"]),
+    ({"AvatarType": "BASE64"}, ["a2", "a4"]),
+    ({"AvatarType": "BASE64", "Name": "a2"}, ["a2"]),
+    ({"AvatarType": "URL", "Name": "a2"}, []),
+    ({"Name": ["a1", "a2", "a3"]}, ["a1", "a3", "a2"]),
+    ({"AvatarType": "BASE64", "Name": ["a1", "a2", "a3"]}, ["a2"]),
+]
 
 VERSION_OUTPUT = """
 APP_GITVERSION = 'r5.3-2bc6ddd'
@@ -2175,7 +2286,7 @@ class TestVsdWriterQuery(object):
 
         assert "not started" in str(e)
 
-    def test_query_attrs_single__success(self):
+    def test_attrs_single__success(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2203,7 +2314,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_attrs_single__unknown(self):
+    def test_attrs_single__unknown(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2231,7 +2342,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_attrs_multiple__success(self):
+    def test_attrs_multiple__success(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2259,7 +2370,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_attrs_multiple__unknown(self):
+    def test_attrs_multiple__unknown(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2287,7 +2398,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_attrs_all__success(self):
+    def test_attrs_all__success(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2317,7 +2428,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_object_single__success(self):
+    def test_object_single__success(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2343,7 +2454,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_object_single__none_found(self):
+    def test_object_single__none_found(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2367,7 +2478,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_object_single__bambou_error(self):
+    def test_object_single__bambou_error(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2396,7 +2507,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_object_multiple__success(self):
+    def test_object_multiple__success(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2424,7 +2535,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_object_multiple_2__success(self):
+    def test_object_multiple_2__success(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2460,7 +2571,7 @@ class TestVsdWriterQuery(object):
         mock_get.assert_has_calls([call("Enterprise",
                                         mock_session.root_object)])
 
-    def test_query_nested_object_multiple__success(self):
+    def test_nested_object_multiple__success(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2501,7 +2612,7 @@ class TestVsdWriterQuery(object):
             call("Domain", mock_ent_2),
         ])
 
-    def test_query_nested_object_multiple__empty_child(self):
+    def test_nested_object_multiple__empty_child(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2545,7 +2656,7 @@ class TestVsdWriterQuery(object):
             call("Domain", mock_ent_2),
         ])
 
-    def test_query_nested_object_multiple__bad_child(self):
+    def test_nested_object_multiple__bad_child(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2577,7 +2688,7 @@ class TestVsdWriterQuery(object):
             call("Enterprise", mock_session.root_object)
         ])
 
-    def test_query_nested_object__bambou_error(self):
+    def test_nested_object__bambou_error(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
 
@@ -2614,3 +2725,269 @@ class TestVsdWriterQuery(object):
             call("Enterprise", mock_session.root_object),
             call("Domain", mock_ent_1)
         ])
+
+    @pytest.mark.parametrize("filter, expected", QUERY_RANGE_SORT_CASES)
+    def test_range_sort__success(self, filter, expected):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": filter},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "a1"})
+        mock_ent_3 = self.create_mock_query_object({"name": "a3"})
+        mock_ent_5 = self.create_mock_query_object({"name": "a5"})
+        mock_ent_2 = self.create_mock_query_object({"name": "a2"})
+        mock_ent_4 = self.create_mock_query_object({"name": "a4"})
+
+        calls = [
+            [mock_ent_1, mock_ent_3, mock_ent_5, mock_ent_2, mock_ent_4]
+        ]
+
+        self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == expected
+
+    @pytest.mark.parametrize("filter, expected", QUERY_RANGE_SORT_CASES)
+    def test_range_sort_nested__success(self, filter, expected):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": filter},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "e1"})
+        mock_ent_2 = self.create_mock_query_object({"name": "e2"})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+
+        mock_dom_1 = self.create_mock_query_object({"name": "a1"})
+        mock_dom_3 = self.create_mock_query_object({"name": "a3"})
+        mock_dom_5 = self.create_mock_query_object({"name": "a5"})
+        mock_dom_2 = self.create_mock_query_object({"name": "a2"})
+        mock_dom_4 = self.create_mock_query_object({"name": "a4"})
+
+        calls = [
+            [mock_ent_1, mock_ent_2],
+            [mock_dom_1, mock_dom_3, mock_dom_5, mock_dom_2, mock_dom_4],
+            [mock_dom_1, mock_dom_3, mock_dom_5, mock_dom_2, mock_dom_4],
+        ]
+
+        self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        combined = list()
+        combined.extend(expected)
+        combined.extend(expected)
+
+        assert results == combined
+
+    @pytest.mark.parametrize("filter, expected", QUERY_RANGE_SORT_CASES)
+    def test_range_sort_nested_filtered__success(self, filter, expected):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": {"%start": 0, "%end": 2}},
+            {"name": "Domain",
+             "filter": filter},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "e1"})
+        mock_ent_2 = self.create_mock_query_object({"name": "e2"})
+        mock_ent_3 = self.create_mock_query_object({"name": "e3"})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+
+        mock_dom_1 = self.create_mock_query_object({"name": "a1"})
+        mock_dom_3 = self.create_mock_query_object({"name": "a3"})
+        mock_dom_5 = self.create_mock_query_object({"name": "a5"})
+        mock_dom_2 = self.create_mock_query_object({"name": "a2"})
+        mock_dom_4 = self.create_mock_query_object({"name": "a4"})
+
+        calls = [
+            [mock_ent_1, mock_ent_2, mock_ent_3],
+            [mock_dom_1, mock_dom_3, mock_dom_5, mock_dom_2, mock_dom_4],
+            [mock_dom_1, mock_dom_3, mock_dom_5, mock_dom_2, mock_dom_4],
+        ]
+
+        self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        combined = list()
+        combined.extend(expected)
+        combined.extend(expected)
+
+        assert results == combined
+
+    def test_sort__bad_field(self):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": {"%sort": "foobar"}},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "a1"})
+        mock_ent_3 = self.create_mock_query_object({"name": "a3"})
+        mock_ent_5 = self.create_mock_query_object({"name": "a5"})
+        mock_ent_2 = self.create_mock_query_object({"name": "a2"})
+        mock_ent_4 = self.create_mock_query_object({"name": "a4"})
+
+        calls = [
+            [mock_ent_1, mock_ent_3, mock_ent_5, mock_ent_2, mock_ent_4]
+        ]
+
+        self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert "a1" in results
+        assert "a3" in results
+        assert "a5" in results
+        assert "a2" in results
+        assert "a4" in results
+
+    @pytest.mark.parametrize("filter, expected", QUERY_ATTR_FILTER_CASES)
+    def test_attr_filter__success(self, filter, expected):
+        vsd_writer = VsdWriter()
+        setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": filter},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "a1",
+                                                    "dhcpleaseinterval": 300,
+                                                    "avatartype": "URL"})
+        mock_ent_3 = self.create_mock_query_object({"name": "a3",
+                                                    "dhcpleaseinterval": 400,
+                                                    "avatartype": "URL"})
+        mock_ent_5 = self.create_mock_query_object({"name": "a5",
+                                                    "dhcpleaseinterval": 500,
+                                                    "avatartype": "URL"})
+        mock_ent_2 = self.create_mock_query_object({"name": "a2",
+                                                    "dhcpleaseinterval": 100,
+                                                    "avatartype": "BASE64"})
+        mock_ent_4 = self.create_mock_query_object({"name": "a4",
+                                                    "dhcpleaseinterval": 200,
+                                                    "avatartype": "BASE64"})
+
+        calls = [
+            [mock_ent_1, mock_ent_3, mock_ent_5, mock_ent_2, mock_ent_4]
+        ]
+
+        self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == expected
+
+    def test_filter__invalid_type(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": 1},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1"})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1],
+            [mock_ent_1]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        with pytest.raises(DeviceWriterError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "Invalid filter" in str(e)
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1)
+        ])
+
+    def test_filter__invalid_special(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": {"%foobar": "not cool"}},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1"})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1],
+            [mock_ent_1]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        with pytest.raises(DeviceWriterError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "Invalid filter %foobar" in str(e)
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1)
+        ])
+
+    def test_query_attribute__success(self):
+        vsd_writer = VsdWriter()
+
+        mock_object = type('', (object,), {"name": "object name"})
+
+        value = vsd_writer.query_attribute(mock_object, "Name")
+        assert value == "object name"
+
+    def test_query_attribute__not_found(self):
+        vsd_writer = VsdWriter()
+
+        mock_object = type('', (object,), {"name": "object name"})
+
+        value = vsd_writer.query_attribute(mock_object, "Foobar")
+        assert value is None

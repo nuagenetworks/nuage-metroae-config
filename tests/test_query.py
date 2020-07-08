@@ -247,7 +247,7 @@ multiline
 
         query_text = """
             end1 = 10
-            index = -2
+            index = -1
             start = -3
             end2 = -5
             Enterprise[:$end1].Domain[$index].Subnet[$start:$end2].Zone.name
@@ -256,7 +256,7 @@ multiline
         mock_results = [["value1", "value2"]]
         expected_results = [
             {"end1": 10},
-            {"index": -2},
+            {"index": -1},
             {"start": -3},
             {"end2": -5},
             ["value1", "value2"]
@@ -264,7 +264,7 @@ multiline
 
         expected_actions = """
             start-session
-            query [Enterprise (%end=10),Domain (%end=-1,%start=-2),Subnet (%end=-5,%start=-3),Zone (None)] {name}
+            query [Enterprise (%end=10),Domain (%start=-1),Subnet (%end=-5,%start=-3),Zone (None)] {name}
             stop-session
         """
 

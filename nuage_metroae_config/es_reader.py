@@ -2,13 +2,7 @@ import requests
 
 from device_reader_base import DeviceReaderBase
 from errors import (DeviceWriterError,
-                    InvalidAttributeError,
-                    InvalidObjectError,
-                    InvalidValueError,
-                    MissingSelectionError,
-                    MultipleSelectionError,
-                    SessionError,
-                    SessionNotStartedError)
+                    SessionError)
 
 PAGE_SIZE = 100
 MAX_RESULTS = 10000
@@ -75,7 +69,7 @@ class EsReader(DeviceReaderBase):
         Creates a new connection with another device
         """
         if len(args) < 1:
-            raise Exception("address parameter is required for connect")
+            raise SessionError("address parameter is required for connect")
         address = args[0]
 
         if len(args) < 2:
@@ -294,4 +288,3 @@ class EsReader(DeviceReaderBase):
             else:
                 self.log.debug("Missing attribute %s in result" % attributes)
                 return list()
-

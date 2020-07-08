@@ -1,5 +1,7 @@
 from logger import Logger
 
+from errors import DeviceWriterError
+
 
 class DeviceReaderBase(object):
     """
@@ -44,10 +46,10 @@ class DeviceReaderBase(object):
                         sort_field = filter[field_name]
                         sort_desc = True
                     else:
-                        raise Exception(
+                        raise DeviceWriterError(
                             "Invalid filter %s for query" % field_name)
         else:
-            raise Exception("Invalid filter for query")
+            raise DeviceWriterError("Invalid filter for query")
 
         for result in results:
             if self._should_keep_result(result, filter):

@@ -181,7 +181,8 @@ class QueryExecutor(Transformer):
                     filter_dict["%end"] = add_filter[1]
             elif type(add_filter) == int:
                 filter_dict["%start"] = add_filter
-                filter_dict["%end"] = add_filter + 1
+                if add_filter != -1:
+                    filter_dict["%end"] = add_filter + 1
             elif add_filter == "*":
                 filter_dict["%all"] = True
             else:
