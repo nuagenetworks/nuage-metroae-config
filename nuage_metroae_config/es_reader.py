@@ -175,14 +175,14 @@ class EsReader(DeviceReaderBase):
                 start = int(filter["%start"])
                 if start < 0:
                     raise EsError("ES index queries do not support negative"
-                                  " indexes, use positive indexes and "
+                                  " indicies, use positive indicies and "
                                   "reverse sort")
             end = MAX_RESULTS
             if "%end" in filter:
                 end = int(filter["%end"])
                 if end < 0:
                     raise EsError("ES index queries do not support negative"
-                                  " indexes, use positive indexes and "
+                                  " indicies, use positive indicies and "
                                   "reverse sort")
 
             return (start, end)
@@ -198,10 +198,10 @@ class EsReader(DeviceReaderBase):
         while current < end:
             size = min(end - current, PAGE_SIZE)
             result_page = self._query_page_from_es(search_url, current, size)
-            if len(result_page) == 0:
-                break
             results.extend(result_page)
             current += size
+            if len(result_page) < size:
+                break
         return results
 
     def _query_page_from_es(self, search_url, start, size):
