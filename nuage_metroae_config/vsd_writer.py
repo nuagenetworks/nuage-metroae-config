@@ -97,7 +97,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         if (major_version < 6):
             self.version = "5.0"
         else:
-            self.version = str(major_version)
+            self.version = "6"
 
     def read_api_specifications(self, path_or_file_name):
         """
@@ -870,16 +870,50 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
             self._check_child_object(parent_object.spec, spec)
             object_list = self._get_object_list(object_name,
                                                 parent_object)
-            values = list()
-            for parent_object in self.filter_results(object_list, filter):
-                values.extend(self._query_objects(objects,
-                                                  attributes,
-                                                  level + 1,
-                                                  parent_object))
-            return values
+
+            filter_list = self._build_filter_list(filter)
+
+            result = list()
+            for cur_filter in filter_list:
+                self.log.debug("Current filter: " + str(cur_filter))
+                values = list()
+                for parent_object in self.filter_results(object_list,
+                                                         cur_filter):
+                    values.extend(self._query_objects(objects,
+                                                      attributes,
+                                                      level + 1,
+                                                      parent_object))
+                if type(filter) == dict and "%group_value" in cur_filter:
+                    group_value = cur_filter["%group_value"]
+                    result.append([group_value, values])
+                else:
+                    result = values
+
+            return result
 
         else:
             return self._query_attributes(parent_object, attributes)
+
+    def _build_filter_list(self, filter):
+        if type(filter) == dict and "%group" in filter:
+            group_field = filter["%group"]
+            if group_field not in filter:
+                raise VsdError("Field %s not provided to group" % group_field)
+            if type(filter[group_field]) != list:
+                items = [filter[group_field]]
+            else:
+                items = filter[group_field]
+
+            filter_list = list()
+            for item in items:
+                filter_copy = dict(filter)
+                filter_copy[group_field] = item
+                filter_copy["%group_value"] = item
+                filter_list.append(filter_copy)
+        else:
+            filter_list = [filter]
+
+        return filter_list
 
     def _query_attributes(self, parent_object, attributes):
         if type(attributes) == list:

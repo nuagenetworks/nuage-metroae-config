@@ -45,6 +45,8 @@ class DeviceReaderBase(object):
                     elif field_name == "%sort_desc":
                         sort_field = filter[field_name]
                         sort_desc = True
+                    elif field_name in ["%group", "%group_value"]:
+                        pass
                     else:
                         raise DeviceWriterError(
                             "Invalid filter %s for query" % field_name)
