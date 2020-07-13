@@ -1,0 +1,197 @@
+# ENTERPRISES = count(enterprise.id)
+# l3_domain_ids = enterprise.domain.id
+# L3_DOMAINS = count($l3_domain_ids)
+# l2_domain_ids = enterprise.l2domain.id
+# L2_DOMAINS = count($l2_domain_ids)
+# MAX_L3_DOMAINS_ON_HOST = count(vminterface[domainid=$l3_domain_ids].id)
+# MAX_L2_DOMAINS_ON_HOST = count(vminterface[domainid=$l2_domain_ids].id)
+# HYPERVISORS = count(vm.hypervisorip)
+# VMS = count(vminterface.vmuuid)
+# VM_VPORTS_L3 = count(enterprise.domain.vport.id)
+# VM_VPORTS_L2 = count(enterprise.l2domain.vport.id)
+
+
+# dbvar=$1
+
+#sql queries
+# ENTERPRISES=$(mysql -u root -e 'select COUNT(DISTINCT id) AS ENTERPRISES from ENTERPRISE' $dbvar)
+# L3_DOMAINS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS L3_DOMAINS from DOMAIN' $dbvar)
+# L2_DOMAINS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS L2_DOMAINS from L2_DOMAIN' $dbvar)
+# MAX_L3_DOMAINS_ON_HOST=$(echo "use $dbvar;select COUNT(DISTINCT assocDomain_id) AS MAX_L3_DOMAINS_ON_HOST FROM VM_INTERFACE where hypervisorId!='NULL' GROUP BY hypervisorId ORDER BY MAX_L3_DOMAINS_ON_HOST desc limit 1" | mysql -u root)
+# MAX_L2_DOMAINS_ON_HOST=$(echo "use $dbvar;select COUNT(DISTINCT assocL2Domain_id) AS MAX_L2_DOMAINS_ON_HOST FROM VM_INTERFACE where hypervisorId!='NULL' GROUP BY hypervisorId ORDER BY MAX_L2_DOMAINS_ON_HOST desc limit 1" | mysql -u root)
+# MAX_TOTAL_DOMAINS_ON_HOST=$(echo "use $dbvar;select COUNT(DISTINCT assocDomain_id) + COUNT(DISTINCT assocL2Domain_id) AS MAX_TOTAL_DOMAINS_ON_HOST FROM VM_INTERFACE where hypervisorId!='NULL' GROUP BY hypervisorId ORDER BY MAX_TOTAL_DOMAINS_ON_HOST desc limit 1"  | mysql -u root)
+# HYPERVISORS=$(mysql -u root -e 'select COUNT(DISTINCT hypervisorId) AS HYPERVISORS FROM VM_INTERFACE where hypervisorId!="NULL"' $dbvar)
+# VMS=$(mysql -u root -e 'select COUNT(DISTINCT vmuuid) AS VMS FROM VM_INTERFACE where hypervisorId!="NULL"' $dbvar)
+# MAX_VMS_ON_HOST=$(echo "use $dbvar;select COUNT(DISTINCT vmuuid) AS MAX_VMS_ON_HOST FROM VM_INTERFACE where hypervisorId!='NULL' GROUP BY hypervisorId ORDER BY MAX_VMS_ON_HOST desc limit 1" | mysql -u root)
+# VM_VPORTS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS VM_VPORTS FROM VM_INTERFACE where hypervisorId!="NULL"' $dbvar)
+#MAX_VPORTS_ON_HOST=$mysql -u root -e 'select COUNT(DISTINCT id) AS VPORTS_MAX FROM VM_INTERFACE where hypervisorId!='NULL' GROUP BY hypervisorId ORDER BY VPORTS_MAX desc limit 1' $dbvar)
+# MAX_VPORTS_ON_HOST=$(echo "use $dbvar;select COUNT(DISTINCT id) AS MAX_VPORTS_ON_HOST FROM VM_INTERFACE where hypervisorId!='NULL' GROUP BY hypervisorId ORDER BY MAX_VPORTS_ON_HOST desc limit 1" | mysql -u root)
+# MAX_VPORTS_IN_L3_DOMAIN=$(mysql -u root -e 'select count(distinct VPORT.id) AS MAX_VPORTS_IN_L3_DOMAIN,VPORT.domain_id,DOMAIN.name from VPORT LEFT JOIN DOMAIN ON VPORT.domain_id=DOMAIN.id where domain_id!="" group by VPORT.domain_id order by MAX_VPORTS_IN_L3_DOMAIN desc limit 1' $dbvar)
+# MAX_VPORTS_IN_L3_DOMAIN_NAME=$(echo $MAX_VPORTS_IN_L3_DOMAIN | awk '{print $6}')
+# MAX_VPORTS_IN_L3_DOMAIN_ID=$(echo $MAX_VPORTS_IN_L3_DOMAIN | awk '{print $5}')
+# MAX_TOTAL_VPORTS_IN_L3_DOMAIN=$(echo $MAX_VPORTS_IN_L3_DOMAIN | awk '{print $4}')
+# MAX_VPORTS_IN_L3_DOMAIN_BREAKDOWN=$(echo "use $dbvar; select vport_type,COUNT(DISTINCT id) AS VPORT_COUNT from VPORT where domain_id='$MAX_VPORTS_IN_L3_DOMAIN_ID' GROUP BY vport_type" | mysql -u root)
+# MAX_VPORTS_IN_L2_DOMAIN=$(mysql -u root -e 'select count(distinct VPORT.id) AS MAX_VPORTS_IN_L2_DOMAIN,VPORT.assocEntityId,L2_DOMAIN.name from VPORT LEFT JOIN L2_DOMAIN ON VPORT.assocEntityId=L2_DOMAIN.id where VPORT.assocEntityType="L2DOMAIN" group by VPORT.assocEntityId order by MAX_VPORTS_IN_L2_DOMAIN desc limit 1' $dbvar)
+# MAX_VPORTS_IN_L2_DOMAIN_NAME=$(echo $MAX_VPORTS_IN_L2_DOMAIN | awk '{print $6}')
+# MAX_VPORTS_IN_L2_DOMAIN_ID=$(echo $MAX_VPORTS_IN_L2_DOMAIN | awk '{print $5}')
+# MAX_TOTAL_VPORTS_IN_L2_DOMAIN=$(echo $MAX_VPORTS_IN_L2_DOMAIN | awk '{print $4}')
+# MAX_VPORTS_IN_L2_DOMAIN_BREAKDOWN=$(echo "use $dbvar; select vport_type,COUNT(DISTINCT id) AS VPORT_COUNT from VPORT where assocEntityId='$MAX_VPORTS_IN_L2_DOMAIN_ID' GROUP BY vport_type" | mysql -u root)
+
+
+# TRUNKS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS TRUNKS from TRUNK' $dbvar)
+# INGRESS_ACLS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS INGRESS_ACLS from ACL_TEMPLATE_ENTRY' $dbvar)
+# EGRESS_ACLS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS EGRESS_ACLS from INBOUND_ACL_TEMPLATE_ENTRY' $dbvar)
+# STATEFUL_INGRESS_ACLS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS STATEFUL_INGRESS_ACLS from ACL_TEMPLATE_ENTRY where stateful<>""' $dbvar)
+# STATEFUL_EGRESS_ACLS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS STATEFUL_EGRESS_ACLS from INBOUND_ACL_TEMPLATE_ENTRY where stateful<>""' $dbvar)
+# INGRESS_ACLS_WITH_MACRO=$(mysql -u root -e 'select COUNT(DISTINCT id) AS INGRESS_ACLS_WITH_MACRO from ACL_TEMPLATE_ENTRY where networkType="ENTERPRISE_NETWORK"' $dbvar)
+# EGRESS_ACLS_WITH_MACRO=$(mysql -u root -e 'select COUNT(DISTINCT id) AS EGRESS_ACLS_WITH_MACRO from INBOUND_ACL_TEMPLATE_ENTRY where networkType="ENTERPRISE_NETWORK"' $dbvar)
+# INGRESS_ACLS_WITH_MACRO_GROUP=$(mysql -u root -e 'select COUNT(DISTINCT id) AS INGRESS_ACLS_WITH_MACRO_GROUP from ACL_TEMPLATE_ENTRY where networkType="NETWORK_MACRO_GROUP"' $dbvar)
+# EGRESS_ACLS_WITH_MACRO_GROUP=$(mysql -u root -e 'select COUNT(DISTINCT id) AS EGRESS_ACLS_WITH_MACRO_GROUP from INBOUND_ACL_TEMPLATE_ENTRY where networkType="NETWORK_MACRO_GROUP"' $dbvar)
+
+
+# TOTAL_BGP_PEERS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS TOTAL_BGP_PEERS from BGP_NEIGHBOR' $dbvar)
+# TOTAL_BGP_PEERS_WITH_BFD=$(mysql -u root -e 'select COUNT(DISTINCT id) AS TOTAL_BGP_PEERS_WITH_BFD from BGP_NEIGHBOR where bfdEnabled!=""' $dbvar)
+# TOTAL_IPV4_BGP_PEERS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS TOTAL_IPV4_BGP_PEERS from BGP_NEIGHBOR where ipType="IPV4"' $dbvar)
+# TOTAL_IPV6_BGP_PEERS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS TOTAL_IPV6_BGP_PEERS from BGP_NEIGHBOR where ipType="IPV6"' $dbvar)
+# TOTAL_IPV4_BGP_PEERS_WITH_BFD=$(mysql -u root -e 'select COUNT(DISTINCT id) AS TOTAL_IPV4_BGP_PEERS_WITH_BFD from BGP_NEIGHBOR where ipType="IPV4" AND bfdEnabled!=""' $dbvar)
+# TOTAL_IPV6_BGP_PEERS_WITH_BFD=$(mysql -u root -e 'select COUNT(DISTINCT id) AS TOTAL_IPV6_BGP_PEERS_WITH_BFD from BGP_NEIGHBOR where ipType="IPV6" AND bfdEnabled!=""' $dbvar)
+# VM_VPORT_IPV4_BGP_PEERS=$(mysql -u root -e 'select COUNT(*) AS VM_VPORT_IPV4_BGP_PEERS from BGP_NEIGHBOR LEFT JOIN VPORT ON BGP_NEIGHBOR.assocEntityId=VPORT.Id where VPORT.vport_type="VM" and BGP_NEIGHBOR.ipType="IPV4"' $dbvar)
+# VM_VPORT_IPV6_BGP_PEERS=$(mysql -u root -e 'select COUNT(*) AS VM_VPORT_IPV6_BGP_PEERS from BGP_NEIGHBOR LEFT JOIN VPORT ON BGP_NEIGHBOR.assocEntityId=VPORT.Id where VPORT.vport_type="VM" and BGP_NEIGHBOR.ipType="IPV6"' $dbvar)
+# BRIDGE_VPORT_IPV4_BGP_PEERS=$(mysql -u root -e 'select COUNT(*) AS BRIDGE_VPORT_IPV4_BGP_PEERS from BGP_NEIGHBOR LEFT JOIN VPORT ON BGP_NEIGHBOR.assocEntityId=VPORT.Id where VPORT.vport_type="BRIDGE" and BGP_NEIGHBOR.ipType="IPV4"' $dbvar)
+# BRIDGE_VPORT_IPV6_BGP_PEERS=$(mysql -u root -e 'select COUNT(*) AS BRIDGE_VPORT_IPV6_BGP_PEERS from BGP_NEIGHBOR LEFT JOIN VPORT ON BGP_NEIGHBOR.assocEntityId=VPORT.Id where VPORT.vport_type="BRIDGE" and BGP_NEIGHBOR.ipType="IPV6"' $dbvar)
+# HOST_VPORT_IPV4_BGP_PEERS=$(mysql -u root -e 'select COUNT(*) AS HOST_VPORT_IPV4_BGP_PEERS from BGP_NEIGHBOR LEFT JOIN VPORT ON BGP_NEIGHBOR.assocEntityId=VPORT.Id where VPORT.vport_type="HOST" and BGP_NEIGHBOR.ipType="IPV4"' $dbvar)
+# HOST_VPORT_IPV6_BGP_PEERS=$(mysql -u root -e 'select COUNT(*) AS HOST_VPORT_IPV6_BGP_PEERS from BGP_NEIGHBOR LEFT JOIN VPORT ON BGP_NEIGHBOR.assocEntityId=VPORT.Id where VPORT.vport_type="HOST" and BGP_NEIGHBOR.ipType="IPV6"' $dbvar)
+
+
+# BFD_SESSIONS=$(mysql -u root -e 'select COUNT(DISTINCT id) AS BFD_SESSIONS from BFD_SESSION' $dbvar)
+
+# dump outputs
+## L3 Domain List
+# L3_DOMAINS_VPORT_COUNTS=$(mysql -u root -e 'select count(distinct VPORT.id) AS MAX_VPORTS_IN_L3_DOMAIN,DOMAIN.name,VPORT.domain_id from VPORT LEFT JOIN DOMAIN ON VPORT.domain_id=DOMAIN.id where domain_id!="" group by VPORT.domain_id order by MAX_VPORTS_IN_L3_DOMAIN desc' $dbvar)
+# L2_DOMAINS_VPORT_COUNTS=$(mysql -u root -e 'select count(distinct VPORT.id) AS MAX_VPORTS_IN_L2_DOMAIN,L2_DOMAIN.name,VPORT.assocEntityId from VPORT LEFT JOIN L2_DOMAIN ON VPORT.assocEntityId=L2_DOMAIN.id where VPORT.assocEntityType="L2DOMAIN" group by VPORT.assocEntityId order by MAX_VPORTS_IN_L2_DOMAIN desc' $dbvar)
+
+# echo "COUNTS FROM $dbvar" > summary_counts_$dbvar
+# echo "" >> summary_counts_$dbvar
+# echo "***TOP LEVEL***" >> summary_counts_$dbvar
+# echo $ENTERPRISES >> summary_counts_$dbvar
+# echo $HYPERVISORS >> summary_counts_$dbvar
+# echo "" >> summary_counts_$dbvar
+# echo "***DOMAINS****" >> summary_counts_$dbvar
+# echo $L3_DOMAINS >> summary_counts_$dbvar
+# echo $L2_DOMAINS >> summary_counts_$dbvar
+# echo $MAX_L3_DOMAINS_ON_HOST >> summary_counts_$dbvar
+# echo $MAX_L2_DOMAINS_ON_HOST >> summary_counts_$dbvar
+# echo $MAX_TOTAL_DOMAINS_ON_HOST >> summary_counts_$dbvar
+# echo "" >> summary_counts_$dbvar
+# echo "***VMS/VPORTS***" >> summary_counts_$dbvar
+# echo $VMS >> summary_counts_$dbvar
+# echo $MAX_VMS_ON_HOST >> summary_counts_$dbvar
+# echo $VM_VPORTS >> summary_counts_$dbvar
+# echo $MAX_VPORTS_ON_HOST >> summary_counts_$dbvar
+# echo $TRUNKS >> summary_counts_$dbvar
+# echo "" >> summary_counts_$dbvar
+# echo "***MAX VPORTS IN DOMAINS***" >> summary_counts_$dbvar
+# echo "MAX_VPORT_L3_DOMAIN_NAME "$MAX_VPORTS_IN_L3_DOMAIN_NAME >> summary_counts_$dbvar
+# echo " TOTAL_VPORTS_IN_DOMAIN "$MAX_TOTAL_VPORTS_IN_L3_DOMAIN >> summary_counts_$dbvar
+# I=$(echo $MAX_VPORTS_IN_L3_DOMAIN_BREAKDOWN | awk '{print NF}')
+# for i in `eval echo {3..$I}`; do W=$(echo $MAX_VPORTS_IN_L3_DOMAIN_BREAKDOWN  | awk -v pos=$i  '{print $pos}'); if (( $i % 2 )); then X=$W; else echo " $X VPORTS $W" >> summary_counts_$dbvar; fi; done
+#for i in `eval echo {3..$I}`; do echo $MAX_VPORTS_IN_L3_DOMAIN_BREAKDOWN | awk -v pos=$i  '{print $pos}'; done
+# echo "MAX_VPORT_L2_DOMAIN_NAME "$MAX_VPORTS_IN_L2_DOMAIN_NAME >> summary_counts_$dbvar
+# echo " TOTAL_VPORTS_IN_DOMAIN "$MAX_TOTAL_VPORTS_IN_L2_DOMAIN >> summary_counts_$dbvar
+# I=$(echo $MAX_VPORTS_IN_L2_DOMAIN_BREAKDOWN | awk '{print NF}')
+# for i in `eval echo {3..$I}`; do W=$(echo $MAX_VPORTS_IN_L2_DOMAIN_BREAKDOWN  | awk -v pos=$i  '{print $pos}'); if (( $i % 2 )); then X=$W; else echo " $X VPORTS $W" >> summary_counts_$dbvar; fi; done
+#for i in `eval echo {3..$I}`; do echo $MAX_VPORTS_IN_L2_DOMAIN_BREAKDOWN | awk -v pos=$i  '{print $pos}'; done
+# echo "" >> summary_counts_$dbvar
+# echo "***ACLS***" >> summary_counts_$dbvar
+# echo $INGRESS_ACLS >> summary_counts_$dbvar
+# echo $EGRESS_ACLS >> summary_counts_$dbvar
+# echo $STATEFUL_INGRESS_ACLS >> summary_counts_$dbvar
+# echo $STATEFUL_EGRESS_ACLS >> summary_counts_$dbvar
+# echo $INGRESS_ACLS_WITH_MACRO >> summary_counts_$dbvar
+# echo $EGRESS_ACLS_WITH_MACRO >> summary_counts_$dbvar
+# echo $INGRESS_ACLS_WITH_MACRO_GROUP >> summary_counts_$dbvar
+# echo $EGRESS_ACLS_WITH_MACRO_GROUP >> summary_counts_$dbvar
+# echo "" >> summary_counts_$dbvar
+# echo "***BGP/BFD***" >> summary_counts_$dbvar
+# echo $TOTAL_BGP_PEERS >> summary_counts_$dbvar
+# echo $TOTAL_BGP_PEERS_WITH_BFD >> summary_counts_$dbvar
+# echo $TOTAL_IPV4_BGP_PEERS >> summary_counts_$dbvar
+# echo $TOTAL_IPV4_BGP_PEERS_WITH_BFD >> summary_counts_$dbvar
+# echo $TOTAL_IPV6_BGP_PEERS >> summary_counts_$dbvar
+# echo $TOTAL_IPV6_BGP_PEERS_WITH_BFD >> summary_counts_$dbvar
+# echo $VM_VPORT_IPV4_BGP_PEERS >> summary_counts_$dbvar
+# echo $VM_VPORT_IPV6_BGP_PEERS >> summary_counts_$dbvar
+# echo $BRIDGE_VPORT_IPV4_BGP_PEERS >> summary_counts_$dbvar
+# echo $BRIDGE_VPORT_IPV6_BGP_PEERS >> summary_counts_$dbvar
+# echo $HOST_VPORT_IPV4_BGP_PEERS >> summary_counts_$dbvar
+# echo $HOST_VPORT_IPV6_BGP_PEERS >> summary_counts_$dbvar
+
+# echo $BFD_SESSIONS >> summary_counts_$dbvar
+# echo "" > detailed_counts_$dbvar
+# echo  "******DOMAIN VPORT COUNT LIST*****" >> detailed_counts_$dbvar
+# echo "" >> detailed_counts_$dbvar
+# echo "***L3 DOMAINS***" >> detailed_counts_$dbvar
+# mysql -u root -e 'select count(distinct VPORT.id) AS MAX_VPORTS_IN_L3_DOMAIN,DOMAIN.name,VPORT.domain_id from VPORT LEFT JOIN DOMAIN ON VPORT.domain_id=DOMAIN.id where domain_id!="" group by VPORT.domain_id order by MAX_VPORTS_IN_L3_DOMAIN desc' $dbvar >> detailed_counts_$dbvar
+# echo "" >> detailed_counts_$dbvar
+# echo "***L2 DOMAINS***" >> detailed_counts_$dbvar
+# mysql -u root -e 'select count(distinct VPORT.id) AS MAX_VPORTS_IN_L2_DOMAIN,L2_DOMAIN.name,VPORT.assocEntityId from VPORT LEFT JOIN L2_DOMAIN ON VPORT.assocEntityId=L2_DOMAIN.id where VPORT.assocEntityType="L2DOMAIN" group by VPORT.assocEntityId order by MAX_VPORTS_IN_L2_DOMAIN desc' $dbvar >> detailed_counts_$dbvar
+
+# echo  "******DOMAIN ACL MACROS*****" >> detailed_counts_$dbvar
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L3 DOMAINS INGRESS ACLS WITH SINGLE MACRO***" >> detailed_counts_$dbvar
+# mysql -u root -e 'select DOMAIN.name AS L3_Domain_Name,ACL_TEMPLATE.id AS ACL_Template_ID,ACL_TEMPLATE_ENTRY.id AS ACL_Entry_ID,ENTERPRISE_NETWORK_MACRO.name AS Network_Macro_name,ENTERPRISE_NETWORK_MACRO.ipType,ENTERPRISE_NETWORK_MACRO.address,ENTERPRISE_NETWORK_MACRO.netmask,ENTERPRISE_NETWORK_MACRO.ipv6Address from ACL_TEMPLATE_ENTRY LEFT JOIN ACL_TEMPLATE on ACL_TEMPLATE.id=ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN ENTERPRISE_NETWORK_MACRO on ACL_TEMPLATE_ENTRY.networkid=ENTERPRISE_NETWORK_MACRO.id LEFT JOIN DOMAIN on DOMAIN.id=ACL_TEMPLATE.assocEntityId where ACL_TEMPLATE.assocEntityType="DOMAIN" AND ACL_TEMPLATE_ENTRY.networkType="ENTERPRISE_NETWORK" order by DOMAIN.id,ENTERPRISE_NETWORK_MACRO.ipType;' $dbvar >> detailed_counts_$dbvar
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L3 DOMAINS EGRESS ACLS WITH SINGLE MACRO***" >> detailed_counts_$dbvar
+# mysql -u root -e 'select DOMAIN.name AS L3_Domain_Name,INBOUND_ACL_TEMPLATE.id AS ACL_Template_ID,INBOUND_ACL_TEMPLATE_ENTRY.id AS ACL_Entry_ID,ENTERPRISE_NETWORK_MACRO.name AS Network_Macro_name,ENTERPRISE_NETWORK_MACRO.ipType,ENTERPRISE_NETWORK_MACRO.address,ENTERPRISE_NETWORK_MACRO.netmask,ENTERPRISE_NETWORK_MACRO.ipv6Address from INBOUND_ACL_TEMPLATE_ENTRY LEFT JOIN INBOUND_ACL_TEMPLATE on INBOUND_ACL_TEMPLATE.id=INBOUND_ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN ENTERPRISE_NETWORK_MACRO on INBOUND_ACL_TEMPLATE_ENTRY.networkid=ENTERPRISE_NETWORK_MACRO.id LEFT JOIN DOMAIN on DOMAIN.id=INBOUND_ACL_TEMPLATE.assocEntityId where INBOUND_ACL_TEMPLATE.assocEntityType="DOMAIN" AND INBOUND_ACL_TEMPLATE_ENTRY.networkType="ENTERPRISE_NETWORK" order by DOMAIN.id,ENTERPRISE_NETWORK_MACRO.ipType;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L2 DOMAINS INGRESS ACLS WITH SINGLE MACRO***" >> detailed_counts_$dbvar
+# mysql -u root -e 'select L2_DOMAIN.name AS L2_Domain_Name,ACL_TEMPLATE.id AS ACL_Template_ID,ACL_TEMPLATE_ENTRY.id AS ACL_Entry_ID,ENTERPRISE_NETWORK_MACRO.name AS Network_Macro_name,ENTERPRISE_NETWORK_MACRO.ipType,ENTERPRISE_NETWORK_MACRO.address,ENTERPRISE_NETWORK_MACRO.netmask,ENTERPRISE_NETWORK_MACRO.ipv6Address from ACL_TEMPLATE_ENTRY LEFT JOIN ACL_TEMPLATE on ACL_TEMPLATE.id=ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN ENTERPRISE_NETWORK_MACRO on ACL_TEMPLATE_ENTRY.networkid=ENTERPRISE_NETWORK_MACRO.id LEFT JOIN L2_DOMAIN on L2_DOMAIN.id=ACL_TEMPLATE.assocEntityId where ACL_TEMPLATE.assocEntityType="L2DOMAIN" AND ACL_TEMPLATE_ENTRY.networkType="ENTERPRISE_NETWORK" order by L2_DOMAIN.id,ENTERPRISE_NETWORK_MACRO.ipType;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L2 DOMAINS EGRESS ACLS WITH SINGLE MACRO***" >> detailed_counts_$dbvar
+# mysql -u root -e 'select L2_DOMAIN.name AS L2_Domain_Name,INBOUND_ACL_TEMPLATE.id AS ACL_Template_ID,INBOUND_ACL_TEMPLATE_ENTRY.id  AS ACL_Entry_ID,ENTERPRISE_NETWORK_MACRO.name AS Network_Macro_name,ENTERPRISE_NETWORK_MACRO.ipType,ENTERPRISE_NETWORK_MACRO.address,ENTERPRISE_NETWORK_MACRO.netmask,ENTERPRISE_NETWORK_MACRO.ipv6Address from INBOUND_ACL_TEMPLATE_ENTRY LEFT JOIN INBOUND_ACL_TEMPLATE on INBOUND_ACL_TEMPLATE.id=INBOUND_ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN ENTERPRISE_NETWORK_MACRO on INBOUND_ACL_TEMPLATE_ENTRY.networkid=ENTERPRISE_NETWORK_MACRO.id LEFT JOIN L2_DOMAIN on L2_DOMAIN.id=INBOUND_ACL_TEMPLATE.assocEntityId where INBOUND_ACL_TEMPLATE.assocEntityType="L2DOMAIN" AND INBOUND_ACL_TEMPLATE_ENTRY.networkType="ENTERPRISE_NETWORK" order by L2_DOMAIN.id,ENTERPRISE_NETWORK_MACRO.ipType;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L3 DOMAINS INGRESS ACLS WITH MACRO GROUPS***" >> detailed_counts_$dbvar
+
+# mysql -u root -e 'select DOMAIN.name AS L3_Domain_Name,ACL_TEMPLATE.id AS ACL_Template_ID,ACL_TEMPLATE_ENTRY.id AS ACL_Entry_ID,NETWORK_MACRO_GROUP.name AS Network_Macro_Group_Name from ACL_TEMPLATE_ENTRY LEFT JOIN ACL_TEMPLATE on ACL_TEMPLATE.id=ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN NETWORK_MACRO_GROUP on ACL_TEMPLATE_ENTRY.networkid=NETWORK_MACRO_GROUP.id LEFT JOIN DOMAIN on DOMAIN.id=ACL_TEMPLATE.assocEntityId where ACL_TEMPLATE.assocEntityType="DOMAIN" AND ACL_TEMPLATE_ENTRY.networkType="NETWORK_MACRO_GROUP" order by DOMAIN.id,ACL_TEMPLATE.id;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L3 DOMAINS EGRESS ACLS WITH MACRO GROUPS***" >> detailed_counts_$dbvar
+
+# mysql -u root -e 'select DOMAIN.name AS L3_Domain_Name,INBOUND_ACL_TEMPLATE.id AS ACL_Template_ID,INBOUND_ACL_TEMPLATE_ENTRY.id AS ACL_Entry_ID,NETWORK_MACRO_GROUP.name AS Network_Macro_Group_Name from INBOUND_ACL_TEMPLATE_ENTRY LEFT JOIN INBOUND_ACL_TEMPLATE on INBOUND_ACL_TEMPLATE.id=INBOUND_ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN NETWORK_MACRO_GROUP on INBOUND_ACL_TEMPLATE_ENTRY.networkid=NETWORK_MACRO_GROUP.id LEFT JOIN DOMAIN on DOMAIN.id=INBOUND_ACL_TEMPLATE.assocEntityId where INBOUND_ACL_TEMPLATE.assocEntityType="DOMAIN" AND INBOUND_ACL_TEMPLATE_ENTRY.networkType="NETWORK_MACRO_GROUP" order by DOMAIN.id,INBOUND_ACL_TEMPLATE.id;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L2 DOMAINS INGRESS ACLS WITH MACRO GROUPS***" >> detailed_counts_$dbvar
+
+# mysql -u root -e 'select L2_DOMAIN.name AS L2_Domain_Name,ACL_TEMPLATE.id AS ACL_Template_ID,ACL_TEMPLATE_ENTRY.id AS ACL_Entry_ID,NETWORK_MACRO_GROUP.name AS Network_Macro_Group_Name from ACL_TEMPLATE_ENTRY LEFT JOIN ACL_TEMPLATE on ACL_TEMPLATE.id=ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN NETWORK_MACRO_GROUP on ACL_TEMPLATE_ENTRY.networkid=NETWORK_MACRO_GROUP.id LEFT JOIN L2_DOMAIN on L2_DOMAIN.id=ACL_TEMPLATE.assocEntityId where ACL_TEMPLATE.assocEntityType="L2DOMAIN" AND ACL_TEMPLATE_ENTRY.networkType="NETWORK_MACRO_GROUP" order by L2_DOMAIN.id,ACL_TEMPLATE.id;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L2 DOMAINS EGRESS ACLS WITH MACRO GROUPS***" >> detailed_counts_$dbvar
+
+# mysql -u root -e 'select L2_DOMAIN.name AS L2_Domain_Name,INBOUND_ACL_TEMPLATE.id AS ACL_Template_ID,INBOUND_ACL_TEMPLATE_ENTRY.id AS ACL_Entry_ID,NETWORK_MACRO_GROUP.name AS Network_Macro_Group_Name from INBOUND_ACL_TEMPLATE_ENTRY LEFT JOIN INBOUND_ACL_TEMPLATE on INBOUND_ACL_TEMPLATE.id=INBOUND_ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN NETWORK_MACRO_GROUP on INBOUND_ACL_TEMPLATE_ENTRY.networkid=NETWORK_MACRO_GROUP.id LEFT JOIN L2_DOMAIN on L2_DOMAIN.id=INBOUND_ACL_TEMPLATE.assocEntityId where INBOUND_ACL_TEMPLATE.assocEntityType="L2DOMAIN" AND INBOUND_ACL_TEMPLATE_ENTRY.networkType="NETWORK_MACRO_GROUP" order by L2_DOMAIN.id,INBOUND_ACL_TEMPLATE.id;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***MACRO GROUP ENTRIES***" >> detailed_counts_$dbvar
+
+# mysql -u root -e 'select NETWORK_MACRO_GROUP.name AS Network_Macro_Group_Name,ENTERPRISE_NETWORK_MACRO.name AS Network_Macro_Name,ENTERPRISE_NETWORK_MACRO.ipType,ENTERPRISE_NETWORK_MACRO.address,ENTERPRISE_NETWORK_MACRO.netmask,ENTERPRISE_NETWORK_MACRO.ipv6Address from MACRO_GROUP LEFT JOIN ENTERPRISE_NETWORK_MACRO on MACRO_GROUP.ENTERPRISE_NETWORK_MACRO_id=ENTERPRISE_NETWORK_MACRO.id LEFT JOIN NETWORK_MACRO_GROUP on NETWORK_MACRO_GROUP.id=MACRO_GROUP.NETWORK_MACRO_GROUP_id order by NETWORK_MACRO_GROUP.name,ENTERPRISE_NETWORK_MACRO.netmask desc;' $dbvar >> detailed_counts_$dbvar
+
+# echo "" >> detailed_counts_$dbvar
+
+# echo "***L3 DOMAINS WITH INGRESS ACL MACRO GROUPS VPORT BREAKDOWN***" >> detailed_counts_$dbvar
+
+# L3_DOMAIN_IDS_WITH_MACRO_GROUPS=$(mysql -u root -e 'select DOMAIN.id AS L3_Domain_ID from ACL_TEMPLATE_ENTRY LEFT JOIN ACL_TEMPLATE on ACL_TEMPLATE.id=ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN NETWORK_MACRO_GROUP on ACL_TEMPLATE_ENTRY.networkid=NETWORK_MACRO_GROUP.id LEFT JOIN DOMAIN on DOMAIN.id=ACL_TEMPLATE.assocEntityId where ACL_TEMPLATE.assocEntityType="DOMAIN" AND ACL_TEMPLATE_ENTRY.networkType="NETWORK_MACRO_GROUP" group by NETWORK_MACRO_GROUP.name,DOMAIN.id order by DOMAIN.id;' $dbvar)
+
+# L3_DOMAIN_NAMES_WITH_MACRO_GROUPS=$(mysql -u root -e 'select DOMAIN.name AS L3_Domain_Name from ACL_TEMPLATE_ENTRY LEFT JOIN ACL_TEMPLATE on ACL_TEMPLATE.id=ACL_TEMPLATE_ENTRY.aclTemplate_id LEFT JOIN NETWORK_MACRO_GROUP on ACL_TEMPLATE_ENTRY.networkid=NETWORK_MACRO_GROUP.id LEFT JOIN DOMAIN on DOMAIN.id=ACL_TEMPLATE.assocEntityId where ACL_TEMPLATE.assocEntityType="DOMAIN" AND ACL_TEMPLATE_ENTRY.networkType="NETWORK_MACRO_GROUP" group by NETWORK_MACRO_GROUP.name,DOMAIN.id order by DOMAIN.id;' $dbvar)
+# I=$(echo $L3_DOMAIN_IDS_WITH_MACRO_GROUPS | awk '{print NF}')
+# for i in `eval echo {2..$I}`; do D_ID=$(echo $L3_DOMAIN_IDS_WITH_MACRO_GROUPS  | awk -v pos=$i '{print $pos}'); D_NAME=$(echo $L3_DOMAIN_NAMES_WITH_MACRO_GROUPS  | awk -v pos=$i '{print $pos}'); echo $D_NAME $D_ID >> detailed_counts_$dbvar; echo "use $dbvar; select vport_type,COUNT(DISTINCT id) AS VPORT_COUNT from VPORT where domain_id='$D_ID' GROUP BY vport_type" | mysql -u root >> detailed_counts_$dbvar; done
