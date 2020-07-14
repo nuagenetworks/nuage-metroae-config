@@ -60,7 +60,8 @@ class UserDataParser(object):
         data_dict = self._decode_to_dict(user_data_string, filename)
         reader = Reader(self)
         reader.set_filename(filename)
-        reader.read(data_dict)
+        if data_dict is not None:
+            reader.read(data_dict)
 
     def _decode_to_dict(self, user_data_string, filename):
         try:

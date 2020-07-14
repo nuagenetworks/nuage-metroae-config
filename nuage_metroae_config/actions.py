@@ -34,6 +34,7 @@ class Action(object):
         self.store_marks = set()
         self.retrieve_marks = set()
         self.template_name = None
+        self.order = 0
         if parent is None:
             self.level = 0
             self.log = Logger()
@@ -262,6 +263,23 @@ class Action(object):
             else:
                 self.parent.retrieve_marks.add(mark)
             self.parent.mark_ancestors_for_reorder(mark, is_store)
+
+    def reorder(self):
+        self.reorder_orders()
+        self.reorder_retrieve()
+
+    def reorder_orders(self):
+
+        sort_dict = dict()
+
+        for child in self.children:
+            if child.order not in sort_dict:
+                sort_dict[child.order] = list()
+            sort_dict[child.order].append(child)
+
+        self.children = list()
+        for order in sorted(sort_dict):
+            self.children.extend(sort_dict[order])
 
     def reorder_retrieve(self):
         complete = False
@@ -495,6 +513,10 @@ class SelectObjectAction(Action):
         updatable = Action.get_dict_field(select_dict, 'update-supported')
         if updatable is not None:
             self.is_updatable = updatable
+
+        order = Action.get_dict_field(select_dict, 'order')
+        if order is not None:
+            self.order = order
 
         if type(self.field) == list:
             if type(self.value) != list:

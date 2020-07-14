@@ -2033,7 +2033,7 @@ class TestVsdWriterVersion(object):
         assert vsd_writer.version == "6"
 
         vsd_writer.set_software_version("20.5.R1")
-        assert vsd_writer.version == "20"
+        assert vsd_writer.version == "6"
 
 
 class TestVsdWriterQuery(object):
