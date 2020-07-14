@@ -23,6 +23,31 @@ class DeviceReaderBase(object):
     def get_logger(self):
         return self.log
 
+    def build_filter_list(self, filter, object_list):
+        if type(filter) == dict and "%group" in filter:
+            group_field = filter["%group"]
+            if group_field not in filter:
+                items = list()
+                for obj in object_list:
+                    value = self.query_attribute(obj, group_field)
+                    if value not in items:
+                        items.append(value)
+            elif type(filter[group_field]) != list:
+                items = [filter[group_field]]
+            else:
+                items = filter[group_field]
+
+            filter_list = list()
+            for item in items:
+                filter_copy = dict(filter)
+                filter_copy[group_field] = item
+                filter_copy["%group_value"] = item
+                filter_list.append(filter_copy)
+        else:
+            filter_list = [filter]
+
+        return filter_list
+
     def filter_results(self, results, filter):
         filtered = list()
         sort_desc = False

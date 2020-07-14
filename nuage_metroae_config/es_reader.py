@@ -140,7 +140,7 @@ class EsReader(DeviceReaderBase):
             fields = list()
             for field_name in query_filter:
                 if field_name.startswith("%"):
-                    if field_name in ["%end", "%start"]:
+                    if field_name in ["%end", "%start", "%group"]:
                         pass
                     elif field_name in ["%sort", "%sort_asc"]:
                         query_params += "sort=%s:asc&" % (

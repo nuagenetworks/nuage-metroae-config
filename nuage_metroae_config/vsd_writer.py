@@ -871,7 +871,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
             object_list = self._get_object_list(object_name,
                                                 parent_object)
 
-            filter_list = self._build_filter_list(filter)
+            filter_list = self.build_filter_list(filter, object_list)
 
             result = list()
             for cur_filter in filter_list:
@@ -893,27 +893,6 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
         else:
             return self._query_attributes(parent_object, attributes)
-
-    def _build_filter_list(self, filter):
-        if type(filter) == dict and "%group" in filter:
-            group_field = filter["%group"]
-            if group_field not in filter:
-                raise VsdError("Field %s not provided to group" % group_field)
-            if type(filter[group_field]) != list:
-                items = [filter[group_field]]
-            else:
-                items = filter[group_field]
-
-            filter_list = list()
-            for item in items:
-                filter_copy = dict(filter)
-                filter_copy[group_field] = item
-                filter_copy["%group_value"] = item
-                filter_list.append(filter_copy)
-        else:
-            filter_list = [filter]
-
-        return filter_list
 
     def _query_attributes(self, parent_object, attributes):
         if type(attributes) == list:
