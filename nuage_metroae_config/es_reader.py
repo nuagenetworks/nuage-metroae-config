@@ -119,7 +119,7 @@ class EsReader(DeviceReaderBase):
         query_filter = objects[0]["filter"]
         (start, end) = self._get_filter_index_pair(query_filter)
         es_results = self._query_to_es(search_url, start, end)
-        return self._filter_es_results(es_results, objects, attributes)
+        return self._filter_es_results(es_results, objects, attributes, list())
 
     def _build_search_url(self, objects):
         index = objects[0]["name"]
@@ -190,9 +190,6 @@ class EsReader(DeviceReaderBase):
             return (0, MAX_RESULTS)
 
     def _query_to_es(self, search_url, start=0, end=MAX_RESULTS):
-
-        self.log.debug("%d %d" % (end, start))
-
         results = list()
         current = start
         while current < end:
@@ -227,42 +224,87 @@ class EsReader(DeviceReaderBase):
         hits = results["hits"]["hits"]
         return [x["_source"] for x in hits]
 
-    def _filter_es_results(self, results, objects, attributes):
+    def _filter_es_results(self, results, objects, attributes, groups):
 
-        filtered = list()
-        for next in results:
-            filtered.extend(self._filter_es_results_level(next,
-                                                          objects,
-                                                          attributes))
+        filter = objects[0]["filter"]
+        filter_list = self.build_filter_list(filter, results)
 
-        return filtered
+        if type(filter) != dict or "%group" not in filter:
+            groups = list()
 
-    def _filter_es_results_level(self, results, objects, attributes, level=1):
-        filtered = list()
+        values = list()
+        for cur_filter in filter_list:
+            self.log.debug("Current filter: " + str(cur_filter))
+            child_group = list()
+            values = list()
+
+            if type(cur_filter) == dict and "%group" in cur_filter:
+                partial_results = self.filter_results(results, cur_filter)
+            else:
+                partial_results = results
+
+            for cur in partial_results:
+                values.extend(self._filter_es_results_level(cur,
+                                                            objects,
+                                                            attributes, 1,
+                                                            child_group))
+
+            if child_group != []:
+                self.group_results(groups, cur_filter, child_group)
+                values = child_group
+            else:
+                self.group_results(groups, cur_filter, values)
+
+        if groups != []:
+            return groups
+
+        return values
+
+    def _filter_es_results_level(self, results, objects, attributes, level,
+                                 groups):
+        values = list()
 
         if level >= len(objects):
             return self._filter_attributes(results, attributes)
         else:
             obj_name = objects[level]["name"]
             filter = objects[level]["filter"]
+            if type(filter) != dict or "%group" not in filter:
+                groups = list()
+
             if type(results) == list:
 
-                for next in self.filter_results(results, filter):
-                    filtered.extend(self._filter_es_results_level(next,
-                                                                  objects,
-                                                                  attributes,
-                                                                  level + 1))
+                filter_list = self.build_filter_list(filter, results)
+
+                for cur_filter in filter_list:
+                    self.log.debug("Current filter: " + str(cur_filter))
+                    values = list()
+                    child_group = list()
+
+                    for cur in self.filter_results(results, cur_filter):
+                        values.extend(self._filter_es_results_level(
+                            cur, objects, attributes, level + 1, child_group))
+
+                    if child_group != []:
+                        self.group_results(groups, cur_filter, child_group)
+                        values = child_group
+                    else:
+                        self.group_results(groups, cur_filter, values)
 
             elif type(results) == dict and obj_name in results:
-                next = results[obj_name]
-                if type(next) != list:
+                cur = results[obj_name]
+                if type(cur) != list:
                     level += 1
-                filtered.extend(self._filter_es_results_level(next,
-                                                              objects,
-                                                              attributes,
-                                                              level))
+                values.extend(self._filter_es_results_level(cur,
+                                                            objects,
+                                                            attributes,
+                                                            level,
+                                                            groups))
 
-        return filtered
+        if groups != []:
+            return groups
+
+        return values
 
     def _filter_attributes(self, current, attributes):
         if type(current) != dict:

@@ -332,7 +332,7 @@ class QueryExecutor(Transformer):
         if result is None:
             return "null"
         elif type(result) == dict or type(result) == list:
-            return yaml.safe_dump(result).strip("\n")
+            return yaml.dump(result, Dumper=NoAliasDumper).strip("\n")
         elif isinstance(result, basestring):
             return result
         else:
@@ -415,6 +415,11 @@ class Query():
         except Exception as e:
             raise QueryExecutionError(str(e))
         return results
+
+
+class NoAliasDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
 
 
 def jinja_date_format(value, format):

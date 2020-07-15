@@ -854,11 +854,12 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
     def _query(self, objects, attributes):
         if len(attributes) > 0:
-            return self._query_objects(objects, attributes, 0, None)
+            return self._query_objects(objects, attributes, 0, None, list())
         else:
             return list()
 
-    def _query_objects(self, objects, attributes, level, parent_object):
+    def _query_objects(self, objects, attributes, level, parent_object,
+                       groups):
         if parent_object is None:
             parent_object = self.session.root_object
 
@@ -873,24 +874,30 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
             filter_list = self.build_filter_list(filter, object_list)
 
-            result = list()
+            if type(filter) != dict or "%group" not in filter:
+                groups = list()
+
+            values = list()
             for cur_filter in filter_list:
                 self.log.debug("Current filter: " + str(cur_filter))
+                child_group = list()
                 values = list()
                 for parent_object in self.filter_results(object_list,
                                                          cur_filter):
                     values.extend(self._query_objects(objects,
                                                       attributes,
                                                       level + 1,
-                                                      parent_object))
-                if type(filter) == dict and "%group_value" in cur_filter:
-                    group_value = cur_filter["%group_value"]
-                    result.append([group_value, values])
+                                                      parent_object,
+                                                      child_group))
+                if child_group != []:
+                    self.group_results(groups, cur_filter, child_group)
+                    values = child_group
                 else:
-                    result = values
+                    self.group_results(groups, cur_filter, values)
 
-            return result
-
+            if groups != []:
+                return groups
+            return values
         else:
             return self._query_attributes(parent_object, attributes)
 

@@ -610,6 +610,280 @@ class TestEsReaderQuery(object):
 
         assert result == ["cf3:", "cf4:"]
 
+    def test_group_parent__success(self, requests_mock):
+        es_reader = EsReader()
+        es_reader.set_session_params(TEST_HOST, TEST_PORT)
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": {"%group": "dhcpleaseinterval"}},
+            {"name": "domains",
+             "filter": None},
+        ]
+
+        attributes = "name"
+
+        mock_entry_1 = {
+            "name": "enterprise_1",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_1",
+                 "bgpenabled": True},
+                {"name": "domain_2",
+                 "bgpenabled": False}
+            ]
+        }
+
+        mock_entry_2 = {
+            "name": "enterprise_2",
+            "dhcpleaseinterval": 20,
+            "domains": []
+        }
+
+        mock_entry_3 = {
+            "name": "enterprise_3",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_3",
+                 "bgpenabled": True},
+                {"name": "domain_4",
+                 "bgpenabled": True}
+            ]
+        }
+
+        mock_entry_4 = {
+            "name": "enterprise_4",
+            "dhcpleaseinterval": 30,
+            "domains": [
+                {"name": "domain_5",
+                 "bgpenabled": True},
+                {"name": "domain_6",
+                 "bgpenabled": True}
+            ]
+        }
+
+        self.register_mock_get(requests_mock, "",
+                               [mock_entry_1, mock_entry_2, mock_entry_3,
+                                mock_entry_4])
+
+        results = es_reader.query(objects, attributes)
+
+        assert results == [
+            [10,
+                ["domain_1", "domain_2", "domain_3", "domain_4"]],
+            [20,
+                []],
+            [30,
+                ["domain_5", "domain_6"]]
+        ]
+
+    def test_group_child__success(self, requests_mock):
+        es_reader = EsReader()
+        es_reader.set_session_params(TEST_HOST, TEST_PORT)
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": None},
+            {"name": "domains",
+             "filter": {"%group": "bgpenabled"}},
+        ]
+
+        attributes = "name"
+
+        mock_entry_1 = {
+            "name": "enterprise_1",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_1",
+                 "bgpenabled": True},
+                {"name": "domain_2",
+                 "bgpenabled": False}
+            ]
+        }
+
+        mock_entry_2 = {
+            "name": "enterprise_2",
+            "dhcpleaseinterval": 20,
+            "domains": []
+        }
+
+        mock_entry_3 = {
+            "name": "enterprise_3",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_3",
+                 "bgpenabled": True},
+                {"name": "domain_4",
+                 "bgpenabled": True}
+            ]
+        }
+
+        mock_entry_4 = {
+            "name": "enterprise_4",
+            "dhcpleaseinterval": 30,
+            "domains": [
+                {"name": "domain_5",
+                 "bgpenabled": True},
+                {"name": "domain_6",
+                 "bgpenabled": True}
+            ]
+        }
+
+        self.register_mock_get(requests_mock, "",
+                               [mock_entry_1, mock_entry_2, mock_entry_3,
+                                mock_entry_4])
+
+        results = es_reader.query(objects, attributes)
+
+        assert results == [
+            [True,
+                ["domain_1", "domain_3", "domain_4", "domain_5", "domain_6"]],
+            [False,
+                ["domain_2"]]
+        ]
+
+    def test_group_both__success(self, requests_mock):
+        es_reader = EsReader()
+        es_reader.set_session_params(TEST_HOST, TEST_PORT)
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": {"%group": "dhcpleaseinterval"}},
+            {"name": "domains",
+             "filter": {"%group": "bgpenabled"}},
+        ]
+
+        attributes = "name"
+
+        mock_entry_1 = {
+            "name": "enterprise_1",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_1",
+                 "bgpenabled": True},
+                {"name": "domain_2",
+                 "bgpenabled": False}
+            ]
+        }
+
+        mock_entry_2 = {
+            "name": "enterprise_2",
+            "dhcpleaseinterval": 20,
+            "domains": []
+        }
+
+        mock_entry_3 = {
+            "name": "enterprise_3",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_3",
+                 "bgpenabled": True},
+                {"name": "domain_4",
+                 "bgpenabled": True}
+            ]
+        }
+
+        mock_entry_4 = {
+            "name": "enterprise_4",
+            "dhcpleaseinterval": 30,
+            "domains": [
+                {"name": "domain_5",
+                 "bgpenabled": True},
+                {"name": "domain_6",
+                 "bgpenabled": True}
+            ]
+        }
+
+        self.register_mock_get(requests_mock, "",
+                               [mock_entry_1, mock_entry_2, mock_entry_3,
+                                mock_entry_4])
+
+        results = es_reader.query(objects, attributes)
+
+        assert results == [
+            [10,
+                [[True,
+                    ["domain_1", "domain_3", "domain_4"]],
+                 [False,
+                    ["domain_2"]]]],
+            [20,
+                []],
+            [30,
+                [[True,
+                    ["domain_5", "domain_6"]]]]
+        ]
+
+    def test_group_both_filtered__success(self, requests_mock):
+        es_reader = EsReader()
+        es_reader.set_session_params(TEST_HOST, TEST_PORT)
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": {"%group": "dhcpleaseinterval"}},
+            {"name": "domains",
+             "filter": {"%group": "bgpenabled",
+                        "bgpenabled": True}}
+        ]
+
+        attributes = "name"
+
+        mock_entry_1 = {
+            "name": "enterprise_1",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_1",
+                 "bgpenabled": True},
+                {"name": "domain_2",
+                 "bgpenabled": False}
+            ]
+        }
+
+        mock_entry_2 = {
+            "name": "enterprise_2",
+            "dhcpleaseinterval": 20,
+            "domains": []
+        }
+
+        mock_entry_3 = {
+            "name": "enterprise_3",
+            "dhcpleaseinterval": 10,
+            "domains": [
+                {"name": "domain_3",
+                 "bgpenabled": True},
+                {"name": "domain_4",
+                 "bgpenabled": True}
+            ]
+        }
+
+        mock_entry_4 = {
+            "name": "enterprise_4",
+            "dhcpleaseinterval": 30,
+            "domains": [
+                {"name": "domain_5",
+                 "bgpenabled": True},
+                {"name": "domain_6",
+                 "bgpenabled": True}
+            ]
+        }
+
+        self.register_mock_get(requests_mock, "",
+                               [mock_entry_1, mock_entry_2, mock_entry_3,
+                                mock_entry_4])
+
+        results = es_reader.query(objects, attributes)
+
+        assert results == [
+            [10,
+                [[True,
+                    ["domain_1", "domain_3", "domain_4"]]]],
+            [20,
+                [[True,
+                    []]]],
+            [30,
+                [[True,
+                    ["domain_5", "domain_6"]]]]
+        ]
+
     @pytest.mark.parametrize("filter, params",
                              QUERY_INDEX_RANGE_SORT_CASES)
     def test_index_range_sort__success(self, filter, params, requests_mock):

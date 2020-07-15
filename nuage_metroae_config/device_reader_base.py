@@ -104,6 +104,17 @@ class DeviceReaderBase(object):
 
         return True
 
+    def group_results(self, groups, cur_filter, values):
+        is_grouped = type(cur_filter) == dict and "%group_value" in cur_filter
+        if is_grouped:
+            group_value = cur_filter["%group_value"]
+            for search_pair in groups:
+                if search_pair[0] == group_value:
+                    search_pair[1].extend(values)
+                    return
+
+            groups.append([group_value, values])
+
     # Abstract prototype functions
     # All types of device writer classes will need to implement these
     # functions in order to apply the configurations to the device.

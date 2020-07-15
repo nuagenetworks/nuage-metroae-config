@@ -2586,6 +2586,276 @@ class TestVsdWriterQuery(object):
             call("Domain", mock_ent_2),
         ])
 
+    def test_group_parent__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": {"%group": "DHCPLeaseInterval"}},
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2",
+                                                    "dhcpleaseinterval": 20})
+        mock_ent_3 = self.create_mock_query_object({"name": "enterprise_3",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_4 = self.create_mock_query_object({"name": "enterprise_4",
+                                                    "dhcpleaseinterval": 30})
+        mock_dom_1 = self.create_mock_query_object({"name": "domain_1",
+                                                    "bgpenabled": True})
+        mock_dom_2 = self.create_mock_query_object({"name": "domain_2",
+                                                    "bgpenabled": False})
+        mock_dom_3 = self.create_mock_query_object({"name": "domain_3",
+                                                    "bgpenabled": True})
+        mock_dom_4 = self.create_mock_query_object({"name": "domain_4",
+                                                    "bgpenabled": True})
+        mock_dom_5 = self.create_mock_query_object({"name": "domain_5",
+                                                    "bgpenabled": True})
+        mock_dom_6 = self.create_mock_query_object({"name": "domain_6",
+                                                    "bgpenabled": True})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+        mock_ent_3.spec = vsd_writer.specs["enterprise"]
+        mock_ent_4.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1, mock_ent_2, mock_ent_3, mock_ent_4],
+            [mock_dom_1, mock_dom_2],
+            [mock_dom_3, mock_dom_4],
+            [],
+            [mock_dom_5, mock_dom_6]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [
+            [10,
+                ["domain_1", "domain_2", "domain_3", "domain_4"]],
+            [20,
+                []],
+            [30,
+                ["domain_5", "domain_6"]]
+        ]
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1),
+            call("Domain", mock_ent_3),
+            call("Domain", mock_ent_2),
+            call("Domain", mock_ent_4),
+        ])
+
+    def test_group_child__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": {"%group": "BGPEnabled"}},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2",
+                                                    "dhcpleaseinterval": 20})
+        mock_ent_3 = self.create_mock_query_object({"name": "enterprise_3",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_4 = self.create_mock_query_object({"name": "enterprise_4",
+                                                    "dhcpleaseinterval": 30})
+        mock_dom_1 = self.create_mock_query_object({"name": "domain_1",
+                                                    "bgpenabled": True})
+        mock_dom_2 = self.create_mock_query_object({"name": "domain_2",
+                                                    "bgpenabled": False})
+        mock_dom_3 = self.create_mock_query_object({"name": "domain_3",
+                                                    "bgpenabled": True})
+        mock_dom_4 = self.create_mock_query_object({"name": "domain_4",
+                                                    "bgpenabled": True})
+        mock_dom_5 = self.create_mock_query_object({"name": "domain_5",
+                                                    "bgpenabled": True})
+        mock_dom_6 = self.create_mock_query_object({"name": "domain_6",
+                                                    "bgpenabled": True})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+        mock_ent_3.spec = vsd_writer.specs["enterprise"]
+        mock_ent_4.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1, mock_ent_2, mock_ent_3, mock_ent_4],
+            [mock_dom_1, mock_dom_2],
+            [],
+            [mock_dom_3, mock_dom_4],
+            [mock_dom_5, mock_dom_6]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [
+            [True,
+                ["domain_1", "domain_3", "domain_4", "domain_5", "domain_6"]],
+            [False,
+                ["domain_2"]]
+        ]
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1),
+            call("Domain", mock_ent_2),
+            call("Domain", mock_ent_3),
+            call("Domain", mock_ent_4),
+        ])
+
+    def test_group_both__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": {"%group": "DHCPLeaseInterval"}},
+            {"name": "Domain",
+             "filter": {"%group": "BGPEnabled"}},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2",
+                                                    "dhcpleaseinterval": 20})
+        mock_ent_3 = self.create_mock_query_object({"name": "enterprise_3",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_4 = self.create_mock_query_object({"name": "enterprise_4",
+                                                    "dhcpleaseinterval": 30})
+        mock_dom_1 = self.create_mock_query_object({"name": "domain_1",
+                                                    "bgpenabled": True})
+        mock_dom_2 = self.create_mock_query_object({"name": "domain_2",
+                                                    "bgpenabled": False})
+        mock_dom_3 = self.create_mock_query_object({"name": "domain_3",
+                                                    "bgpenabled": True})
+        mock_dom_4 = self.create_mock_query_object({"name": "domain_4",
+                                                    "bgpenabled": True})
+        mock_dom_5 = self.create_mock_query_object({"name": "domain_5",
+                                                    "bgpenabled": True})
+        mock_dom_6 = self.create_mock_query_object({"name": "domain_6",
+                                                    "bgpenabled": True})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+        mock_ent_3.spec = vsd_writer.specs["enterprise"]
+        mock_ent_4.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1, mock_ent_2, mock_ent_3, mock_ent_4],
+            [mock_dom_1, mock_dom_2],
+            [mock_dom_3, mock_dom_4],
+            [],
+            [mock_dom_5, mock_dom_6]
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [
+            [10,
+                [[True,
+                    ["domain_1", "domain_3", "domain_4"]],
+                 [False,
+                    ["domain_2"]]]],
+            [20,
+                []],
+            [30,
+                [[True,
+                    ["domain_5", "domain_6"]]]]
+        ]
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1),
+            call("Domain", mock_ent_3),
+            call("Domain", mock_ent_2),
+            call("Domain", mock_ent_4),
+        ])
+
+    def test_group_both_filtered__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": {"%group": "DHCPLeaseInterval",
+                        "DHCPLeaseInterval": [10, 20]}},
+            {"name": "Domain",
+             "filter": {"%group": "BGPEnabled",
+                        "BGPEnabled": True}},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2",
+                                                    "dhcpleaseinterval": 20})
+        mock_ent_3 = self.create_mock_query_object({"name": "enterprise_3",
+                                                    "dhcpleaseinterval": 10})
+        mock_ent_4 = self.create_mock_query_object({"name": "enterprise_4",
+                                                    "dhcpleaseinterval": 30})
+        mock_dom_1 = self.create_mock_query_object({"name": "domain_1",
+                                                    "bgpenabled": True})
+        mock_dom_2 = self.create_mock_query_object({"name": "domain_2",
+                                                    "bgpenabled": False})
+        mock_dom_3 = self.create_mock_query_object({"name": "domain_3",
+                                                    "bgpenabled": True})
+        mock_dom_4 = self.create_mock_query_object({"name": "domain_4",
+                                                    "bgpenabled": True})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+        mock_ent_3.spec = vsd_writer.specs["enterprise"]
+        mock_ent_4.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1, mock_ent_2, mock_ent_3, mock_ent_4],
+            [mock_dom_1, mock_dom_2],
+            [mock_dom_3, mock_dom_4],
+            []
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+
+        assert results == [
+            [10,
+                [[True,
+                    ["domain_1", "domain_3", "domain_4"]]]],
+            [20,
+                [[True,
+                    []]]]
+        ]
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_1),
+            call("Domain", mock_ent_3),
+            call("Domain", mock_ent_2),
+        ])
+
     def test_nested_object_multiple__empty_child(self):
         vsd_writer = VsdWriter()
         mock_session = setup_standard_session(vsd_writer)
