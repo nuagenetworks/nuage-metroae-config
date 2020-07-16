@@ -20,6 +20,8 @@ PARSE_ERROR_CASES = [
     ("Enterprise[field=].name", 18),
     ("Enterprise[field=test field2=other].name", 23),
     ("Enterprise.{}", 13),
+    ("test = + 1", 8),
+    ("test = 1 + ;", 12),
     ("count()", 7),
     ("reverse()", 9),
     ("echo()", 6),
@@ -28,6 +30,37 @@ PARSE_ERROR_CASES = [
     ("output('true', 'extra')", 14),
 ]
 
+VALID_COMBINE_CASES = [
+    ("['a', 'b'] + ['c', 'd']", [["a", "b", "c", "d"]]),
+    ("['a', 'b'] + ['c', 'd'] + ['e', 'f']", [["a", "b", "c", "d", "e", "f"]]),
+    ("'a' + 'bcd'", ["abcd"]),
+    ("'a' + 'bcd' + 'ef'", ["abcdef"]),
+    ("'a' + 1", ["a1"]),
+    ("'a' + 1 + 'b'", ["a1b"]),
+    ("1 + 'a'", ["1a"]),
+    ("1 + 'a' + 2", ["1a2"]),
+    ("1 + 5", [6]),
+    ("1 + 5 + 2", [8]),
+    ("count(enterprise.id) + 1", [3]),
+    ("count(enterprise.id) + 1 + count(domain.id)", [5]),
+    ("count(enterprise.id + domain.id)", [4]),
+    ("enterprise.id + [99, 100]", [[1, 2, 99, 100]]),
+    ("enterprise.id + domain.id", [[1, 2, 3, 4]]),
+    ("enterprise.id + domain.id + subnet.id", [[1, 2, 3, 4, 5, 6]]),
+    ("var = ['a', 'b']; enterprise.id + $var", [{"var": ['a', 'b']}, [1, 2, 'a', 'b']]),
+    ("file = 'test'; $file + '.txt'", [{"file": "test"}, "test.txt"]),
+    ("v1 = 1 + 5; v2 = $v1 + 1; v3 = $v1 + $v2", [{"v1": 6}, {"v2": 7}, {"v3": 13}]),
+]
+
+INVALID_COMBINE_CASES = [
+    "['a'] + 'b'",
+    "['a'] + ['b'] + 'c'",
+    "['a'] + 1",
+    "['a'] + ['b'] + 1",
+    "enterprise.id + 1",
+    "count(enterprise.id) + ['a']",
+    "var = enterprise.id; $var + 1",
+]
 
 class TestQuery(object):
 
@@ -42,16 +75,18 @@ class TestQuery(object):
 
         results = query.execute(query_text, **override_vars)
 
-        expected_actions_formatted = self.format_expected_actions(
-            expected_actions)
+        if expected_actions is not None:
+            expected_actions_formatted = self.format_expected_actions(
+                expected_actions)
 
-        print "\nExpected actions:"
-        print "\n".join(expected_actions_formatted)
+            print "\nExpected actions:"
+            print "\n".join(expected_actions_formatted)
 
-        print "\nRecorded actions:"
-        print "\n".join(reader.get_recorded_actions())
+            print "\nRecorded actions:"
+            print "\n".join(reader.get_recorded_actions())
 
-        assert reader.get_recorded_actions() == expected_actions_formatted
+            assert reader.get_recorded_actions() == expected_actions_formatted
+
         assert results == expected_results
 
         return query
@@ -414,6 +449,40 @@ multiline
             query.execute(query_text)
 
         assert "Unassigned variable" in str(e.value)
+
+    @pytest.mark.parametrize("query_text, expected_results",
+                             VALID_COMBINE_CASES)
+    def test_combine__success(self, query_text, expected_results):
+
+        mock_results = [
+            [1, 2],
+            [3, 4],
+            [5, 6]
+        ]
+
+        expected_actions = None
+
+        self.run_execute_test(query_text, expected_actions, mock_results,
+                              expected_results)
+
+    @pytest.mark.parametrize("query_text",
+                             INVALID_COMBINE_CASES)
+    def test_combine__error(self, query_text):
+
+        mock_results = [
+            [1, 2],
+            [3, 4],
+            [5, 6]
+        ]
+
+        expected_actions = None
+        expected_results = None
+
+        with pytest.raises(QueryExecutionError) as e:
+            self.run_execute_test(query_text, expected_actions, mock_results,
+                                  expected_results)
+
+        assert "Incompatible types for combine" in str(e.value)
 
     def test_count_1__success(self):
 

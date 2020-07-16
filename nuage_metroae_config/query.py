@@ -17,7 +17,7 @@ query_grammer = Lark(r"""
     COMMENT       : "#" /[^\n\r]+/? _NEWLINE
     query         : _expression | assignment | _action
 
-    _expression        : retrieve | _function | variable
+    _expression        : retrieve | _function | variable | combine
     assignment         : CNAME "=" ( boolean | _expression | string | list | integer )
     variable           : "$" CNAME
     retrieve           : objects attributes
@@ -40,6 +40,7 @@ query_grammer = Lark(r"""
     filter_range_end   : ":" ( integer | variable )
     filter_attr_name   : CNAME
     all                : "*"
+    combine            : ( _expression | string | list | integer ) "+" ( _expression | string | list | integer )
     _function          : count | reverse
     count              : "count(" _expression ")"
     reverse            : "reverse(" _expression ")"
@@ -212,6 +213,23 @@ class QueryExecutor(Transformer):
 
     def filter_range_end(self, t):
         return [None, t[0]]
+
+    def combine(self, t):
+        (op1, op2) = t
+        if type(op1) == list and type(op2) == list:
+            op1.extend(op2)
+        elif isinstance(op1, basestring) and isinstance(op2, basestring):
+            op1 = op1 + op2
+        elif type(op1) == int and isinstance(op2, basestring):
+            op1 = str(op1) + op2
+        elif isinstance(op1, basestring) and type(op2) == int:
+            op1 = op1 + str(op2)
+        elif type(op1) == int and type(op2) == int:
+            op1 = op1 + op2
+        else:
+            raise Exception("Incompatible types for combine")
+
+        return op1
 
     def connect_action(self, t):
         args = list(t)
