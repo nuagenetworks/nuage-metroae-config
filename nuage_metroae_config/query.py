@@ -6,6 +6,7 @@ import time
 import yaml
 
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
+from nuage_metroae_config.variable_reader import VariableReader
 
 query_grammer = Lark(r"""
 
@@ -19,7 +20,7 @@ query_grammer = Lark(r"""
 
     _expression        : retrieve | _function | variable | combine
     assignment         : CNAME "=" ( boolean | _expression | string | list | integer )
-    variable           : "$" CNAME
+    variable           : "$" CNAME _filter? _dot_object* attributes?
     retrieve           : objects attributes
     objects            : object _dot_object*
     object             : CNAME _filter?
@@ -314,9 +315,33 @@ class QueryExecutor(Transformer):
         return arg
 
     def variable(self, t):
-        (var_name,) = t
+        var_name = t[0].value
         if var_name not in self.variables:
             raise Exception("Unassigned variable " + var_name)
+
+        if len(t) > 1:
+            print str(t)
+            var_reader = VariableReader()
+            var_reader.set_data(self.variables[var_name])
+            last_object = t[-1]
+            if type(last_object) == dict:
+                if "filter" in last_object and last_object["filter"] is None:
+                    attributes = last_object["name"]
+                else:
+                    attributes = None
+            else:
+                attributes = last_object
+
+            if len(t) > 2:
+                objects = t[1:-1]
+                if type(objects[0]) is dict and "filter" not in objects[0]:
+                    objects[0] = {"name": var_name, "filter": objects[0]}
+            else:
+                objects = [{"name": var_name, "filter": None}]
+
+            result = var_reader.query(objects, attributes)
+            return result
+
         return self.variables[var_name]
 
     def list(self, t):
