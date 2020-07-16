@@ -18,7 +18,7 @@ query_grammer = Lark(r"""
     query         : _expression | assignment | _action
 
     _expression        : retrieve | _function | variable
-    assignment         : CNAME "=" ( _expression | string | list | integer )
+    assignment         : CNAME "=" ( boolean | _expression | string | list | integer )
     variable           : "$" CNAME
     retrieve           : objects attributes
     objects            : object _dot_object*
@@ -32,7 +32,7 @@ query_grammer = Lark(r"""
     _filter            : "[" filter_set "]"
     filter_set         : _filter_item ( "&" _filter_item )*
     _filter_item       : filter_attr | _filter_range | variable | integer
-    filter_attr        : ( filter_special | filter_attr_name ) "=" ( variable | string | filter_attr_name | integer | list )
+    filter_attr        : ( filter_special | filter_attr_name ) "=" ( variable | string | boolean | null | filter_attr_name | integer | list)
     filter_special     : "%" CNAME
     _filter_range      : filter_range_both | filter_range_start | filter_range_end
     filter_range_both  : ( integer | variable ) ":" ( integer | variable )
@@ -55,7 +55,7 @@ query_grammer = Lark(r"""
     output_action    : "output(" argument ")"
 
     list              : "[" _list_item_comma* _list_item? "]"
-    _list_item        : variable | string | integer
+    _list_item        : variable | string | integer | boolean | null
     _list_item_comma  : _list_item ","
     string            : STRING_SQ | STRING_DQ | STRING_BLOCK_SQ | STRING_BLOCK_DQ
     _STRING_INNER     : /.*?/
@@ -67,6 +67,8 @@ query_grammer = Lark(r"""
     STRING_BLOCK_SQ   : "'''" _STRING_ESC_BLOCK "'''"
     STRING_BLOCK_DQ   : "\"\"\"" _STRING_ESC_BLOCK "\"\"\""
     integer           : SIGNED_INT
+    !boolean          : "true" | "false"
+    null              : "null"
 
     _NEWLINE          : NEWLINE
 
@@ -312,6 +314,18 @@ class QueryExecutor(Transformer):
     def integer(self, t):
         (i,) = t
         return int(i)
+
+    def boolean(self, t):
+        (b,) = t
+        if b == "true":
+            return True
+        elif b == "false":
+            return False
+        else:
+            raise Exception("Invalid boolean value")
+
+    def null(self, t):
+        return None
 
     def _set_logger(self, logger):
         self.log = logger

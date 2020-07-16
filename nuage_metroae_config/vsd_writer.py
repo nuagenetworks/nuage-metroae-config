@@ -874,13 +874,13 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
             filter_list = self.build_filter_list(filter, object_list)
 
-            if type(filter) != dict or "%group" not in filter:
-                groups = list()
-
             values = list()
             for cur_filter in filter_list:
                 self.log.debug("Current filter: " + str(cur_filter))
-                child_group = list()
+                if type(filter) != dict or "%group" not in filter:
+                    child_group = groups
+                else:
+                    child_group = list()
                 values = list()
                 for parent_object in self.filter_results(object_list,
                                                          cur_filter):

@@ -235,12 +235,13 @@ class EsReader(DeviceReaderBase):
         values = list()
         for cur_filter in filter_list:
             self.log.debug("Current filter: " + str(cur_filter))
-            child_group = list()
             values = list()
 
             if type(cur_filter) == dict and "%group" in cur_filter:
+                child_group = list()
                 partial_results = self.filter_results(results, cur_filter)
             else:
+                child_group = groups
                 partial_results = results
 
             for cur in partial_results:
@@ -269,8 +270,6 @@ class EsReader(DeviceReaderBase):
         else:
             obj_name = objects[level]["name"]
             filter = objects[level]["filter"]
-            if type(filter) != dict or "%group" not in filter:
-                groups = list()
 
             if type(results) == list:
 
@@ -279,7 +278,10 @@ class EsReader(DeviceReaderBase):
                 for cur_filter in filter_list:
                     self.log.debug("Current filter: " + str(cur_filter))
                     values = list()
-                    child_group = list()
+                    if type(filter) != dict or "%group" not in filter:
+                        child_group = groups
+                    else:
+                        child_group = list()
 
                     for cur in self.filter_results(results, cur_filter):
                         values.extend(self._filter_es_results_level(

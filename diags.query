@@ -1,14 +1,34 @@
-# ENTERPRISES = count(enterprise.id)
-# l3_domain_ids = enterprise.domain.id
-# L3_DOMAINS = count($l3_domain_ids)
-# l2_domain_ids = enterprise.l2domain.id
-# L2_DOMAINS = count($l2_domain_ids)
-# MAX_L3_DOMAINS_ON_HOST = count(vminterface[domainid=$l3_domain_ids].id)
-# MAX_L2_DOMAINS_ON_HOST = count(vminterface[domainid=$l2_domain_ids].id)
-# HYPERVISORS = count(vm.hypervisorip)
-# VMS = count(vminterface.vmuuid)
-# VM_VPORTS_L3 = count(enterprise.domain.vport.id)
-# VM_VPORTS_L2 = count(enterprise.l2domain.vport.id)
+ENTERPRISES = count(enterprise.id)
+l3_domain_ids = enterprise.domain.id
+L3_DOMAINS = count($l3_domain_ids)
+l2_domain_ids = enterprise.l2domain.id
+L2_DOMAINS = count($l2_domain_ids)
+MAX_L3_DOMAINS_ON_HOST = count(vminterface[domainid=$l3_domain_ids].id)
+MAX_L2_DOMAINS_ON_HOST = count(vminterface[domainid=$l2_domain_ids].id)
+HYPERVISORS = count(vm.hypervisorip)
+VMS = count(vminterface.vmuuid)
+VM_VPORTS_L3 = count(enterprise.domain.vport.id)
+VM_VPORTS_L2 = count(enterprise.l2domain.vport.id)
+MAX_VPORTS_IN_L3_DOMAIN_BREAKDOWN = enterprise.domain.vport[%group=type].id
+MAX_VPORTS_IN_L2_DOMAIN_BREAKDOWN = enterprise.l2domain.vport[%group=type].id
+
+TRUNKS = count(enterprise.trunk.id)
+INGRESS_ACLS = count(IngressACLEntryTemplate.id)
+EGRESS_ACLS = count(EgressACLEntryTemplate.id)
+STATEFUL_INGRESS_ACLS = count(IngressACLEntryTemplate[stateful=true].id)
+STATEFUL_EGRESS_ACLS = count(EgressACLEntryTemplate[stateful=true].id)
+INGRESS_ACLS_BY_NETWORK_TYPE = IngressACLEntryTemplate[%group=networkType].id
+EGRESS_ACLS_BY_NETWORK_TYPE = EgressACLEntryTemplate[%group=networkType].id
+
+TOTAL_BGP_PEERS = count(BGPNeighbor.id)
+TOTAL_BGP_PEERS_WITH_BFD = count(BGPNeighbor[BFDEnabled=true].id)
+TOTAL_BGP_PEERS_BY_IP_TYPE = BGPNeighbor[%group=ipType].id
+TOTAL_BGP_PEERS_WITH_BFD_BY_IP_TYPE = BGPNeighbor[%group=ipType & BFDEnabled=true].id
+VM_VPORT_BGP_PEERS_BY_VPORT_AND_IP_TYPE = enterprise.domain.vport[%group=type].BGPNeighbor[%group=ipType].id
+
+MAX_VPORTS_IN_L3_DOMAIN = count(enterprise.domain.vport[domainId=$l3_domain_ids].id)
+MAX_VPORTS_IN_L2_DOMAIN = count(enterprise.l2domain.vport[assocEntityId=$l2_domain_ids].id)
+
 
 
 # dbvar=$1

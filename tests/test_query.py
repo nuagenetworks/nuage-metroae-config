@@ -162,6 +162,7 @@ class TestQuery(object):
             enterprises = Enterprise.name
             integer = -20
             list = ["a", "b", "c"]
+            boolean = true
             string1 = '"str1'
             string2 = "'str2"
             string3 = '''
@@ -181,6 +182,7 @@ multiline
             {"enterprises": ["value1", "value2"]},
             {"integer": -20},
             {"list": ["a", "b", "c"]},
+            {"boolean": True},
             {"string1": '"str1'},
             {"string2": "'str2"},
             {"string3": '''
@@ -206,10 +208,11 @@ multiline
         assert variables["enterprises"] == expected_results[0]["enterprises"]
         assert variables["integer"] == expected_results[1]["integer"]
         assert variables["list"] == expected_results[2]["list"]
-        assert variables["string1"] == expected_results[3]["string1"]
-        assert variables["string2"] == expected_results[4]["string2"]
-        assert variables["string3"] == expected_results[5]["string3"]
-        assert variables["string4"] == expected_results[6]["string4"]
+        assert variables["boolean"] == expected_results[3]["boolean"]
+        assert variables["string1"] == expected_results[4]["string1"]
+        assert variables["string2"] == expected_results[5]["string2"]
+        assert variables["string3"] == expected_results[6]["string3"]
+        assert variables["string4"] == expected_results[7]["string4"]
 
     def test_filter_range_1__success(self):
 
