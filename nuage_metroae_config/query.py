@@ -320,26 +320,27 @@ class QueryExecutor(Transformer):
             raise Exception("Unassigned variable " + var_name)
 
         if len(t) > 1:
-            print str(t)
             var_reader = VariableReader()
             var_reader.set_data(self.variables[var_name])
             last_object = t[-1]
+            objects = t[1:-1]
             if type(last_object) == dict:
                 if "filter" in last_object and last_object["filter"] is None:
                     attributes = last_object["name"]
                 else:
                     attributes = None
+                    objects = t[1:]
             else:
                 attributes = last_object
 
-            if len(t) > 2:
-                objects = t[1:-1]
-                if type(objects[0]) is dict and "filter" not in objects[0]:
-                    objects[0] = {"name": var_name, "filter": objects[0]}
+            if (len(objects) > 0 and type(objects[0]) is dict and
+                    "filter" not in objects[0]):
+                objects[0] = {"name": var_name, "filter": objects[0]}
             else:
-                objects = [{"name": var_name, "filter": None}]
+                objects.insert(0, {"name": var_name, "filter": None})
 
             result = var_reader.query(objects, attributes)
+
             return result
 
         return self.variables[var_name]

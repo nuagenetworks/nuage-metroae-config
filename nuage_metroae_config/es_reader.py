@@ -245,10 +245,10 @@ class EsReader(DeviceReaderBase):
                 partial_results = results
 
             for cur in partial_results:
-                values.extend(self._filter_es_results_level(cur,
-                                                            objects,
-                                                            attributes, 1,
-                                                            child_group))
+                values.extend(self.filter_results_level(cur,
+                                                        objects,
+                                                        attributes, 1,
+                                                        child_group))
 
             if child_group != []:
                 self.group_results(groups, cur_filter, child_group)
@@ -260,74 +260,3 @@ class EsReader(DeviceReaderBase):
             return groups
 
         return values
-
-    def _filter_es_results_level(self, results, objects, attributes, level,
-                                 groups):
-        values = list()
-
-        if level >= len(objects):
-            return self._filter_attributes(results, attributes)
-        else:
-            obj_name = objects[level]["name"]
-            filter = objects[level]["filter"]
-
-            if type(results) == list:
-
-                filter_list = self.build_filter_list(filter, results)
-
-                for cur_filter in filter_list:
-                    self.log.debug("Current filter: " + str(cur_filter))
-                    values = list()
-                    if type(filter) != dict or "%group" not in filter:
-                        child_group = groups
-                    else:
-                        child_group = list()
-
-                    for cur in self.filter_results(results, cur_filter):
-                        values.extend(self._filter_es_results_level(
-                            cur, objects, attributes, level + 1, child_group))
-
-                    if child_group != []:
-                        self.group_results(groups, cur_filter, child_group)
-                        values = child_group
-                    else:
-                        self.group_results(groups, cur_filter, values)
-
-            elif type(results) == dict and obj_name in results:
-                cur = results[obj_name]
-                if type(cur) != list:
-                    level += 1
-                values.extend(self._filter_es_results_level(cur,
-                                                            objects,
-                                                            attributes,
-                                                            level,
-                                                            groups))
-
-        if groups != []:
-            return groups
-
-        return values
-
-    def _filter_attributes(self, current, attributes):
-        if type(current) != dict:
-            self.log.debug("Attempting to get attributes from a result that"
-                           " is not an object")
-            return list()
-        if type(attributes) == list:
-            attr_dict = dict()
-            if attributes[0] == "*":
-                attr_dict = current
-            else:
-                for attribute in attributes:
-                    if attribute in current:
-                        attr_dict[attribute] = current[attribute]
-                    else:
-                        self.log.debug("Missing attribute %s in result" %
-                                       attribute)
-            return [attr_dict]
-        else:
-            if attributes in current:
-                return [current[attributes]]
-            else:
-                self.log.debug("Missing attribute %s in result" % attributes)
-                return list()
