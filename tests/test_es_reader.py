@@ -1,9 +1,6 @@
-from mock import call, patch, MagicMock
 import pytest
-# import requests_mock
 
-from nuage_metroae_config.errors import (DeviceWriterError,
-                                         SessionError)
+from nuage_metroae_config.errors import SessionError
 from nuage_metroae_config.es_reader import (EsError,
                                             EsReader,
                                             MissingSessionParamsError)

@@ -1,6 +1,7 @@
 import os
 import pytest
 
+from mock import patch
 from mock_reader import MockReader
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
 from nuage_metroae_config.query import Query
@@ -28,6 +29,17 @@ PARSE_ERROR_CASES = [
     ("output()", 8),
     ("echo('true', 'extra')", 12),
     ("output('true', 'extra')", 14),
+]
+
+VARIABLE_FILTER_CASES = [
+    ("$v[0]", "query [v (%end=1,%start=0)] {None}"),
+    ("$v.field", "query [v (None)] {field}"),
+    ("$v.field[0]", "query [v (None),field (%end=1,%start=0)] {None}"),
+    ("$v[0].field[0]", "query [v (%end=1,%start=0),field (%end=1,%start=0)] {None}"),
+    ("$v[0].field[0].other", "query [v (%end=1,%start=0),field (%end=1,%start=0)] {other}"),
+    ("$v[0].{name,id}", "query [v (%end=1,%start=0)] {name,id}"),
+    ("$v.{name,id}", "query [v (None)] {name,id}"),
+    ("$v[0].field[0].{name,id}", "query [v (%end=1,%start=0),field (%end=1,%start=0)] {name,id}"),
 ]
 
 VALID_COMBINE_CASES = [
@@ -66,8 +78,15 @@ class TestQuery(object):
 
     def run_execute_test(self, query_text, expected_actions, mock_results,
                          expected_results, override_vars={}):
-        query = Query()
         reader = MockReader()
+        return self.run_execute_test_with_reader(
+            reader, query_text, expected_actions, mock_results,
+            expected_results, override_vars)
+
+    def run_execute_test_with_reader(self, reader, query_text,
+                                     expected_actions, mock_results,
+                                     expected_results, override_vars={}):
+        query = Query()
         for mock_result in mock_results:
             reader.add_mock_result(mock_result)
 
@@ -449,6 +468,32 @@ multiline
             query.execute(query_text)
 
         assert "Unassigned variable" in str(e.value)
+
+    @pytest.mark.parametrize("query_text, expected_query",
+                             VARIABLE_FILTER_CASES)
+    @patch("nuage_metroae_config.query.VariableReader")
+    def test_variable_filter__success(self, reader_patch, query_text,
+                                      expected_query):
+
+        mock_reader = MockReader()
+        reader_patch.return_value = mock_reader
+
+        override_vars = {"v": "test data"}
+
+        mock_results = ["test result"]
+        expected_results = mock_results
+
+        expected_actions = """
+            start-session
+            set-data test data
+            %s
+            stop-session
+        """ % expected_query
+
+        self.run_execute_test_with_reader(mock_reader, query_text,
+                                          expected_actions, mock_results,
+                                          expected_results,
+                                          override_vars)
 
     @pytest.mark.parametrize("query_text, expected_results",
                              VALID_COMBINE_CASES)

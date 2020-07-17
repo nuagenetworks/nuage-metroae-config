@@ -38,6 +38,9 @@ class MockReader(object):
     def set_return_empty_select_list(self, return_empty_select_list=True):
         self.return_empty_select_list = return_empty_select_list
 
+    def set_data(self, data):
+        self._record_action("set-data " + str(data))
+
     #
     # Implement all required Abstract Base Class prototype functions.
     #
@@ -79,6 +82,9 @@ class MockReader(object):
                 filters.append("%s (%s)" % (obj["name"], ",".join(pairs)))
             else:
                 filters.append("%s (None)" % obj["name"])
+
+        if attributes is None:
+            attributes = ["None"]
 
         if type(attributes) is not list:
             attributes = [attributes]
