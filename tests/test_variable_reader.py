@@ -299,6 +299,68 @@ class TestVariableReaderQuery(object):
 
         assert result == [mock_entry_1, mock_entry_2, mock_entry_3]
 
+    def test_no_attr_1__success(self):
+        var_reader = VariableReader()
+
+        objects = [
+            {"name": "v",
+             "filter": None}
+        ]
+
+        attributes = None
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1"
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2"
+        }
+
+        mock_entry_3 = {
+            "timestamp": 300,
+            "cpu": "30.3"
+        }
+
+        var_reader.set_data([mock_entry_1, mock_entry_2, mock_entry_3])
+
+        result = var_reader.query(objects, attributes)
+
+        assert result == [mock_entry_1, mock_entry_2, mock_entry_3]
+
+    def test_no_attr_2__success(self):
+        var_reader = VariableReader()
+
+        objects = [
+            {"name": "v",
+             "filter": {"%start": 1}}
+        ]
+
+        attributes = None
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1"
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2"
+        }
+
+        mock_entry_3 = {
+            "timestamp": 300,
+            "cpu": "30.3"
+        }
+
+        var_reader.set_data([mock_entry_1, mock_entry_2, mock_entry_3])
+
+        result = var_reader.query(objects, attributes)
+
+        assert result == [mock_entry_2, mock_entry_3]
+
     def test_nested_object_multiple__success(self):
         var_reader = VariableReader()
 
@@ -387,6 +449,179 @@ class TestVariableReaderQuery(object):
         result = var_reader.query(objects, attributes)
 
         assert result == ["cf3:", "cf4:"]
+
+    def test_nested_no_attr_1__success(self):
+        var_reader = VariableReader()
+
+        objects = [
+            {"name": "v",
+             "filter": None},
+            {"name": "disks",
+             "filter": None},
+        ]
+
+        attributes = None
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1",
+            "disks": [{"name": "cf1:"}, {"name": "cf2:"}, {"name": "cf3:"}]
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf4:"}, {"name": "cf5:"}, {"name": "cf6:"}]
+        }
+
+        mock_entry_3 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf7:"}, {"name": "cf8:"}, {"name": "cf9:"}]
+        }
+
+        var_reader.set_data([mock_entry_1, mock_entry_2, mock_entry_3])
+
+        result = var_reader.query(objects, attributes)
+
+        assert result == [
+            {"name": "cf1:"},
+            {"name": "cf2:"},
+            {"name": "cf3:"},
+            {"name": "cf4:"},
+            {"name": "cf5:"},
+            {"name": "cf6:"},
+            {"name": "cf7:"},
+            {"name": "cf8:"},
+            {"name": "cf9:"},
+        ]
+
+    def test_nested_no_attr_2__success(self):
+        var_reader = VariableReader()
+
+        objects = [
+            {"name": "v",
+             "filter": None},
+            {"name": "disks",
+             "filter": {"%start": 1}},
+        ]
+
+        attributes = None
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1",
+            "disks": [{"name": "cf1:"}, {"name": "cf2:"}, {"name": "cf3:"}]
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf4:"}, {"name": "cf5:"}, {"name": "cf6:"}]
+        }
+
+        mock_entry_3 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf7:"}, {"name": "cf8:"}, {"name": "cf9:"}]
+        }
+
+        var_reader.set_data([mock_entry_1, mock_entry_2, mock_entry_3])
+
+        result = var_reader.query(objects, attributes)
+
+        assert result == [
+            {"name": "cf2:"},
+            {"name": "cf3:"},
+            {"name": "cf5:"},
+            {"name": "cf6:"},
+            {"name": "cf8:"},
+            {"name": "cf9:"},
+        ]
+
+    def test_nested_no_attr_3__success(self):
+        var_reader = VariableReader()
+
+        objects = [
+            {"name": "v",
+             "filter": {"%start": 1}},
+            {"name": "disks",
+             "filter": None},
+        ]
+
+        attributes = None
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1",
+            "disks": [{"name": "cf1:"}, {"name": "cf2:"}, {"name": "cf3:"}]
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf4:"}, {"name": "cf5:"}, {"name": "cf6:"}]
+        }
+
+        mock_entry_3 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf7:"}, {"name": "cf8:"}, {"name": "cf9:"}]
+        }
+
+        var_reader.set_data([mock_entry_1, mock_entry_2, mock_entry_3])
+
+        result = var_reader.query(objects, attributes)
+
+        assert result == [
+            {"name": "cf4:"},
+            {"name": "cf5:"},
+            {"name": "cf6:"},
+            {"name": "cf7:"},
+            {"name": "cf8:"},
+            {"name": "cf9:"},
+        ]
+
+    def test_nested_no_attr_4__success(self):
+        var_reader = VariableReader()
+
+        objects = [
+            {"name": "v",
+             "filter": {"%start": 1}},
+            {"name": "disks",
+             "filter": {"%start": 1}},
+        ]
+
+        attributes = None
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1",
+            "disks": [{"name": "cf1:"}, {"name": "cf2:"}, {"name": "cf3:"}]
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf4:"}, {"name": "cf5:"}, {"name": "cf6:"}]
+        }
+
+        mock_entry_3 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf7:"}, {"name": "cf8:"}, {"name": "cf9:"}]
+        }
+
+        var_reader.set_data([mock_entry_1, mock_entry_2, mock_entry_3])
+
+        result = var_reader.query(objects, attributes)
+
+        assert result == [
+            {"name": "cf5:"},
+            {"name": "cf6:"},
+            {"name": "cf8:"},
+            {"name": "cf9:"},
+        ]
 
     def test_group_parent__success(self):
         var_reader = VariableReader()
