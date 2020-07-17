@@ -157,6 +157,7 @@ class QueryParseError(MetroConfigError):
     """
     pass
 
+
 class QueryExecutionError(MetroConfigError):
     """
     Exception class for errors during a query

@@ -74,6 +74,7 @@ INVALID_COMBINE_CASES = [
     "var = enterprise.id; $var + 1",
 ]
 
+
 class TestQuery(object):
 
     def run_execute_test(self, query_text, expected_actions, mock_results,
