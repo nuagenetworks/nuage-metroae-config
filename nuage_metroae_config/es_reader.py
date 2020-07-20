@@ -35,6 +35,7 @@ class EsReader(DeviceReaderBase):
         """
         super(EsReader, self).__init__()
         self.session_params = None
+        self.query_cache = dict()
 
     def set_session_params(self, address, port=None):
         """
@@ -57,6 +58,8 @@ class EsReader(DeviceReaderBase):
         self.log.debug(location)
 
         self._check_session()
+
+        self.query_cache = dict()
 
     def stop_session(self):
         """
@@ -205,6 +208,9 @@ class EsReader(DeviceReaderBase):
         search_url += "from=%d&size=%d" % (start, size)
         self.log.debug("GET " + search_url)
 
+        if search_url in self.query_cache:
+            return self.query_cache[search_url]
+
         resp = requests.get(search_url, verify=False)
 
         results = dict()
@@ -215,7 +221,10 @@ class EsReader(DeviceReaderBase):
             raise EsError("Status code %d from URL %s" % (
                           resp.status_code, search_url))
 
-        return self._extract_results(results)
+        extracted = self._extract_results(results)
+
+        self.query_cache[search_url] = list(extracted)
+        return extracted
 
     def _extract_results(self, results):
         if "hits" not in results or "hits" not in results["hits"]:

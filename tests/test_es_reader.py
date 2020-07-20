@@ -512,6 +512,121 @@ class TestEsReaderQuery(object):
 
         assert result == [mock_entry_1, mock_entry_2, mock_entry_3]
 
+    def test_cache_index__success(self, requests_mock):
+
+        es_reader = EsReader()
+        es_reader.set_session_params(TEST_HOST, TEST_PORT)
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": None}
+        ]
+
+        attributes = "timestamp"
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1"
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2"
+        }
+
+        mock_entry_3 = {
+            "timestamp": 300,
+            "cpu": "30.3"
+        }
+
+        self.register_mock_get(requests_mock, "",
+                               [mock_entry_1, mock_entry_2, mock_entry_3])
+
+        result = es_reader.query(objects, attributes)
+
+        assert result == [100, 200, 300]
+
+        attributes = "cpu"
+
+        self.register_mock_get(requests_mock, "",
+                               ["Should be cached"], status_code=403)
+
+        result = es_reader.query(objects, attributes)
+
+        assert result == ["10.1", "20.2", "30.3"]
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": {"%sort_desc": "timestamp"}}
+        ]
+
+        self.register_mock_get(requests_mock,
+                               "sort=timestamp:desc&from=0&size=100",
+                               [mock_entry_3, mock_entry_2, mock_entry_1])
+
+        result = es_reader.query(objects, attributes)
+
+        assert result == ["30.3", "20.2", "10.1"]
+
+    def test_cache_nested__success(self, requests_mock):
+
+        es_reader = EsReader()
+        es_reader.set_session_params(TEST_HOST, TEST_PORT)
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": None},
+            {"name": "disks",
+             "filter": None}
+        ]
+
+        attributes = "name"
+
+        mock_entry_1 = {
+            "timestamp": 100,
+            "cpu": "10.1",
+            "disks": [{"name": "cf1:", "total": 1000},
+                      {"name": "cf2:", "total": 2000}]
+        }
+
+        mock_entry_2 = {
+            "timestamp": 200,
+            "cpu": "20.2",
+            "disks": [{"name": "cf3:", "total": 3000},
+                      {"name": "cf4:", "total": 4000}]
+        }
+
+        self.register_mock_get(requests_mock, "",
+                               [mock_entry_1, mock_entry_2])
+
+        result = es_reader.query(objects, attributes)
+
+        assert result == ["cf1:", "cf2:", "cf3:", "cf4:"]
+
+        attributes = "total"
+
+        self.register_mock_get(requests_mock, "",
+                               ["Should be cached"], status_code=403)
+
+        result = es_reader.query(objects, attributes)
+
+        assert result == [1000, 2000, 3000, 4000]
+
+        objects = [
+            {"name": TEST_INDEX,
+             "filter": {"%sort_desc": "timestamp"}},
+            {"name": "disks",
+             "filter": None}
+        ]
+
+        self.register_mock_get(requests_mock,
+                               "sort=timestamp:desc&from=0&size=100",
+                               [mock_entry_2, mock_entry_1])
+
+        result = es_reader.query(objects, attributes)
+
+        assert result == [3000, 4000, 1000, 2000]
+
     def test_nested_object_multiple__success(self, requests_mock):
         es_reader = EsReader()
         es_reader.set_session_params(TEST_HOST, TEST_PORT)

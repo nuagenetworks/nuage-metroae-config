@@ -75,6 +75,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         self.root_spec_name = None
         self.spec_paths = list()
         self.read_spec_paths = list()
+        self.query_cache = dict()
 
     def set_session_params(self, url, username="csproot",
                            password=None, enterprise="csp",
@@ -235,6 +236,8 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
             raise VsdError(e, location)
         except DeviceWriterBase as e:
             e.reraise_with_location(location)
+
+        self.query_cache = dict()
 
     def stop_session(self):
         """
@@ -869,8 +872,8 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
             filter = object_set["filter"]
             spec = self._get_specification(object_name)
             self._check_child_object(parent_object.spec, spec)
-            object_list = self._get_object_list(object_name,
-                                                parent_object)
+            object_list = self._get_object_list_with_cache(object_name,
+                                                           parent_object)
 
             filter_list = self.build_filter_list(filter, object_list)
 
@@ -921,6 +924,23 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
                 return [value]
             else:
                 return list()
+
+    def _get_object_list_with_cache(self, object_name, parent_object):
+
+        if parent_object is None:
+            cache_key = "root:" + object_name.lower()
+        else:
+            cache_key = parent_object.id + ":" + object_name.lower()
+
+        if cache_key in self.query_cache:
+            return self.query_cache[cache_key]
+
+        object_list = self._get_object_list(object_name,
+                                            parent_object)
+
+        self.query_cache[cache_key] = list(object_list)
+
+        return object_list
 
 #
 # Private classes to do the work

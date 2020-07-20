@@ -2,6 +2,7 @@ from mock import call, patch, MagicMock
 import json
 import os
 import pytest
+import uuid
 
 from bambou.exceptions import BambouHTTPError
 from nuage_metroae_config.vsd_writer import (Context,
@@ -256,6 +257,7 @@ def setup_standard_session(vsd_writer, mock_patch):
 
     mock_session = MagicMock()
     mock_session.root_object = MagicMock()
+    mock_session.root_object.id = str(uuid.uuid1())
     mock_patch.return_value = mock_session
     vsd_writer.start_session()
 
@@ -2040,6 +2042,7 @@ class TestVsdWriterQuery(object):
 
     def create_mock_query_object(self, attr_dict):
         mock_object = MagicMock()
+        mock_object.id = str(uuid.uuid1())
         mock_object._attributes = attr_dict
         mock_object.unknown = None
         for attr_name, value in attr_dict.items():
@@ -2585,6 +2588,126 @@ class TestVsdWriterQuery(object):
             call("Domain", mock_ent_1),
             call("Domain", mock_ent_2),
         ])
+
+    def test_cache_root__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": {"%sort": "dhcpleaseinterval"}},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1",
+                                                    "dhcpleaseinterval": 20})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2",
+                                                    "dhcpleaseinterval": 10})
+
+        calls = [
+            [mock_ent_1, mock_ent_2],
+            get_mock_bambou_error(400, "Should have cached result")
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+        assert results == ["enterprise_2", "enterprise_1"]
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+        ]
+
+        attributes = "DHCPLeaseInterval"
+
+        results = vsd_writer.query(objects, attributes)
+        assert results == [20, 10]
+
+        mock_get.assert_called_once_with("Enterprise",
+                                         mock_session.root_object)
+
+        objects = [
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "400" in str(e)
+        assert "Should have cached result" in str(e)
+
+    def test_cache_nested__success(self):
+        vsd_writer = VsdWriter()
+        mock_session = setup_standard_session(vsd_writer)
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": {"%sort": "dhcpleaseinterval"}},
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        attributes = "Name"
+
+        mock_ent_1 = self.create_mock_query_object({"name": "enterprise_1",
+                                                    "dhcpleaseinterval": 20})
+        mock_ent_2 = self.create_mock_query_object({"name": "enterprise_2",
+                                                    "dhcpleaseinterval": 10})
+        mock_dom_1 = self.create_mock_query_object({"name": "domain_1",
+                                                    "bgpenabled": True})
+        mock_dom_2 = self.create_mock_query_object({"name": "domain_2",
+                                                    "bgpenabled": False})
+        mock_dom_3 = self.create_mock_query_object({"name": "domain_3",
+                                                    "bgpenabled": True})
+        mock_dom_4 = self.create_mock_query_object({"name": "domain_4",
+                                                    "bgpenabled": True})
+
+        mock_ent_1.spec = vsd_writer.specs["enterprise"]
+        mock_ent_2.spec = vsd_writer.specs["enterprise"]
+
+        calls = [
+            [mock_ent_1, mock_ent_2],
+            [mock_dom_3, mock_dom_4],
+            [mock_dom_1, mock_dom_2],
+            get_mock_bambou_error(400, "Should have cached result")
+        ]
+
+        mock_get = self.add_mock_objects_to_vsd_writer(vsd_writer, calls)
+
+        results = vsd_writer.query(objects, attributes)
+        assert results == ["domain_3", "domain_4", "domain_1", "domain_2"]
+
+        objects = [
+            {"name": "Enterprise",
+             "filter": None},
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        attributes = "BGPEnabled"
+
+        results = vsd_writer.query(objects, attributes)
+        assert results == [True, False, True, True]
+
+        mock_get.assert_has_calls([
+            call("Enterprise", mock_session.root_object),
+            call("Domain", mock_ent_2),
+            call("Domain", mock_ent_1),
+        ])
+
+        objects = [
+            {"name": "Domain",
+             "filter": None},
+        ]
+
+        with pytest.raises(VsdError) as e:
+            vsd_writer.query(objects, attributes)
+
+        assert "400" in str(e)
+        assert "Should have cached result" in str(e)
 
     def test_group_parent__success(self):
         vsd_writer = VsdWriter()
