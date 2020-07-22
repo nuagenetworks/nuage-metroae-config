@@ -31,7 +31,8 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'vrsaddressrange', 'job', 'containerresync',
                   'ingressexternalservicetemplate',
                   'applicationperformancemanagement', 'l4service',
-                  'ltestatistics', 'eventlog', 'testdefinition']
+                  'ltestatistics', 'eventlog', 'testdefinition',
+                  'gatewaysecurity', 'proxyarpfilter']
 DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'last_updated_date',
                       'associatedl7applicationsignatureid',
