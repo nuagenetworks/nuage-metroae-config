@@ -1,4 +1,4 @@
-#!/Users/chennare/Sources/nuage-metro/venv/bin/python
+#!/usr/bin/python
 
 import argparse
 import os
