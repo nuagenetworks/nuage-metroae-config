@@ -50,7 +50,7 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'globalmacaddress', 'customerkey']
 
 
-IGNORE_EXPTECTED_REMOVE = ['VSP']
+IGNORE_EXPECTED_REMOVED = ['VSP']
 
 
 class MissingSubset(Exception):
