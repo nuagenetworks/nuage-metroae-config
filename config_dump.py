@@ -326,7 +326,7 @@ def parse_args():
                         action='store_true', required=False, default=False,
                         help=('Verify that expected config was removed'))
 
-    parser.add_argumet('-o', '--output-file',
+    parser.add_argument('-o', '--output-file',
                        dest='output_file',
                        action='store', required=False, default=None,
                        help=('Output file to dump the config'))
