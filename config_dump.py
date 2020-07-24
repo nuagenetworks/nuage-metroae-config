@@ -50,6 +50,9 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'globalmacaddress', 'customerkey']
 
 
+IGNORE_EXPTECTED_REMOVE = ['VSP']
+
+
 class MissingSubset(Exception):
     pass
 
@@ -189,6 +192,9 @@ def compare_tree(superset, subset):
         for subset_obj_type, subset_obj in child_subset.items():
             expected_subset[subset_obj_type] = dict(subset_obj)
             expected_subset[subset_obj_type]['children'] = dict()
+            if args.expect_removed and\
+               subset_obj_type in IGNORE_EXPECTED_REMOVED:
+                continue
             for child_superset in superset:
                 for superset_obj_type, superset_obj in child_superset.items():
                     if superset_obj_type == subset_obj_type:
