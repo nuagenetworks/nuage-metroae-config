@@ -326,6 +326,11 @@ def parse_args():
                         action='store_true', required=False, default=False,
                         help=('Verify that expected config was removed'))
 
+    parser.add_argumet('-o', '--output-file',
+                       dest='output_file',
+                       action='store', required=False, default=None,
+                       help=('Output file to dump the config'))
+
     return parser.parse_args()
 
 
@@ -362,7 +367,11 @@ def main():
     if args.trim_dynamic is True:
         trim_dynamic(config)
 
-    print yaml.safe_dump(config, default_flow_style=False, default_style='')
+    if args.output_file:
+        with open(args.output_file, 'w') as f:
+            yaml.safe_dump(config, f)
+    else:
+        print yaml.safe_dump(config, default_flow_style=False, default_style='')
 
     if args.compare_file is not None:
         subset_config = read_configuration(args.compare_file)
