@@ -181,8 +181,8 @@ def trim_dynamic_attributes(attributes, obj):
         if attr_name in DYNAMIC_ATTRIBUTES:
             del obj['attributes'][attr_name]
 
-        elif type(obj['attributes'][attr_name]) == dict:
-            trim_dynamic_attributes(obj['attributes'][attr_name].items(), obj)
+        elif type(attributes[attr_name]) == dict:
+            trim_dynamic_attributes(attributes[attr_name].items(), obj)
 
 
 def trim_dynamic(children):
