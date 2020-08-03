@@ -302,7 +302,7 @@ def compare_objects(superset_obj, subset_obj):
     for subset_name, subset_value in subset_obj['attributes'].items():
         if type(subset_value) == dict:
             superset_value = superset_obj['attributes'][subset_name]
-            for subset_obj_name, subset_obj_val in subset_value:
+            for subset_obj_name, subset_obj_val in subset_value.items():
                 if (subset_obj_name not in superset_value or
                         subset_obj_val != superset_value[subset_obj_name]):
                     score -= 1
