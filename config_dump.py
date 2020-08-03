@@ -153,17 +153,16 @@ def get_guid_map(children, guid_map=None):
                 else:
                     name = "????"
                 guid_map[guid] = "$(%s,name,%s)" % (obj_type, name)
-            elif 'ID' in obj['attributes']:
-                guid = obj['attributes']['ID']
-                if 'name' in obj['attributes']:
-                    name = obj['attributes']['name']
-                else:
-                    name = "????"
-                guid_map[guid] = "$(%s,name,%s)" % (obj_type, name)
 
             get_guid_map(obj['children'], guid_map)
 
     return guid_map
+
+
+def resolve_references_for_sub_objects(guid_map, obj, attr_name)
+    for sub_attr_name, attr_value in obj['attributes'][attr_name].items():
+        if sub_attr_name != 'id' and str(attr_value) in guid_map:
+            obj['attributes'][attr_name][sub_attr_name] = guid_map[attr_value]
 
 
 def resolve_references(children, guid_map):
@@ -172,6 +171,9 @@ def resolve_references(children, guid_map):
             for attr_name, attr_value in obj['attributes'].items():
                 if attr_name != 'id' and str(attr_value) in guid_map:
                     obj['attributes'][attr_name] = guid_map[attr_value]
+
+                if type(attr_value) == dict:
+                    resolve_references_for_sub_objects(guid_map, obj, attr_name)
 
             resolve_references(obj['children'], guid_map)
 
