@@ -50,7 +50,8 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'globalmacaddress', 'customerkey',
                       'creationDate', 'lastUpdatedBy', 'lastUpdatedDate',
                       'ID', 'parentID', 'owner', 'operationModeTimestamp',
-                      'datapathid', 'primarydatapathid', 'systemid']
+                      'datapathid', 'primarydatapathid', 'systemid',
+                      'associatedgatewaysecurityid', 'systemID']
 
 
 IGNORE_EXPECTED_REMOVED = ['VSP']
@@ -162,7 +163,7 @@ def get_guid_map(children, guid_map=None):
 
 def resolve_references_for_sub_objects(guid_map, obj, attr_name):
     for sub_attr_name, attr_value in obj['attributes'][attr_name].items():
-        if sub_attr_name != 'id' and str(attr_value) in guid_map:
+        if sub_attr_name != 'ID' and str(attr_value) in guid_map:
             obj['attributes'][attr_name][sub_attr_name] = guid_map[attr_value]
 
 
@@ -241,7 +242,10 @@ def compare_tree(superset, subset):
                             try:
                                 compare_tree(superset_obj['children'],
                                              subset_obj['children'])
+                                print "########"
+                                print subset_obj_type, subset_obj, superset_obj
                                 found = True
+                                break
                             except MissingSubset as e:
                                 print "caught"
                                 if e.score > best_score:
@@ -271,6 +275,8 @@ def compare_tree(superset, subset):
                                 superset_obj_type] = dict(superset_obj)
                             best_superset[
                                 superset_obj_type]['children'] = dict()
+                if found:
+                    break
 
         if not args.expect_removed and not found:
             #print "raisign exception "
