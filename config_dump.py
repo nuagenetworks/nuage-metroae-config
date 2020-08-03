@@ -181,10 +181,17 @@ def resolve_references(children, guid_map):
             resolve_references(obj['children'], guid_map)
 
 
-def trim_dynamic_attributes_sub_object(attributes, obj, subobject):
-    for attr_name, attr_value in attributes.items():
+def trim_dynamic_attributes_sub_object_dict(obj, subobject):
+    for attr_name, attr_value in obj['attributes'][subobject].items():
         if attr_name in DYNAMIC_ATTRIBUTES:
             del obj['attributes'][subobject][attr_name]
+
+
+def trim_dynamic_attributes_sub_object_list(obj, subobject):
+    for value in obj['attributes'][subobject]:
+        for attr_name, attr_value in value.items():
+            if attr_name in DYNAMIC_ATTRIBUTES:
+                del value[attr_name]
 
 
 def trim_dynamic_attributes(attributes, obj):
@@ -193,7 +200,10 @@ def trim_dynamic_attributes(attributes, obj):
             del obj['attributes'][attr_name]
 
         elif type(attributes[attr_name]) == dict:
-            trim_dynamic_attributes_sub_object(attributes[attr_name], obj, attr_name)
+            trim_dynamic_attributes_sub_object_dict(obj, attr_name)
+
+        elif type(attributes[attr_name]) == list:
+            trim_dynamic_attributes_sub_object_list(obj, attr_name)
 
 
 def trim_dynamic(children):
