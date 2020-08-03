@@ -47,7 +47,9 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'vnid', 'serviceid', 'gatewaymacaddress',
                       'domainservicelabel', 'domainid', 'backhaulserviceid',
                       'backhaulvnid', 'labelid', 'virtualnetworkid',
-                      'globalmacaddress', 'customerkey']
+                      'globalmacaddress', 'customerkey',
+                      'creationDate', 'lastUpdatedBy', 'lastUpdatedDate',
+                      'ID', 'parentID', 'owner']
 
 
 IGNORE_EXPECTED_REMOVED = ['VSP']
@@ -151,6 +153,13 @@ def get_guid_map(children, guid_map=None):
                 else:
                     name = "????"
                 guid_map[guid] = "$(%s,name,%s)" % (obj_type, name)
+            elif 'ID' in obj['attributes']:
+                guid = obj['attributes']['ID']
+                if 'name' in obj['attributes']:
+                    name = obj['attributes']['name']
+                else:
+                    name = "????"
+                guid_map[guid] = "$(%s,name,%s)" % (obj_type, name)
 
             get_guid_map(obj['children'], guid_map)
 
@@ -195,7 +204,7 @@ def compare_tree(superset, subset):
             expected_subset[subset_obj_type]['children'] = dict()
             for child_superset in superset:
                 for superset_obj_type, superset_obj in child_superset.items():
-                    if subset_obj_type == 'NSGateway':
+                    #if subset_obj_type == 'NSGateway':
                         #print "-------------------"
                         #print subset_obj, superset_obj
 
@@ -363,24 +372,19 @@ def main():
                                   username=args.username,
                                   password=args.password,
                                   enterprise=args.enterprise)
-
     major_version = int(vsd_writer.get_version()["software_version"].split(".")[0])
     if (major_version < 6):
         vsd_writer.set_api_version("5.0")
     else:
         vsd_writer.set_api_version(str(major_version))
     vsd_writer.start_session()
-
     config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME,
                                   VSD_CSP_ENTERPRISE_GUID)
-
     if args.resolve_references is True or args.compare_file is not None:
         guid_map = get_guid_map(config)
         resolve_references(config, guid_map)
-
     if args.trim_dynamic is True:
         trim_dynamic(config)
-
     if args.output_file:
         with open(args.output_file, 'w') as f:
             yaml.safe_dump(config, f)
