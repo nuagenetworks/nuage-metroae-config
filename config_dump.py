@@ -159,7 +159,7 @@ def get_guid_map(children, guid_map=None):
     return guid_map
 
 
-def resolve_references_for_sub_objects(guid_map, obj, attr_name)
+def resolve_references_for_sub_objects(guid_map, obj, attr_name):
     for sub_attr_name, attr_value in obj['attributes'][attr_name].items():
         if sub_attr_name != 'id' and str(attr_value) in guid_map:
             obj['attributes'][attr_name][sub_attr_name] = guid_map[attr_value]
