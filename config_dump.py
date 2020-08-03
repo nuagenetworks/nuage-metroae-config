@@ -196,14 +196,14 @@ def compare_tree(superset, subset):
             for child_superset in superset:
                 for superset_obj_type, superset_obj in child_superset.items():
                     if subset_obj_type == 'NSGateway':
-                        print "-------------------"
-                        print subset_obj, superset_obj
+                        #print "-------------------"
+                        #print subset_obj, superset_obj
 
                     if superset_obj_type == subset_obj_type:
                         object_score = compare_objects(superset_obj,
                                                        subset_obj)
-                        if subset_obj_type == 'NSGateway':
-                            print object_score
+                        #if subset_obj_type == 'NSGateway':
+                        #    print object_score
                         if object_score == 0:
 
                             if args.expect_removed:
@@ -238,7 +238,7 @@ def compare_tree(superset, subset):
                                 best_superset[
                                     superset_obj_type]['children'] = dict()
                     else:
-                        print "setting best superset"
+                        #print "setting best superset"
                         if best_score < -1000000:
                             best_score = -1000000
                             best_superset = dict(child_superset)
@@ -248,7 +248,7 @@ def compare_tree(superset, subset):
                                 superset_obj_type]['children'] = dict()
 
         if not args.expect_removed and not found:
-            print "raisign exception "
+            #print "raisign exception "
             missing_yaml = yaml.safe_dump(expected_subset,
                                           default_flow_style=False,
                                           default_style='')
@@ -357,38 +357,38 @@ def main():
         print "Specifications path -sp is required"
         exit(1)
 
-    #vsd_writer = VsdWriter()
-    #vsd_writer.read_api_specifications(args.spec_path)
-    #vsd_writer.set_session_params(args.vsd_url,
-    #                              username=args.username,
-    #                              password=args.password,
-    #                              enterprise=args.enterprise)
-#
-    #major_version = int(vsd_writer.get_version()["software_version"].split(".")[0])
-    #if (major_version < 6):
-    #    vsd_writer.set_api_version("5.0")
-    #else:
-    #    vsd_writer.set_api_version(str(major_version))
-    #vsd_writer.start_session()
-#
-    #config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME,
-    #                              VSD_CSP_ENTERPRISE_GUID)
-#
-    #if args.resolve_references is True or args.compare_file is not None:
-    #    guid_map = get_guid_map(config)
-    #    resolve_references(config, guid_map)
-#
-    #if args.trim_dynamic is True:
-    #    trim_dynamic(config)
-#
-    #if args.output_file:
-    #    with open(args.output_file, 'w') as f:
-    #        yaml.safe_dump(config, f)
-    #else:
-    #    print yaml.safe_dump(config, default_flow_style=False, default_style='')
+    vsd_writer = VsdWriter()
+    vsd_writer.read_api_specifications(args.spec_path)
+    vsd_writer.set_session_params(args.vsd_url,
+                                  username=args.username,
+                                  password=args.password,
+                                  enterprise=args.enterprise)
+
+    major_version = int(vsd_writer.get_version()["software_version"].split(".")[0])
+    if (major_version < 6):
+        vsd_writer.set_api_version("5.0")
+    else:
+        vsd_writer.set_api_version(str(major_version))
+    vsd_writer.start_session()
+
+    config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME,
+                                  VSD_CSP_ENTERPRISE_GUID)
+
+    if args.resolve_references is True or args.compare_file is not None:
+        guid_map = get_guid_map(config)
+        resolve_references(config, guid_map)
+
+    if args.trim_dynamic is True:
+        trim_dynamic(config)
+
+    if args.output_file:
+        with open(args.output_file, 'w') as f:
+            yaml.safe_dump(config, f)
+    else:
+        print yaml.safe_dump(config, default_flow_style=False, default_style='')
 
     if args.compare_file is not None:
-        config = read_configuration(args.output_file)
+        #config = read_configuration(args.output_file)
         subset_config = read_configuration(args.compare_file)
         compare_tree(config, subset_config)
 
