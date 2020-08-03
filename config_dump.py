@@ -179,7 +179,7 @@ def resolve_references(children, guid_map):
 def trim_dynamic_attributes_sub_object(attributes, obj, subobject):
     for attr_name, attr_value in attributes.items():
         if attr_name in DYNAMIC_ATTRIBUTES:
-            del obj['attributes'][suboject][attr_name]
+            del obj['attributes'][subobject][attr_name]
 
 
 def trim_dynamic_attributes(attributes, obj):
