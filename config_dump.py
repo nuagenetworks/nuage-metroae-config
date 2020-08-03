@@ -49,7 +49,8 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'backhaulvnid', 'labelid', 'virtualnetworkid',
                       'globalmacaddress', 'customerkey',
                       'creationDate', 'lastUpdatedBy', 'lastUpdatedDate',
-                      'ID', 'parentID', 'owner', 'operationModeTimestamp']
+                      'ID', 'parentID', 'owner', 'operationModeTimestamp',
+                      'datapathid', 'primarydatapathid', 'systemid']
 
 
 IGNORE_EXPECTED_REMOVED = ['VSP']
