@@ -300,6 +300,12 @@ def compare_tree(superset, subset):
 def compare_objects(superset_obj, subset_obj):
     score = 0
     for subset_name, subset_value in subset_obj['attributes'].items():
+        if type(subset_value) == dict:
+            superset_value = superset_obj['attributes'][subset_name]
+            for subset_obj_name, subset_obj_val in subset_value:
+                if (subset_obj_name not in superset_value or
+                        subset_obj_val != superset_value[subset_obj_name]):
+                    score -= 1
         if (subset_name not in superset_obj['attributes'] or
                 superset_obj['attributes'][subset_name] != subset_value):
             score -= 1
