@@ -188,11 +188,12 @@ def trim_dynamic_attributes_sub_object_dict(obj, subobject):
 
 
 def trim_dynamic_attributes_sub_object_list(obj, subobject):
-    for value in obj['attributes'][subobject]:
-        if type(value) == dict():
-            for attr_name, attr_value in value.items():
+    value = obj['attributes'][subobject]
+    for i in range(0, len(value):
+        if type(value[i]) == dict():
+            for attr_name, attr_value in value[i].items():
                 if attr_name in DYNAMIC_ATTRIBUTES:
-                    del value[attr_name]
+                    del obj['attributes'][subobject][i][attr_name]
 
 
 def trim_dynamic_attributes(attributes, obj):
