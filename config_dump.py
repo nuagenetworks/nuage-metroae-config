@@ -52,7 +52,7 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'ID', 'parentID', 'owner', 'operationModeTimestamp',
                       'datapathid', 'primarydatapathid', 'systemid',
                       'associatedgatewaysecurityid', 'systemID',
-                      'underlayid', 'uplinkid']
+                      'underlayid', 'uplinkid', 'templateID']
 
 
 IGNORE_EXPECTED_REMOVED = ['VSP']
@@ -310,17 +310,52 @@ def compare_tree(superset, subset):
             raise e
 
 
+def compare_objects_dict(superset_value, subset_value):
+    score = 0
+    for subset_obj_name, subset_obj_val in subset_value.items():
+        if (subset_obj_name not in superset_value or
+                subset_obj_val != superset_value[subset_obj_name]):
+            print subset_obj_name, subset_obj_val, superset_value
+            score -= 1
+
+    return score
+
+
+def compare_objects_list(superset_value, subset_value):
+    score = 0
+    for subset_obj_value in subset_value:
+        found = False
+        for superset_obj_value in superset_value:
+            for subset_obj_name, subset_obj_val in subset_obj_value.items():
+                if (subset_obj_name not in superset_obj_value or
+                        subset_obj_val != superset_obj_value[subset_obj_name]):
+                    print subset_obj_name, subset_obj_val, superset_value
+                    found = False
+                    break
+
+                found = True
+
+            if found:
+                break
+
+        if not found:
+            score -= 1
+
+    return score
+
+
 def compare_objects(superset_obj, subset_obj):
     score = 0
     for subset_name, subset_value in subset_obj['attributes'].items():
         if type(subset_value) == dict:
+            score += \
+                 compare_objects_dict(superset_obj['attributes'][subset_name],
+                                      subset_value)
+        elif type(subset_value) == list:
             superset_value = superset_obj['attributes'][subset_name]
-            for subset_obj_name, subset_obj_val in subset_value.items():
-                if (subset_obj_name not in superset_value or
-                        subset_obj_val != superset_value[subset_obj_name]):
-                    print subset_obj_name, subset_obj_val, superset_value
-                    score -= 1
-        if (subset_name not in superset_obj['attributes'] or
+            score += compare_objects_list(superset_value, subset_value)
+
+        elif (subset_name not in superset_obj['attributes'] or
                 superset_obj['attributes'][subset_name] != subset_value):
             print subset_name, subset_value, superset_obj['attributes'][subset_name]
             score -= 1
