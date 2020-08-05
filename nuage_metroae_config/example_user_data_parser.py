@@ -38,7 +38,8 @@ LIST_DEPENDENCY_KEYS = {"monitor scope": {"destination_nsgs": "nsg_name",
                         "application performance management binding": {"domain_names": "domain_name",
                                                                        "l2_domain_names": "l2_domain_name"},
                         "network performance binding": {"domain_names": "domain_name",
-                                                        "l2_domain_names": "l2_domain_name"}}
+                                                        "l2_domain_names": "l2_domain_name"},
+                        "nsg access port": {"egress_qos_policy_names": "egress_qos_policy_name"}}
 REPLACEMENT_KEYS = \
     {"ingress qos policy":
         {"wrr_queue_2_rate_limiter_name": "rate_limiter_name",
@@ -138,7 +139,7 @@ def load_data(args, jinja2_template_data):
                                      args.version):
         udp = UserDataParser()
         udp.read_data(os.path.join(args.data_path, fileName))
-        udp.get_template_name_data_pairs()
+        #udp.get_template_name_data_pairs()
         for user_data in udp.data:
             templateName = user_data[0].lower()
             template_object_name = get_object_name(user_data[1], jinja2_template_data[templateName])
@@ -253,15 +254,12 @@ def find_dependency(tuple_key, user_data):
                             return True, value[(tuple_key[0], data)], key
                     else:
                         for name in object_name.split(','):
-                            #print name, tuple_key[1]
                             if '-' in name:
                                 range_keys = [int(x) for x in name.split('-')]
                                 if range_keys[0] < tuple_key[1] < range_keys[1]:
-                                    #print "found", tuple_key, value[tuple_key]
                                     return True, value[(tuple_key[0], data)], key
                             elif int(tuple_key[1]) == int(name):
 
-                                #print "found", tuple_key, data, value
                                 return True, value[(tuple_key[0], data)], key
 
             elif tuple_key in value:
