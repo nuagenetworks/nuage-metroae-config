@@ -138,6 +138,7 @@ def load_data(args, jinja2_template_data):
                                      args.version):
         udp = UserDataParser()
         udp.read_data(os.path.join(args.data_path, fileName))
+        udp.get_template_name_data_pairs()
         for user_data in udp.data:
             templateName = user_data[0].lower()
             template_object_name = get_object_name(user_data[1], jinja2_template_data[templateName])
@@ -293,7 +294,6 @@ def get_replacement_keys(templateName, dependency, curr_object_data):
         tuple_key = (REPLACEMENT_KEYS[templateName][dependency],
                     curr_object_data[dependency])
 
-
         if isinstance(REPLACEMENT_KEYS[templateName][dependency],
                       ObjectTypeToName):
             objectTypeToName = REPLACEMENT_KEYS[templateName][dependency]
@@ -333,7 +333,6 @@ def resolve_single_dependencies(templateName,
 def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
     template_dependencies = calculate_template_dependencies(template_dict,
                                                             group_user_data)
-
     dependencies_not_found = []
 
     for templateName, value in group_user_data.items():

@@ -52,7 +52,10 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'ID', 'parentID', 'owner', 'operationModeTimestamp',
                       'datapathid', 'primarydatapathid', 'systemid',
                       'associatedgatewaysecurityid', 'systemID',
-                      'underlayid', 'uplinkid', 'templateID']
+                      'underlayid', 'uplinkid', 'templateID',
+                      'backhaulroutedistinguisher', 'backhaulroutetarget',
+                      'exportroutetarget', 'importroutetarget',
+                      'routedistinguisher', 'routetarget', 'secondaryroutetarget']
 
 
 IGNORE_EXPECTED_REMOVED = ['VSP']
