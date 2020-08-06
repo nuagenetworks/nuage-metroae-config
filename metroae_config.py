@@ -3,10 +3,10 @@
 import argparse
 import logging
 import os
+import requests
 import sys
 import tarfile
 import urllib3
-import wget
 
 from nuage_metroae_config.configuration import Configuration
 from nuage_metroae_config.errors import MetroConfigError
@@ -639,7 +639,14 @@ class MetroConfig(object):
             os.mkdir(dirName)
         os.chdir(dirName)
 
-        filename = wget.download(url)
+        filename = os.path.basename(url)
+
+        r = requests.get(url, stream=True)
+
+        with open(filename, 'wb') as f:
+            for chunk in r:
+                f.write(chunk)
+
         tfile = tarfile.TarFile(filename)
         tfile.extractall()
         os.remove(tfile.name)
