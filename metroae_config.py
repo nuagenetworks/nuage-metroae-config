@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import jinja2
 import logging
 import os
 import requests
@@ -9,6 +10,7 @@ import tarfile
 import urllib3
 
 from nuage_metroae_config.configuration import Configuration
+from nuage_metroae_config.document_template_md import DOCUMENT_README_MD
 from nuage_metroae_config.errors import MetroConfigError
 from nuage_metroae_config.es_reader import EsReader
 from nuage_metroae_config.query import Query
@@ -57,7 +59,7 @@ TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/l
 VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
 TEMPLATE_DIR = "/metroae_data/standard-templates"
 SPECIFICATION_DIR = "/metroae_data/vsd-api-specifications"
-DOCUMENTATION_DIR = "/metroae_data/documentation"
+DOCUMENTATION_DIR = "/metroae_data/documentation/config"
 LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
@@ -475,6 +477,9 @@ class MetroConfig(object):
         template_names = self.store.get_template_names(
             self.get_software_type(),
             self.get_software_version())
+
+        template_info = list()
+
         for template_name in template_names:
             template = self.store.get_template(
                 template_name,
@@ -483,12 +488,31 @@ class MetroConfig(object):
 
             doc_file = template.get_doc_file_name()
             if doc_file is not None:
+                template_info.append({
+                    "name": template_name,
+                    "file": doc_file})
+
                 full_path = os.path.join(DOCUMENTATION_DIR, doc_file)
                 print "Writing %s documentation to %s" % (template_name,
                                                           full_path)
                 doc_text = template.get_documentation()
                 with open(full_path, "w") as f:
                     f.write(doc_text)
+
+        self.write_documentation_readme(template_info)
+
+    def write_documentation_readme(self, template_info):
+        template = jinja2.Template(
+            DOCUMENT_README_MD,
+            autoescape=False,
+            undefined=jinja2.StrictUndefined)
+
+        full_path = os.path.join(DOCUMENTATION_DIR, "README.md")
+
+        readme = template.render(**{"template_info": template_info})
+
+        with open(full_path, "w") as f:
+            f.write(readme)
 
     def setup_reader(self):
         if self.args.es_address is not None:
