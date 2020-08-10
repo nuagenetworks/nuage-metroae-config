@@ -243,8 +243,8 @@ def parse(args):
     group_user_data, remaining_user_data, groups_dict = load_data(args, template_store.templates)
     dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
 
-    #while len(dependencies_not_found) > 0:
-    #    dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+    while len(dependencies_not_found) > 0:
+        dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
     #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
     #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
     #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
