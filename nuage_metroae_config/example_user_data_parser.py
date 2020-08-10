@@ -38,7 +38,7 @@ COMMON_LOCATION_TYPE = {"SUBNET":"subnet_name",
                            "NETWORK_MACRO_GROUP":"network_macro_group_name"}
 
 SERVICE_CHAINING_POLICY_KEY = TypeToObjectName("action",
-                                               {"REDIRECT":"redirection_target_name",
+                                               {"REDIRECT":"redirection target_name",
                                                 "FORWARD":"ingress_forwarding_policy_name"})
 
 NETWORK_TYPE = TypeToObjectName("network_type", COMMON_LOCATION_TYPE)
@@ -64,7 +64,9 @@ EXECLUDE_DEPENDENCIES = {"application": ["l7_application_signature_name"]}
 PRE_DEFINED_OBJECTS = {("enterprise_profile_name", "Default Profile"),
                        ("enterprise_name", "Shared Infrastructure"),
                        ("import_routing_policy_name", "RejectAll"),
-                       ('export_routing_policy_name', 'DefaultOnly')}
+                       ('export_routing_policy_name', 'DefaultOnly'),
+                       ('saas_application_name', 'WebEx'),
+                       ('network_name', 'ANY')}
 
 LIST_DEPENDENCY_KEYS = {"monitor scope": {"destination_nsgs": "nsg_name",
                                             "source_nsgs": "nsg_name",
@@ -103,7 +105,9 @@ REPLACEMENT_KEYS = \
      "dc gateway vlan":{"vlan_enterprise_name": "enterprise_name"},
      "dc gateway port":{"port_enterprise_name": "enterprise_name"},
      "bidirectional security policy entry": {"network_name": NETWORK_TYPE,
-                                            "location_name": LOCATION_TYPE},
+                                            "location_name": LOCATION_TYPE,
+                                            "location_zone_name": "zone_name",
+                                            "network_zone_name": "zone_name"},
      "egress security policy entry": {"source_location_zone_name": "zone_name",
                                       "source_location_name": EGRESS_SOURCE_LOCATION_TYPE,
                                       "destination_location_name": EGRESS_DESTINATION_LOCATION_TYPE,
@@ -129,6 +133,8 @@ REPLACEMENT_KEYS = \
       "virtual ip":{"port_name":[('nsg_name', 'nsg_access_port_name'),
                    ('gateway_name', 'port_name')]},
       "redirection target binding":{"port_name":[('nsg_name', 'nsg_access_port_name'),
+                                                ('gateway_name', 'port_name')]},
+      "policy group binding":{"port_name":[('nsg_name', 'nsg_access_port_name'),
                                                 ('gateway_name', 'port_name')]}
     }
 
@@ -245,9 +251,6 @@ def parse(args):
 
     while len(dependencies_not_found) > 0:
         dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
-    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
-    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
-    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
 
     file_data = []
     for key, value in group_user_data.items():
@@ -369,6 +372,8 @@ def get_replacement_keys(templateName, dependency, curr_object_data):
                     tuple_key =(key, curr_object_data[dependency])
                 else:
                     tuple_key = (key, curr_object_data[dependency])
+            else:
+                tuple_key = (dependency, curr_object_data[key_type].upper())
         elif type(REPLACEMENT_KEYS[templateName][dependency]) == list:
             tmp_list = REPLACEMENT_KEYS[templateName][dependency]
             for tuple in tmp_list:
@@ -462,7 +467,7 @@ def get_object_name(yaml_data, jinja2_template_data):
             for variable in jinja2_template_data[0].variables:
                 if re.match(".*name", variable["name"]) is not None and \
                    variable["type"] != "reference":
-                    return(key.type_dict[yaml_data[key.type_name]],
+                    return (key.type_dict[yaml_data[key.type_name]],
                            yaml_data[variable["name"]])
 
 

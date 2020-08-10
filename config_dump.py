@@ -237,15 +237,10 @@ def compare_tree(superset, subset):
             expected_subset[subset_obj_type]['children'] = dict()
             for child_superset in superset:
                 for superset_obj_type, superset_obj in child_superset.items():
-                    #if subset_obj_type == 'NSGateway':
-                        #print "-------------------"
-                        #print subset_obj, superset_obj
 
                     if superset_obj_type == subset_obj_type:
                         object_score = compare_objects(superset_obj,
                                                        subset_obj)
-                        #if subset_obj_type == 'NSGateway':
-                        #    print object_score
                         if object_score == 0:
 
                             if args.expect_removed:
@@ -258,12 +253,9 @@ def compare_tree(superset, subset):
                             try:
                                 compare_tree(superset_obj['children'],
                                              subset_obj['children'])
-                                print "########"
-                                print subset_obj_type, subset_obj, superset_obj
                                 found = True
                                 break
                             except MissingSubset as e:
-                                print "caught"
                                 if e.score > best_score:
                                     best_score = e.score
                                     best_superset = dict(child_superset)
@@ -283,7 +275,6 @@ def compare_tree(superset, subset):
                                 best_superset[
                                     superset_obj_type]['children'] = dict()
                     else:
-                        #print "setting best superset"
                         if best_score < -1000000:
                             best_score = -1000000
                             best_superset = dict(child_superset)
@@ -295,7 +286,6 @@ def compare_tree(superset, subset):
                     break
 
         if not args.expect_removed and not found:
-            #print "raisign exception "
             missing_yaml = yaml.safe_dump(expected_subset,
                                           default_flow_style=False,
                                           default_style='')
@@ -318,7 +308,6 @@ def compare_objects_dict(superset_value, subset_value):
     for subset_obj_name, subset_obj_val in subset_value.items():
         if (subset_obj_name not in superset_value or
                 subset_obj_val != superset_value[subset_obj_name]):
-            print subset_obj_name, subset_obj_val, superset_value
             score -= 1
 
     return score
@@ -333,7 +322,6 @@ def compare_objects_list(superset_value, subset_value):
                 for subset_obj_name, subset_obj_val in subset_obj_value.items():
                     if (subset_obj_name not in superset_obj_value or
                             subset_obj_val != superset_obj_value[subset_obj_name]):
-                        print subset_obj_name, subset_obj_val, superset_value
                         found = False
                         break
 
@@ -361,7 +349,6 @@ def compare_objects(superset_obj, subset_obj):
 
         elif (subset_name not in superset_obj['attributes'] or
                 superset_obj['attributes'][subset_name] != subset_value):
-            print subset_name, subset_value, superset_obj['attributes'][subset_name]
             score -= 1
 
     return score
