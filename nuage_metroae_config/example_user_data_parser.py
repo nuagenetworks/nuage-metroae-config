@@ -25,7 +25,7 @@ class Expression():
 
         for i in range(1, len(split_keys), 2):
             print split_keys[i]
-            keys.append(tuple(self.key_name, split_keys[i]))
+            keys.append((self.key_name, split_keys[i]))
 
         return keys
 
@@ -153,7 +153,7 @@ REPLACEMENT_KEYS = \
                                                 ('gateway_name', 'port_name')]},
       "policy group binding":{"port_name":[('nsg_name', 'nsg_access_port_name'),
                                                 ('gateway_name', 'port_name')]},
-      "polic group expression":{"expression":POLICY_GROUP_EXPRESSION}
+      "policy group expression":{"expression":POLICY_GROUP_EXPRESSION}
     }
 
 
@@ -402,6 +402,7 @@ def get_replacement_keys(templateName, dependency, curr_object_data):
 
         elif isinstance(REPLACEMENT_KEYS[templateName][dependency],
                       Expression):
+            print "yes expression"
             exp = REPLACEMENT_KEYS[templateName][dependency]
             return exp.get_keys(curr_object_data[dependency])
 
@@ -420,7 +421,7 @@ def resolve_single_dependencies(templateName,
     replacement_tuple_keys = get_replacement_keys(templateName,
                                                  dependency,
                                                  curr_object_data)
-    tuple_keys = replacement_tuple_keys if replacement_tuple_keys is not None else tuple_keys
+    tuple_keys = replacement_tuple_keys if len(replacement_tuple_keys) > 0 else tuple_keys
     for key in tuple_keys:
         found, data, tempTemplateName = find_dependency(key, group_user_data)
 
