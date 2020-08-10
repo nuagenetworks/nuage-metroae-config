@@ -14,6 +14,22 @@ class TypeToObjectName():
         self.type_dict = type_dict
 
 
+class Expression():
+    def __init__(self, key_name):
+        self.key_name = key_name
+
+
+    def get_keys(self, expression):
+        keys = []
+        split_keys = expression.split('"')
+
+        for i in range(1, len(split_keys), 2):
+            print split_keys[i]
+            keys.append(tuple(self.key_name, split_keys[i]))
+
+        return keys
+
+
 class NoAliasDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
@@ -76,6 +92,7 @@ LIST_DEPENDENCY_KEYS = {"monitor scope": {"destination_nsgs": "nsg_name",
                         "network performance binding": {"domain_names": "domain_name",
                                                         "l2_domain_names": "l2_domain_name"},
                         "nsg access port": {"egress_qos_policy_names": "egress_qos_policy_name"}}
+POLICY_GROUP_EXPRESSION = Expression('policy_group_name')
 REPLACEMENT_KEYS = \
     {"ingress qos policy":
         {"wrr_queue_2_rate_limiter_name": "rate_limiter_name",
@@ -135,7 +152,8 @@ REPLACEMENT_KEYS = \
       "redirection target binding":{"port_name":[('nsg_name', 'nsg_access_port_name'),
                                                 ('gateway_name', 'port_name')]},
       "policy group binding":{"port_name":[('nsg_name', 'nsg_access_port_name'),
-                                                ('gateway_name', 'port_name')]}
+                                                ('gateway_name', 'port_name')]},
+      "polic group expression":{"expression":POLICY_GROUP_EXPRESSION}
     }
 
 
@@ -355,6 +373,7 @@ def resolve_list_dependencies(templateName,
 
 
 def get_replacement_keys(templateName, dependency, curr_object_data):
+    tuple_keys = []
     if templateName in REPLACEMENT_KEYS and \
         dependency in REPLACEMENT_KEYS[templateName]:
         tuple_key = (REPLACEMENT_KEYS[templateName][dependency],
@@ -381,26 +400,34 @@ def get_replacement_keys(templateName, dependency, curr_object_data):
                     tuple_key = (tuple[1], curr_object_data[dependency])
                     break
 
-        return tuple_key
+        elif isinstance(REPLACEMENT_KEYS[templateName][dependency],
+                      Expression):
+            exp = REPLACEMENT_KEYS[templateName][dependency]
+            return exp.get_keys(curr_object_data[dependency])
 
-    return None
+        tuple_keys.append(tuple_key)
+
+    return tuple_keys
 
 
 def resolve_single_dependencies(templateName,
                                 dependency,
                                 group_user_data,
                                 curr_object_data):
-    tuple_key = (dependency, curr_object_data[dependency])
-    replacement_tuple_key = get_replacement_keys(templateName,
+
+    tuple_keys = [(dependency, curr_object_data[dependency])]
+    dependencies_not_found = []
+    replacement_tuple_keys = get_replacement_keys(templateName,
                                                  dependency,
                                                  curr_object_data)
-    tuple_key = replacement_tuple_key if replacement_tuple_key is not None else tuple_key
-    found, data, tempTemplateName = find_dependency(tuple_key, group_user_data)
+    tuple_keys = replacement_tuple_keys if replacement_tuple_keys is not None else tuple_keys
+    for key in tuple_keys:
+        found, data, tempTemplateName = find_dependency(key, group_user_data)
 
-    if not found:
-        return tuple_key
+        if not found:
+            dependencies_not_found.append(key)
 
-    return None
+    return dependencies_not_found
 
 
 def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
@@ -420,14 +447,11 @@ def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
                                                       group_user_data,
                                                       object_data[1]))
                     else:
-                        unresolved_dependency = \
+                        dependencies_not_found.extend(
                               resolve_single_dependencies(templateName,
                                                     dependency,
                                                     group_user_data,
-                                                    object_data[1])
-
-                        if unresolved_dependency:
-                            dependencies_not_found.append(unresolved_dependency)
+                                                    object_data[1]))
 
     for val in dependencies_not_found:
         found, data, templateName = find_dependency(val, remaining_user_data)
