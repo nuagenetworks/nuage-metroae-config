@@ -8,29 +8,63 @@ from template import TemplateStore
 from user_data_parser import UserDataParser
 
 
-class ObjectTypeToName():
+class TypeToObjectName():
     def __init__(self, type_name, type_dict):
         self.type_name = type_name
         self.type_dict = type_dict
 
+
+class NoAliasDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
+
 GATEWAY_NAME_DICT = dict(NSGATEWAY="nsg_name", GATEWAY="gateway_name")
 
-GATEWAY_NAME_TYPE = ObjectTypeToName("gateway_type", GATEWAY_NAME_DICT)
+GATEWAY_NAME_TYPE = TypeToObjectName("gateway_type", GATEWAY_NAME_DICT)
 
-INTERFACE_TYPE = ObjectTypeToName("interface_type",
+INTERFACE_TYPE = TypeToObjectName("interface_type",
                                   {"WIRED":"nsg_access_port_name",
                                    "WIRELESS": "nsg_wifi_port_name"})
 
-ACCESS_PORT_NAME_TYPE = ObjectTypeToName("gateway_type",\
+ACCESS_PORT_NAME_TYPE = TypeToObjectName("gateway_type",
                             {"NSGATEWAY":INTERFACE_TYPE,
                              "GATEWAY":"port_name"})
+
+COMMON_LOCATION_TYPE = {"SUBNET":"subnet_name",
+                           "ZONE":"zone_name",
+                           "POLICYGROUP":"policy_group_name",
+                           "PGEXPRESSION":"policy_group_expression_name",
+                           "NETWORK_MACRO": "network_macro_name",
+                           "NETWORK_MACRO_GROUP":"network_macro_group_name"}
+
+SERVICE_CHAINING_POLICY_KEY = TypeToObjectName("action",
+                                               {"REDIRECT":"redirection_target_name",
+                                                "FORWARD":"ingress_forwarding_policy_name"})
+
+NETWORK_TYPE = TypeToObjectName("network_type", COMMON_LOCATION_TYPE)
+LOCATION_TYPE = TypeToObjectName("location_type", COMMON_LOCATION_TYPE)
+INGRESS_SOURCE_LOCATION_TYPE= TypeToObjectName("source_location_type",
+                                       COMMON_LOCATION_TYPE)
+INGRESS_DESTINATION_LOCATION_TYPE = TypeToObjectName("destination_location_type",
+                                             COMMON_LOCATION_TYPE)
+
+EGRESS_SOURCE_LOCATION_TYPE= TypeToObjectName("source_location_type",
+                                       COMMON_LOCATION_TYPE)
+EGRESS_DESTINATION_LOCATION_TYPE = TypeToObjectName("destination_location_type",
+                                             COMMON_LOCATION_TYPE)
+
+SERVICE_GROUP_TYPE = TypeToObjectName("l4_service_or_group_type",
+                                      {"L4_SERVICE": "l4_service_name",
+                                       "L4_SERVICE_GROUP": "l4_service_group_name"})
 
 RANGE_KEYS = ["access_vlan_numbers"]
 
 EXECLUDE_DEPENDENCIES = {"application": ["l7_application_signature_name"]}
 
 PRE_DEFINED_OBJECTS = {("enterprise_profile_name", "Default Profile"),
-                               ("enterprise_name", "Shared Infrastructure")}
+                       ("enterprise_name", "Shared Infrastructure"),
+                       ("import_routing_policy_name", "RejectAll"),
+                       ('export_routing_policy_name', 'DefaultOnly')}
 
 LIST_DEPENDENCY_KEYS = {"monitor scope": {"destination_nsgs": "nsg_name",
                                             "source_nsgs": "nsg_name",
@@ -50,7 +84,7 @@ REPLACEMENT_KEYS = \
         "priority_queue_1_rate_limiter_name" : "rate_limiter_name",
         "management_queue_rate_limiter_name" : "rate_limiter_name",
         "network_control_queue_rate_limiter_name": "rate_limiter_name"},
-    "egress qos policy":
+     "egress qos policy":
         {"wrr_queue_2_rate_limiter_name": "rate_limiter_name",
         "wrr_queue_3_rate_limiter_name": "rate_limiter_name",
         "wrr_queue_4_rate_limiter_name": "rate_limiter_name",
@@ -59,15 +93,43 @@ REPLACEMENT_KEYS = \
         "priority_queue_1_rate_limiter_name" : "rate_limiter_name",
         "management_queue_rate_limiter_name" : "rate_limiter_name",
         "network_control_queue_rate_limiter_name": "rate_limiter_name"},
-    "bridge port":{"gateway_name":GATEWAY_NAME_TYPE,
+     "bridge port":{"gateway_name":GATEWAY_NAME_TYPE,
         "access_port_name":ACCESS_PORT_NAME_TYPE,
         "vlan": "access_vlan_numbers"},
-    "floating ip":{"shared_domain_name":"domain_name",
+     "floating ip":{"shared_domain_name":"domain_name",
                    "shared_zone_name":"zone_name",
                    "shared_subnet_name":"subnet_name"},
-    "dc gateway":{"gateway_enterprise_name": "enterprise_name"},
-    "dc gateway vlan":{"vlan_enterprise_name": "enterprise_name"},
-    "dc gateway port":{"port_enterprise_name": "enterprise_name"},
+     "dc gateway":{"gateway_enterprise_name": "enterprise_name"},
+     "dc gateway vlan":{"vlan_enterprise_name": "enterprise_name"},
+     "dc gateway port":{"port_enterprise_name": "enterprise_name"},
+     "bidirectional security policy entry": {"network_name": NETWORK_TYPE,
+                                            "location_name": LOCATION_TYPE},
+     "egress security policy entry": {"source_location_zone_name": "zone_name",
+                                      "source_location_name": EGRESS_SOURCE_LOCATION_TYPE,
+                                      "destination_location_name": EGRESS_DESTINATION_LOCATION_TYPE,
+                                      "l4_service_or_group_name": SERVICE_GROUP_TYPE,
+                                      "destination_location_zone_name": "zone_name"},
+     "ingress forwarding policy entry":{"source_location_zone_name": "zone_name",
+                                        "destination_location_zone_name": "zone_name",
+                                      "source_location_name":INGRESS_SOURCE_LOCATION_TYPE,
+                                      "destination_location_name": INGRESS_DESTINATION_LOCATION_TYPE,
+                                      "l4_service_or_group_name": SERVICE_GROUP_TYPE,
+                                      "source_network_macro_group_name": "network_macro_group_name"},
+     "ingress security policy entry":{"source_location_zone_name": "zone_name",
+                                      "destination_location_zone_name": "zone_name",
+                                      "source_location_name":INGRESS_SOURCE_LOCATION_TYPE,
+                                      "destination_location_name": INGRESS_DESTINATION_LOCATION_TYPE,
+                                      "l4_service_or_group_name": SERVICE_GROUP_TYPE},
+      "service chaining policy":{"location_name": LOCATION_TYPE,
+                                 "network_name": NETWORK_TYPE,
+                                 "location_zone_name": "zone_name",
+                                 "port_name":[('nsg_name', 'nsg_access_port_name'),
+                                              ('gateway_name', 'port_name')]},
+      "bgp neighbour":{"import_routing_policy_name": "routing_policy_name"},
+      "virtual ip":{"port_name":[('nsg_name', 'nsg_access_port_name'),
+                   ('gateway_name', 'port_name')]},
+      "redirection target binding":{"port_name":[('nsg_name', 'nsg_access_port_name'),
+                                                ('gateway_name', 'port_name')]}
     }
 
 
@@ -139,7 +201,7 @@ def load_data(args, jinja2_template_data):
                                      args.version):
         udp = UserDataParser()
         udp.read_data(os.path.join(args.data_path, fileName))
-        #udp.get_template_name_data_pairs()
+        udp.get_template_name_data_pairs()
         for user_data in udp.data:
             templateName = user_data[0].lower()
             template_object_name = get_object_name(user_data[1], jinja2_template_data[templateName])
@@ -181,8 +243,11 @@ def parse(args):
     group_user_data, remaining_user_data, groups_dict = load_data(args, template_store.templates)
     dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
 
-    while len(dependencies_not_found) > 0:
-        dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+    #while len(dependencies_not_found) > 0:
+    #    dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
 
     file_data = []
     for key, value in group_user_data.items():
@@ -207,11 +272,11 @@ def parse(args):
 
     if args.output_file:
         with open(args.output_file, 'w') as f:
-            yaml.dump(file_data, f)
+            yaml.dump(file_data, f, Dumper=NoAliasDumper)
             f.write('\n')
     else:
         for key, value in group_user_data.items():
-            print yaml.dump(value)
+            print yaml.dump(value, Dumper=NoAliasDumper)
 
 
 def calculate_template_dependencies(template_dict, group_user_data):
@@ -293,16 +358,23 @@ def get_replacement_keys(templateName, dependency, curr_object_data):
                     curr_object_data[dependency])
 
         if isinstance(REPLACEMENT_KEYS[templateName][dependency],
-                      ObjectTypeToName):
-            objectTypeToName = REPLACEMENT_KEYS[templateName][dependency]
-            key_type = objectTypeToName.type_name
-            key = objectTypeToName.type_dict[curr_object_data[key_type].upper()]
-            if isinstance(key, ObjectTypeToName):
-                key_type = key.type_name
-                key = key.type_dict[curr_object_data[key_type].upper()]
-                tuple_key =(key, curr_object_data[dependency])
-            else:
-                tuple_key = (key, curr_object_data[dependency])
+                      TypeToObjectName):
+            objectName = REPLACEMENT_KEYS[templateName][dependency]
+            key_type = objectName.type_name
+            if curr_object_data[key_type].upper() in objectName.type_dict:
+                key = objectName.type_dict[curr_object_data[key_type].upper()]
+                if isinstance(key, TypeToObjectName):
+                    key_type = key.type_name
+                    key = key.type_dict[curr_object_data[key_type].upper()]
+                    tuple_key =(key, curr_object_data[dependency])
+                else:
+                    tuple_key = (key, curr_object_data[dependency])
+        elif type(REPLACEMENT_KEYS[templateName][dependency]) == list:
+            tmp_list = REPLACEMENT_KEYS[templateName][dependency]
+            for tuple in tmp_list:
+                if tuple[0] in curr_object_data:
+                    tuple_key = (tuple[1], curr_object_data[dependency])
+                    break
 
         return tuple_key
 
@@ -313,7 +385,6 @@ def resolve_single_dependencies(templateName,
                                 dependency,
                                 group_user_data,
                                 curr_object_data):
-    dependencies_not_found = []
     tuple_key = (dependency, curr_object_data[dependency])
     replacement_tuple_key = get_replacement_keys(templateName,
                                                  dependency,
@@ -321,11 +392,10 @@ def resolve_single_dependencies(templateName,
     tuple_key = replacement_tuple_key if replacement_tuple_key is not None else tuple_key
     found, data, tempTemplateName = find_dependency(tuple_key, group_user_data)
 
-    if not found and\
-        tuple_key not in dependencies_not_found:
-        dependencies_not_found.append(tuple_key)
+    if not found:
+        return tuple_key
 
-    return dependencies_not_found
+    return None
 
 
 def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
@@ -345,11 +415,14 @@ def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
                                                       group_user_data,
                                                       object_data[1]))
                     else:
-                        dependencies_not_found.extend(
-                            resolve_single_dependencies(templateName,
-                                                        dependency,
-                                                        group_user_data,
-                                                        object_data[1]))
+                        unresolved_dependency = \
+                              resolve_single_dependencies(templateName,
+                                                    dependency,
+                                                    group_user_data,
+                                                    object_data[1])
+
+                        if unresolved_dependency:
+                            dependencies_not_found.append(unresolved_dependency)
 
     for val in dependencies_not_found:
         found, data, templateName = find_dependency(val, remaining_user_data)
@@ -374,7 +447,8 @@ def get_object_name(yaml_data, jinja2_template_data):
                         "DHCP Pool": "minAddress",
                         "Floating IP": "last",
                         "Destination Url": "destination_url",
-                        "Application Binding": "first"}
+                        "Application Binding": "first",
+                        "Service Chaining Policy": SERVICE_CHAINING_POLICY_KEY}
 
     if jinja2_template_data[0].get_name() in special_templates:
         key = special_templates[jinja2_template_data[0].get_name()]
@@ -383,6 +457,14 @@ def get_object_name(yaml_data, jinja2_template_data):
                 if k in yaml_data:
                     key = k
                     break
+
+        if isinstance(key, TypeToObjectName):
+            for variable in jinja2_template_data[0].variables:
+                if re.match(".*name", variable["name"]) is not None and \
+                   variable["type"] != "reference":
+                    return(key.type_dict[yaml_data[key.type_name]],
+                           yaml_data[variable["name"]])
+
 
         if key in yaml_data:
             return (key, yaml_data[key])
