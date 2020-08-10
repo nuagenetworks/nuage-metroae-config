@@ -38,7 +38,7 @@ COMMON_LOCATION_TYPE = {"SUBNET":"subnet_name",
                            "NETWORK_MACRO_GROUP":"network_macro_group_name"}
 
 SERVICE_CHAINING_POLICY_KEY = TypeToObjectName("action",
-                                               {"REDIRECT":"redirection target_name",
+                                               {"REDIRECT":"redirection_target_name",
                                                 "FORWARD":"ingress_forwarding_policy_name"})
 
 NETWORK_TYPE = TypeToObjectName("network_type", COMMON_LOCATION_TYPE)
