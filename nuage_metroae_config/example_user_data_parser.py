@@ -236,6 +236,7 @@ def load_data(args, jinja2_template_data):
     group_user_data = {}
     remaining_user_data = {}
     extra_keys_dict = {}
+    groups_dict = {}
 
     if not os.path.exists(args.data_path) and os.path.isdir(args.data_path):
         print "Please provide a valid path for data files"
@@ -284,14 +285,17 @@ def load_data(args, jinja2_template_data):
 
                     extra_keys_dict[templateName] = template_dict
 
-    return group_user_data, remaining_user_data, extra_keys_dict
+        groups_dict.update(udp.groups)
+
+    return group_user_data, remaining_user_data, extra_keys_dict, groups_dict
 
 
 def parse(args):
     template_store = TemplateStore(None)
     template_store.read_templates(args.template_path)
 
-    group_user_data, remaining_user_data, extra_keys_dict = load_data(args, template_store.templates)
+    group_user_data, remaining_user_data, extra_keys_dict, groups_dict = \
+                                    load_data(args, template_store.templates)
     dependencies_not_found = resolve_dependencies(group_user_data,
                                                   remaining_user_data,
                                                   extra_keys_dict,
@@ -316,6 +320,12 @@ def parse(args):
 
                     temp_dict["values"]
             file_data.append(temp_dict)
+
+    for key, value in groups_dict.items():
+        group_dict = {}
+        group_dict["group"] = key
+        group_dict["values"] = value
+        file_data.append(group_dict)
 
     if args.output_file:
         with open(args.output_file, 'w') as f:
