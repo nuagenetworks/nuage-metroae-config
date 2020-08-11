@@ -20,7 +20,7 @@ Executing MetroAE Configuration requires details such as location of the VSD API
 
 ## Features Supported by MetroAE Config
 
-MetroAE Config will provide support for a growing list of VSD features. You can find a list of the current features supported by referring to [MetroAE Feature Documentation](../standard-templates/documentation/README.md).
+MetroAE Config will provide support for a growing list of VSD features. You can find a list of the current features supported by referring to [MetroAE Config Feature Documentation](../standard-templates/documentation/README.md).
 
 ## Feature Samples
 
@@ -28,7 +28,7 @@ Each support feature has an example of user input provided for your reference. Y
 
 ## Inheritance
 
-When creating configuration user data to pass into MetroAE Config you can make use of `inheritance` to avoid specifying common parameters multiple times. You can find out more about inheritance by refrring to [MetroAE Inheritance](CONFIG-INHERITANCE.md).
+When creating configuration user data to pass into MetroAE Config you can make use of `inheritance` to avoid specifying common parameters multiple times. You can find out more about inheritance by refrring to [MetroAE Config Inheritance](CONFIG_INHERITANCE.md).
 
 ## Questions, Feedback, and Contributing
 
