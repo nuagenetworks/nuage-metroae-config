@@ -253,22 +253,21 @@ def load_data(args, jinja2_template_data):
             template_object_name = get_object_name(user_data[1], jinja2_template_data[templateName])
 
             if re.match(args.group +".*", fileName):
-                if templateName in group_user_data:
-                    object_name_to_data = group_user_data[templateName]
-                else:
-                    object_name_to_data = {}
+                object_name_to_data = group_user_data.get(templateName, {})
                 object_name_to_data[template_object_name] = user_data
                 group_user_data[templateName] = object_name_to_data
             elif (args.group == "vnsaar" or
                   args.group == "vnswifi" or
                   args.group == "network") and\
                   templateName == "nsg network port":
-                  if templateName in group_user_data:
-                      object_name_to_data = group_user_data[templateName]
-                  else:
-                      object_name_to_data = {}
-                  object_name_to_data[template_object_name] = user_data
-                  group_user_data[templateName] = object_name_to_data
+                object_name_to_data = group_user_data.get(templateName, {})
+                object_name_to_data[template_object_name] = user_data
+                group_user_data[templateName] = object_name_to_data
+            elif (args.group == "security" or
+                  args.group == "advrouting") and templateName == "bridge port":
+                object_name_to_data = group_user_data.get(templateName, {})
+                object_name_to_data[template_object_name] = user_data
+                group_user_data[templateName] = object_name_to_data
             else:
                 if templateName in remaining_user_data:
                     object_name_to_data = remaining_user_data[templateName]
@@ -386,8 +385,8 @@ def find_dependency(tuple_key, user_data):
                         for name in object_name:
                             if type(name) == str and '-' in name:
                                 range_keys = [int(x) for x in name.split('-')]
-                                if range_keys[0] < tuple_key[1] < range_keys[1]:
-                                    return True, value[(tuple_key[0], data)], key
+                                if range_keys[0] <= tuple_key[1] <= range_keys[1]:
+                                    return True, value[(value_keys, data)], key
                             elif int(tuple_key[1]) == int(name):
                                 return True, value[(value_keys, data)], key
 
@@ -406,6 +405,9 @@ def resolve_list_dependencies(templateName,
     dependency_key = LIST_DEPENDENCY_KEYS[templateName][dependency]
 
     for value in curr_object_data[dependency]:
+        if value == "":
+            continue
+
         tuple_key = (dependency_key, value)
         found, data, tempTemplateName = find_dependency(tuple_key,
                                                         group_user_data)
