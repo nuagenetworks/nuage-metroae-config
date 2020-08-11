@@ -72,7 +72,7 @@ SERVICE_GROUP_TYPE = TypeToObjectName("l4_service_or_group_type",
                                       {"L4_SERVICE": "l4_service_name",
                                        "L4_SERVICE_GROUP": "l4_service_group_name"})
 
-RANGE_KEYS = {"vlan_value": "access_vlan_values"}
+RANGE_KEYS = {"vlan_value": ["access_vlan_values","vlan_values"]}
 
 EXECLUDE_DEPENDENCIES = {"application": ["l7_application_signature_name"]}
 
@@ -175,7 +175,7 @@ REPLACEMENT_KEY_TEMPLATES = {"DC Gateway Vlan": "access_vlan_values",
                     "NSGateway Activate": 0,
                     "NSG ZFBInfo Download": 0}
 
-SECOND_KEYS = {'NSG Access Port': 'vlan_values'}
+EXTRA_KEYS = {'nsg access port': ['vlan_values']}
 
 
 def main():
@@ -235,7 +235,7 @@ def filter_data_file(sortedFileNames, version):
 def load_data(args, jinja2_template_data):
     group_user_data = {}
     remaining_user_data = {}
-    groups_dict = {}
+    extra_keys_dict = {}
 
     if not os.path.exists(args.data_path) and os.path.isdir(args.data_path):
         print "Please provide a valid path for data files"
@@ -276,22 +276,31 @@ def load_data(args, jinja2_template_data):
                 object_name_to_data[template_object_name] = user_data
                 remaining_user_data[templateName] = object_name_to_data
 
-        groups_dict.update(udp.groups)
+            if templateName in EXTRA_KEYS:
+                for k in EXTRA_KEYS[templateName]:
+                    template_dict = extra_keys_dict.get(templateName, {})
+                    if k in user_data[1]:
+                        template_dict[(k, tuple(user_data[1][k]))] = user_data
 
-    return group_user_data, remaining_user_data, groups_dict
+                    extra_keys_dict[templateName] = template_dict
+
+    return group_user_data, remaining_user_data, extra_keys_dict
 
 
 def parse(args):
     template_store = TemplateStore(None)
     template_store.read_templates(args.template_path)
 
-    group_user_data, remaining_user_data, groups_dict = load_data(args, template_store.templates)
-    dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
-    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
-    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
-
+    group_user_data, remaining_user_data, extra_keys_dict = load_data(args, template_store.templates)
+    dependencies_not_found = resolve_dependencies(group_user_data,
+                                                  remaining_user_data,
+                                                  extra_keys_dict,
+                                                  template_store.templates)
     while len(dependencies_not_found) > 0:
-        dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+        dependencies_not_found = resolve_dependencies(group_user_data,
+                                                      remaining_user_data,
+                                                      extra_keys_dict,
+                                                      template_store.templates)
 
     file_data = []
     for key, value in group_user_data.items():
@@ -307,12 +316,6 @@ def parse(args):
 
                     temp_dict["values"]
             file_data.append(temp_dict)
-
-    for key, value in groups_dict.items():
-        group_dict = {}
-        group_dict["group"] = key
-        group_dict["values"] = value
-        file_data.append(group_dict)
 
     if args.output_file:
         with open(args.output_file, 'w') as f:
@@ -354,7 +357,13 @@ def find_dependency(tuple_key, user_data):
             if tuple_key[0] in RANGE_KEYS:
                 for value_keys, data in value:
 
-                    if RANGE_KEYS[tuple_key[0]] != value_keys:
+                    matched = False
+                    for range_key in RANGE_KEYS[tuple_key[0]]:
+                        if range_key == value_keys:
+                            matched = True
+                            break
+
+                    if not matched:
                         continue
 
                     object_name = data
@@ -362,14 +371,14 @@ def find_dependency(tuple_key, user_data):
                         if int(tuple_key[1]) == object_name:
                             return True, value[(tuple_key[0], data)], key
                     else:
-                        for name in object_name.split(','):
-                            if '-' in name:
+                        if type(object_name) == str:
+                            object_name = object_name.split(',')
+                        for name in object_name:
+                            if type(name) == str and '-' in name:
                                 range_keys = [int(x) for x in name.split('-')]
                                 if range_keys[0] < tuple_key[1] < range_keys[1]:
-                                    #print value[(value_keys, data)]
                                     return True, value[(tuple_key[0], data)], key
                             elif int(tuple_key[1]) == int(name):
-                                #print value[(value_keys, data)]
                                 return True, value[(value_keys, data)], key
 
             if tuple_key in value:
@@ -381,13 +390,19 @@ def find_dependency(tuple_key, user_data):
 def resolve_list_dependencies(templateName,
                               dependency,
                               group_user_data,
+                              extra_keys_dict,
                               curr_object_data):
     dependencies_not_found = []
     dependency_key = LIST_DEPENDENCY_KEYS[templateName][dependency]
 
     for value in curr_object_data[dependency]:
         tuple_key = (dependency_key, value)
-        found, data, tempTemplateName = find_dependency(tuple_key, group_user_data)
+        found, data, tempTemplateName = find_dependency(tuple_key,
+                                                        group_user_data)
+
+        if not found:
+            found, data, tempTemplateName = find_dependency(tuple_key,
+                                                            extra_keys_dict)
 
         if not found and\
             tuple_key not in dependencies_not_found:
@@ -437,6 +452,7 @@ def get_replacement_keys(templateName, dependency, curr_object_data):
 def resolve_single_dependencies(templateName,
                                 dependency,
                                 group_user_data,
+                                extra_keys_dict,
                                 curr_object_data):
 
     tuple_keys = [(dependency, curr_object_data[dependency])]
@@ -446,17 +462,22 @@ def resolve_single_dependencies(templateName,
                                                  curr_object_data)
     tuple_keys = replacement_tuple_keys if len(replacement_tuple_keys) > 0 else tuple_keys
     for key in tuple_keys:
-        found, data, tempTemplateName = find_dependency(key, group_user_data)
-        if dependency == 'vlan_value' and found:
-            print found, data, key, group_user_data[templateName]
+        found, data, tempTemplateName = find_dependency(key,
+                                                        group_user_data)
 
+        if not found:
+            found, data, tempTemplateName = find_dependency(key,
+                                                            extra_keys_dict)
         if not found:
             dependencies_not_found.append(key)
 
     return dependencies_not_found
 
 
-def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
+def resolve_dependencies(group_user_data,
+                         remaining_user_data,
+                         extra_keys_dict,
+                         template_dict):
     template_dependencies = calculate_template_dependencies(template_dict,
                                                             group_user_data)
     dependencies_not_found = []
@@ -471,23 +492,26 @@ def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
                             resolve_list_dependencies(templateName,
                                                       dependency,
                                                       group_user_data,
+                                                      extra_keys_dict,
                                                       object_data[1]))
                     else:
                         dependencies_not_found.extend(
                               resolve_single_dependencies(templateName,
                                                     dependency,
                                                     group_user_data,
+                                                    extra_keys_dict,
                                                     object_data[1]))
 
     for val in dependencies_not_found:
         found, data, templateName = find_dependency(val, remaining_user_data)
-        if templateName == 'dc gateway vlan':
-            print "yes", found
+
+        if not found:
+            found, data, templateName = find_dependency(val,
+                                                            extra_keys_dict)
         if found:
             template_user_data = group_user_data.get(templateName, {})
             template_user_data[val] = data
             group_user_data[templateName] = template_user_data
-            print group_user_data[templateName]
 
     print dependencies_not_found
 
