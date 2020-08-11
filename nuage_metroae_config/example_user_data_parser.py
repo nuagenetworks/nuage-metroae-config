@@ -24,7 +24,6 @@ class Expression():
         split_keys = expression.split('"')
 
         for i in range(1, len(split_keys), 2):
-            print split_keys[i]
             keys.append((self.key_name, split_keys[i]))
 
         return keys
@@ -73,7 +72,7 @@ SERVICE_GROUP_TYPE = TypeToObjectName("l4_service_or_group_type",
                                       {"L4_SERVICE": "l4_service_name",
                                        "L4_SERVICE_GROUP": "l4_service_group_name"})
 
-RANGE_KEYS = ["access_vlan_numbers"]
+RANGE_KEYS = {"vlan_value": "access_vlan_values"}
 
 EXECLUDE_DEPENDENCIES = {"application": ["l7_application_signature_name"]}
 
@@ -155,6 +154,28 @@ REPLACEMENT_KEYS = \
                                                 ('gateway_name', 'port_name')]},
       "policy group expression":{"expression":POLICY_GROUP_EXPRESSION}
     }
+
+REPLACEMENT_KEY_TEMPLATES = {"DC Gateway Vlan": "access_vlan_values",
+                    "Enterprise Permission": 0,
+                    "Static Route": ["ipv4_network", "ipv6_network"],
+                    "Virtual IP": ["virtual_ipv4_address",
+                                   "virtual_ipv6_address"],
+                    "Network Performance Binding": "priority",
+                    "Application Performance Management Binding": "priority",
+                    "DHCP Option": "type",
+                    "DHCPv6 Option": "type",
+                    "DHCP Pool": "minAddress",
+                    "Floating IP": "last",
+                    "Destination Url": "destination_url",
+                    "Application Binding": 0,
+                    "Service Chaining Policy": SERVICE_CHAINING_POLICY_KEY,
+                    "Network Macro Group Binding": 0,
+                    "L4 Service Group Binding": 0,
+                    "Redirection Target Binding": 0,
+                    "NSGateway Activate": 0,
+                    "NSG ZFBInfo Download": 0}
+
+SECOND_KEYS = {'NSG Access Port': 'vlan_values'}
 
 
 def main():
@@ -266,6 +287,8 @@ def parse(args):
 
     group_user_data, remaining_user_data, groups_dict = load_data(args, template_store.templates)
     dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
+    #dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
 
     while len(dependencies_not_found) > 0:
         dependencies_not_found = resolve_dependencies(group_user_data, remaining_user_data, template_store.templates)
@@ -329,11 +352,11 @@ def find_dependency(tuple_key, user_data):
     else:
         for key, value in user_data.items():
             if tuple_key[0] in RANGE_KEYS:
-
                 for value_keys, data in value:
 
-                    if tuple_key[0] != value_keys:
+                    if RANGE_KEYS[tuple_key[0]] != value_keys:
                         continue
+
                     object_name = data
                     if type(object_name) == int:
                         if int(tuple_key[1]) == object_name:
@@ -343,12 +366,13 @@ def find_dependency(tuple_key, user_data):
                             if '-' in name:
                                 range_keys = [int(x) for x in name.split('-')]
                                 if range_keys[0] < tuple_key[1] < range_keys[1]:
+                                    #print value[(value_keys, data)]
                                     return True, value[(tuple_key[0], data)], key
                             elif int(tuple_key[1]) == int(name):
+                                #print value[(value_keys, data)]
+                                return True, value[(value_keys, data)], key
 
-                                return True, value[(tuple_key[0], data)], key
-
-            elif tuple_key in value:
+            if tuple_key in value:
                 return True, value[tuple_key], key
 
     return False, None, None
@@ -402,7 +426,6 @@ def get_replacement_keys(templateName, dependency, curr_object_data):
 
         elif isinstance(REPLACEMENT_KEYS[templateName][dependency],
                       Expression):
-            print "yes expression"
             exp = REPLACEMENT_KEYS[templateName][dependency]
             return exp.get_keys(curr_object_data[dependency])
 
@@ -424,6 +447,8 @@ def resolve_single_dependencies(templateName,
     tuple_keys = replacement_tuple_keys if len(replacement_tuple_keys) > 0 else tuple_keys
     for key in tuple_keys:
         found, data, tempTemplateName = find_dependency(key, group_user_data)
+        if dependency == 'vlan_value' and found:
+            print found, data, key, group_user_data[templateName]
 
         if not found:
             dependencies_not_found.append(key)
@@ -456,10 +481,13 @@ def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
 
     for val in dependencies_not_found:
         found, data, templateName = find_dependency(val, remaining_user_data)
+        if templateName == 'dc gateway vlan':
+            print "yes", found
         if found:
             template_user_data = group_user_data.get(templateName, {})
             template_user_data[val] = data
             group_user_data[templateName] = template_user_data
+            print group_user_data[templateName]
 
     print dependencies_not_found
 
@@ -467,34 +495,26 @@ def resolve_dependencies(group_user_data, remaining_user_data, template_dict):
 
 
 def get_object_name(yaml_data, jinja2_template_data):
-    special_templates = {"DC Gateway Vlan": "access_vlan_numbers",
-                        "Enterprise Permission": "first",
-                        "Static Route": ["ipv4_network", "ipv6_network"],
-                        "Network Performance Binding": "priority",
-                        "Application Performance Management Binding": "priority",
-                        "DHCP Option": "type",
-                        "DHCPv6 Option": "type",
-                        "DHCP Pool": "minAddress",
-                        "Floating IP": "last",
-                        "Destination Url": "destination_url",
-                        "Application Binding": "first",
-                        "Service Chaining Policy": SERVICE_CHAINING_POLICY_KEY}
-
-    if jinja2_template_data[0].get_name() in special_templates:
-        key = special_templates[jinja2_template_data[0].get_name()]
+    if jinja2_template_data[0].get_name() in REPLACEMENT_KEY_TEMPLATES:
+        key = REPLACEMENT_KEY_TEMPLATES[jinja2_template_data[0].get_name()]
         if type(key) == list:
             for k in key:
                 if k in yaml_data:
                     key = k
                     break
 
-        if isinstance(key, TypeToObjectName):
+        elif isinstance(key, TypeToObjectName):
             for variable in jinja2_template_data[0].variables:
                 if re.match(".*name", variable["name"]) is not None and \
                    variable["type"] != "reference":
                     return (key.type_dict[yaml_data[key.type_name]],
                            yaml_data[variable["name"]])
 
+        elif type(key) == int:
+            key += 1
+            REPLACEMENT_KEY_TEMPLATES[jinja2_template_data[0].get_name()] = key
+            return (jinja2_template_data[0].get_name(),
+                    jinja2_template_data[0].get_name() + str(key))
 
         if key in yaml_data:
             return (key, yaml_data[key])
