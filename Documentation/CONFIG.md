@@ -28,7 +28,7 @@ Each support feature has an example of user input provided for your reference. Y
 
 ## Inheritance
 
-When creating configuration user data to pass into MetroAE Config you can make use of `inheritance` to avoid specifying common parameters multiple times. You can find out more about inheritance by refrring to [MetroAE Inheritance](config-inheritance.md).
+When creating configuration user data to pass into MetroAE Config you can make use of `inheritance` to avoid specifying common parameters multiple times. You can find out more about inheritance by refrring to [MetroAE Inheritance](CONFIG-INHERITANCE.md).
 
 ## Questions, Feedback, and Contributing
 
