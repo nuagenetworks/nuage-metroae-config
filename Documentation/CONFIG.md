@@ -8,7 +8,7 @@ MetroAE Config is provided in a special verison of the MetroAE docker container.
 
 ## Where to get MetroAE Config
 
-The installation and operation of MetroAE Config is handled by the `metroae` script. You can find the latest `metroae` script by opening [the MetroAE repo on github.com](https://github.com/nuagenetworks/nuage-metroae/metroae).  
+The installation and operation of MetroAE Config is handled by the `metroae` script. You can find the latest `metroae` script by opening [the MetroAE repo on github.com](https://raw.githubusercontent.com/nuagenetworks/nuage-metroae/master/metroae).  
 
 ## How to use MetroAE Config
 
