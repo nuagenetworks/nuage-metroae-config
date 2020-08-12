@@ -1,39 +1,43 @@
-## Configuration Engine Installation
+# MetroAE Config Engine Installation
 
+MetroAE Configuration engine is provided as a Docker container. You can install the container and the supporting artifacts using the `metroae` srcript. By providing a few simple inputs, you can automatically install the Config Engine along with its dependencies.
 
-MetroAE Configuration engine is provided as a Docker container. The installation of the container is handled via an install and management script. Along with the configuration container we also require some additional data.
+On a host where the configuration engine will be installed the following artifacts will be installed by `metroae`:
 
-On a host where the configuration engine will be installed the following artifacts will be installed.
-1. Docker container for configuration
-2. Collection of configuration Templates
-3. VSD API Specification
+* Docker container for configuration
+* Collection of configuration Templates
+* VSD API Specification
 
+## System Requirements
 
-#### System Requirements
+The MetroAE container requires the following on the host where it will be installed:
+
 * Operating System: RHEL/Centos 7.4+
 * Docker: Docker Engine 1.13.1+
 * Network Access: Internal and Public
 * Storage: At least 800MB
 
-##### Operating system
-The primary requirement for the configuration container is Docker Engine, however the installation, container operation and functionality is only tested on RHEL/Centos 7.4. Many other operating systems will support Docker Engine, however support for these is not currently provided and would be considered experimental only. A manual set of installation steps is provided for these cases.  
+## Operating system
 
-##### Docker Engine
-The configuration engine is packaged into a Docker container. This ensures that all package and library requirements are self-contained with no other host dependencies. To support this, Docker Engine must be installed on the host. The configuration container requirements, however, are quite minimal. Primarily, the Docker container mounts a local path on the host as a volume while ensuring that any templates and user data are maintained only on the host. The user never needs to interact directly with the container.  
+The primary requirement for the configuration container is Docker Engine, however the installation, container operation and functionality is only tested on RHEL/Centos 7.4. You can use one of the many other operating systems will support Docker Engine, however support for these is not currently provided and would be considered experimental only. A manual set of installation steps is provided for you to use in these cases.
 
-##### Network Access
-Currently the configuration container is hosted in an internal Docker registry and the public network as a secondary option, while the Templates and API Spec are hosted only publicly. The install script manages the location of these resources. The user does not need any further information. However, without public network access the installation will fail to complete.
+## Docker Engine
 
-##### Storage
-The configuration container along with the templates requires 800MB of local disk space. Note that the container itself is ~750MB, thus it is recommended that during install a good network connection is available.
+The configuration engine is packaged into a Docker container. This ensures that all package and library requirements are self-contained with no other host dependencies. To support this, Docker Engine must be installed on the host. The configuration container requirements, however, are quite minimal. Primarily, the Docker container mounts a local path on the host as a volume while ensuring that any templates and user data are maintained only on the host. The user never needs to interact directly with the container.
 
-##### User Privileges
+## Network Access
+
+Currently the MetroAE container can be pulled from either an internal Nokia Docker registry or an Amazon AWS S3 bucket on the public network. The Feature Templates and VSD API Specifications are hosted publicly, as well. The `metroae` install script manages the location of these resources automatically. You don't need to manage this or provide any further information. However, public network access during the installation is required.
+
+## Storage
+
+The MetroAE container along with the templates requires approximately 800MB of local disk space. Note that the container itself is ~750MB, thus it is recommended that during install a good network connection is available.
+
+## User Privileges
 
 The user must have elevated privileges on the host system.
 
-
-### Installing via installation script
-
+## Installing via installation script
 
 1. Install Docker Engine
 
@@ -73,7 +77,6 @@ The user must have elevated privileges on the host system.
     
     Complete!
     ```
-
 
 2. Enable and Start Docker Engine Service
 
@@ -121,8 +124,6 @@ The user must have elevated privileges on the host system.
     [root@metroae-host ~]# ls -la /usr/bin | grep metroae
     -rwxr-xr-x.  1 root root      64264 Jul  9 17:13 metroae
     ```
-
-    Note that this is a requirement for the initial release, the GA release will use an rpm install.
 
 5. Switch to the user that will operate "metroae config" and check the script is running ok. In this case per step 3 its the "caso" user.
 
@@ -320,13 +321,17 @@ The user must have elevated privileges on the host system.
     
     [MetroAE v3.3.0, script 1.0.4, container softlaunch]
     ```
+    
     At this point the container should be running and the templates and VSD API spec should be installed in the specified data directory.
+    
     ```
     [caso@metroae-host ~]$ docker ps
     CONTAINER ID        IMAGE                                                   COMMAND                  CREATED             STATUS              PORTS               NAMES
     574c7314aa7e        registry.mv.nuagenetworks.net:5000/metroae:softlaunch   "/bin/sh -c /sourc..."   2 minutes ago       Up 2 minutes                            metroae
     ```
+    
     We can check the status via metroae. This will also show us the data directory mount point that was created during install.
+    
     ```
     [caso@metroae-host ~]$ metroae container status
     
@@ -371,7 +376,7 @@ The user must have elevated privileges on the host system.
 
 7. Create and source an RC file.
 
-    As detailed in the [Environment Variables guide](config-env-variables.md) we can use a RC file to fulfill the requirements of the command line. The format required is per below, replacing the values to fit the specific Setup
+    As detailed in the [Environment Variables guide](CONFIG_ENV_VARIABLES.md) we can use a RC file to fulfill the requirements of the command line. The format required is per below, replacing the values to fit the specific Setup
 
     ```
     [caso@metroae-host metroae_data]$ cat metroaerc
@@ -403,4 +408,4 @@ The user must have elevated privileges on the host system.
     declare -x VSD_USERNAME="csproot"
     ```
 
-metroae config is now ready to use. The operation of which is detailed in the Usage document <link to usage>
+metroae config is now ready to use. You can get more information about usage by referring to [MetroAE Config Usage](CONFIG_USAGE.md)
