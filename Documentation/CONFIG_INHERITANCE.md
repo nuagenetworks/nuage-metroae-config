@@ -4,7 +4,8 @@ When creating configuration user data to pass into MetroAE config you can make u
 
 User data files are able to specify groups that contain common values for parameters that will then be inherited (used) by subsequent feature configuration.
 
-#### Using Groups
+## Using Groups
+
 You create a group by giving it a name and specifying the parameter names and associated values you would like contained in that group. The parameter names and values will be inherited by any feature that references that group.
 
 For example to create a group called StaticRoutes that specifies an Enterprise and L3 Domain to use you would include the following in your user data:
@@ -24,7 +25,8 @@ MetroAE config supports two types of inheritance using groups:
 * Parent/Child
 * Substitution
 
-#### Parent/Child inheritance
+## Parent/Child inheritance
+
 With Parent/Child inheritance you instantiate one or more feature templates as children of the group you have defined. All children inherit all properties (and their values) from their parent group.
 
 For example to create three static routes, two of which are within the same L3 Domain, under the same Enterprise you could include the following in your user data:
@@ -73,10 +75,13 @@ Device: Nuage Networks VSD 6.0.1
                 nextHopIp = '100.1.2.15'
                 address = '172.17.0.0'
 ```
-#### Inheritance by substitution
+
+## Inheritance by substitution
+
 Inheritance by substitution allows you to insert the parameter values defined in a group into the configuration for a feature without having to specify the resulting configuration as children of the group. This provides more flexibility in how you can structure your user data.
 
 For example to create the same three static routes, two of which are within the same L3 Domain, under the same Enterprise you could include the following in your user data:
+
 network-static-route-groups-sub2.yaml
 
 ```
@@ -105,7 +110,9 @@ network-static-route-groups-sub2.yaml
       netmask: 255.255.0.0
       next_hop: 200.1.1.20
 ```
+
 which would generate output similar to:
+
 ```
 (example)# metroae config create network-static-route-groups-sub2.yaml
 
@@ -127,7 +134,8 @@ Device: Nuage Networks VSD 6.0.1
                 address = '172.17.0.0'
 ```
 
-#### Combining Parent/Child inheritance with substitution
+## Combining Parent/Child inheritance with substitution
+
 It is possible to use Parent/Child inheritance as well as inheritance by substitution together in a single user data file and even together within the configuration of a single feature.
 
 For example to create the same three static routes, with their netmask only specified once you could include the following in your user data:
@@ -159,7 +167,9 @@ network-static-route-groups-child-sub.yaml
           address: 172.17.0.0
           next_hop: 100.1.2.15
 ```
+
 which would generate output similar to:
+
 ```
 (example)# metroae config create network-static-route-groups-child-sub.yaml
 
