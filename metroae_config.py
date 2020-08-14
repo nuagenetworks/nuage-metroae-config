@@ -55,11 +55,11 @@ TEMPLATE_ACTION = 'templates'
 UPGRADE_TEMPLATE_ACTION = 'update'
 VERSION_ACTION = 'version'
 HELP_ACTION = 'help'
-TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
-VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
+TEMPLATE_TAR_LOCATION = "https://metroae-config-templates.s3.amazonaws.com/metroae_config.tar"
+VSD_SPECIFICAIONS_LOCATION = "https://vsd-api-specifications.s3.us-east-2.amazonaws.com/specifications.tar"
 TEMPLATE_DIR = "/metroae_data/standard-templates"
 SPECIFICATION_DIR = "/metroae_data/vsd-api-specifications"
-DOCUMENTATION_DIR = "/metroae_data/documentation/config"
+DOCUMENTATION_DIR = "/metroae_data/config_documentation"
 LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
