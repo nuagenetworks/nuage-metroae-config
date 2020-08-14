@@ -266,7 +266,8 @@ def load_data(args, jinja2_template_data):
             elif (args.group == "security" or
                   args.group == "advrouting") and \
                   (templateName == "bridge port" or
-                   templateName == "application binding"):
+                   templateName == "application binding" or
+                   templateName == "monitor scope"):
                 object_name_to_data = group_user_data.get(templateName, {})
                 object_name_to_data[template_object_name] = user_data
                 group_user_data[templateName] = object_name_to_data
