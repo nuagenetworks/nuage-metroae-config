@@ -268,10 +268,21 @@ def load_data(args, jinja2_template_data):
                   (templateName == "bridge port" or
                    templateName == "application binding" or
                    templateName == "monitor scope" or
-                   templateName == "application performance management binding"):
+                   templateName == "application performance management binding" or
+                   templateName == "Enterprise Permission"):
                 object_name_to_data = group_user_data.get(templateName, {})
                 object_name_to_data[template_object_name] = user_data
                 group_user_data[templateName] = object_name_to_data
+            elif (args.group == "vnsnsg") and \
+                  (templateName == "bridge port" or
+                   templateName == "application binding" or
+                   templateName == "monitor scope" or
+                   templateName == "application performance management binding" or
+                   templateName == "Enterprise Permission"):
+                object_name_to_data = group_user_data.get(templateName, {})
+                object_name_to_data[template_object_name] = user_data
+                group_user_data[templateName] = object_name_to_data
+
             else:
                 if templateName in remaining_user_data:
                     object_name_to_data = remaining_user_data[templateName]
