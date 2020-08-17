@@ -56,7 +56,7 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'backhaulroutedistinguisher', 'backhaulroutetarget',
                       'exportroutetarget', 'importroutetarget',
                       'routedistinguisher', 'routetarget', 'secondaryroutetarget',
-                      'parent_type', 'passphrase']
+                      'parent_type', 'passphrase', 'esi']
 
 
 IGNORE_EXPECTED_REMOVED = ['VSP']
