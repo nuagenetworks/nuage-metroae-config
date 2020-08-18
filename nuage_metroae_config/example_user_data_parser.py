@@ -251,8 +251,6 @@ def load_data(args, jinja2_template_data):
         udp.get_template_name_data_pairs()
         for user_data in udp.data:
             templateName = user_data[0].lower()
-            if fileName == "dcinfra_enterprise_permission_multi_port_vlans_groups.yml":
-                print templateName
             template_object_name = get_object_name(user_data[1], jinja2_template_data[templateName])
 
             if re.match(args.group +".*", fileName):
@@ -378,9 +376,9 @@ def calculate_template_dependencies(template_dict, group_user_data):
 def find_dependency(tuple_key, user_data):
 
     if tuple_key in PRE_DEFINED_OBJECTS:
-        return True, None, None
+        return True, None, None, tuple_key
     else:
-        for key, value in user_data.items():
+        for templateName, value in user_data.items():
             if tuple_key[0] in RANGE_KEYS:
                 for value_keys, data in value:
 
@@ -396,7 +394,10 @@ def find_dependency(tuple_key, user_data):
                     object_name = data
                     if type(object_name) == int:
                         if int(tuple_key[1]) == object_name:
-                            return True, value[(tuple_key[0], data)], key
+                            return (True,
+                                    value[(tuple_key[0],data)],
+                                    templateName,
+                                    (value_keys, data))
                     else:
                         if type(object_name) == str:
                             object_name = object_name.split(',')
@@ -404,14 +405,20 @@ def find_dependency(tuple_key, user_data):
                             if type(name) == str and '-' in name:
                                 range_keys = [int(x) for x in name.split('-')]
                                 if range_keys[0] <= tuple_key[1] <= range_keys[1]:
-                                    return True, value[(value_keys, data)], key
+                                    return (True,
+                                            value[(value_keys, data)],
+                                            templateName,
+                                            (value_keys, data))
                             elif int(tuple_key[1]) == int(name):
-                                return True, value[(value_keys, data)], key
+                                return (True,
+                                        value[(value_keys, data)],
+                                        templateName,
+                                        (value_keys, data))
 
             if tuple_key in value:
-                return True, value[tuple_key], key
+                return True, value[tuple_key], templateName, tuple_key
 
-    return False, None, None
+    return False, None, None, None
 
 
 def resolve_list_dependencies(templateName,
@@ -427,11 +434,11 @@ def resolve_list_dependencies(templateName,
             continue
 
         tuple_key = (dependency_key, value)
-        found, data, tempTemplateName = find_dependency(tuple_key,
+        found, data, tempTemplateName, temp_key = find_dependency(tuple_key,
                                                         group_user_data)
 
         if not found:
-            found, data, tempTemplateName = find_dependency(tuple_key,
+            found, data, tempTemplateName, temp_key = find_dependency(tuple_key,
                                                             extra_keys_dict)
 
         if not found and\
@@ -492,11 +499,11 @@ def resolve_single_dependencies(templateName,
                                                  curr_object_data)
     tuple_keys = replacement_tuple_keys if len(replacement_tuple_keys) > 0 else tuple_keys
     for key in tuple_keys:
-        found, data, tempTemplateName = find_dependency(key,
+        found, data, tempTemplateName, temp_key = find_dependency(key,
                                                         group_user_data)
 
         if not found:
-            found, data, tempTemplateName = find_dependency(key,
+            found, data, tempTemplateName, temp_key = find_dependency(key,
                                                             extra_keys_dict)
         if not found:
             dependencies_not_found.append(key)
@@ -533,14 +540,15 @@ def resolve_dependencies(group_user_data,
                                                     object_data[1]))
 
     for val in dependencies_not_found:
-        found, data, templateName = find_dependency(val, remaining_user_data)
+        found, data, templateName, key = find_dependency(val,
+                                                         remaining_user_data)
 
         if not found:
-            found, data, templateName = find_dependency(val,
+            found, data, templateName, key = find_dependency(val,
                                                             extra_keys_dict)
         if found:
             template_user_data = group_user_data.get(templateName, {})
-            template_user_data[val] = data
+            template_user_data[key] = data
             group_user_data[templateName] = template_user_data
 
     print dependencies_not_found
