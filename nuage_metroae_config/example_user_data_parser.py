@@ -72,7 +72,8 @@ SERVICE_GROUP_TYPE = TypeToObjectName("l4_service_or_group_type",
                                       {"L4_SERVICE": "l4_service_name",
                                        "L4_SERVICE_GROUP": "l4_service_group_name"})
 
-RANGE_KEYS = {"vlan_value": ["access_vlan_values","vlan_values"]}
+RANGE_KEYS = {"vlan_value": ["access_vlan_values","vlan_values"],
+              "access_vlan_value": ["access_vlan_values","vlan_values"]}
 
 EXECLUDE_DEPENDENCIES = {"application": ["l7_application_signature_name"]}
 
