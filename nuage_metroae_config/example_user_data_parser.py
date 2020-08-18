@@ -250,6 +250,8 @@ def load_data(args, jinja2_template_data):
         udp.get_template_name_data_pairs()
         for user_data in udp.data:
             templateName = user_data[0].lower()
+            if fileName == "dcinfra_enterprise_permission_multi_port_vlans_groups.yml":
+                print templateName
             template_object_name = get_object_name(user_data[1], jinja2_template_data[templateName])
 
             if re.match(args.group +".*", fileName):
@@ -269,7 +271,7 @@ def load_data(args, jinja2_template_data):
                    templateName == "application binding" or
                    templateName == "monitor scope" or
                    templateName == "application performance management binding" or
-                   templateName == "Enterprise Permission"):
+                   templateName == "enterprise permission"):
                 object_name_to_data = group_user_data.get(templateName, {})
                 object_name_to_data[template_object_name] = user_data
                 group_user_data[templateName] = object_name_to_data
@@ -278,7 +280,7 @@ def load_data(args, jinja2_template_data):
                    templateName == "application binding" or
                    templateName == "monitor scope" or
                    templateName == "application performance management binding" or
-                   templateName == "Enterprise Permission"):
+                   templateName == "enterprise permission"):
                 object_name_to_data = group_user_data.get(templateName, {})
                 object_name_to_data[template_object_name] = user_data
                 group_user_data[templateName] = object_name_to_data
