@@ -18,7 +18,6 @@ class Expression():
     def __init__(self, key_name):
         self.key_name = key_name
 
-
     def get_keys(self, expression):
         keys = []
         split_keys = expression.split('"')
