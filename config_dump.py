@@ -461,7 +461,6 @@ def main():
         print yaml.safe_dump(config, default_flow_style=False, default_style='')
 
     if args.compare_file is not None:
-        #config = read_configuration(args.output_file)
         subset_config = read_configuration(args.compare_file)
         compare_tree(config, subset_config)
 
