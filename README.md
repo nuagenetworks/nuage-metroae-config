@@ -505,3 +505,623 @@ These schemas conform to the json-schema.org standard specification:
         }
       }
     }
+
+## Query Tool
+
+### Description
+
+MetroAE config can be used as a generic data querying tool to extract
+information from devices.  At the time of this writing VSD and ES are
+supported.  The tool uses a simple language to describe the data that is to be
+retrieved.  The data will be displayed to the screen in a YAML like format, but
+it could (in addition) be written to a file.  The results are also returned as
+a Python list when using query tool as a library.
+
+### Usage
+
+The query tool is used by specifying "query" as the action to `metroae_config`.
+The parameters are mostly the same as other actions supported by
+`metroae_config`.  The VSD specification path `-sp` is required if querying a
+VSD.  The other VSD parameters (i.e. user, pass, URL, etc) also apply for
+query in the same way as configuration creation actions.
+
+The query tool also supports queries to ElasticSearch (ES).  In this case, a
+new `-es` parameter has been added to specify the address of the ES to query.
+
+The `query language` can be specified to the tool directly on the command-line
+for easy manual use using the `-q` query parameter.  An example follows:
+
+    ./metroae_config.py query -v https://localhost:8443 -q 'enterprise.name'
+
+    Device: Nuage Networks VSD 20.5.1
+    - Shared Infrastructure
+    - public
+    - private
+    >>> All actions successfully applied
+
+Multiple queries can be specified on a single line using semicolon `;`:
+
+    ./metroae_config.py query -v https://localhost:8443 -q 'apps = SAASApplicationType.name; ents = enterprise.name'
+
+    Device: Nuage Networks VSD 20.5.1
+    apps:
+    - Office365
+    - SalesForce
+    - WebEx
+    ents:
+    - Shared Infrastructure
+    - public
+    - private
+    >>> All actions successfully applied
+
+The language definition for query tool can also be specifed in a file to be
+read.  One or more of these files (or a directory containing .query files) can
+be specifed on the command-line for the tool to read and execute each file.
+Newlines in files separate commands.  However, semicolons are still
+supported in files as well.
+
+    example.query:
+
+    apps = SAASApplicationType.name
+    ents = enterprise.name
+
+    ./metroae_config.py query -v https://localhost:8443 example.query
+
+    Device: Nuage Networks VSD 20.5.1
+    apps:
+    - Office365
+    - SalesForce
+    - WebEx
+    ents:
+    - Shared Infrastructure
+    - public
+    - private
+    >>> All actions successfully applied
+
+### Language Definition
+
+The query tool uses a `query language` to specify the data to be reteived from
+devices.  This language is intended to be simple to read and use and is easily
+extendable.
+
+#### General Formatting
+
+Each query to be performed is specified one per-line.  Alternatively and
+equivalently, semicolons `;` can be used to separate multiple queries on a
+single line.  Any query beginning with a hash `#` indicates a comment and will
+be ignored.  Outside of strings, any whitespace is ignored.
+
+#### Data Retrieval
+
+Data retrieval commands are specified by providing nested object names
+separated by dot `.` with the attribute as the last identifier.  A retrieval
+traverses all instances of each level of the specified object tree and returns
+the attribute value for every instance found.
+
+The result is always a flat list of the attribute values.  Any heirarchy is
+flattened.  If no results are found or there is an error (such as missing child
+object) then an empty list is returned.  With this procedure, processing
+results is consistent as there will always be a list.
+
+For VSD:
+
+    Enterprise.Domain.Zone.Subnet.name
+
+The above (reading from right to left) returns a list of the names from all
+subnets under all zones under all domains under all enterprises.  For VSD
+queries, each object is a configuration object specified by entity name.  The
+names here are case-insensitve although note that case may matter for other
+devices (like ES).
+
+For ElasticSearch:
+
+    nuage_sysmon.disks.available
+
+The above (reading from right to left) returns the available values for all
+disks under the nuage_sysmon index.  For ES, the first object is the ES index
+and then subsequent object names traverse the JSON objects stored in each ES
+record.  Since ES encodes using JSON, the object names and attribures are all
+case-sensitive as required by the format.
+
+#### Attributes
+
+The last identifier on a data retrieval is the attribute.  It determines which
+value to extract from the objects traversed.  In previous examples, a single
+value was extracted, however multiple attributes can be gathered by specifying
+a comma-separated list in curly braces `{}`.  When retrieving multiple
+attributes, the result becomes a list of dictionaries with key/value pairs
+for each of the attributes.  A star `*` can be used to get all available
+attributes.
+
+Single attribute:
+
+    Enterprise.name
+
+    - Shared Infrastructure
+    - public
+    - private
+
+Multiple attributes:
+
+    Enterprise.{name,id}
+
+    - name: Shared Infrastructure
+      id: abcd-0001
+    - name: public
+      id: abcd-0002
+    - name: private
+      id: abcd-0003
+
+All attributes:
+
+    Enterprise.{*}
+
+    - name: Shared Infrastructure
+      id: abcd-0001
+      bgpenabled: false
+      dhcpleaseinterval: 24
+      (Whole bunch of stuff omitted for brevity...)
+    - name: public
+      id: abcd-0002
+      bgpenabled: false
+      dhcpleaseinterval: 24
+      (Whole bunch of stuff omitted for brevity...)
+    - name: private
+      id: abcd-0003
+      bgpenabled: false
+      dhcpleaseinterval: 24
+      (Whole bunch of stuff omitted for brevity...)
+
+#### Filters
+
+Filters can be applied to each object of the data retrieval.  Filters are
+enclosed by square brackets `[]` and are separated by and `&` characters.  The
+choice of `&` as a separator enforces that filters are combined together as
+logical AND operations.
+
+The filter applies only to the level where it is specified.  The filters
+manipulate the results from the level, usually by removing unwanted records.
+Any subsequent object levels would operate on the filtered list.  For example:
+
+    Enterprise[name=public].domain.name
+
+The filter on enterprise will limit enterprise results to only a single
+enterprise object (with name `public`).  However, let's say the `public`
+enterprise had 10 domains.  Then the 10 name results for those domains would be
+returned.
+
+##### Range Filter
+
+A range filter can be used to limit the start and max number of results at the
+level.  The filter has a start index and an end index separated by colon `:`.
+Indexes are 0-based positions of the list.  Thus 0 is the first and 4 would be
+the 5th item in the list.  The items from the query are returned starting at
+the start index and ending one before the end index.  Any range out of bounds
+of the results are omitted.  Thus if the start index is after the end of the
+results, an empty list is returned.
+
+If the start index is omitted, a value of 0 is assumed (start at beginning).
+If the end index is omitted, then the entire remainder of the list is returned.
+
+A single index (without colon specified) can be used to return the single
+item from the results at the specified index.  If this is out of bounds of the
+results, an empty list is returned.
+
+Negative indicies are allowed and count from the end of the list.  Thus -1 is
+the last item and -5 is the 5th from last.
+
+The behavior of the range filter is exactly the same as Python list slicing.
+
+    Note that ES index queries do not support negative range indicies.  Use a
+    reverse sort and positive indicies instead.
+
+Examples using enterpises: `e1, e2, e3, e4, e5`
+
+    enterprise[1:5].name
+    - e2
+    - e3
+    - e4
+
+    enterprise[1:99].name
+    - e2
+    - e3
+    - e4
+    - e5
+
+    enterprise[:5].name
+    - e1
+    - e2
+    - e3
+    - e4
+
+    enterprise[3:].name
+    - e4
+    - e5
+
+    enterprise[99:].name
+    []
+
+    enterprise[3].name
+    - e4
+
+    enterprise[99].name
+    []
+
+    enterprise[-3:-1].name
+    - e3
+    - e4
+
+##### Attribute Filter
+
+Object results can be filtered by attribute values.  Only results where the
+field value of the object matches the filter value will be returned.  The
+format for these filters is the field name equal `=` value.  A list of values
+can be provided enclosed in square brackets `[]` and separated by comma `,`.
+This denotes that any result matching any of the list values will be returned.
+
+Given these enterprises:
+
+    - name: e1
+      BGPEnabled: true
+    - name: e2
+      BGPEnabled: false
+    - name: e3
+      BGPEnabled: true
+
+The following examples produce:
+
+    enterprise[BGPEnabled=true].name
+    - e1
+    - e3
+
+    enterprise[name=[e2, e3]].name
+    - e2
+    - e3
+
+    enterprise[name=[e2, e3] & BGPEnabled=false].name
+    - e2
+
+    enterprise[name=[e1, e3] & BGPEnabled=false].name
+    []
+
+##### Sort Filter
+
+The sort filter can be used to sort the results by an object field.  Note that
+the sorting occurs only at the level where it is specified.  If there are
+child objects under a sort fitler the children would not be sorted, but they
+would be queried in the parent's sorted order.
+
+Sorting is specified by the `%sort=` keyword followed by the field name of the
+object to sort by.  There is also `%sort_desc=` to sort in descending order.
+
+Given these enterprises:
+
+    - name: e3
+      dhcpleaseinterval: 1
+    - name: e1
+      dhcpleaseinterval: 2
+    - name: e2
+      dhcpleaseinterval: 3
+
+The following examples produce:
+
+    enterprise[%sort=name].name
+    - e1
+    - e2
+    - e3
+
+    enterprise[%sort=DHCPLeaseInterval].name
+    - e3
+    - e1
+    - e2
+
+    enterprise[%sort_desc=name].name
+    - e3
+    - e2
+    - e1
+
+##### Group Filter
+
+A group filter can be specified to combine together results by the value of
+another field.  This makes it easier to identify subsets of results given that
+the query tool collapses them all into flat lists.
+
+The group filter is specified by `%group=` followed by the field name to group
+by.  When using groups, results are returned as a list of pairs.  The first
+item of the pair is the group field value and the second is the list of results
+matching the group field value.
+
+For example, normally results are flattened and thus it is difficult to
+determine which domain goes with which enterprise:
+
+    enterprise.domain.name
+
+    - domain1
+    - domain2
+    - domain3
+    - domain4
+
+However, using grouping the relationships can be determined:
+
+    enterprise[%group=name].domain.name
+
+    - - public
+      - - domain1
+        - domain2
+        - domain3
+    - - private
+      - - domain4
+    - - Shared Infrastructure
+      - []
+
+#### Variables
+
+Results can be stored in variables for identification and use in later queries.
+Variables are restricted to C-like names which cannot start with a number and
+can contain capital letters, lower case letters, numbers or underscore `_`.
+
+Variable assignments are performed by specifying the variable name then equal
+`=` then the expression or data type to store in the variable.  The output of
+assigments changes to a dictionary.
+
+    enterprise_names = enterprise.name
+
+    enterprise_names:
+    - public
+    - private
+    - Shared Infrastructure
+
+Variables are dynamically typed and can contain any data type.  More
+information about data types will be provided in a later section.  Variables
+can be dereferenced in later queries by specifying dollar `$` and the variable
+name.  Variables that have been dereferenced but not yet defined will cause an
+error.
+
+Variables can be filtered:
+
+    enterprises = enterprise.{name,id}
+
+    enterprises:
+    - name: public
+      id: abcd-0001
+    - name: private
+      id: abcd-0002
+
+    $enterprises[%sort=name]
+
+    - name: private
+      id: abcd-0002
+    - name: public
+      id: abcd-0001
+
+    $enterprises[%sort=name].id
+
+    - abcd-0002
+    - abcd-0001
+
+Variables can also be used as the values for filters:
+
+    enterprises = enterprise.name
+
+    enterprises:
+    - e1
+    - e2
+    - e3
+    - e4
+
+    start = 2
+
+    start: 2
+
+    $enterprises[$start:]
+    - e3
+    - e4
+
+    name = "e2"
+
+    name: e2
+
+    enterprise[name=$name].{name,id}
+    - name: e2
+      id: abcd-0002
+
+Variable values can be specified on the command-line using the `-d` option.
+The format is variable name `=` value. i.e. `-d name=enterprise1`.  When
+variables are defined on the command-line, they override any assignment
+within queries.  This allows defaults to be set inside query files and `-d` to
+override with a specific value.
+
+#### Data Types
+
+The query language defines various data types to be specified.  Variables are
+dynamically typed and can accept any of these types.
+
+Strings are defined enclosed with single `'` or double `"` quotes.  Multi-line
+blocks can be defined using triple single `'''` or double `"""` quotes.
+
+    string = 'this is a string'
+    string = "another has ' in it"
+    multiline = """
+    this has
+    multiple lines
+    """
+
+Numbers can be specified as positive or negative integers.  Floating point
+numbers are not supported.
+
+    integer = 42
+    negative = -4
+
+For Booleans, `true` specifies true and `false` specifies false.
+
+    is_true = true
+    is_false = false
+
+Lists can be formed using square brackets `[]` and separating items by comma
+`,`.  Lists can contain any of the above data types even in combinations.
+However, lists of lists are not supported.
+
+    enterprise_names = ['e1', 'e2', 'e3']
+
+#### Functions
+
+There are a set of functions that can operate on expressions such as data
+retrieval or variables.  These come in the form of function name followed by
+the expression enclosed in parens `()`.
+
+The `count` function returns the number of items in a list.  An error is
+produced if the expression provided to count is not a list.
+
+    names = enterprise.name
+
+    names:
+    - e1
+    - e2
+    - e3
+
+    count($names)
+    3
+
+The `reverse` function returns the items of a list in backward order.  An error
+is produced if the expression provided to reverse is not a list.
+
+    reverse(enterprise.name)
+    - e3
+    - e2
+    - e1
+
+#### Combine
+
+There is a `combine` operator which combines expressions together depending on
+the data types.  The format is expression1 plus `+` expression2.  The
+expressions can be variables, data type constants or data retrieval.
+
+If both expressions are lists, then the combine operator will return a list
+with all of the items of both.
+
+    names = enterprise.name
+
+    names:
+    - e1
+    - e2
+    - e3
+
+    $names + ["new1", "new2"]
+    - e1
+    - e2
+    - e3
+    - new1
+    - new2
+
+If both expressions are integers, then the combine operator will add the
+values.
+
+    count(enterprise.name) + 1
+    4
+
+If both expressions are strings, then the strings will be concatenated.
+
+    filename = "output"
+    filename: output
+
+    path = "/tmp/" + $filename + ".txt"
+    path: /tmp/output.txt
+
+Any other combination of data types will result in an error from combine.
+
+#### Actions
+
+There are a set of actions that can change the state of later queries or
+perform a task.  These come in the form of action name followed by a list of
+comma-separated arguments enclosed in parens `()`.  Actions do not return any
+value and they cannot be part of an assignment or expression.
+
+The `connect` action sets up a new session with a device.  All subsequent
+queries are directed to the new device.  The first argument to connect is the
+device type, then the remaining parameters are specific to the device.  Using
+connect allows data to be gathered from multiple sources in the same query
+execution.
+
+For VSD:
+
+    connect("VSD", url, username, password, enterprise, cert_file, cert_key_file)
+
+    Where:
+        url (required)           : URL of VSD to connect to
+        username (optional)      : Username to be used to connect (default "csproot")
+        password (optional)      : Password to be used to connect (default "csproot")
+        enterprise (optional)    : Enterprise to be used to connect (default "csp")
+        cert_file (optional)     : Path to a certificate file (instead of password)
+        cert_key_file (optional) : Path to a certificate key file (required if cert_file specified)
+
+For ElasticSearch:
+
+    connect("ES", address, port)
+
+    Where:
+        address (required) : Address of ElasticSearch to connect to
+        port (optional)    : Port of ElasticSearch (default 9200)
+
+The `redirect_to_file` action causes all subsequent queries to write results
+to the specified file in addition to echoing to the screen.
+
+    redirect_to_file("/tmp/output.txt")
+
+The `echo` action turns on and off the printing of output of subsequent queries
+to the screen.  This only affects the display of the queries and they still
+operate normally in all other ways.  Variables would still be assigned and
+output would still be written to file if redirected.  Echoing is on by default.
+it can be turned off with the string `off` and turned back on with the string
+`on`.  Disabling echoing is useful when huge amounts of data are expected to be
+returned but it would clutter the screen.
+
+    echo("off")
+
+The `output` action turns on and off the writing of results to the screen,
+redirect file and Python returned results.  Variables are still assigned when
+output is off.  Turning off output is useful for gathering all intermediate
+variables and then turning it on to write out a single final report.  Output is
+on by default.  It can be turned off with the string `off` and turned back on
+with the string `on`.
+
+    output("off")
+
+The `render_template` action outputs the text of a variable substituted
+template.  The action takes a [Python Jinja](https://jinja.palletsprojects.com/en/2.11.x/)
+template string as an argument.  Jinja templates contain tags enclosed by
+double curly braces `{{` `}}` that reference variables to be substituted into
+the text.  The variables assigned from queries are all available to be injected
+into the text output.  Jinja templates support loops, conditionals, math and
+other filters.  See the [Python Jinja](https://jinja.palletsprojects.com/en/2.11.x/)
+documentation for more. Using Jinja templates, many file formats can be output
+including nice text reports, HTML pages, CSV or JSON.
+
+Example query file:
+
+    output("off")
+
+    connect("VSD", "https://localhost:8443")
+
+    report_file = "report.txt"
+    ent_names = enterprise.name
+    ent_count = count($ent_names)
+    licenses_expires = License.expirytimestamp
+
+    template = """============== VSD Health Report ===========
+    VSD:
+        Enterprises: {{ ent_names | join(', ') }} ({{ ent_count }})
+        License expiry: {{ ((licenses_expires[0] / 1000 - now) / (3600 * 24)) | int }} days
+    ===========================================
+    """
+
+    redirect_to_file($report_file)
+    output("on")
+    render_template($template)
+
+Resulting output to `report.txt`:
+
+    ============== VSD Health Report ===========
+    VSD:
+        Enterprises: public, private, Shared Infrastructure (3)
+        License expiry: 90 days
+    ===========================================

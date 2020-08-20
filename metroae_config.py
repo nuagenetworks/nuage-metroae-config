@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 
 import argparse
+import jinja2
 import logging
 import os
+import requests
+import sys
 import tarfile
 import urllib3
-import wget
 
 from nuage_metroae_config.configuration import Configuration
+from nuage_metroae_config.document_template_md import DOCUMENT_README_MD
 from nuage_metroae_config.errors import MetroConfigError
+from nuage_metroae_config.es_reader import EsReader
+from nuage_metroae_config.query import Query
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.user_data_parser import UserDataParser
 from nuage_metroae_config.vsd_writer import VsdWriter, SOFTWARE_TYPE
@@ -31,6 +36,7 @@ ENV_VSD_PASSWORD = 'VSD_PASSWORD'
 ENV_VSD_ENTERPRISE = 'VSD_ENTERPRISE'
 ENV_VSD_URL = 'VSD_URL'
 ENV_VSD_SPECIFICATIONS = 'VSD_SPECIFICATIONS_PATH'
+ENV_ES_ADDRESS = 'ES_ADDRESS'
 ENV_SOFTWARE_VERSION = 'SOFTWARE_VERSION'
 ENV_LOG_FILE = 'LOG_FILE'
 ENV_LOG_LEVEL = 'LOG_LEVEL'
@@ -40,6 +46,7 @@ VALIDATE_ACTION = 'validate'
 CREATE_ACTION = 'create'
 REVERT_ACTION = 'revert'
 UPDATE_ACTION = 'update'
+QUERY_ACTION = 'query'
 LIST_ACTION = 'list'
 SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
@@ -48,11 +55,11 @@ TEMPLATE_ACTION = 'templates'
 UPGRADE_TEMPLATE_ACTION = 'update'
 VERSION_ACTION = 'version'
 HELP_ACTION = 'help'
-TEMPLATE_TAR_LOCATION = "http://s3.us-east-2.amazonaws.com/levistate-templates/levistate.tar"
-VSD_SPECIFICAIONS_LOCATION = "http://s3.us-east-2.amazonaws.com/vsd-api-specifications/specifications.tar"
+TEMPLATE_TAR_LOCATION = "https://metroae-config-templates.s3.amazonaws.com/metroae_config.tar"
+VSD_SPECIFICAIONS_LOCATION = "https://vsd-api-specifications.s3.us-east-2.amazonaws.com/specifications.tar"
 TEMPLATE_DIR = "/metroae_data/standard-templates"
 SPECIFICATION_DIR = "/metroae_data/vsd-api-specifications"
-DOCUMENTATION_DIR = "/metroae_data/documentation"
+DOCUMENTATION_DIR = "/metroae_data/config_documentation"
 LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
@@ -74,6 +81,18 @@ def main():
                                            args.version):
         print VERSION_OUTPUT
         exit(0)
+    elif args.action == QUERY_ACTION:
+        if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
+            args.data_path = os.getenv(ENV_USER_DATA).split()
+
+        if (args.spec_path is None and
+                os.getenv(ENV_VSD_SPECIFICATIONS) is not None):
+            args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
+
+        if args.spec_path is None:
+            print REQUIRED_FIELDS_ERROR
+            exit(1)
+
     elif (args.action in [VALIDATE_ACTION, CREATE_ACTION, UPDATE_ACTION,
                           REVERT_ACTION]):
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
@@ -132,6 +151,9 @@ def get_parser():
 
     update_parser = sub_parser.add_parser(UPDATE_ACTION)
     add_parser_arguments(update_parser)
+
+    query_parser = sub_parser.add_parser(QUERY_ACTION)
+    add_parser_arguments(query_parser)
 
     template_parser = sub_parser.add_parser(TEMPLATE_ACTION)
     template_sub_parser = template_parser.add_subparsers(dest='templateAction')
@@ -220,6 +242,13 @@ def add_parser_arguments(parser):
                         default=os.getenv(ENV_VSD_ENTERPRISE,
                                           DEFAULT_VSD_ENTERPRISE),
                         help='Enterprise for VSD. Can also set using environment variable %s' % (ENV_VSD_ENTERPRISE))
+    parser.add_argument('-es', '--es_address', dest='es_address',
+                        action='store', required=False,
+                        default=os.getenv(ENV_ES_ADDRESS, None),
+                        help='Address with optional ":<port>" for ElasticSearch. Can also set using environment variable %s' % (ENV_ES_ADDRESS))
+    parser.add_argument('-q', '--query', dest='query',
+                        action='store', required=False,
+                        help='Query string to perform in query action'),
     parser.add_argument('--debug', dest='debug',
                         action='store_true', required=False,
                         help='Output in debug mode')
@@ -257,6 +286,8 @@ class MetroConfig(object):
     def __init__(self, args, action):
         self.args = args
         self.template_data = list()
+        self.query_files = list()
+        self.query_variables = dict()
         self.action = action
         self.device_version = None
 
@@ -312,7 +343,7 @@ class MetroConfig(object):
             else:
                 self.logger.addHandler(debug_handler)
         else:
-            output_handler = logging.StreamHandler()
+            output_handler = logging.StreamHandler(sys.stdout)
             output_handler.setLevel(OUTPUT_LEVEL_NUM)
             self.logger.addHandler(output_handler)
 
@@ -325,17 +356,26 @@ class MetroConfig(object):
 
         self.setup_logging()
 
-        self.setup_template_store()
-        if self.list_info():
-            return
-        self.setup_vsd_writer()
-        self.parse_user_data()
-        self.parse_extra_vars()
+        if self.action == QUERY_ACTION:
+            self.setup_reader()
+            self.parse_extra_vars()
+            if self.args.query is None:
+                self.parse_user_data()
+        else:
+            self.setup_template_store()
+            if self.list_info():
+                return
+            self.setup_vsd_writer()
+            self.parse_user_data()
+            self.parse_extra_vars()
 
         had_error = False
         error_output = ""
         try:
-            self.apply_templates()
+            if self.action == QUERY_ACTION:
+                self.perform_query()
+            else:
+                self.apply_templates()
         except MetroConfigError as e:
             error_output = e.get_display_string()
             self.logger.error(error_output)
@@ -369,10 +409,14 @@ class MetroConfig(object):
                                         "be key=value format: " + var)
                     key = key_value_pair[0]
                     value = self.parse_var_value(key_value_pair[1])
-                    template_data[key] = value
+                    if self.action == QUERY_ACTION:
+                        self.query_variables[key] = value
+                    else:
+                        template_data[key] = value
 
-            self.template_data.append((self.args.template_name, template_data))
-            # print str(template_data)
+            if self.action != QUERY_ACTION:
+                self.template_data.append((self.args.template_name,
+                                           template_data))
 
     def parse_var_value(self, value):
         if value.lower() == "true":
@@ -433,6 +477,9 @@ class MetroConfig(object):
         template_names = self.store.get_template_names(
             self.get_software_type(),
             self.get_software_version())
+
+        template_info = list()
+
         for template_name in template_names:
             template = self.store.get_template(
                 template_name,
@@ -441,12 +488,50 @@ class MetroConfig(object):
 
             doc_file = template.get_doc_file_name()
             if doc_file is not None:
+                template_info.append({
+                    "name": template_name,
+                    "file": doc_file})
+
                 full_path = os.path.join(DOCUMENTATION_DIR, doc_file)
                 print "Writing %s documentation to %s" % (template_name,
                                                           full_path)
                 doc_text = template.get_documentation()
                 with open(full_path, "w") as f:
                     f.write(doc_text)
+
+        self.write_documentation_readme(template_info)
+
+    def write_documentation_readme(self, template_info):
+        template = jinja2.Template(
+            DOCUMENT_README_MD,
+            autoescape=False,
+            undefined=jinja2.StrictUndefined)
+
+        full_path = os.path.join(DOCUMENTATION_DIR, "README.md")
+
+        readme = template.render(**{"template_info": template_info})
+
+        with open(full_path, "w") as f:
+            f.write(readme)
+
+    def setup_reader(self):
+        if self.args.es_address is not None:
+            self.setup_es_reader()
+        else:
+            self.setup_vsd_writer()
+
+    def setup_es_reader(self):
+        self.writer = EsReader()
+        self.writer.set_logger(self.logger)
+        if ":" in self.args.es_address:
+            addr_pair = self.args.es_address.split(":")
+            address = addr_pair[0]
+            port = addr_pair[1]
+        else:
+            address = self.args.es_address
+            port = None
+
+        self.writer.set_session_params(address, port)
 
     def setup_vsd_writer(self):
         self.writer = VsdWriter()
@@ -464,11 +549,7 @@ class MetroConfig(object):
             self.device_version = self.writer.get_version()
 
         if self.get_software_version() is not None:
-            major_version = int(self.get_software_version().split(".")[0])
-            if (major_version < 6):
-                self.writer.set_api_version("5.0")
-            else:
-                self.writer.set_api_version(str(major_version))
+            self.writer.set_software_version(self.get_software_version())
 
     def setup_template_store(self):
         self.store = TemplateStore(ENGINE_VERSION)
@@ -496,14 +577,21 @@ class MetroConfig(object):
                                   "sure it is accessible to the docker" %
                                   (datafile))
                             exit(1)
-                    parser.read_data(datafile)
+                    if self.action == QUERY_ACTION:
+                        self.query_files.append(datafile)
+                    else:
+                        parser.read_data(datafile)
         else:
             if self.args.data_path is None or len(self.args.data_path) == 0:
                 print("Please specify a user data file or path")
                 exit(1)
             for path in self.args.data_path:
-                parser.read_data(path)
-        self.template_data = parser.get_template_name_data_pairs()
+                if self.action == QUERY_ACTION:
+                    self.query_files.append(path)
+                else:
+                    parser.read_data(path)
+        if self.action != QUERY_ACTION:
+            self.template_data = parser.get_template_name_data_pairs()
 
     def apply_templates(self):
         config = Configuration(self.store)
@@ -534,6 +622,30 @@ class MetroConfig(object):
             if self.action == VALIDATE_ACTION:
                 print str(config.root_action)
 
+    def perform_query(self):
+        query = Query()
+        query.set_logger(self.logger)
+        query.set_reader(self.writer)
+        self.register_query_readers(query)
+
+        if self.args.query is None:
+            for file in self.query_files:
+                query.add_query_file(file)
+        results = query.execute(self.args.query, **self.query_variables)
+        self.logger.debug("Query results")
+        self.logger.debug(str(results))
+
+    def register_query_readers(self, query):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_logger(self.logger)
+        for path in self.args.spec_path:
+            vsd_writer.add_api_specification_path(path)
+        query.register_reader("vsd", vsd_writer)
+
+        es_reader = EsReader()
+        es_reader.set_logger(self.logger)
+        query.register_reader("es", es_reader)
+
     def get_software_type(self):
         if self.device_version is not None:
             return self.device_version['software_type']
@@ -551,7 +663,14 @@ class MetroConfig(object):
             os.mkdir(dirName)
         os.chdir(dirName)
 
-        filename = wget.download(url)
+        filename = os.path.basename(url)
+
+        r = requests.get(url, stream=True)
+
+        with open(filename, 'wb') as f:
+            for chunk in r:
+                f.write(chunk)
+
         tfile = tarfile.TarFile(filename)
         tfile.extractall()
         os.remove(tfile.name)

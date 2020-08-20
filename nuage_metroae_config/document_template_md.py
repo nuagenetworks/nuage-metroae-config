@@ -30,3 +30,11 @@ Name | Required | Type | Description
 {% endfor %}
 {% endfor -%}
 """
+
+DOCUMENT_README_MD = """# Standard Template Documentation
+
+{% for template in template_info | sort(attribute="name") -%}
+[{{ template.name }}]({{ template.file }})<br>
+{% endfor %}
+
+"""

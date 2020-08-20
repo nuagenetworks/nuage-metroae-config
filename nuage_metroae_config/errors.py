@@ -146,3 +146,20 @@ class UserDataParseError(MetroConfigError):
     Exception class for errors parsing user data files
     """
     pass
+
+
+#
+# Query errors
+#
+class QueryParseError(MetroConfigError):
+    """
+    Exception class for errors during a query
+    """
+    pass
+
+
+class QueryExecutionError(MetroConfigError):
+    """
+    Exception class for errors during a query
+    """
+    pass

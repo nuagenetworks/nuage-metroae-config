@@ -442,11 +442,10 @@ def main():
                                   username=args.username,
                                   password=args.password,
                                   enterprise=args.enterprise)
-    major_version = int(vsd_writer.get_version()["software_version"].split(".")[0])
-    if (major_version < 6):
-        vsd_writer.set_api_version("5.0")
-    else:
-        vsd_writer.set_api_version(str(major_version))
+
+    vsd_writer.set_software_version(
+        vsd_writer.get_version()["software_version"])
+
     vsd_writer.start_session()
     config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME,
                                   VSD_CSP_ENTERPRISE_GUID)
