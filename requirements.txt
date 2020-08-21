@@ -1,6 +1,4 @@
 bambou
 Jinja2==2.10.1
+lark-parser==0.8.9
 PyYAML
-wget
-
-

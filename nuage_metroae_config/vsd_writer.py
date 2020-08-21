@@ -5,6 +5,7 @@ import requests
 
 from bambou.exceptions import BambouHTTPError
 from bambou_adapter import ConfigObject, Fetcher, Root, Session
+from device_reader_base import DeviceReaderBase
 from device_writer_base import DeviceWriterBase
 from errors import (DeviceWriterError,
                     InvalidAttributeError,
@@ -54,7 +55,7 @@ class VsdError(SessionError):
             self.add_location(location)
 
 
-class VsdWriter(DeviceWriterBase):
+class VsdWriter(DeviceWriterBase, DeviceReaderBase):
     """
     Writes configuration to a VSD.  This class is a derived class from
     the DeviceWriterBase Abstract Base Class.
@@ -72,6 +73,9 @@ class VsdWriter(DeviceWriterBase):
         self.specs = dict()
         self.specs_by_restname = dict()
         self.root_spec_name = None
+        self.spec_paths = list()
+        self.read_spec_paths = list()
+        self.query_cache = dict()
 
     def set_session_params(self, url, username="csproot",
                            password=None, enterprise="csp",
@@ -89,8 +93,12 @@ class VsdWriter(DeviceWriterBase):
         if certificate is not None and certificate[0] is not None:
             self.session_params['certificate'] = certificate
 
-    def set_api_version(self, version="6"):
-        self.version = version
+    def set_software_version(self, software_version):
+        major_version = int(software_version.split(".")[0])
+        if (major_version < 6):
+            self.version = "5.0"
+        else:
+            self.version = "6"
 
     def read_api_specifications(self, path_or_file_name):
         """
@@ -98,6 +106,9 @@ class VsdWriter(DeviceWriterBase):
         in the specified path or file name.  This must be called before
         writing or an exception will be raised.
         """
+        if path_or_file_name in self.read_spec_paths:
+            return
+
         if (os.path.isdir(path_or_file_name)):
             for file_name in os.listdir(path_or_file_name):
                 if (file_name.endswith(SPEC_EXTENSION) and
@@ -116,6 +127,11 @@ class VsdWriter(DeviceWriterBase):
         else:
             raise InvalidSpecification("File or path not found: " +
                                        path_or_file_name)
+
+        self.read_spec_paths.append(path_or_file_name)
+
+    def add_api_specification_path(self, path):
+        self.spec_paths.append(path)
 
     #
     # Implement all required Abstract Base Class prototype functions.
@@ -220,6 +236,8 @@ class VsdWriter(DeviceWriterBase):
             raise VsdError(e, location)
         except DeviceWriterBase as e:
             e.reraise_with_location(location)
+
+        self.query_cache = dict()
 
     def stop_session(self):
         """
@@ -454,6 +472,76 @@ class VsdWriter(DeviceWriterBase):
 
     def does_object_exist(self, context=None):
         return context is not None and context.object_exists
+
+    def connect(self, *args):
+        """
+        Creates a new connection with another device
+        """
+        for path in self.spec_paths:
+            self.read_api_specifications(path)
+
+        if len(args) < 1:
+            raise SessionError("url parameter is required for connect")
+        url = args[0]
+
+        if len(args) < 2:
+            username = "csproot"
+        else:
+            username = args[1]
+
+        if len(args) < 3:
+            password = "csproot"
+        else:
+            password = args[2]
+
+        if len(args) < 4:
+            enterprise = "csp"
+        else:
+            enterprise = args[3]
+
+        certificate = None
+        if len(args) == 6:
+            certificate = (args[4], args[5])
+        elif len(args) == 5:
+            raise SessionError("certificate key parameter is required when"
+                               " using certificate for connect")
+        elif len(args) > 6:
+            raise SessionError("Too many arguments to connect")
+
+        if self.session is not None:
+            self.stop_session()
+
+        self.set_session_params(url, username, password, enterprise,
+                                certificate)
+
+        self.start_session()
+
+    def query(self, objects, attributes):
+        """
+        Reads attributes from device
+        """
+        location = "Query %s : %s" % (objects, attributes)
+        self.log.debug(location)
+        self._check_session()
+
+        try:
+            return self._query(objects, attributes)
+        except BambouHTTPError as e:
+            raise VsdError(e, location)
+        except DeviceWriterError as e:
+            e.reraise_with_location(location)
+
+    def query_attribute(self, obj, attribute):
+        """
+        Reads an attribute from an object
+        """
+        local_name = attribute.lower()
+
+        value = None
+        if hasattr(obj, local_name):
+            value = getattr(obj, local_name)
+
+        return value
 
     #
     # Private functions to do the work
@@ -766,6 +854,93 @@ class VsdWriter(DeviceWriterBase):
             for attr_name, message in obj.errors.iteritems():
                 messages.append("%s: %s" % (attr_name, message))
             raise InvalidValueError("Invalid values: " + ', '.join(messages))
+
+    def _query(self, objects, attributes):
+        if len(attributes) > 0:
+            return self._query_objects(objects, attributes, 0, None, list())
+        else:
+            return list()
+
+    def _query_objects(self, objects, attributes, level, parent_object,
+                       groups):
+        if parent_object is None:
+            parent_object = self.session.root_object
+
+        if level < len(objects):
+            object_set = objects[level]
+            object_name = object_set["name"]
+            filter = object_set["filter"]
+            spec = self._get_specification(object_name)
+            self._check_child_object(parent_object.spec, spec)
+            object_list = self._get_object_list_with_cache(object_name,
+                                                           parent_object)
+
+            filter_list = self.build_filter_list(filter, object_list)
+
+            values = list()
+            for cur_filter in filter_list:
+                self.log.debug("Current filter: " + str(cur_filter))
+                if type(filter) != dict or "%group" not in filter:
+                    child_group = groups
+                else:
+                    child_group = list()
+                values = list()
+                for parent_object in self.filter_results(object_list,
+                                                         cur_filter):
+                    values.extend(self._query_objects(objects,
+                                                      attributes,
+                                                      level + 1,
+                                                      parent_object,
+                                                      child_group))
+                if child_group != []:
+                    self.group_results(groups, cur_filter, child_group)
+                    values = child_group
+                else:
+                    self.group_results(groups, cur_filter, values)
+
+            if groups != []:
+                return groups
+            return values
+        else:
+            return self._query_attributes(parent_object, attributes)
+
+    def _query_attributes(self, parent_object, attributes):
+        if type(attributes) == list:
+            attribute_dict = dict()
+            if attributes[0] == "*":
+                for attr_name, attr in parent_object._attributes.items():
+                    if hasattr(parent_object, attr_name):
+                        attribute_dict[attr_name] = getattr(parent_object,
+                                                            attr_name)
+            else:
+                for attribute in attributes:
+                    value = self.query_attribute(parent_object, attribute)
+                    if value is not None:
+                        attribute_dict[attribute] = value
+            return [attribute_dict]
+        else:
+            value = self.query_attribute(parent_object, attributes)
+            if value is not None:
+                return [value]
+            else:
+                return list()
+
+    def _get_object_list_with_cache(self, object_name, parent_object):
+
+        if parent_object is None:
+            cache_key = "root:" + object_name.lower()
+        else:
+            cache_key = parent_object.id + ":" + object_name.lower()
+
+        if cache_key in self.query_cache:
+            return self.query_cache[cache_key]
+
+        object_list = self._get_object_list(object_name,
+                                            parent_object)
+
+        self.query_cache[cache_key] = list(object_list)
+
+        return object_list
 
 #
 # Private classes to do the work
