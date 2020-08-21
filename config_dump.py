@@ -31,7 +31,8 @@ FILTER_OBJECTS = ['keyservermember', 'enterprisesecurity',
                   'vrsaddressrange', 'job', 'containerresync',
                   'ingressexternalservicetemplate',
                   'applicationperformancemanagement', 'l4service',
-                  'ltestatistics', 'eventlog', 'testdefinition']
+                  'ltestatistics', 'eventlog', 'testdefinition',
+                  'gatewaysecurity', 'proxyarpfilter']
 DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'last_updated_date',
                       'associatedl7applicationsignatureid',
@@ -46,7 +47,20 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'vnid', 'serviceid', 'gatewaymacaddress',
                       'domainservicelabel', 'domainid', 'backhaulserviceid',
                       'backhaulvnid', 'labelid', 'virtualnetworkid',
-                      'globalmacaddress', 'customerkey']
+                      'globalmacaddress', 'customerkey',
+                      'creationDate', 'lastUpdatedBy', 'lastUpdatedDate',
+                      'ID', 'parentID', 'owner', 'operationModeTimestamp',
+                      'datapathid', 'primarydatapathid', 'systemid',
+                      'associatedgatewaysecurityid', 'systemID',
+                      'underlayid', 'uplinkid', 'templateID',
+                      'backhaulroutedistinguisher', 'backhaulroutetarget',
+                      'exportroutetarget', 'importroutetarget',
+                      'routedistinguisher', 'routetarget',
+                      'secondaryroutetarget',
+                      'parent_type', 'passphrase', 'esi']
+
+
+IGNORE_EXPECTED_REMOVED = ['VSP']
 
 
 class MissingSubset(Exception):
@@ -112,6 +126,7 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
             if not args.ignore_errors:
                 raise ChildError()
 
+    children.sort()
     if parent_context is None:
         return children
     else:
@@ -152,6 +167,12 @@ def get_guid_map(children, guid_map=None):
     return guid_map
 
 
+def resolve_references_for_sub_objects(guid_map, obj, attr_name):
+    for sub_attr_name, attr_value in obj['attributes'][attr_name].items():
+        if sub_attr_name != 'ID' and str(attr_value) in guid_map:
+            obj['attributes'][attr_name][sub_attr_name] = guid_map[attr_value]
+
+
 def resolve_references(children, guid_map):
     for child in children:
         for obj_type, obj in child.items():
@@ -159,15 +180,45 @@ def resolve_references(children, guid_map):
                 if attr_name != 'id' and str(attr_value) in guid_map:
                     obj['attributes'][attr_name] = guid_map[attr_value]
 
+                if type(attr_value) == dict:
+                    resolve_references_for_sub_objects(guid_map,
+                                                       obj,
+                                                       attr_name)
+
             resolve_references(obj['children'], guid_map)
+
+
+def trim_dynamic_attributes_sub_object_dict(obj, subobject):
+    for attr_name, attr_value in obj['attributes'][subobject].items():
+        if attr_name in DYNAMIC_ATTRIBUTES:
+            del obj['attributes'][subobject][attr_name]
+
+
+def trim_dynamic_attributes_sub_object_list(obj, subobject):
+    value = obj['attributes'][subobject]
+    for i in range(0, len(value)):
+        if type(value[i]) == dict:
+            for attr_name, attr_value in value[i].items():
+                if attr_name in DYNAMIC_ATTRIBUTES:
+                    del obj['attributes'][subobject][i][attr_name]
+
+
+def trim_dynamic_attributes(attributes, obj):
+    for attr_name, attr_value in attributes.items():
+        if attr_name in DYNAMIC_ATTRIBUTES:
+            del obj['attributes'][attr_name]
+
+        elif type(attributes[attr_name]) == dict:
+            trim_dynamic_attributes_sub_object_dict(obj, attr_name)
+
+        elif type(attributes[attr_name]) == list:
+            trim_dynamic_attributes_sub_object_list(obj, attr_name)
 
 
 def trim_dynamic(children):
     for child in children:
         for obj_type, obj in child.items():
-            for attr_name, attr_value in obj['attributes'].items():
-                if attr_name in DYNAMIC_ATTRIBUTES:
-                    del obj['attributes'][attr_name]
+            trim_dynamic_attributes(obj['attributes'], obj)
 
             trim_dynamic(obj['children'])
 
@@ -190,10 +241,12 @@ def compare_tree(superset, subset):
             expected_subset[subset_obj_type]['children'] = dict()
             for child_superset in superset:
                 for superset_obj_type, superset_obj in child_superset.items():
+
                     if superset_obj_type == subset_obj_type:
                         object_score = compare_objects(superset_obj,
                                                        subset_obj)
                         if object_score == 0:
+
                             if args.expect_removed:
                                 extra_yaml = yaml.safe_dump(
                                     child_subset,
@@ -205,6 +258,7 @@ def compare_tree(superset, subset):
                                 compare_tree(superset_obj['children'],
                                              subset_obj['children'])
                                 found = True
+                                break
                             except MissingSubset as e:
                                 if e.score > best_score:
                                     best_score = e.score
@@ -232,6 +286,8 @@ def compare_tree(superset, subset):
                                 superset_obj_type] = dict(superset_obj)
                             best_superset[
                                 superset_obj_type]['children'] = dict()
+                if found:
+                    break
 
         if not args.expect_removed and not found:
             missing_yaml = yaml.safe_dump(expected_subset,
@@ -251,10 +307,53 @@ def compare_tree(superset, subset):
             raise e
 
 
+def compare_objects_dict(superset_value, subset_value):
+    score = 0
+    for subset_obj_name, subset_obj_val in subset_value.items():
+        if (subset_obj_name not in superset_value or
+                subset_obj_val != superset_value[subset_obj_name]):
+            score -= 1
+
+    return score
+
+
+def compare_objects_list(superset_value, subset_value):
+    score = 0
+    for subset_obj_value in subset_value:
+        found = False
+        if type(subset_obj_value) == dict:
+            for superset_obj_value in superset_value:
+                for subset_obj_name, subset_obj_val in \
+                      subset_obj_value.items():
+                    if (subset_obj_name not in superset_obj_value or
+                            subset_obj_val !=
+                            superset_obj_value[subset_obj_name]):
+                        found = False
+                        break
+
+                    found = True
+
+                if found:
+                    break
+
+            if not found:
+                score -= 1
+
+    return score
+
+
 def compare_objects(superset_obj, subset_obj):
     score = 0
     for subset_name, subset_value in subset_obj['attributes'].items():
-        if (subset_name not in superset_obj['attributes'] or
+        if type(subset_value) == dict:
+            score += \
+                 compare_objects_dict(superset_obj['attributes'][subset_name],
+                                      subset_value)
+        elif type(subset_value) == list:
+            superset_value = superset_obj['attributes'][subset_name]
+            score += compare_objects_list(superset_value, subset_value)
+
+        elif (subset_name not in superset_obj['attributes'] or
                 superset_obj['attributes'][subset_name] != subset_value):
             score -= 1
 
@@ -325,6 +424,11 @@ def parse_args():
                         action='store_true', required=False, default=False,
                         help=('Verify that expected config was removed'))
 
+    parser.add_argument('-o', '--output-file',
+                        dest='output_file',
+                        action='store', required=False, default=None,
+                        help=('Output file to dump the config'))
+
     return parser.parse_args()
 
 
@@ -343,22 +447,27 @@ def main():
                                   username=args.username,
                                   password=args.password,
                                   enterprise=args.enterprise)
-
-    vsd_writer.set_software_version(
-        vsd_writer.get_version()["software_version"])
+    major_version = int(vsd_writer.get_version()
+                        ["software_version"].split(".")[0])
+    if (major_version < 6):
+        vsd_writer.set_api_version("5.0")
+    else:
+        vsd_writer.set_api_version(str(major_version))
     vsd_writer.start_session()
-
     config = walk_object_children(vsd_writer, ROOT_OBJECT_NAME,
                                   VSD_CSP_ENTERPRISE_GUID)
-
     if args.resolve_references is True or args.compare_file is not None:
         guid_map = get_guid_map(config)
         resolve_references(config, guid_map)
-
     if args.trim_dynamic is True:
         trim_dynamic(config)
-
-    print yaml.safe_dump(config, default_flow_style=False, default_style='')
+    if args.output_file:
+        with open(args.output_file, 'w') as f:
+            yaml.safe_dump(config, f)
+    else:
+        print yaml.safe_dump(config,
+                             default_flow_style=False,
+                             default_style='')
 
     if args.compare_file is not None:
         subset_config = read_configuration(args.compare_file)
