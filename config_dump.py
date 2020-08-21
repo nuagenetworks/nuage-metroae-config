@@ -55,7 +55,8 @@ DYNAMIC_ATTRIBUTES = ['id', 'owner', 'parent_id', 'creation_date',
                       'underlayid', 'uplinkid', 'templateID',
                       'backhaulroutedistinguisher', 'backhaulroutetarget',
                       'exportroutetarget', 'importroutetarget',
-                      'routedistinguisher', 'routetarget', 'secondaryroutetarget',
+                      'routedistinguisher', 'routetarget',
+                      'secondaryroutetarget',
                       'parent_type', 'passphrase', 'esi']
 
 
@@ -180,7 +181,9 @@ def resolve_references(children, guid_map):
                     obj['attributes'][attr_name] = guid_map[attr_value]
 
                 if type(attr_value) == dict:
-                    resolve_references_for_sub_objects(guid_map, obj, attr_name)
+                    resolve_references_for_sub_objects(guid_map,
+                                                       obj,
+                                                       attr_name)
 
             resolve_references(obj['children'], guid_map)
 
@@ -320,9 +323,11 @@ def compare_objects_list(superset_value, subset_value):
         found = False
         if type(subset_obj_value) == dict:
             for superset_obj_value in superset_value:
-                for subset_obj_name, subset_obj_val in subset_obj_value.items():
+                for subset_obj_name, subset_obj_val in \
+                      subset_obj_value.items():
                     if (subset_obj_name not in superset_obj_value or
-                            subset_obj_val != superset_obj_value[subset_obj_name]):
+                            subset_obj_val !=
+                            superset_obj_value[subset_obj_name]):
                         found = False
                         break
 
@@ -420,9 +425,9 @@ def parse_args():
                         help=('Verify that expected config was removed'))
 
     parser.add_argument('-o', '--output-file',
-                       dest='output_file',
-                       action='store', required=False, default=None,
-                       help=('Output file to dump the config'))
+                        dest='output_file',
+                        action='store', required=False, default=None,
+                        help=('Output file to dump the config'))
 
     return parser.parse_args()
 
@@ -442,7 +447,8 @@ def main():
                                   username=args.username,
                                   password=args.password,
                                   enterprise=args.enterprise)
-    major_version = int(vsd_writer.get_version()["software_version"].split(".")[0])
+    major_version = int(vsd_writer.get_version()
+                        ["software_version"].split(".")[0])
     if (major_version < 6):
         vsd_writer.set_api_version("5.0")
     else:
@@ -459,10 +465,11 @@ def main():
         with open(args.output_file, 'w') as f:
             yaml.safe_dump(config, f)
     else:
-        print yaml.safe_dump(config, default_flow_style=False, default_style='')
+        print yaml.safe_dump(config,
+                             default_flow_style=False,
+                             default_style='')
 
     if args.compare_file is not None:
-        #config = read_configuration(args.output_file)
         subset_config = read_configuration(args.compare_file)
         compare_tree(config, subset_config)
 
