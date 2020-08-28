@@ -346,9 +346,8 @@ def compare_objects(superset_obj, subset_obj):
     score = 0
     for subset_name, subset_value in subset_obj['attributes'].items():
         if type(subset_value) == dict:
-            score += \
-                 compare_objects_dict(superset_obj['attributes'][subset_name],
-                                      subset_value)
+            score += compare_objects_dict(superset_obj['attributes'][subset_name],
+                                          subset_value)
         elif type(subset_value) == list:
             superset_value = superset_obj['attributes'][subset_name]
             score += compare_objects_list(superset_value, subset_value)
