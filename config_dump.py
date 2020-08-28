@@ -324,7 +324,7 @@ def compare_objects_list(superset_value, subset_value):
         if type(subset_obj_value) == dict:
             for superset_obj_value in superset_value:
                 for subset_obj_name, subset_obj_val in \
-                      subset_obj_value.items():
+                    subset_obj_value.items():
                     if (subset_obj_name not in superset_obj_value or
                             subset_obj_val !=
                             superset_obj_value[subset_obj_name]):
