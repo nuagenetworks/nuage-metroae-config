@@ -1,133 +1,161 @@
 {
-  "title": "Schema validator for Nuage Metro Config template Bidirectional ACL",
   "$id": "urn:nuage-metro:config:template:bidirectional-acl",
-  "required": [
-    "enterprise_name",
-    "domain_name",
-    "acl_name",
-    "default_allow_ip",
-    "default_allow_non_ip",
-    "policy_priority",
-    "allow_address_spoof",
-    "default_install_acl_implicit_rules",
-    "description",
-    "entry_priority",
-    "protocol",
-    "source_port",
-    "destination_port",
-    "ether_type",
-    "action",
-    "location_type",
-    "location_name",
-    "network_type",
-    "network_name",
-    "stateful",
-    "flow_logging_enabled",
-    "stats_logging_enabled"
-  ],
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
-  "properties": {
-    "policy_priority": {
-      "type": "integer",
-      "title": "Policy priority"
+  "type": "array",
+  "title": "Schema validator for Nuage Metro Config template Bidirectional ACL",
+  "description": "Creates a set of ingress and egress ACLs",
+  "items": {
+    "title": "Bidirectional ACL",
+    "additionalProperties": false,
+    "type": "object",
+    "properties": {
+      "policy_priority": {
+        "propertyOrder": 60,
+        "type": "integer",
+        "title": "Policy priority"
+      },
+      "protocol": {
+        "propertyOrder": 110,
+        "type": "string",
+        "title": "Protocol"
+      },
+      "ether_type": {
+        "propertyOrder": 140,
+        "type": "string",
+        "title": "Ether type"
+      },
+      "entry_priority": {
+        "propertyOrder": 100,
+        "type": "integer",
+        "title": "Entry priority"
+      },
+      "network_name": {
+        "propertyOrder": 190,
+        "type": "string",
+        "title": "Network name"
+      },
+      "default_allow_non_ip": {
+        "propertyOrder": 50,
+        "type": "boolean",
+        "title": "Default allow non ip"
+      },
+      "location_name": {
+        "propertyOrder": 170,
+        "type": "string",
+        "title": "Location name"
+      },
+      "flow_logging_enabled": {
+        "propertyOrder": 210,
+        "type": "boolean",
+        "title": "Flow logging enabled"
+      },
+      "domain_name": {
+        "propertyOrder": 20,
+        "type": "string",
+        "title": "Domain name"
+      },
+      "stats_logging_enabled": {
+        "propertyOrder": 220,
+        "type": "boolean",
+        "title": "Stats logging enabled"
+      },
+      "description": {
+        "propertyOrder": 90,
+        "type": "string",
+        "title": "Description"
+      },
+      "acl_name": {
+        "propertyOrder": 30,
+        "type": "string",
+        "title": "Acl name"
+      },
+      "default_allow_ip": {
+        "propertyOrder": 40,
+        "type": "boolean",
+        "title": "Default allow ip"
+      },
+      "stateful": {
+        "propertyOrder": 200,
+        "type": "boolean",
+        "title": "Stateful"
+      },
+      "source_port": {
+        "propertyOrder": 120,
+        "type": "string",
+        "title": "Source port"
+      },
+      "allow_address_spoof": {
+        "propertyOrder": 70,
+        "type": "boolean",
+        "title": "Allow address spoof"
+      },
+      "destination_port": {
+        "propertyOrder": 130,
+        "type": "string",
+        "title": "Destination port"
+      },
+      "location_type": {
+        "enum": [
+          "any",
+          "policygroup",
+          "subnet",
+          "zone"
+        ],
+        "propertyOrder": 160,
+        "title": "Location type"
+      },
+      "enterprise_name": {
+        "propertyOrder": 10,
+        "type": "string",
+        "title": "Enterprise name"
+      },
+      "default_install_acl_implicit_rules": {
+        "propertyOrder": 80,
+        "type": "boolean",
+        "title": "Default install acl implicit rules"
+      },
+      "action": {
+        "enum": [
+          "forward",
+          "drop"
+        ],
+        "propertyOrder": 150,
+        "title": "Action"
+      },
+      "network_type": {
+        "enum": [
+          "any",
+          "policygroup",
+          "subnet",
+          "zone"
+        ],
+        "propertyOrder": 180,
+        "title": "Network type"
+      }
     },
-    "protocol": {
-      "type": "string",
-      "title": "Protocol"
-    },
-    "ether_type": {
-      "type": "string",
-      "title": "Ether type"
-    },
-    "entry_priority": {
-      "type": "integer",
-      "title": "Entry priority"
-    },
-    "flow_logging_enabled": {
-      "type": "boolean",
-      "title": "Flow logging enabled"
-    },
-    "default_allow_non_ip": {
-      "type": "boolean",
-      "title": "Default allow non ip"
-    },
-    "location_name": {
-      "type": "string",
-      "title": "Location name"
-    },
-    "network_name": {
-      "type": "string",
-      "title": "Network name"
-    },
-    "domain_name": {
-      "type": "string",
-      "title": "Domain name"
-    },
-    "stats_logging_enabled": {
-      "type": "boolean",
-      "title": "Stats logging enabled"
-    },
-    "description": {
-      "type": "string",
-      "title": "Description"
-    },
-    "acl_name": {
-      "type": "string",
-      "title": "Acl name"
-    },
-    "default_allow_ip": {
-      "type": "boolean",
-      "title": "Default allow ip"
-    },
-    "stateful": {
-      "type": "boolean",
-      "title": "Stateful"
-    },
-    "source_port": {
-      "type": "string",
-      "title": "Source port"
-    },
-    "allow_address_spoof": {
-      "type": "boolean",
-      "title": "Allow address spoof"
-    },
-    "destination_port": {
-      "type": "string",
-      "title": "Destination port"
-    },
-    "location_type": {
-      "enum": [
-        "any",
-        "policygroup",
-        "subnet",
-        "zone"
-      ],
-      "title": "Location type"
-    },
-    "enterprise_name": {
-      "type": "string",
-      "title": "Enterprise name"
-    },
-    "default_install_acl_implicit_rules": {
-      "type": "boolean",
-      "title": "Default install acl implicit rules"
-    },
-    "action": {
-      "enum": [
-        "forward",
-        "drop"
-      ],
-      "title": "Action"
-    },
-    "network_type": {
-      "enum": [
-        "any",
-        "policygroup",
-        "subnet",
-        "zone"
-      ],
-      "title": "Network type"
-    }
+    "required": [
+      "enterprise_name",
+      "domain_name",
+      "acl_name",
+      "default_allow_ip",
+      "default_allow_non_ip",
+      "policy_priority",
+      "allow_address_spoof",
+      "default_install_acl_implicit_rules",
+      "description",
+      "entry_priority",
+      "protocol",
+      "source_port",
+      "destination_port",
+      "ether_type",
+      "action",
+      "location_type",
+      "location_name",
+      "network_type",
+      "network_name",
+      "stateful",
+      "flow_logging_enabled",
+      "stats_logging_enabled"
+    ]
   }
 }

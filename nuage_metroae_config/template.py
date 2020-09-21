@@ -38,6 +38,7 @@ class Template(object):
         self.software_type = None
         self.software_version = None
         self.variables = None
+        self.property_order = 10
 
         self.documentation = None
 
@@ -247,8 +248,11 @@ class Template(object):
     def _convert_variables_to_schema(self):
         new_schema = dict()
         self._generate_schema_headers(new_schema)
-        self._generate_schema_properties(new_schema)
-        self._generate_schema_required(new_schema)
+        item_schema = dict()
+        self._generate_item_headers(item_schema)
+        new_schema["items"] = item_schema
+        self._generate_schema_properties(item_schema)
+        self._generate_schema_required(item_schema)
 
         return new_schema
 
@@ -258,14 +262,26 @@ class Template(object):
         new_schema['$id'] = (JSON_SCHEMA_ID_PREFIX +
                              name.lower().replace(' ', '-'))
         new_schema['title'] = JSON_SCHEMA_TITLE + name
-        new_schema['type'] = "object"
+        if self.description is not None:
+            new_schema['description'] = self.description
+        else:
+            new_schema['description'] = "(no description)"
+        new_schema['type'] = "array"
+
+    def _generate_item_headers(self, item_schema):
+        item_schema["type"] = "object"
+        item_schema["title"] = self.get_name()
+        item_schema["additionalProperties"] = False
 
     def _generate_schema_properties(self, new_schema):
         props = dict()
         new_schema['properties'] = props
 
+        self.property_order = 10
+
         for variable in self.variables:
             self._generate_schema_property(props, variable)
+            self.property_order += 10
 
     def _generate_schema_property(self, props, variable):
         name = self._get_required_field(variable, "name")
@@ -277,6 +293,7 @@ class Template(object):
         title = name.lower().replace('_', ' ')
         title = title[0].upper() + title[1:]
         info['title'] = title
+        info['propertyOrder'] = self.property_order
 
         description = get_dict_field_no_case(variable, "description")
         if description is not None:
