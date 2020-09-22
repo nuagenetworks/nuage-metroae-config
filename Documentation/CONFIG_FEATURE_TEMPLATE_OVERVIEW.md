@@ -151,4 +151,4 @@ We have provided sample data for each feature template. This sample yaml files a
 
 ##### How to Define user data
 
-The MetroAE Config has some powerful features in terms of being able to reduce data required by the user by functions such as inheritance and substitution. The section on [Inheritance](config-inheritance.md) will attempt to describe those.
+The MetroAE Config has some powerful features in terms of being able to reduce data required by the user by functions such as inheritance and substitution. The section on [Inheritance](CONFIG_INHERITANCE.md) will attempt to describe those.

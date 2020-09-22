@@ -925,7 +925,7 @@ Writing Zone documentation to documentation/template-zone.md
 
 ## Reduce Command Requirements with an RC File
 
-The configuration engine supports the use of local environment variable in the user shell. Assuming the VSD, templates and VSP API SPEC are not changing locally this reduces the command requirements to the action and a single data input. See the article [Exporting the environment variables using an RC File](config-env-variables.md) for details.
+The configuration engine supports the use of local environment variable in the user shell. Assuming the VSD, templates and VSP API SPEC are not changing locally this reduces the command requirements to the action and a single data input. See the article [Exporting the environment variables using an RC File](CONFIG_ENV_VARIABLES.md) for details.
 
 Without using an RC file
 
