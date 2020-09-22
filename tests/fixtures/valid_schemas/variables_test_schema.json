@@ -2,7 +2,7 @@
   "$id": "urn:nuage-metro:config:template:variables-testing",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "array",
-  "title": "Schema validator for Nuage Metro Config template Variables Testing",
+  "title": "Nuage Metro Config template Variables Testing",
   "description": "For testing variable validation and schemas",
   "items": {
     "title": "Variables Testing",

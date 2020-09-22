@@ -29,6 +29,7 @@ class ExcelTemplateGenerator(object):
             "schemas": None,
             "column_offset": 1,
             "row_offset": 4,
+            "row_sections_present": True,
             "object_width": 70,
             "column_width": 25,
             "comment_width": 600,
@@ -37,6 +38,8 @@ class ExcelTemplateGenerator(object):
             "normal_color": "FFFFFF",
             "advanced_color": "EEEEEE",
             "advanced_text_color": "888888",
+            "col_label_text_color": "000000",
+            "row_label_text_color": "000000",
             "row_label_color": "AAAAAA",
             "border_color": "AAAAAA",
             "section_color": "8888FF",
@@ -181,8 +184,9 @@ class ExcelTemplateGenerator(object):
         num_rows = self.get_num_rows(schema, example)
         list_name = self.get_list_name(schema)
 
-        self.write_row_sections(worksheet, properties)
-        row_offset += 1
+        if self.settings["row_sections_present"]:
+            self.write_row_sections(worksheet, properties)
+            row_offset += 1
 
         i = 0
         for name, field in sorted(iter(properties.items()),
@@ -273,14 +277,17 @@ class ExcelTemplateGenerator(object):
         cell.comment.width = self.settings["comment_width"]
         cell.comment.height = self.settings["comment_height"]
         if row_label and "required" in field and field["required"]:
-            cell.font = Font(bold=True)
+            cell.font = Font(color=self.settings["row_label_text_color"],
+                             bold=True)
             cell.fill = PatternFill("solid",
                                     fgColor=self.settings["row_label_color"])
         elif row_label:
+            cell.font = Font(color=self.settings["row_label_text_color"])
             cell.fill = PatternFill("solid",
                                     fgColor=self.settings["row_label_color"])
         elif "required" in field and field["required"]:
-            cell.font = Font(bold=True)
+            cell.font = Font(color=self.settings["col_label_text_color"],
+                             bold=True)
             cell.fill = PatternFill("solid",
                                     fgColor=self.settings["required_color"])
         elif "advanced" in field and field["advanced"]:
@@ -288,6 +295,7 @@ class ExcelTemplateGenerator(object):
             cell.fill = PatternFill("solid",
                                     fgColor=self.settings["advanced_color"])
         else:
+            cell.font = Font(color=self.settings["col_label_text_color"])
             cell.fill = PatternFill("solid",
                                     fgColor=self.settings["normal_color"])
 

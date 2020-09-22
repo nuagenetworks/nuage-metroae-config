@@ -547,6 +547,10 @@ class MetroConfig(object):
         excel = ExcelTemplateGenerator()
         excel.settings["schema_order"] = template_names
         excel.settings["show_version"] = False
+        excel.settings["row_sections_present"] = False
+        excel.settings["num_list_entries"] = 100
+        excel.settings["row_label_color"] = "8888FF"
+        excel.settings["row_label_text_color"] = "FFFFFF"
 
         schemas = self.get_schemas(template_names)
         excel.settings["schemas"] = schemas
@@ -613,6 +617,7 @@ class MetroConfig(object):
         self.excel_parser = ExcelParser()
 
         self.excel_parser.settings["use_schema_titles"] = True
+        self.excel_parser.settings["row_sections_present"] = False
 
         template_names = self.store.get_template_names(
             self.get_software_type(),

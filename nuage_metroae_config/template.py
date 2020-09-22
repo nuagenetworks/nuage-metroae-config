@@ -14,7 +14,7 @@ from util import get_dict_field_no_case
 
 JSON_SCHEMA_URL = "http://json-schema.org/draft-04/schema#"
 JSON_SCHEMA_ID_PREFIX = "urn:nuage-metro:config:template:"
-JSON_SCHEMA_TITLE = "Schema validator for Nuage Metro Config template "
+JSON_SCHEMA_TITLE = "Nuage Metro Config template "
 VALID_VARIABLE_TYPES = ["string", "reference", "integer", "float", "boolean",
                         "ipv4", "ipv6", "ipv4_or_6", "choice", "list"]
 JSON_SCHEMA_STRING_TYPES = ["string", "reference", "ipv4", "ipv6", "ipv4_or_6"]
