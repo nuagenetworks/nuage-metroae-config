@@ -54,7 +54,7 @@ def store_parents(spec):
 
 
 def find_spec(entity_name):
-    for rest_name, spec in list(specs.items()):
+    for rest_name, spec in specs.items():
         if ("entity_name" in spec["model"] and
                 spec["model"]["entity_name"] == entity_name):
             return spec
@@ -85,7 +85,7 @@ def run_commands(command_file):
         commands = yaml.safe_load(f.read())
 
     for command_pair in commands:
-        for command, value in list(command_pair.items()):
+        for command, value in command_pair.items():
             if command == "name":
                 template_info["name"] = value
             elif command == "description":
