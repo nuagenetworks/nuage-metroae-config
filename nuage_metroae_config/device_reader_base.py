@@ -1,6 +1,6 @@
-from logger import Logger
+from .logger import Logger
 
-from errors import DeviceWriterError
+from .errors import DeviceWriterError
 
 
 class DeviceReaderBase(object):
