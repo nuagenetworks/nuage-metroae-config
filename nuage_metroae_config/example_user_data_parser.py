@@ -4,8 +4,8 @@ import argparse
 import os
 import yaml
 import re
-from template import TemplateStore
-from user_data_parser import UserDataParser
+from .template import TemplateStore
+from .user_data_parser import UserDataParser
 
 
 class TypeToObjectName():
@@ -233,7 +233,7 @@ def load_data(args, jinja2_template_data):
     groups_dict = {}
 
     if not os.path.exists(args.data_path) and os.path.isdir(args.data_path):
-        print "Please provide a valid path for data files"
+        print("Please provide a valid path for data files")
 
     # first load files that path the group pattern
     for file_name in filter_data_file(sorted(os.listdir(args.data_path)), args.version):
@@ -330,7 +330,7 @@ def parse(args):
             f.write('\n')
     else:
         for key, value in group_user_data.items():
-            print yaml.dump(value, Dumper=NoAliasDumper)
+            print(yaml.dump(value, Dumper=NoAliasDumper))
 
 
 def calculate_template_dependencies(template_dict, group_user_data):
@@ -528,7 +528,7 @@ def resolve_dependencies(group_user_data,
             template_user_data[key] = data
             group_user_data[template_name] = template_user_data
 
-    print dependencies_not_found
+    print(dependencies_not_found)
 
     return dependencies_not_found
 

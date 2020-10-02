@@ -5,12 +5,12 @@ import os
 import re
 import yaml
 
-from document_template_md import DOCUMENT_TEMPLATE_MD
-from errors import (MissingTemplateError,
+from .document_template_md import DOCUMENT_TEMPLATE_MD
+from .errors import (MissingTemplateError,
                     TemplateParseError,
                     UndefinedVariableError,
                     VariableValueError)
-from util import get_dict_field_no_case
+from .util import get_dict_field_no_case
 
 JSON_SCHEMA_URL = "http://json-schema.org/draft-04/schema#"
 JSON_SCHEMA_ID_PREFIX = "urn:nuage-metro:config:template:"
@@ -439,7 +439,7 @@ class Template(object):
     def _validate_data(self, data):
         var_info = self._generate_variable_info()
 
-        for name, value in data.iteritems():
+        for name, value in data.items():
             self._validate_against_variable_info(var_info, name, value)
 
         self._validate_required_data(var_info, data)
@@ -480,7 +480,7 @@ class Template(object):
 
     def _validate_variable_value(self, var_schema, var_name, value, var_type):
         if var_type in JSON_SCHEMA_STRING_TYPES:
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 return True
             else:
                 allow_int = get_dict_field_no_case(var_schema, "allow-integer")
@@ -506,7 +506,7 @@ class Template(object):
             else:
                 self._raise_value_error(var_name, "is not a boolean")
         elif var_type == "choice":
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 self._raise_value_error(var_name, "is not a string")
             choices = self._get_required_field(var_schema, "choices")
             upper_choices = [x.upper() for x in choices]
@@ -522,7 +522,7 @@ class Template(object):
                 ranges = [ranges]
 
             for r in ranges:
-                if isinstance(r, basestring):
+                if isinstance(r, str):
                     try:
                         low, high = r.split("..")
                         low = float(low)
@@ -541,7 +541,7 @@ class Template(object):
 
     def _validate_required_data(self, var_info, data):
         missing = []
-        for var_name, var_schema in var_info.iteritems():
+        for var_name, var_schema in var_info.items():
             optional = get_dict_field_no_case(var_schema, "optional")
             if optional is not True and var_name not in data:
                 missing.append(var_name)
@@ -654,7 +654,7 @@ class TemplateStore(object):
         be filtered by the specified version/type.
         """
         names = list()
-        for key, template_list in self.templates.iteritems():
+        for key, template_list in self.templates.items():
             template = self._get_latest_template(template_list,
                                                  software_type,
                                                  software_version)

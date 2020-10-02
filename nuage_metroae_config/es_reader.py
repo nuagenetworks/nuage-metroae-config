@@ -1,7 +1,7 @@
 import requests
 
-from device_reader_base import DeviceReaderBase
-from errors import (DeviceWriterError,
+from .device_reader_base import DeviceReaderBase
+from .errors import (DeviceWriterError,
                     SessionError)
 
 PAGE_SIZE = 100

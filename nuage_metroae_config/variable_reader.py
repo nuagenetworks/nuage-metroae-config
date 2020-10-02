@@ -1,4 +1,4 @@
-from device_reader_base import DeviceReaderBase
+from .device_reader_base import DeviceReaderBase
 
 
 class VariableReader(DeviceReaderBase):
