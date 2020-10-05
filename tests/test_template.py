@@ -303,7 +303,7 @@ class TestTemplateParsing(object):
                                "variables_documentation.md"), 'r') as file:
             expected_doc = file.read()
 
-        print template.get_documentation()
+        print(template.get_documentation())
 
         assert template.get_documentation() == expected_doc
 
@@ -487,7 +487,7 @@ class TestTemplateVariableValidation(object):
             template.validate_template_data(**data)
 
         assert "Variables Testing" in str(e)
-        assert data.keys()[0] in str(e)
+        assert list(data.keys())[0] in str(e)
         assert message in str(e)
 
     def test_required_vars__success(self):

@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
+from .action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 CREATE_OBJECTS_DICT,
                                 CREATE_OBJECTS_NO_TYPE,
                                 CREATE_OBJECTS_SELECT_FIRST,
@@ -87,8 +87,8 @@ from nuage_metroae_config.errors import (ConflictError,
                                          MissingSelectionError,
                                          TemplateActionError,
                                          TemplateParseError)
-from mock_writer import MockWriter
-from template_test_params import (EXPECTED_ACL_TEMPLATE,
+from .mock_writer import MockWriter
+from .template_test_params import (EXPECTED_ACL_TEMPLATE,
                                   EXPECTED_DOMAIN_TEMPLATE,
                                   EXPECTED_ENTERPRISE_TEMPLATE)
 
@@ -992,14 +992,13 @@ class TestActionsExecute(object):
         root_action.execute(writer)
         writer.stop_session()
 
-        expected_actions_formatted = filter(
-            None, [x.strip() for x in expected_actions.split("\n")])
+        expected_actions_formatted = [_f for _f in [x.strip() for x in expected_actions.split("\n")] if _f]
 
-        print "\nExpected actions:"
-        print "\n".join(expected_actions_formatted)
+        print("\nExpected actions:")
+        print("\n".join(expected_actions_formatted))
 
-        print "\nRecorded actions:"
-        print "\n".join(writer.get_recorded_actions())
+        print("\nRecorded actions:")
+        print("\n".join(writer.get_recorded_actions()))
 
         assert writer.get_recorded_actions() == expected_actions_formatted
 
@@ -1023,14 +1022,13 @@ class TestActionsExecute(object):
             root_action.execute(writer)
         writer.stop_session()
 
-        expected_actions_formatted = filter(
-            None, [x.strip() for x in expected_actions.split("\n")])
+        expected_actions_formatted = [_f for _f in [x.strip() for x in expected_actions.split("\n")] if _f]
 
-        print "\nExpected actions:"
-        print "\n".join(expected_actions_formatted)
+        print("\nExpected actions:")
+        print("\n".join(expected_actions_formatted))
 
-        print "\nRecorded actions:"
-        print "\n".join(writer.get_recorded_actions())
+        print("\nRecorded actions:")
+        print("\n".join(writer.get_recorded_actions()))
 
         assert writer.get_recorded_actions() == expected_actions_formatted
         if expect_error:

@@ -2,7 +2,7 @@ import pytest
 import requests
 import requests_mock
 
-from bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
+from .bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
                                         ENTERPRISE_SPEC_TEST,
                                         ENTERPRISE_SPEC_VALIDATE,
                                         ENTERPRISENET_SPEC_TEST,
@@ -92,19 +92,19 @@ class RequestSpy(object):
             mock.put(url)
             test_func(session)
             last_request = mock.last_request
-            print "- Request -----"
-            print str(last_request.url)
-            print str(last_request.headers)
-            print str(last_request.json())
+            print("- Request -----")
+            print(str(last_request.url))
+            print(str(last_request.headers))
+            print(str(last_request.json()))
 
         response = requests.put(last_request.url,
                                 headers=last_request.headers,
                                 verify=False,
                                 json=last_request.json())
-        print "- Response -----"
-        print str(response.status_code)
-        print str(response.headers)
-        print str(response.text)
+        print("- Response -----")
+        print(str(response.status_code))
+        print(str(response.headers))
+        print(str(response.text))
 
 
 class TestSession(object):

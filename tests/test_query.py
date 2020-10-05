@@ -2,7 +2,7 @@ import os
 import pytest
 
 from mock import patch
-from mock_reader import MockReader
+from .mock_reader import MockReader
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
 from nuage_metroae_config.query import Query
 
@@ -99,11 +99,11 @@ class TestQuery(object):
             expected_actions_formatted = self.format_expected_actions(
                 expected_actions)
 
-            print "\nExpected actions:"
-            print "\n".join(expected_actions_formatted)
+            print("\nExpected actions:")
+            print("\n".join(expected_actions_formatted))
 
-            print "\nRecorded actions:"
-            print "\n".join(reader.get_recorded_actions())
+            print("\nRecorded actions:")
+            print("\n".join(reader.get_recorded_actions()))
 
             assert reader.get_recorded_actions() == expected_actions_formatted
 
@@ -133,11 +133,11 @@ class TestQuery(object):
         expected_actions_formatted = self.format_expected_actions(
             expected_actions)
 
-        print "\nExpected actions:"
-        print "\n".join(expected_actions_formatted)
+        print("\nExpected actions:")
+        print("\n".join(expected_actions_formatted))
 
-        print "\nRecorded actions:"
-        print "\n".join(reader.get_recorded_actions())
+        print("\nRecorded actions:")
+        print("\n".join(reader.get_recorded_actions()))
 
         assert reader.get_recorded_actions() == expected_actions_formatted
         assert results == expected_results
@@ -147,7 +147,7 @@ class TestQuery(object):
             return e
 
     def format_expected_actions(self, expected_actions):
-        return filter(None, [x.strip() for x in expected_actions.split("\n")])
+        return [_f for _f in [x.strip() for x in expected_actions.split("\n")] if _f]
 
     @pytest.mark.parametrize("query_text, col", PARSE_ERROR_CASES)
     def test__parse_errors(self, query_text, col):
