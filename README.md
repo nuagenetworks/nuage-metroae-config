@@ -76,6 +76,7 @@ Additional packages for unit-test
 - pytest
 - requests
 - requests-mock
+- lark_parser
 
 The following packages are installed via the same method on both Ubuntu and RHEL/Centos.
 
