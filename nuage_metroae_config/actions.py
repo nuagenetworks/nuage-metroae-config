@@ -664,7 +664,7 @@ class SelectObjectAction(Action):
     def get_object_selector(self):
         if type(self.field) == list:
             fields = sorted([x.lower() for x in self.field])
-            values = sorted(self.value)
+            values = sorted(self.value, key=lambda x: str(x))
         else:
             fields = self.field.lower()
             values = self.value
