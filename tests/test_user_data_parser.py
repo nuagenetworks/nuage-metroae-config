@@ -46,8 +46,10 @@ class TestUserDataParser(object):
         expected.extend(EXPECTED_ACLS_DATA)
         expected.extend(EXPECTED_DOMAINS_DATA)
         expected.extend(EXPECTED_ACLS_GROUPS_DATA)
-
-        assert sorted(data_pairs) == sorted(expected)
+        for i in data_pairs:
+            assert i in expected
+            expected.remove(i)
+        assert len(expected) == 0
 
     def test_read_dir__success(self):
         parser = UserDataParser()
