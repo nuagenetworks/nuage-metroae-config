@@ -399,7 +399,7 @@ class TestVsdWriterSpecParsing(object):
                 INVALID_SPECS_DIRECTORY,
                 filename))
 
-        assert message in str(e)
+        assert message in str(e.value)
 
 
 class TestVsdWriterSession(object):
@@ -3222,6 +3222,12 @@ class TestVsdWriterQuery(object):
         mock_ent_5 = self.create_mock_query_object({"name": "a5"})
         mock_ent_2 = self.create_mock_query_object({"name": "a2"})
         mock_ent_4 = self.create_mock_query_object({"name": "a4"})
+
+        mock_ent_1.foobar = None
+        mock_ent_3.foobar = None
+        mock_ent_5.foobar = None
+        mock_ent_2.foobar = None
+        mock_ent_4.foobar = None
 
         calls = [
             [mock_ent_1, mock_ent_3, mock_ent_5, mock_ent_2, mock_ent_4]

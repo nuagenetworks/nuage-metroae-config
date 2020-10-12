@@ -250,8 +250,8 @@ class TestTemplateParsing(object):
             store.read_templates(os.path.join(INVALID_TEMPLATE_DIRECTORY,
                                               filename))
 
-        assert message in str(e)
-        assert filename in str(e)
+        assert message in str(e.value)
+        assert filename in str(e.value)
 
     def test_schema__success(self):
         store = TemplateStore()
@@ -488,7 +488,7 @@ class TestTemplateVariableValidation(object):
 
         assert "Variables Testing" in str(e)
         assert list(data.keys())[0] in str(e)
-        assert message in str(e)
+        assert message in str(e.value)
 
     def test_required_vars__success(self):
         template = self.get_variables_template()

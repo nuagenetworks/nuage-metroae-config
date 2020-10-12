@@ -83,8 +83,8 @@ class TestUserDataParser(object):
             parser.read_data(os.path.join(INVALID_USER_DATA_DIRECTORY,
                              filename))
 
-        assert message in str(e)
-        assert filename in str(e)
+        assert message in str(e.value)
+        assert filename in str(e.value)
 
     def test_group__override(self):
         parser = UserDataParser()
