@@ -8,13 +8,13 @@ from .bambou_adapter import ConfigObject, Fetcher, Root, Session
 from .device_reader_base import DeviceReaderBase
 from .device_writer_base import DeviceWriterBase
 from .errors import (DeviceWriterError,
-                    InvalidAttributeError,
-                    InvalidObjectError,
-                    InvalidValueError,
-                    MissingSelectionError,
-                    MultipleSelectionError,
-                    SessionError,
-                    SessionNotStartedError)
+                     InvalidAttributeError,
+                     InvalidObjectError,
+                     InvalidValueError,
+                     MissingSelectionError,
+                     MultipleSelectionError,
+                     SessionError,
+                     SessionNotStartedError)
 
 SPEC_EXTENSION = ".spec"
 SOFTWARE_TYPE = "Nuage Networks VSD"

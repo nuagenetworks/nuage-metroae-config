@@ -7,9 +7,9 @@ import yaml
 
 from .document_template_md import DOCUMENT_TEMPLATE_MD
 from .errors import (MissingTemplateError,
-                    TemplateParseError,
-                    UndefinedVariableError,
-                    VariableValueError)
+                     TemplateParseError,
+                     UndefinedVariableError,
+                     VariableValueError)
 from .util import get_dict_field_no_case
 
 JSON_SCHEMA_URL = "http://json-schema.org/draft-04/schema#"

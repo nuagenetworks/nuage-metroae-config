@@ -573,9 +573,9 @@ class MetroConfig(object):
                                                     datafile)
                         if not os.path.exists(datafile):
                             print(("Could not find user data file %s if "
-                                  "using the docker container please make "
-                                  "sure it is accessible to the docker" %
-                                  (datafile)))
+                                   "using the docker container please make "
+                                   "sure it is accessible to the docker" %
+                                   (datafile)))
                             exit(1)
                     if self.action == QUERY_ACTION:
                         self.query_files.append(datafile)
