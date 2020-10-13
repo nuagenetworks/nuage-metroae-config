@@ -391,7 +391,8 @@ class QueryExecutor(Transformer):
         if result is None:
             return "null"
         elif type(result) == dict or type(result) == list:
-            return yaml.dump(result, Dumper=NoAliasDumper).strip("\n")
+            return yaml.dump(result, Dumper=NoAliasDumper,
+                             default_flow_style=False).strip("\n")
         elif isinstance(result, str):
             return result
         else:
