@@ -1382,7 +1382,7 @@ class TestActionsExecute(object):
             set-values name=nsg_template [context_3]
             get-value id [context_3]
             create-object Job [context_1]
-            set-values parameters={'type': 'ISO', 'entityID': 'value_1'} [context_5]
+            set-values parameters={'entityID': 'value_1', 'type': 'ISO'} [context_5]
             stop-session
         """
 
