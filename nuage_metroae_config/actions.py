@@ -856,6 +856,12 @@ class SetValuesAction(Action):
 
                     attributes_copy[obj_name] = dict(self.attributes[obj_name])
 
+                if type(attributes_copy[obj_name]) is not dict:
+                    raise ConflictError("Field '%s' of object %s"
+                                        " is not a dictionary" %
+                                        (str(obj_name),
+                                         str(self.parent.object_type)))
+
                 if param in attributes_copy[obj_name]:
                     raise ConflictError("Param '%s' in field '%s' of object %s"
                                         " is already set" %
