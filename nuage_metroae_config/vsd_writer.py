@@ -94,6 +94,11 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
             self.session_params['certificate'] = certificate
 
     def set_software_version(self, software_version):
+        """
+        Sets the software version of the VSD.  This can be obtained via the
+        get_version() method to get from the VSD itself or overwriten
+        to a specific value.
+        """
         major_version = int(software_version.split(".")[0])
         if (major_version < 6):
             self.version = "5.0"
