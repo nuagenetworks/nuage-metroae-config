@@ -16,8 +16,51 @@ provided by the user in the form of Yaml or JSON files and is transformed and
 applied to the VSD through the tool's templates.  The required data and proper
 format for each template is defined by standardized JSON schema specifications.
 
-## Installation of MetroAE Config
+## Installation
 
+### Via Docker Container
+
+There are several modes of operation for MetroAE config.  For most users, the
+tool should be consumed via the MetroAE Docker container.  Using this method
+ensures that all of the libraries are properly installed and the `metroae`
+command-line tool can be utilized for config (as well as deploy).  Instructions
+for the Docker container installation are available at:
+
+https://github.com/nuagenetworks/nuage-metroae/blob/master/Documentation/DOCKER.md
+
+If using the Docker container, all remaining installation instructions can be
+skipped.
+
+### As Python Library
+
+The MetroAE config tool is completely implemented as a Python library.  As such,
+the functionality of the tool can be integrated into other Python tools or
+libraries through the use of the APIs.  To do this, the library can be installed
+via Python pip package from pypi.org:
+
+```
+pip install nuage-metroae-config
+```
+
+The pip installation of the package will pull in all dependent libraries
+automatically.  The following section of installing from Github can be skipped.
+The use of the Library APIs is documented in the `Python Library API` section.
+
+### From Github Python Source
+
+Using the MetroAE config tool without the Docker container can be accomplished
+by pulling the source from Github.  You may want to use this method if you are
+comfortable working with Python environments and don't want the overhead of a
+container.   The instructions for this case is described in the next section.
+If using this method, you would be responsible for installing all of the
+necessary prerequiste libraries and to obtain the VSD API specs and templates.
+
+#### Installation of MetroAE Config from Github
+
+This section describes how to install the MetroAE config tool from the Github
+repo.  These steps will be necessary to use the metroae_config command-line
+tool directly.  If using the MetroAE Docker container, this section should be
+skipped.
 
 The primary requirements for running MetroAE config are:
 1. Installation of Python and the necessary packages.
@@ -69,6 +112,7 @@ python functionality. However we will need to install the following:
 - Bambou
 - Jinja2 (min version 2.10)
 - PyYAML
+- lark-parser
 
 Additional packages for unit-test
 
@@ -82,15 +126,11 @@ The following packages are installed via the same method on both Ubuntu and RHEL
 *Ubuntu and RHEL/Centos*
 
 ```
-[root@rhel]# pip install Bambou
-...
-[root@rhel]# pip install Jinja2
-...
-[root@rhel]# pip install PyYAML
+[root@rhel]# pip install -r requirements.txt
 ...
 ```
 
-### Installation of configuration engine
+#### Installation of configuration engine
 
 Currently MetroAE config is available on github and will be installed via git
 clone. Check the MetroAE home page for latest master branch location.
@@ -109,6 +149,12 @@ root@ubuntu:~# apt-get install git
 [root@rhel]# yum install git
 ```
 
+The repository is available via Github:
+
+```
+https://github.com/nuagenetworks/nuage-metroae-config
+```
+
 Depending on the authentication method with github, ie. SSH Key, or
 Username/Password the git clone command line may change.
 
@@ -119,9 +165,9 @@ For username/password authentication
 
 ```
 [root@rhel]# export GIT_SSL_NO_VERIFY=false
-[root@rhel]# git clone  https://github.mv.usa.alcatel.com/CASO/levistate.git
+[root@rhel]# git clone https://github.com/nuagenetworks/nuage-metroae-config.git
 Cloning into 'levistate'...
-Username for 'https://github.mv.usa.alcatel.com': sfiddian
+Username for 'https://github.com/nuagenetworks/nuage-metroae-config.git': sfiddian
 Password for 'https://sfiddian@github.mv.usa.alcatel.com':
 remote: Counting objects: 619, done.
 remote: Compressing objects: 100% (9/9), done.
@@ -131,7 +177,7 @@ Resolving deltas: 100% (398/398), done.
 ```
 
 
-### Installation of the VSD API Specifications
+#### Installation of the VSD API Specifications
 
 MetroAE Config requires a description of the VSD API to create, read, update and
 delete the template contents into the VSD. We do this via reading the published
@@ -151,14 +197,26 @@ Receiving objects: 100% (23428/23428), 4.98 MiB | 1013.00 KiB/s, done.
 Resolving deltas: 100% (18163/18163), done.
 ```
 
+## Command-line Tool
+
+When using the MetroAE Docker container, all commands are accessed through the
+`metroae` command-line tool as:
+
+    metroae config ...
+
+If you are using the Python source obtained through Github, then any reference
+to `metroae config` should substitute the equivalent Python source tool:
+
+    python metroae_config.py ...
+
 
 ## Parameters
 
 MetroAE Config command-line tool usage:
 
-    usage: metroae_config.py [-h]
-                             {create,revert,validate,list,schema,example,upgrade-templates,version,help}
-                             ...
+    usage: metroae config [-h]
+                          {create,revert,validate,list,schema,example,upgrade-templates,version,help}
+                          ...
 
     Version 1.0 - This tool reads JSON or Yaml files of templates and user-data to
     write a configuration to a VSD or to revert (remove) said configuration. See
@@ -171,11 +229,11 @@ MetroAE Config command-line tool usage:
       -h, --help            show this help message and exit
 
 
-    usage: metroae_config.py create [-h] [-tp TEMPLATE_PATH] [--version]
-                                    [-sp SPEC_PATH] [-dp DATA_PATH] [-d DATA]
-                                    [-v VSD_URL] [-u USERNAME] [-p PASSWORD]
-                                    [-e ENTERPRISE] [-lg]
-                                    [datafiles [datafiles ...]]
+    usage: metroae config create [-h] [-tp TEMPLATE_PATH] [--version]
+                                 [-sp SPEC_PATH] [-dp DATA_PATH] [-d DATA]
+                                 [-v VSD_URL] [-u USERNAME] [-p PASSWORD]
+                                 [-e ENTERPRISE] [-lg]
+                                 [datafiles [datafiles ...]]
 
     positional arguments:
       datafiles             Optional datafile
@@ -212,7 +270,7 @@ MetroAE Config command-line tool usage:
 
 Apply enterprise, domain and ACLs to VSD.
 
-    $ python metroae_config.py create -tp sample/templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
+    $ metroae config create -tp sample/templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
 
     Configuration
         Enterprise
@@ -270,7 +328,7 @@ Apply enterprise, domain and ACLs to VSD.
 
 Revert (remove) objects configured during application, use -r option
 
-    $ python metroae_config.py revert -tp sample/templates -sp ~/vsd-api-specifications sample/user_data/acls.yaml
+    $ metroae config revert -tp sample/templates -sp ~/vsd-api-specifications sample/user_data/acls.yaml
 
 ## User Data
 
@@ -434,7 +492,7 @@ length as the fields list.
 The templates that have been loaded into the MetroAE config tool can be listed
 with the following:
 
-    $ python metroae_config.py -tp sample/templates --list
+    $ metroae config -tp sample/templates --list
 
     Domain
     Enterprise
@@ -445,7 +503,7 @@ with the following:
 
 An example of user data for any template can be provided using the following:
 
-    python metroae_config.py example -tp sample/templates Domain
+    metroae config example -tp sample/templates Domain
 
     # First template set - Create a L3 Domain
     - template: Domain
@@ -461,7 +519,7 @@ An example of user data for any template can be provided using the following:
 A JSON schema can be generated for the user data required for any template.
 These schemas conform to the json-schema.org standard specification:
 
-    python metroae_config.py schema -tp sample/templates Domain
+    metroae config schema -tp sample/templates Domain
 
     {
       "title": "Schema validator for Nuage Metro config template Domain",
@@ -531,7 +589,7 @@ new `-es` parameter has been added to specify the address of the ES to query.
 The `query language` can be specified to the tool directly on the command-line
 for easy manual use using the `-q` query parameter.  An example follows:
 
-    ./metroae_config.py query -v https://localhost:8443 -q 'enterprise.name'
+    metroae config query -v https://localhost:8443 -q 'enterprise.name'
 
     Device: Nuage Networks VSD 20.5.1
     - Shared Infrastructure
@@ -541,7 +599,7 @@ for easy manual use using the `-q` query parameter.  An example follows:
 
 Multiple queries can be specified on a single line using semicolon `;`:
 
-    ./metroae_config.py query -v https://localhost:8443 -q 'apps = SAASApplicationType.name; ents = enterprise.name'
+    metroae config query -v https://localhost:8443 -q 'apps = SAASApplicationType.name; ents = enterprise.name'
 
     Device: Nuage Networks VSD 20.5.1
     apps:
@@ -565,7 +623,7 @@ supported in files as well.
     apps = SAASApplicationType.name
     ents = enterprise.name
 
-    ./metroae_config.py query -v https://localhost:8443 example.query
+    metroae config query -v https://localhost:8443 example.query
 
     Device: Nuage Networks VSD 20.5.1
     apps:
@@ -1125,3 +1183,250 @@ Resulting output to `report.txt`:
         Enterprises: public, private, Shared Infrastructure (3)
         License expiry: 90 days
     ===========================================
+
+
+## Python Library API
+
+The MetroAE Config engine is written entirely using Python.  It can be integrated
+into other Python-based tools using the library APIs via the pip package
+`nuage-metroae-config`.  The following sections describe the use of the APIs.
+
+### Template Store Class
+
+The TemplateStore class is a repository for all of the templates loaded into
+the engine.  It will be used by the Configuration class to apply template
+actions to a device via a Writer class.
+
+from nuage_metroae_config.template import TemplateStore
+
+    Reads and parses configuration templates.
+
+- read_templates(path_or_file_name)
+
+        Reads and parses templates from either all templates in a
+        directory path, or a single template specified by filename.
+        Both yaml (.yml) and JSON (.json) files are supported.
+
+- add_template(template_string, filename=None)
+
+        Parses the specified string as a template in Yaml or JSON format.
+
+- get_template_names(software_type=None, software_version=None)
+
+        Returns a list of all template names currently loaded in store.
+        If software_version and/or software_type is provided, names will
+        be filtered by the specified version/type.
+
+- get_template(name, software_type=None, software_version=None)
+
+        Returns a Template object of the specified name.  If software_version
+        and/or software_type is provided, template of specified version/type
+        will be returned.
+
+### Template Class
+
+The Template class is a read-only class which provides information about a
+template that was read in via the TemplateStore.
+
+from nuage_metroae_config.template import Template
+
+    Configuration template.  This class is read-only.
+
+- get_name()
+
+        Returns the name of this template.
+
+- get_template_version()
+
+        Returns the template version
+
+- get_software_version()
+
+        Returns a dictionary of {"software_version": "xxx", "software_type": "xxx"}
+
+- get_schema()
+
+        Returns the schema for the template variables in json-schema form.
+
+- get_example()
+
+        Returns example user-data for template variables in YAML format.
+
+- get_documentation()
+
+        Returns template documentation in MarkDown format.
+
+- validate_template_data(template_data)
+
+        Validates that the template_data provided matches the variables schema.
+        Returns True if ok, otherwise an exception is raised.
+
+### VSD Writer Class
+
+The `VsdWriter` class is a derived class of the `DeviceWriterBase` that applies
+configuration to a Nuage Networks VSD.  The writers are modular such that
+new devices could be configured by defining derived device writer classes based
+off of the common `DeviceWriterBase` base class.  The remainder of the engine
+APIs use the generic base class.  This provides great extendability to
+configure many different devices.  Note that the `VsdWriter` class also acts as
+a reader for the `Query` class.
+
+from nuage_metroae_config.vsd_writer import VsdWriter
+
+    Writes configuration to a VSD.  This class is a derived class from
+    the DeviceWriterBase Abstract Base Class.
+
+- set_session_params(url, username="csproot", password=None, enterprise="csp", certificate=None)
+
+        Sets the parameters necessary to connect to the VSD.  This must
+        be called before writing or an exception will be raised.
+
+- get_version():
+
+        Returns the version running on the VSD in format:
+            {"software_version": "xxx", "software_type": "xxx"}
+
+- set_software_version(software_version):
+
+        Sets the software version of the VSD.  This can be obtained via the
+        get_version() method to get from the VSD itself or overwriten
+        to a specific value.
+
+- read_api_specifications(path_or_file_name):
+
+        Reads the VSD configuration API specifications from JSON files
+        in the specified path or file name.  This must be called before
+        writing or an exception will be raised.
+
+- set_logger(logger):
+
+        Set a custom logger for actions taken.  This should be based on the
+        logging Python library.  It will need to define an 'output' log level
+        which is intended to print to stdout.
+
+### User Data Parser Class
+
+The `UserDataParser` class parses the YAML-based user-data format defined in
+the `User Data` section of this document.  It is able to return the data in
+template_name/data_dictionary pairs.  This data can be fed into the
+`Configuration` class to render templates and apply configuration.
+
+from nuage_metroae_config.user_data_parser import UserDataParser
+
+    Parses Yaml or JSON files containing template user data
+
+- read_data(path_or_file_name):
+
+        Reads and parses user data from either all files in a
+        directory path, or a single file specified by filename.
+        Both yaml (.yml) and JSON (.json) files are supported.
+
+- add_data(user_data_string):
+
+        Parses the specified string as user data in Yaml or JSON format.
+
+- get_template_name_data_pairs():
+
+        Returns parsed data as a list of (template_name, data_dict) pairs.
+
+### Configuration Class
+
+The `Configuration` class puts all the above pieces together to configure a
+device.  It requires a `TemplateStore` object with loaded templates.  User data
+is applied to the `Configuration` object which can be taken directly from the
+`UserDataParser` class or from pure Python data via another source.  Finally,
+the configuration is applied, updated or reverted to a device using one of the
+derived writer classes.
+
+from nuage_metroae_config.configuration import Configuration
+
+    Container for template instances.
+
+- set_software_version(software_type=None, software_version=None)
+
+        Sets the current software version of templates that is desired.
+        If not called, the latest software version of templates will be
+        used.
+
+- add_template_data(template_name, template_data)
+
+        Adds template data (user data) for the specified template name.
+        Data is specified in a kwargs dictionary with keys as the
+        attribute/variable name.  The data is validated against the
+        corresponding template schema.  An id is returned for reference.
+
+- apply(writer)
+
+        Applies this configuration to the provided device
+        writer.  Returns True if ok, otherwise an exception is
+        raised.
+
+- update(writer)
+
+        Applies this configuration to the provided device
+        writer as an update.  This means objects that exist will
+        not be considered conflicts.  Returns True if ok, otherwise
+        an exception is raised.
+
+- revert(writer)
+
+        Reverts (removes or undo) this configuration from the
+        provided device writer.  Returns True if ok, otherwise
+        an exception is raised.
+
+- set_logger(logger):
+
+        Set a custom logger for actions taken.  This should be based on the
+        logging Python library.  It will need to define an 'output' log level
+        which is intended to print to stdout.
+
+### Query Class
+
+The `Query` class allows information to be retrieved from a device through
+device readers based on the `DeviceReaderBase`.  Note that the `VsdWriter`
+class is also a reader derived off of this base and can be used for query.  The
+information to be retrieved is defined by a "query language".  Results are
+returned from the execute of the query language text.  Also, any variables set
+during the query can be retrieved.
+
+from nuage_metroae_config.query import Query
+
+    A class which can retrieve information from a device using a
+    DeviceReaderBase reader object.  The information to be retrieved is defined
+    by query language text.
+
+- set_reader(reader)
+
+        Set the primary reader object for performing queries on the device.
+        The reader needs to be derived from the DeviceReaderBase class.
+
+- get_variables()
+
+        Returns a dictionary of all variables and values set during queries.
+
+- register_reader(reader_type, reader)
+
+        Register a reader object for each 'connect' type for performing queries
+        on the device.  This allows devices to be switched within the query
+        text.  The readers need to be derived from the DeviceReaderBase class.
+
+- add_query_file(path_or_file_name)
+
+        Reads and parses query sets from either all query files in a
+        directory path, or a single query file specified by filename.
+        Query files are expected to have .query extension
+
+- execute(query_text=None, override_variables)
+
+        Executes the query defined in query_text.  Variables in the query
+        text can be overriden using the override_variables kwargs dict.  The
+        results of the query are returned as a list with an entry for each
+        query text line.  If query_text is None, then query text is pulled
+        from query files defined by add_query_file.
+
+- set_logger(logger)
+
+        Set a custom logger for actions taken.  This should be based on the
+        logging Python library.  It will need to define an 'output' log level
+        which is intended to print to stdout.
+
