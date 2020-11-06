@@ -1193,9 +1193,9 @@ into other Python-based tools using the library APIs via the pip package
 
 ### Template Store Class
 
-The TemplateStore class is a repository for all of the templates loaded into
-the engine.  It will be used by the Configuration class to apply template
-actions to a device via a Writer class.
+The `TemplateStore` class is a repository for all of the templates loaded into
+the engine.  It will be used by the `Configuration` class to apply template
+actions to a device via a `DeviceWriterBase` class.
 
 from nuage_metroae_config.template import TemplateStore
 
@@ -1225,8 +1225,8 @@ from nuage_metroae_config.template import TemplateStore
 
 ### Template Class
 
-The Template class is a read-only class which provides information about a
-template that was read in via the TemplateStore.
+The `Template` class is a read-only class which provides information about a
+template that was read in via the `TemplateStore`.
 
 from nuage_metroae_config.template import Template
 
@@ -1437,7 +1437,7 @@ The `EsReader` class can be used as another reader with the `Query` class.  It
 is derived from the `DeviceReaderBase` class and can retrieve information from
 ElasticSearch.
 
-from nuage_metroae_config.query import Query
+from nuage_metroae_config.es_reader import EsReader
 
     Performs queries on ElasticSearch.  This class is a derived class from
     the DeviceReaderBase Abstract Base Class.
@@ -1481,7 +1481,7 @@ from nuage_metroae_config.query import Query
                                       password=VSD_PASSWORD,
                                       enterprise=VSD_ENTERPRISE)
 
-        device_version = self.writer.get_version()
+        device_version = vsd_writer.get_version()
         vsd_writer.set_software_version(device_version)
 
         return vsd_writer
@@ -1538,7 +1538,7 @@ from nuage_metroae_config.query import Query
                                       password=VSD_PASSWORD,
                                       enterprise=VSD_ENTERPRISE)
 
-        device_version = self.writer.get_version()
+        device_version = vsd_writer.get_version()
         vsd_reader.set_software_version(device_version)
 
         vsd_query = Query()
