@@ -1385,9 +1385,10 @@ from nuage_metroae_config.configuration import Configuration
 The `Query` class allows information to be retrieved from a device through
 device readers based on the `DeviceReaderBase`.  Note that the `VsdWriter`
 class is also a reader derived off of this base and can be used for query.  The
-information to be retrieved is defined by a "query language".  Results are
-returned from the execute of the query language text.  Also, any variables set
-during the query can be retrieved.
+information to be retrieved is defined by a "query language" which is described
+in the `Language Definition` section of this document.  Results are returned
+from the `execute()` of the query language text.  Also, any variables set during
+the query can be retrieved with `get_variables()`.
 
 from nuage_metroae_config.query import Query
 
@@ -1429,4 +1430,188 @@ from nuage_metroae_config.query import Query
         Set a custom logger for actions taken.  This should be based on the
         logging Python library.  It will need to define an 'output' log level
         which is intended to print to stdout.
+
+### ES Reader Class
+
+The `EsReader` class can be used as another reader with the `Query` class.  It
+is derived from the `DeviceReaderBase` class and can retrieve information from
+ElasticSearch.
+
+from nuage_metroae_config.query import Query
+
+    Performs queries on ElasticSearch.  This class is a derived class from
+    the DeviceReaderBase Abstract Base Class.
+
+- set_session_params(address, port=None):
+
+        Sets the parameters necessary to connect to the ES.  This must
+        be called before reading or an exception will be raised.
+
+## Library API Example - Config
+
+    from nuage_metroae_config.configuration import Configuration
+    from nuage_metroae_config.template import TemplateStore
+    from nuage_metroae_config.user_data_parser import UserDataParser
+    from nuage_metroae_config.vsd_writer import VsdWriter
+
+    ENGINE_VERSION = "1.0"
+    VSD_API_SPEC_PATH = "./vsd-api-specifications"
+    TEMPLATE_PATH = "./templates"
+    USER_DATA_PATH = "./user_data"
+    VSD_URL = "https://10.0.0.1:8443"
+    VSD_USERNAME = "username"
+    VSD_PASSWORD = "password"
+    VSD_ENTERPRISE = "csp"
+
+
+    def setup_template_store(template_path):
+        store = TemplateStore(ENGINE_VERSION)
+
+        store.read_templates(template_path)
+
+        return store
+
+
+    def setup_vsd_writer(vsd_url):
+        vsd_writer = VsdWriter()
+        vsd_writer.add_api_specification_path(VSD_API_SPEC_PATH)
+
+        vsd_writer.set_session_params(vsd_url,
+                                      username=VSD_USERNAME,
+                                      password=VSD_PASSWORD,
+                                      enterprise=VSD_ENTERPRISE)
+
+        device_version = self.writer.get_version()
+        vsd_writer.set_software_version(device_version)
+
+        return vsd_writer
+
+
+    def setup_configuration(template_store, user_data_path):
+        config = Configuration(template_store)
+
+        parser = UserDataParser()
+        template_data_pairs = parser.read_data(user_data_path)
+
+        for data in template_data_pairs:
+            template_name = data[0]
+            template_data = data[1]
+            config.add_template_data(template_name, **template_data)
+
+        return config
+
+
+    # Setup
+    template_store = setup_template_store(TEMPLATE_PATH)
+    vsd_writer = setup_vsd_writer(VSD_URL)
+    config = setup_configuration(template_store, USER_DATA_PATH)
+
+    # Apply the configuration from user data
+    config.apply(vsd_writer)
+
+    # Revert the configuration from user data
+    config.revert(vsd_writer)
+
+
+## Library API Example - Query
+
+    from nuage_metroae_config.es_reader import EsReader
+    from nuage_metroae_config.query import Query
+    from nuage_metroae_config.vsd_writer import VsdWriter
+
+    VSD_API_SPEC_PATH = "./vsd-api-specifications"
+    VSD_URL = "https://10.0.0.1:8443"
+    VSD_USERNAME = "username"
+    VSD_PASSWORD = "password"
+    VSD_ENTERPRISE = "csp"
+
+    ES_ADDRESS = "10.0.0.2"
+    ES_PORT = 9200
+
+
+    def setup_vsd_query_tool(vsd_url):
+        vsd_reader = VsdWriter()
+        vsd_reader.add_api_specification_path(VSD_API_SPEC_PATH)
+
+        vsd_reader.set_session_params(vsd_url,
+                                      username=VSD_USERNAME,
+                                      password=VSD_PASSWORD,
+                                      enterprise=VSD_ENTERPRISE)
+
+        device_version = self.writer.get_version()
+        vsd_reader.set_software_version(device_version)
+
+        vsd_query = Query()
+        vsd_query.set_reader(vsd_reader)
+
+        return vsd_query
+
+
+    def setup_es_query_tool(es_address):
+        es_reader = EsReader()
+        es_reader.set_session_params(es_address, ES_PORT)
+
+        es_query = Query()
+        es_query.set_reader(es_reader)
+
+        return es_query
+
+
+    def get_subnetwork_usage(vsd_query):
+
+        query_string = """
+        subnets = Enterprise.Domain.Zone.Subnet.{name, netmask}
+        zones = Enterprise.Domain.Zone[%group=name].Subnet.{name, netmask}
+        d_count = count(Enterprise.Domain)
+        s_count = count(Enterprise.Domain.Zone.Subnet)
+        z_count = count(Enterprise.Domain.Zone)
+        """
+        vsd_query.execute(query_string)
+
+        results = vsd_query.get_variables()
+
+        domain_dict = dict()
+        domain_dict_agg = dict()
+
+        # [{"name": <subnet_name>, "netmask": <netmask>}, ...]
+        domain_dict["subnets"] = results["subnets"]
+        # [[<zone_name>, [{"name": <subnet_name>, "netmask": <netmask>}, ...]], ...]
+        domain_dict["zones"] = results["zones"]
+        domain_dict_agg["d_count"] = results["d_count"]
+        domain_dict_agg["s_count"] = results["s_count"]
+        domain_dict_agg["z_count"] = results["z_count"]
+
+        return domain_dict, domain_dict_agg
+
+
+    def get_enterprises_with_alarms(vsd_query):
+
+        query_string = """
+        Enterprise[%group=name].Alarm[severity="CRITICAL"].description
+        """
+        results = vsd_query.execute(query_string)
+
+        # [[<enterprise_name>, [{"description": <alarm_descr>}, ...]], ...]
+
+        enterprises_with_critical_alarms = dict()
+        count = 0
+
+        for result in results:
+            ent_name = result[0]
+            alarms = result[1]
+            if len(alarms) > 0:
+                enterprises_with_critical_alarms[ent_name] = alarms
+                count += 1
+
+        enterprises_with_critical_alarms['total_enterprises_with_alarms'] = count
+
+        return enterprises_with_critical_alarms
+
+
+    # Setup query
+    vsd_query = setup_vsd_query_tool(VSD_URL)
+
+    # Perform queries
+    domain_dict, domain_dict_agg = get_subnetwork_usage(vsd_query)
+    enterprises_with_critical_alarms = get_enterprises_with_alarms(vsd_query)
 
