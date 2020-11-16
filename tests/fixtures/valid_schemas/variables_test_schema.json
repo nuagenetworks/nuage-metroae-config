@@ -1,93 +1,112 @@
 {
-  "title": "Schema validator for Nuage Metro Config template Variables Testing",
   "$id": "urn:nuage-metro:config:template:variables-testing",
-  "required": [
-    "name",
-    "select_name",
-    "int_as_string",
-    "number",
-    "floating_point",
-    "true_or_false",
-    "fruit",
-    "string_list",
-    "int_list",
-    "soda_list"
-  ],
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
-  "properties": {
-    "ipv6_address": {
-      "type": "string",
-      "title": "Ipv6 address",
-      "default": "8000::1"
-    },
-    "soda_list": {
-      "items": {
+  "type": "array",
+  "title": "Nuage Metro Config template Variables Testing",
+  "description": "For testing variable validation and schemas",
+  "items": {
+    "title": "Variables Testing",
+    "additionalProperties": false,
+    "type": "object",
+    "properties": {
+      "ipv6_address": {
+        "default": "8000::1",
+        "propertyOrder": 80,
+        "type": "string",
+        "title": "Ipv6 address"
+      },
+      "soda_list": {
+        "items": {
+          "enum": [
+            "COKE",
+            "pepsi",
+            "Sprite"
+          ]
+        },
+        "type": "array",
+        "propertyOrder": 130,
+        "title": "Soda list"
+      },
+      "name": {
+        "propertyOrder": 10,
+        "type": "string",
+        "description": "Name field description",
+        "title": "Name"
+      },
+      "true_or_false": {
+        "propertyOrder": 60,
+        "type": "boolean",
+        "title": "True or false"
+      },
+      "select_name": {
+        "propertyOrder": 20,
+        "type": "string",
+        "title": "Select name"
+      },
+      "int_list": {
+        "items": {
+          "type": "integer"
+        },
+        "type": "array",
+        "propertyOrder": 120,
+        "title": "Int list"
+      },
+      "number": {
+        "propertyOrder": 40,
+        "type": "integer",
+        "title": "Number"
+      },
+      "floating_point": {
+        "propertyOrder": 50,
+        "type": "float",
+        "title": "Floating point"
+      },
+      "ipv4_address": {
+        "default": "10.0.0.1",
+        "propertyOrder": 70,
+        "type": "string",
+        "title": "Ipv4 address"
+      },
+      "string_list": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "propertyOrder": 110,
+        "title": "String list"
+      },
+      "fruit": {
         "enum": [
-          "COKE",
-          "pepsi",
-          "Sprite"
-        ]
+          "APPLE",
+          "Orange",
+          "banana"
+        ],
+        "propertyOrder": 100,
+        "title": "Fruit"
       },
-      "type": "array",
-      "title": "Soda list"
-    },
-    "name": {
-      "type": "string",
-      "title": "Name",
-      "description": "Name field description"
-    },
-    "string_list": {
-      "items": {
-        "type": "string"
+      "int_as_string": {
+        "propertyOrder": 30,
+        "type": "string",
+        "title": "Int as string"
       },
-      "type": "array",
-      "title": "String list"
+      "any_ip_address": {
+        "default": "192.168.0.1",
+        "propertyOrder": 90,
+        "type": "string",
+        "title": "Any ip address"
+      }
     },
-    "select_name": {
-      "type": "string",
-      "title": "Select name"
-    },
-    "int_as_string": {
-      "type": "string",
-      "title": "Int as string"
-    },
-    "int_list": {
-      "items": {
-        "type": "integer"
-      },
-      "type": "array",
-      "title": "Int list"
-    },
-    "number": {
-      "type": "integer",
-      "title": "Number"
-    },
-    "floating_point": {
-      "type": "float",
-      "title": "Floating point"
-    },
-    "any_ip_address": {
-      "type": "string",
-      "title": "Any ip address",
-      "default": "192.168.0.1"
-    },
-    "ipv4_address": {
-      "type": "string",
-      "title": "Ipv4 address",
-      "default": "10.0.0.1"
-    },
-    "true_or_false": {
-      "type": "boolean",
-      "title": "True or false"
-    },
-    "fruit": {
-      "enum": [
-        "APPLE",
-        "Orange",
-        "banana"
-      ],
-      "title": "Fruit"
-    }
+    "required": [
+      "name",
+      "select_name",
+      "int_as_string",
+      "number",
+      "floating_point",
+      "true_or_false",
+      "fruit",
+      "string_list",
+      "int_list",
+      "soda_list"
+    ]
   }
 }

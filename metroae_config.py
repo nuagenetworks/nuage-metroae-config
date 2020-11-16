@@ -52,6 +52,7 @@ SCHEMA_ACTION = 'schema'
 EXAMPLE_ACTION = 'example'
 DOCUMENT_ACTION = 'document'
 TEMPLATE_ACTION = 'templates'
+EXCEL_ACTION = 'excel'
 UPGRADE_TEMPLATE_ACTION = 'update'
 VERSION_ACTION = 'version'
 HELP_ACTION = 'help'
@@ -60,6 +61,8 @@ VSD_SPECIFICAIONS_LOCATION = "https://vsd-api-specifications.s3.us-east-2.amazon
 TEMPLATE_DIR = "/metroae_data/standard-templates"
 SPECIFICATION_DIR = "/metroae_data/vsd-api-specifications"
 DOCUMENTATION_DIR = "/metroae_data/config_documentation"
+EXCEL_DIR = "/metroae_data/excel"
+EXCEL_FILE_PREFIX = "user_data_form_"
 LOGS_DIR = "/metroae_data"
 LOG_LEVEL_STRS = ["OUTPUT", "ERROR", "INFO", "DEBUG", "API"]
 
@@ -119,7 +122,8 @@ def main():
             print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
             exit(1)
 
-    elif args.action in [SCHEMA_ACTION, EXAMPLE_ACTION, DOCUMENT_ACTION]:
+    elif args.action in [SCHEMA_ACTION, EXAMPLE_ACTION, DOCUMENT_ACTION,
+                         EXCEL_ACTION]:
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
@@ -170,6 +174,9 @@ def get_parser():
 
     document_parser = sub_parser.add_parser(DOCUMENT_ACTION)
     add_template_parser_arguments(document_parser)
+
+    excel_parser = sub_parser.add_parser(EXCEL_ACTION)
+    add_template_parser_arguments(excel_parser)
 
     sub_parser.add_parser(VERSION_ACTION)
 
@@ -290,6 +297,7 @@ class MetroConfig(object):
         self.query_variables = dict()
         self.action = action
         self.device_version = None
+        self.excel_parser = None
 
     def setup_logging(self):
         if "log_level" not in self.args:
@@ -468,6 +476,10 @@ class MetroConfig(object):
                     print template.get_documentation()
             return True
 
+        if self.action == EXCEL_ACTION:
+            self.write_excel_input_form(self.args.template_names)
+            return True
+
         return False
 
     def write_template_documentation(self):
@@ -513,6 +525,108 @@ class MetroConfig(object):
 
         with open(full_path, "w") as f:
             f.write(readme)
+
+    def write_excel_input_form(self, template_names):
+        excel = self.create_excel_generator(template_names)
+
+        excel_file_name = self.find_new_excel_file_name()
+
+        excel.write_workbook(excel_file_name)
+
+        print(">>> Successfully created Excel form for %d templates: %s" % (
+            len(template_names), excel_file_name))
+
+    def create_excel_generator(self, template_names):
+        try:
+            from excel_template_generator import ExcelTemplateGenerator
+        except ImportError:
+            print("Could not import excel libraries.  Requires: "
+                  "excel_template_generator and openpyxl")
+            exit(1)
+
+        excel = ExcelTemplateGenerator()
+        excel.settings["schema_order"] = template_names
+        excel.settings["show_version"] = False
+        excel.settings["row_sections_present"] = False
+        excel.settings["num_list_entries"] = 100
+        excel.settings["row_label_color"] = "8888FF"
+        excel.settings["row_label_text_color"] = "FFFFFF"
+
+        schemas = self.get_schemas(template_names)
+        excel.settings["schemas"] = schemas
+
+        return excel
+
+    def get_schemas(self, template_names):
+        schemas = dict()
+        for name in template_names:
+            template = self.store.get_template(
+                name,
+                self.get_software_type(),
+                self.get_software_version())
+            schema = template.get_schema()
+            schemas[name] = schema
+
+        return schemas
+
+    def find_new_excel_file_name(self):
+        file_num_suffix = 1
+
+        if not os.path.isdir(EXCEL_DIR):
+            os.mkdir(EXCEL_DIR)
+
+        excel_file_name = os.path.join(EXCEL_DIR, EXCEL_FILE_PREFIX +
+                                       str(file_num_suffix) + ".xlsx")
+        while os.path.isfile(excel_file_name):
+            file_num_suffix += 1
+            excel_file_name = os.path.join(EXCEL_DIR, EXCEL_FILE_PREFIX +
+                                           str(file_num_suffix) + ".xlsx")
+
+        return excel_file_name
+
+    def read_and_parse_excel(self, excel_file):
+        parser = self.create_excel_parser()
+
+        from excel_parser import ExcelParseError
+        try:
+            data = parser.read_xlsx(excel_file)
+        except ExcelParseError:
+            print("Error")
+            print("-----")
+            print("In Excel file: " + excel_file)
+            for error in parser.errors:
+                print("%s %s | %s" % (error["schema_title"], error["position"],
+                                      error["message"]))
+            exit(1)
+
+        for template_name, var_set_entries in data.iteritems():
+            for var_set in var_set_entries:
+                self.template_data.append((template_name, var_set))
+
+    def create_excel_parser(self):
+        if self.excel_parser is not None:
+            return self.excel_parser
+
+        try:
+            from excel_parser import ExcelParser
+        except ImportError:
+            print("Could not import excel libraries.  Requires: "
+                  "excel_parser, json-schema and openpyxl")
+            exit(1)
+
+        self.excel_parser = ExcelParser()
+
+        self.excel_parser.settings["use_schema_titles"] = True
+        self.excel_parser.settings["row_sections_present"] = False
+
+        template_names = self.store.get_template_names(
+            self.get_software_type(),
+            self.get_software_version())
+
+        schemas = self.get_schemas(template_names)
+        self.excel_parser.settings["schemas"] = schemas
+
+        return self.excel_parser
 
     def setup_reader(self):
         if self.args.es_address is not None:
@@ -580,7 +694,10 @@ class MetroConfig(object):
                     if self.action == QUERY_ACTION:
                         self.query_files.append(datafile)
                     else:
-                        parser.read_data(datafile)
+                        if datafile.endswith(".xlsx"):
+                            self.read_and_parse_excel(datafile)
+                        else:
+                            parser.read_data(datafile)
         else:
             if self.args.data_path is None or len(self.args.data_path) == 0:
                 print("Please specify a user data file or path")
@@ -591,7 +708,7 @@ class MetroConfig(object):
                 else:
                     parser.read_data(path)
         if self.action != QUERY_ACTION:
-            self.template_data = parser.get_template_name_data_pairs()
+            self.template_data.extend(parser.get_template_name_data_pairs())
 
     def apply_templates(self):
         config = Configuration(self.store)
