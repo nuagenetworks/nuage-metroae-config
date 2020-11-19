@@ -41,6 +41,7 @@ from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                 SAVE_TO_FILE_AND_CONSOLE,
                                 SAVE_TO_FILE_APPEND,
                                 SAVE_TO_FILE_NO_FILE,
+                                SAVE_TO_FILE_DECODE,
                                 SELECT_MULTIPLE_MISSING,
                                 SELECT_MULTIPLE_SUCCESS_1,
                                 SELECT_MULTIPLE_SUCCESS_2,
@@ -682,6 +683,19 @@ class TestActionsRead(object):
 
         assert "missing required 'file-path' field" in str(e)
         assert "In Job" in e.value.get_display_string()
+
+    def test_save_to_file__decode(self):
+        root_action = Action(None)
+        root_action.read_children_actions(SAVE_TO_FILE_DECODE)
+
+        current_action = root_action.children[0]
+        assert current_action.object_type == "Job"
+
+        current_action = root_action.children[0].children[1]
+        assert current_action.file_path == "/tmp/pytest_save_to_file.txt"
+        assert current_action.append_to_file is False
+        assert current_action.from_field == "result"
+        assert current_action.decode == "base64"
 
 
 class TestActionsOrdering(object):
