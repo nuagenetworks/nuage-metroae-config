@@ -8,6 +8,7 @@ from logger import Logger
 from util import get_dict_field_no_case
 from os import remove
 import zipfile
+import base64
 
 DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
@@ -1068,12 +1069,13 @@ class SaveToFileAction(Action):
                 zip_path = self.file_path
                 self.file_path = self.file_path.replace('.zip','.iso')
                 isZip = True
-                print "zip it"
             with open(self.file_path, file_mode) as f:
                 if self.prefix_string is not None:
                     console_text += self.prefix_string
                     f.write(self.prefix_string)
                 if self.from_field is not None:
+                    if isZip:
+                        field_value = base64.b64decode(field_value)
                     console_text += field_value
                     f.write(field_value)
                 if self.suffix_string is not None:
