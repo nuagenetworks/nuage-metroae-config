@@ -1067,7 +1067,7 @@ class SaveToFileAction(Action):
             isZip = False
             if self.file_path.endswith('.zip'):
                 zip_path = self.file_path
-                self.file_path = self.file_path.replace('.zip','.iso')
+                self.file_path = self.file_path.replace('.zip', '.iso.gz')
                 isZip = True
             with open(self.file_path, file_mode) as f:
                 if self.prefix_string is not None:
