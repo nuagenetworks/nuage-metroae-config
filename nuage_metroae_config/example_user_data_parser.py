@@ -14,6 +14,14 @@ class TypeToObjectName():
         self.type_dict = type_dict
 
 
+class CombinationKey():
+    def __init__(self, key_name):
+        self.key = key_name
+
+    def get_keys(self, combinationKey):
+        return combinationKey.split(" ")
+
+
 class Expression():
     def __init__(self, key_name):
         self.key_name = key_name
@@ -90,6 +98,7 @@ LIST_DEPENDENCY_KEYS = {"monitor scope": {"destination_nsgs": "nsg_name",
                         "nsg access port": {"egress_qos_policy_names": "egress_qos_policy_name"}}
 
 POLICY_GROUP_EXPRESSION = Expression('policy_group_name')
+BR_DOMAIN_LINK_COMBINATION_KEY = CombinationKey("source_domain_name,domain_name")
 REPLACEMENT_KEYS = \
     {"ingress qos policy": {"wrr_queue_2_rate_limiter_name": "rate_limiter_name",
                             "wrr_queue_3_rate_limiter_name": "rate_limiter_name",
@@ -148,7 +157,10 @@ REPLACEMENT_KEYS = \
                                                   ('gateway_name', 'port_name')]},
      "policy group binding": {"port_name": [('nsg_name', 'nsg_access_port_name'),
                                             ('gateway_name', 'port_name')]},
-     "policy group expression": {"expression": POLICY_GROUP_EXPRESSION}}
+     "policy group expression": {"expression": POLICY_GROUP_EXPRESSION},
+     "br domain link": {"expression": BR_DOMAIN_LINK_COMBINATION_KEY,
+                        "source_domain_name": "domain_name",
+                        "source_enterprise_name": "enterprise_name"}}
 
 REPLACEMENT_KEY_TEMPLATES = {"DC Gateway Vlan": "access_vlan_values",
                              "Enterprise Permission": 0,
@@ -168,7 +180,10 @@ REPLACEMENT_KEY_TEMPLATES = {"DC Gateway Vlan": "access_vlan_values",
                              "L4 Service Group Binding": 0,
                              "Redirection Target Binding": 0,
                              "NSGateway Activate": 0,
-                             "NSG ZFBInfo Download": 0}
+                             "NSG ZFBInfo Download": 0,
+                             "BR Connection": "ipv4_network",
+                             "BR Demarcation Service": ["vlan_value", "nsg_name"],
+                             "BR Domain Link": BR_DOMAIN_LINK_COMBINATION_KEY}
 
 EXTRA_KEYS = {'nsg access port': ['vlan_values']}
 
@@ -553,6 +568,16 @@ def get_object_name(yaml_data, jinja2_template_data):
             REPLACEMENT_KEY_TEMPLATES[jinja2_template_data[0].get_name()] = key
             return (jinja2_template_data[0].get_name(),
                     jinja2_template_data[0].get_name() + str(key))
+
+        elif isinstance(key, CombinationKey):
+            key_list = key.key.split(',')
+            comb_key = ""
+            for k in key_list:
+                if k in yaml_data:
+                    comb_key = comb_key + yaml_data[k] + " "
+
+            comb_key.strip()
+            return (key, comb_key)
 
         if key in yaml_data:
             return (key, yaml_data[key])
