@@ -684,19 +684,6 @@ class TestActionsRead(object):
         assert "missing required 'file-path' field" in str(e)
         assert "In Job" in e.value.get_display_string()
 
-    def test_save_to_file__decode(self):
-        root_action = Action(None)
-        root_action.read_children_actions(SAVE_TO_FILE_DECODE)
-
-        current_action = root_action.children[0]
-        assert current_action.object_type == "Job"
-
-        current_action = root_action.children[0].children[1]
-        assert current_action.file_path == "/tmp/pytest_save_to_file.txt"
-        assert current_action.append_to_file is False
-        assert current_action.from_field == "result"
-        assert current_action.decode == "base64"
-
 
 class TestActionsOrdering(object):
 
@@ -994,10 +981,12 @@ class TestActionsExecute(object):
 
     def run_execute_test(self, template_dict, expected_actions,
                          is_revert=False, is_update=False,
-                         return_empty_select_list=False):
+                         return_empty_select_list=False,
+                         encode=False):
         root_action = Action(None)
         writer = MockWriter()
         writer.set_return_empty_select_list(return_empty_select_list)
+        writer.encode_data(encode)
 
         root_action.set_revert(is_revert)
         root_action.set_update(is_update)
@@ -1927,6 +1916,33 @@ class TestActionsExecute(object):
             f.write("SHOULD BE PRESERVED")
 
         self.run_execute_test(SAVE_TO_FILE_APPEND, expected_actions)
+
+        with open(TEST_FILE, "r") as f:
+            assert f.read() == (
+                "SHOULD BE PRESERVEDno::valueprefix:value_1:suffix")
+
+        output = capsys.readouterr()
+
+        assert "value_1" not in output.out
+
+        os.remove(TEST_FILE)
+
+    def test_save_to_file__decode(self, capsys):
+
+        TEST_FILE = "/tmp/pytest_save_to_file.txt"
+
+        expected_actions = """
+            start-session
+            create-object Job [None]
+            set-values command=GET_ZFB_INFO,parameters={'mediaType': 'ISO'} [context_1]
+            get-value result [context_1]
+            stop-session
+        """
+
+        with open(TEST_FILE, "w") as f:
+            f.write("SHOULD BE PRESERVED")
+
+        self.run_execute_test(SAVE_TO_FILE_DECODE, expected_actions, encode=True)
 
         with open(TEST_FILE, "r") as f:
             assert f.read() == (

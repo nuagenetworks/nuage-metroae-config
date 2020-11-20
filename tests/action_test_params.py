@@ -1636,9 +1636,15 @@ actions:
               mediaType: ISO
       - Save-to-file:
           File-path: /tmp/pytest_save_to_file.txt
-          Append-to-file: false
+          Prefix-string: "no:"
+          Suffix-string: ":value"
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Append-to-file: true
+          Prefix-string: "prefix:"
           From-field: result
-          Write-to-console: True
+          Suffix-string: ":suffix"
+          Write-to-console: False
           decode: base64
 
 """)
