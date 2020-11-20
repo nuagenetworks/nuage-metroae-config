@@ -160,7 +160,9 @@ REPLACEMENT_KEYS = \
      "policy group expression": {"expression": POLICY_GROUP_EXPRESSION},
      "br domain link": {"expression": BR_DOMAIN_LINK_COMBINATION_KEY,
                         "source_domain_name": "domain_name",
-                        "source_enterprise_name": "enterprise_name"}}
+                        "source_enterprise_name": "enterprise_name"},
+     "br demarcation service":{"source_domain_name": "domain_name",
+                                "source_enterprise_name": "enterprise_name"}}
 
 REPLACEMENT_KEY_TEMPLATES = {"DC Gateway Vlan": "access_vlan_values",
                              "Enterprise Permission": 0,
