@@ -1,5 +1,6 @@
 import base64
 
+
 class MockWriter(object):
     """
     Class for unit testing to record all actions taken to the writer and
