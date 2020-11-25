@@ -1,11 +1,11 @@
-from errors import (ConflictError,
-                    MissingSelectionError,
-                    MultipleSelectionError,
-                    MetroConfigError,
-                    TemplateActionError,
-                    TemplateParseError)
-from logger import Logger
-from util import get_dict_field_no_case
+from .errors import (ConflictError,
+                     MissingSelectionError,
+                     MultipleSelectionError,
+                     MetroConfigError,
+                     TemplateActionError,
+                     TemplateParseError)
+from .logger import Logger
+from .util import get_dict_field_no_case
 
 DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
@@ -90,7 +90,7 @@ class Action(object):
         if type(action_dict) != dict:
             raise TemplateParseError("Invalid action: " + str(action_dict))
 
-        action_keys = action_dict.keys()
+        action_keys = list(action_dict.keys())
         if (len(action_keys) != 1):
             raise TemplateParseError("Invalid action: " + str(action_keys))
 
@@ -664,7 +664,7 @@ class SelectObjectAction(Action):
     def get_object_selector(self):
         if type(self.field) == list:
             fields = sorted([x.lower() for x in self.field])
-            values = sorted(self.value)
+            values = sorted(self.value, key=lambda x: str(x))
         else:
             fields = self.field.lower()
             values = self.value
@@ -760,7 +760,7 @@ class SetValuesAction(Action):
 
         self.log.debug(self._get_location("Reading "))
 
-        for key, value in set_values_dict.iteritems():
+        for key, value in set_values_dict.items():
             self.add_attribute(key, value)
 
     def add_attribute(self, field, value):
@@ -797,7 +797,7 @@ class SetValuesAction(Action):
                 self.attributes[field].append(value)
 
     def combine(self, new_set_values_action):
-        for key, value in new_set_values_action.attributes.iteritems():
+        for key, value in new_set_values_action.attributes.items():
             if self.as_list or new_set_values_action.as_list:
                 self.append_list_attribute(key, value)
             else:
@@ -826,7 +826,7 @@ class SetValuesAction(Action):
 
     def resolve_attributes(self):
         attributes_copy = dict()
-        for key, value in self.attributes.iteritems():
+        for key, value in self.attributes.items():
             if isinstance(value, Action):
                 resolved_value = value.get_stored_value()
             elif (type(value) == list and
@@ -856,6 +856,12 @@ class SetValuesAction(Action):
 
                     attributes_copy[obj_name] = dict(self.attributes[obj_name])
 
+                if type(attributes_copy[obj_name]) is not dict:
+                    raise ConflictError("Field '%s' of object %s"
+                                        " is not a dictionary" %
+                                        (str(obj_name),
+                                         str(self.parent.object_type)))
+
                 if param in attributes_copy[obj_name]:
                     raise ConflictError("Param '%s' in field '%s' of object %s"
                                         " is already set" %
@@ -879,8 +885,8 @@ class SetValuesAction(Action):
         cur_output = ""
         indent = Action._indent(indent_level)
 
-        for field, value in self.attributes.iteritems():
-            if isinstance(value, basestring):
+        for field, value in self.attributes.items():
+            if isinstance(value, str):
                 if "'" in value:
                     value = '"' + value + '"'
                 else:

@@ -331,7 +331,7 @@ def main():
 
     run_commands(args.command_file)
 
-    print generate_template()
+    print(generate_template())
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-from logger import Logger
+from .logger import Logger
 
-from errors import DeviceWriterError
+from .errors import DeviceWriterError
 
 
 class DeviceReaderBase(object):
@@ -84,7 +84,10 @@ class DeviceReaderBase(object):
 
         if sort_field is not None:
             def sort_func(result):
-                return self.query_attribute(result, sort_field)
+                value = self.query_attribute(result, sort_field)
+                if value is None:
+                    return "(missing sort field)"
+                return value
 
             filtered.sort(reverse=sort_desc, key=sort_func)
 

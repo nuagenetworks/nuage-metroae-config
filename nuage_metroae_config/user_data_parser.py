@@ -1,8 +1,8 @@
 import os
 import yaml
 
-from errors import UserDataParseError
-from util import get_dict_field_no_case
+from .errors import UserDataParseError
+from .util import get_dict_field_no_case
 
 
 class UserDataParser(object):
@@ -104,7 +104,7 @@ class Reference(object):
             raise UserDataParseError("Group %s not defined" % self.name)
 
         group_dict = groups[self.name]
-        for key, value in group_dict.iteritems():
+        for key, value in group_dict.items():
             if key not in self.target_dict:
                 self.target_dict[key] = value
 
@@ -225,7 +225,7 @@ class ValuesReader(Reader):
 
     @staticmethod
     def combine_dicts(values_dict, parent_values):
-        for key, value in parent_values.iteritems():
+        for key, value in parent_values.items():
             if key not in values_dict:
                 values_dict[key] = value
 
@@ -269,7 +269,7 @@ class ValuesReader(Reader):
         return values_list
 
     def read_references(self, values_dict):
-        for key, value in values_dict.iteritems():
+        for key, value in values_dict.items():
             if key.lower().startswith('$group'):
                 self.store._add_reference(value, values_dict)
 

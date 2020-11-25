@@ -2,14 +2,14 @@ import pytest
 import requests
 import requests_mock
 
-from bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
-                                        ENTERPRISE_SPEC_TEST,
-                                        ENTERPRISE_SPEC_VALIDATE,
-                                        ENTERPRISENET_SPEC_TEST,
-                                        NETMACGRP_SPEC_TEST,
-                                        ROOT_SPEC_TEST,
-                                        SESSION_CREDS_REAL,
-                                        SESSION_CREDS_TEST)
+from .bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
+                                         ENTERPRISE_SPEC_TEST,
+                                         ENTERPRISE_SPEC_VALIDATE,
+                                         ENTERPRISENET_SPEC_TEST,
+                                         NETMACGRP_SPEC_TEST,
+                                         ROOT_SPEC_TEST,
+                                         SESSION_CREDS_REAL,
+                                         SESSION_CREDS_TEST)
 from bambou.exceptions import BambouHTTPError
 from nuage_metroae_config.bambou_adapter import ConfigObject, Fetcher, Session
 
@@ -92,29 +92,31 @@ class RequestSpy(object):
             mock.put(url)
             test_func(session)
             last_request = mock.last_request
-            print "- Request -----"
-            print str(last_request.url)
-            print str(last_request.headers)
-            print str(last_request.json())
+            print("- Request -----")
+            print(str(last_request.url))
+            print(str(last_request.headers))
+            print(str(last_request.json()))
 
         response = requests.put(last_request.url,
                                 headers=last_request.headers,
                                 verify=False,
                                 json=last_request.json())
-        print "- Response -----"
-        print str(response.status_code)
-        print str(response.headers)
-        print str(response.text)
+        print("- Response -----")
+        print(str(response.status_code))
+        print(str(response.headers))
+        print(str(response.text))
 
 
 class TestSession(object):
 
-    @requests_mock.mock()
-    def test_start__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_start__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
 
-    @requests_mock.mock()
-    def test_start__invalid_pass(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_start__invalid_pass(self, **kwargs):
+        mock = kwargs['mock']
         session = Session(**SESSION_CREDS_TEST)
         session.set_enterprise_spec(ENTERPRISE_SPEC_TEST)
 
@@ -131,15 +133,17 @@ class TestSession(object):
 
 class TestConfigObject(object):
 
-    @requests_mock.mock()
-    def test_new_object__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_new_object__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
 
         assert obj.get_name() == "Enterprise"
 
-    @requests_mock.mock()
-    def test_create_parent__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_create_parent__success(self, **kwargs):
+        mock = kwargs['mock']
         session = start_session(mock)
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -167,8 +171,9 @@ class TestConfigObject(object):
         assert obj.name == "test_enterprise"
         assert obj.id == test_id
 
-    @requests_mock.mock()
-    def test_create_parent__conflict(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_create_parent__conflict(self, **kwargs):
+        mock = kwargs['mock']
         session = start_session(mock)
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
 
@@ -204,8 +209,9 @@ class TestConfigObject(object):
         assert 'duplicate' in str(e)
         assert 'test_enterprise exists' in str(e)
 
-    @requests_mock.mock()
-    def test_assign__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_assign__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         parent_id = "bff6a2a3-0ac2-4891-b4e5-099741e6826d"
         child_id = "0d4a68c5-b351-45a2-80e4-fdb880016ef5"
@@ -230,8 +236,9 @@ class TestConfigObject(object):
         json_data = last_request.json()
         assert json_data == [child_id]
 
-    @requests_mock.mock()
-    def test_assign__invalid_id(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_assign__invalid_id(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         parent_id = "bff6a2a3-0ac2-4891-b4e5-099741e6826d"
         child_id = "foobar"
@@ -271,8 +278,9 @@ class TestConfigObject(object):
         assert 'invalid id' in str(e)
         assert child_id in str(e)
 
-    @requests_mock.mock()
-    def test_unassign__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_unassign__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         test_id = "bff6a2a3-0ac2-4891-b4e5-099741e6826d"
 
@@ -293,8 +301,9 @@ class TestConfigObject(object):
         json_data = last_request.json()
         assert json_data == list()
 
-    @requests_mock.mock()
-    def test_save_parent__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_save_parent__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -319,8 +328,9 @@ class TestConfigObject(object):
         assert "name" in json_data
         assert json_data["name"] == "new_name"
 
-    @requests_mock.mock()
-    def test_save_parent__not_found(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_save_parent__not_found(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -359,8 +369,9 @@ class TestConfigObject(object):
         assert 'not found' in str(e)
         assert test_id in str(e)
 
-    @requests_mock.mock()
-    def test_create_child__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_create_child__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         parent_test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -399,8 +410,9 @@ class TestConfigObject(object):
         assert child_obj.name == "test_domain_template"
         assert child_obj.id == child_test_id
 
-    @requests_mock.mock()
-    def test_create_child__conflict(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_create_child__conflict(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         parent_test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -445,8 +457,9 @@ class TestConfigObject(object):
         assert 'in use' in str(e)
         assert 'test_domain_template' in str(e)
 
-    @requests_mock.mock()
-    def test_save_child__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_save_child__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
@@ -471,8 +484,9 @@ class TestConfigObject(object):
         assert "name" in json_data
         assert json_data["name"] == "new_name"
 
-    @requests_mock.mock()
-    def test_save_child__not_found(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_save_child__not_found(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
@@ -511,8 +525,9 @@ class TestConfigObject(object):
         assert 'not found' in str(e)
         assert test_id in str(e)
 
-    @requests_mock.mock()
-    def test_delete_parent__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_delete_parent__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -538,8 +553,9 @@ class TestConfigObject(object):
         assert "name" in json_data
         assert json_data["name"] == "test_enterprise"
 
-    @requests_mock.mock()
-    def test_delete_parent__not_found(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_delete_parent__not_found(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -580,8 +596,9 @@ class TestConfigObject(object):
         assert 'enterprise not found' in str(e)
         assert test_id in str(e)
 
-    @requests_mock.mock()
-    def test_delete_child__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_delete_child__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
@@ -607,8 +624,9 @@ class TestConfigObject(object):
         assert "name" in json_data
         assert json_data["name"] == "test_domain_template"
 
-    @requests_mock.mock()
-    def test_delete_child__not_found(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_delete_child__not_found(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         obj = ConfigObject(DOMAINTMPL_SPEC_TEST)
         test_id = "e5b683ed-5c24-4d43-bac9-181b6d4eb63b"
@@ -652,8 +670,9 @@ class TestConfigObject(object):
 
 class TestFetcher(object):
 
-    @requests_mock.mock()
-    def test_find_parent__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_find_parent__success(self, **kwargs):
+        mock = kwargs['mock']
         session = start_session(mock)
         fetcher = Fetcher(session.root_object, ENTERPRISE_SPEC_TEST)
 
@@ -681,8 +700,9 @@ class TestFetcher(object):
         assert hasattr(obj, 'id') is True
         assert obj.id == test_id
 
-    @requests_mock.mock()
-    def test_find_parent__not_found(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_find_parent__not_found(self, **kwargs):
+        mock = kwargs['mock']
         session = start_session(mock)
         fetcher = Fetcher(session.root_object, ENTERPRISE_SPEC_TEST)
 
@@ -702,8 +722,9 @@ class TestFetcher(object):
 
         assert len(objects) == 0
 
-    @requests_mock.mock()
-    def test_find_parent__multiple(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_find_parent__multiple(self, **kwargs):
+        mock = kwargs['mock']
         session = start_session(mock)
         fetcher = Fetcher(session.root_object, ENTERPRISE_SPEC_TEST)
 
@@ -742,8 +763,9 @@ class TestFetcher(object):
         assert hasattr(obj_2, 'id') is True
         assert obj_2.id == test_id_2
 
-    @requests_mock.mock()
-    def test_find_child__success(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_find_child__success(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
 
         parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
@@ -782,8 +804,9 @@ class TestFetcher(object):
         assert hasattr(obj, 'id') is True
         assert obj.id == child_test_id
 
-    @requests_mock.mock()
-    def test_find_child__not_found(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_find_child__not_found(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         parent_test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -811,8 +834,9 @@ class TestFetcher(object):
 
         assert len(objects) == 0
 
-    @requests_mock.mock()
-    def test_find_child__multiple(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_find_child__multiple(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         parent_test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
@@ -861,8 +885,9 @@ class TestFetcher(object):
         assert hasattr(obj_2, 'id') is True
         assert obj_2.id == child_test_id_2
 
-    @requests_mock.mock()
-    def test_find_child__invalid_parent(self, mock):
+    @requests_mock.mock(kw="mock")
+    def test_find_child__invalid_parent(self, **kwargs):
+        mock = kwargs['mock']
         start_session(mock)
         parent_obj = ConfigObject(ENTERPRISE_SPEC_TEST)
         parent_test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
