@@ -20,6 +20,11 @@ class Configuration(object):
         self.is_update = False
 
     def set_logger(self, logger):
+        """
+        Set a custom logger for actions taken.  This should be based on the
+        logging Python library.  It will need to define an 'output' log level
+        which is intended to print to stdout.
+        """
         self.log = logger
 
     def get_logger(self):

@@ -87,6 +87,9 @@ query_grammer = Lark(r"""
 
 
 class QueryExecutor(Transformer):
+    """
+    Private class for parsing and executing the query language tree
+    """
 
     def __init__(self, reader, override_variables, reader_dict):
 
@@ -403,6 +406,11 @@ class QueryExecutor(Transformer):
 
 
 class Query():
+    """
+    A class which can retrieve information from a device using a
+    DeviceReaderBase reader object.  The information to be retrieved is defined
+    by query language text.
+    """
 
     def __init__(self):
         self.reader = None
@@ -413,15 +421,32 @@ class Query():
         self.variables = None
 
     def set_logger(self, logger):
+        """
+        Set a custom logger for actions taken.  This should be based on the
+        logging Python library.  It will need to define an 'output' log level
+        which is intended to print to stdout.
+        """
         self.log = logger
 
     def set_reader(self, reader):
+        """
+        Set the primary reader object for performing queries on the device.
+        The reader needs to be derived from the DeviceReaderBase class.
+        """
         self.reader = reader
 
     def get_variables(self):
+        """
+        Returns a dictionary of all variables and values set during queries.
+        """
         return self.variables
 
     def register_reader(self, reader_type, reader):
+        """
+        Register a reader object for each 'connect' type for performing queries
+        on the device.  This allows devices to be switched within the query
+        text.  The readers need to be derived from the DeviceReaderBase class.
+        """
         self.reader_dict[reader_type.lower()] = reader
 
     def add_query_file(self, path_or_file_name):
@@ -442,7 +467,13 @@ class Query():
                                       path_or_file_name)
 
     def execute(self, query_text=None, **override_variables):
-
+        """
+        Executes the query defined in query_text.  Variables in the query
+        text can be overriden using the override_variables kwargs dict.  The
+        results of the query are returned as a list with an entry for each
+        query text line.  If query_text is None, then query text is pulled
+        from query files defined by add_query_file.
+        """
         if query_text is None:
             results = list()
             for query_file in self.query_files:

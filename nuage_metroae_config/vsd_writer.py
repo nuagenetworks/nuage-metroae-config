@@ -94,6 +94,11 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
             self.session_params['certificate'] = certificate
 
     def set_software_version(self, software_version):
+        """
+        Sets the software version of the VSD.  This can be obtained via the
+        get_version() method to get from the VSD itself or overwriten
+        to a specific value.
+        """
         major_version = int(software_version.split(".")[0])
         if (major_version < 6):
             self.version = "5.0"
@@ -393,7 +398,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
             raise SessionError("No object for setting values", location)
 
         try:
-            self._set_attributes(context.current_object, **kwargs)
+            is_changed = self._set_attributes(context.current_object, **kwargs)
             self._validate_values(context.current_object,
                                   skip_required_check=context.object_exists)
         except DeviceWriterError as e:
@@ -402,11 +407,15 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         if context.object_exists:
             location = "Saving [%s]" % context
             self.log.debug(location)
-            if self.validate_only is False:
-                try:
-                    context.current_object.save()
-                except BambouHTTPError as e:
-                    raise VsdError(e, location)
+            if is_changed:
+                if self.validate_only is False:
+                    try:
+                        context.current_object.save()
+                    except BambouHTTPError as e:
+                        raise VsdError(e, location)
+            else:
+                self.log.debug("No change to existing object,"
+                               " save skipped [%s]" % context)
         else:
             location = "Creating child [%s]" % context
             self.log.debug(location)
@@ -714,11 +723,15 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         return objects
 
     def _set_attributes(self, obj, **kwargs):
+        is_changed = False
         for field, value in kwargs.items():
             local_name = field.lower()
             if not self._is_assign_attribute(local_name):
                 self._get_attribute_name(obj.spec, field)
                 setattr(obj, local_name, value)
+                is_changed = True
+
+        return is_changed
 
     def _get_attribute(self, obj, field):
         self._get_attribute_name(obj.spec, field)

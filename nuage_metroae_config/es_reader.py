@@ -40,7 +40,7 @@ class EsReader(DeviceReaderBase):
     def set_session_params(self, address, port=None):
         """
         Sets the parameters necessary to connect to the ES.  This must
-        be called before writing or an exception will be raised.
+        be called before reading or an exception will be raised.
         """
         if port is None:
             port = DEFAULT_PORT

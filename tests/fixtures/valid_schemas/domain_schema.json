@@ -1,20 +1,25 @@
 {
-  "title": "Schema validator for Nuage Metro Config template Domain",
-  "$id": "urn:nuage-metro:config:template:domain",
-  "required": [
-    "enterprise_name",
-    "domain_name"
-  ],
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
-  "properties": {
-    "domain_name": {
-      "type": "string",
-      "title": "Domain name"
-    },
-    "enterprise_name": {
-      "type": "string",
-      "title": "Enterprise name"
+    "$id": "urn:nuage-metro:config:template:domain",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "array",
+    "title": "Nuage Metro Config template Domain",
+    "description": "Creates a domain",
+    "items": {
+        "additionalProperties": false,
+        "title": "Domain",
+        "type": "object",
+        "properties": {
+            "domain_name": {
+                "propertyOrder": 20,
+                "type": "string",
+                "title": "Domain name"
+            },
+            "enterprise_name": {
+                "propertyOrder": 10,
+                "type": "string",
+                "title": "Enterprise name"
+            }
+        },
+        "required": ["enterprise_name", "domain_name"]
     }
-  }
 }

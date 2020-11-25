@@ -1484,6 +1484,59 @@ class TestVsdWriterSetValues(object):
     @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
     @patch("nuage_metroae_config.vsd_writer.ConfigObject")
     @patch("nuage_metroae_config.vsd_writer.Fetcher")
+    def test_assign_skip_save__success(self, mock_fetcher, mock_object,
+                                       validate_only):
+        vsd_writer = VsdWriter()
+        vsd_writer.set_validate_only(validate_only)
+        mock_session = setup_standard_session(vsd_writer)
+
+        mock_fetcher.return_value = mock_fetcher
+        mock_fetcher.get.return_value = []
+
+        child_object = MagicMock()
+        mock_object.return_value = child_object
+
+        if validate_only is True:
+            mock_session.root_object = MagicMock()
+            mock_session.root_object.spec = vsd_writer.specs['me']
+
+        mock_object = MagicMock()
+        mock_object.spec = vsd_writer.specs['enterprise']
+        mock_object.__resource_name__ = "enterprises"
+        mock_object.validate.return_value = True
+        mock_object.assign.return_value = True
+
+        context = Context()
+        context.parent_object = None
+        context.current_object = mock_object
+        context.object_exists = True
+
+        values = {
+            "assign(domain)": "abcd-1234"
+        }
+
+        new_context = vsd_writer.set_values(context, **values)
+
+        mock_object.validate.assert_called_once()
+
+        if validate_only is True:
+            mock_session.root_object.save.assert_not_called()
+            mock_object.assign.assert_not_called()
+        else:
+            mock_session.root_object.current_child_name == "enterprises"
+            mock_object.save.assert_not_called()
+            mock_object.assign.assert_called_once_with([child_object],
+                                                       nurest_object_type=None)
+            assert mock_object.current_child_name == "domains"
+            assert child_object.id == "abcd-1234"
+
+        assert new_context.parent_object is None
+        assert new_context.current_object == mock_object
+        assert new_context.object_exists is True
+
+    @pytest.mark.parametrize("validate_only", VALIDATE_ONLY_CASES)
+    @patch("nuage_metroae_config.vsd_writer.ConfigObject")
+    @patch("nuage_metroae_config.vsd_writer.Fetcher")
     def test_assign_multiple__success(self, mock_fetcher, mock_object,
                                       validate_only):
         vsd_writer = VsdWriter()
