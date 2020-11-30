@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nuage-metroae-config",
-    version="0.0.6",
+    version="0.99.0",
     author="Nuage Devops",
     author_email="devops@nuagenetworks.net",
     description="Template-based configuration tool for Nuage Networks VSD",
@@ -15,10 +15,11 @@ setuptools.setup(
     packages=["nuage_metroae_config"],
     classifiers=[
         "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=2.7,<3',
+    python_requires='>=2.7',
     install_requires=[
         "bambou",
         "Jinja2",
