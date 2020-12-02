@@ -154,7 +154,7 @@ class ConfigObject(NURESTObject):
                 # is set to str
                 if not (sys.version_info < (3,) and
                         attribute.attribute_type == str and
-                        type(value) == str) and not (
+                        type(value) == unicode) and not (
                         attribute.attribute_type == float and
                         type(value) == int):
                     self._attribute_errors[local_name] = {
