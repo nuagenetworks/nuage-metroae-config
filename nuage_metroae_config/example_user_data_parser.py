@@ -125,6 +125,7 @@ REPLACEMENT_KEYS = \
      "dc gateway": {"gateway_enterprise_name": "enterprise_name"},
      "dc gateway vlan": {"vlan_enterprise_name": "enterprise_name"},
      "dc gateway port": {"port_enterprise_name": "enterprise_name"},
+     "enterprise permission": {"permission_enterprise_name": "enterprise_name"},
      "bidirectional security policy entry": {"network_name": NETWORK_TYPE,
                                              "location_name": LOCATION_TYPE,
                                              "location_zone_name": "zone_name",
@@ -165,7 +166,7 @@ REPLACEMENT_KEYS = \
                                 "source_enterprise_name": "enterprise_name"}}
 
 REPLACEMENT_KEY_TEMPLATES = {"DC Gateway Vlan": "access_vlan_values",
-                             "Enterprise Permission": 0,
+                             "Enterprise Permission": ["vlan_value", "nsg_name"],
                              "Static Route": ["ipv4_network", "ipv6_network"],
                              "Virtual IP": ["virtual_ipv4_address",
                                             "virtual_ipv6_address"],
