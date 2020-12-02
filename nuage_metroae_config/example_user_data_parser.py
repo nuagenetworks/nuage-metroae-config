@@ -166,7 +166,7 @@ REPLACEMENT_KEYS = \
                                 "source_enterprise_name": "enterprise_name"}}
 
 REPLACEMENT_KEY_TEMPLATES = {"DC Gateway Vlan": "access_vlan_values",
-                             "Enterprise Permission": ["vlan_value", "nsg_name"],
+                             "Enterprise Permission": 0,
                              "Static Route": ["ipv4_network", "ipv6_network"],
                              "Virtual IP": ["virtual_ipv4_address",
                                             "virtual_ipv6_address"],
