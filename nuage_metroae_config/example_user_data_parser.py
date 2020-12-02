@@ -125,7 +125,6 @@ REPLACEMENT_KEYS = \
      "dc gateway": {"gateway_enterprise_name": "enterprise_name"},
      "dc gateway vlan": {"vlan_enterprise_name": "enterprise_name"},
      "dc gateway port": {"port_enterprise_name": "enterprise_name"},
-     "enterprise permission": {"permission_enterprise_name": "enterprise_name"},
      "bidirectional security policy entry": {"network_name": NETWORK_TYPE,
                                              "location_name": LOCATION_TYPE,
                                              "location_zone_name": "zone_name",
