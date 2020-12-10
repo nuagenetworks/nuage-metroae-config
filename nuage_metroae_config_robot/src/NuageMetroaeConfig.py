@@ -1,6 +1,9 @@
 
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.vsd_writer import SOFTWARE_TYPE, VsdWriter
+import urllib3
+
+urllib3.disable_warnings()
 
 
 class NuageMetroaeConfig(object):
