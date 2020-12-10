@@ -3,6 +3,7 @@ import jinja2.ext
 import json
 import os
 import re
+import sys
 import yaml
 
 from .document_template_md import DOCUMENT_TEMPLATE_MD
@@ -497,7 +498,8 @@ class Template(object):
 
     def _validate_variable_value(self, var_schema, var_name, value, var_type):
         if var_type in JSON_SCHEMA_STRING_TYPES:
-            if isinstance(value, str):
+            if isinstance(value, str) or (
+                    sys.version_info < (3,) and isinstance(value, unicode)):
                 return True
             else:
                 allow_int = get_dict_field_no_case(var_schema, "allow-integer")
