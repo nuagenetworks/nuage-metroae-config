@@ -1,6 +1,9 @@
 
 from nuage_metroae_config.configuration import Configuration
+from nuage_metroae_config.es_reader import EsReader
+from nuage_metroae_config.query import Query
 from nuage_metroae_config.template import TemplateStore
+from nuage_metroae_config.user_data_parser import UserDataParser
 from nuage_metroae_config.vsd_writer import SOFTWARE_TYPE, VsdWriter
 import urllib3
 
@@ -16,6 +19,8 @@ class NuageMetroaeConfig(object):
         self.spec_path = None
         self.vsd_writers = dict()
         self.current_vsd_writer = None
+        self.es_readers = dict()
+        self.current_reader = None
         self.configs = dict()
         self.current_config = None
 
@@ -80,14 +85,26 @@ class NuageMetroaeConfig(object):
                 vsd_writer.set_software_version(version["software_version"])
 
         name = self._add_object_with_alias(self.vsd_writers, vsd_writer, alias)
-        self.current_vsd_writer = name
+        self.current_vsd_writer = vsd_writer
+        self.current_reader = vsd_writer
         return name
 
     def switch_vsd_connection(self, alias):
-        if alias not in self.vsd_writers:
-            raise Exception("No VSD connection of alias: " + alias)
+        vsd_writer = self._get_vsd_writer(alias)
+        self.current_vsd_writer = vsd_writer
+        self.current_reader = vsd_writer
 
-        self.current_vsd_writer = alias
+    def setup_es_connection(self, address, port=9200, alias=None):
+        es_reader = EsReader()
+        es_reader.set_session_params(address, port)
+
+        name = self._add_object_with_alias(self.es_readers, es_reader, alias)
+        self.current_reader = es_reader
+        return name
+
+    def switch_es_connection(self, alias):
+        es_reader = self._get_es_reader(alias)
+        self.current_reader = es_reader
 
     def create_config(self, alias=None, software_version=None):
         if self.template_store is None:
@@ -99,30 +116,36 @@ class NuageMetroaeConfig(object):
             config.set_software_version(SOFTWARE_TYPE, software_version)
 
         name = self._add_object_with_alias(self.configs, config, alias)
-        self.current_config = name
+        self.current_config = config
         return name
 
     def switch_config(self, alias):
-        if alias not in self.configs:
-            raise Exception("No config of alias: " + alias)
-
-        self.current_config = alias
+        config = self._get_config(alias)
+        self.current_config = config
 
     def add_to_config(self, template_name, **variable_dict):
         if self.current_config is None:
             self.create_config()
 
-        config = self._get_current_config()
+        config = self.current_config
         config.add_template_data(template_name, **variable_dict)
 
-    def apply_config(self):
-        config = self._get_current_config()
-        vsd_writer = self._get_current_vsd_writer()
+    def add_to_config_from_file(self, user_data_file_or_path):
+        if self.current_config is None:
+            self.create_config()
 
-        if vsd_writer.robot_software_version is not None:
-            software_version = vsd_writer.robot_software_version[
-                "software_version"]
-            config.set_software_version(SOFTWARE_TYPE, software_version)
+        config = self.current_config
+        parser = UserDataParser()
+        parser.read_data(user_data_file_or_path)
+        pairs = parser.get_template_name_data_pairs()
+        for pair in pairs:
+            template_name = pair[0]
+            template_data = pair[1]
+            config.add_template_data(template_name, **template_data)
+
+    def apply_config(self):
+        config, vsd_writer = self._get_current_config_and_writer()
+        self._set_config_version(config, vsd_writer)
 
         vsd_writer.set_validate_only(True)
         config.apply(vsd_writer)
@@ -130,13 +153,8 @@ class NuageMetroaeConfig(object):
         config.apply(vsd_writer)
 
     def update_config(self):
-        config = self._get_current_config()
-        vsd_writer = self._get_current_vsd_writer()
-
-        if vsd_writer.robot_software_version is not None:
-            software_version = vsd_writer.robot_software_version[
-                "software_version"]
-            config.set_software_version(SOFTWARE_TYPE, software_version)
+        config, vsd_writer = self._get_current_config_and_writer()
+        self._set_config_version(config, vsd_writer)
 
         vsd_writer.set_validate_only(True)
         config.update(vsd_writer)
@@ -144,13 +162,8 @@ class NuageMetroaeConfig(object):
         config.update(vsd_writer)
 
     def revert_config(self):
-        config = self._get_current_config()
-        vsd_writer = self._get_current_vsd_writer()
-
-        if vsd_writer.robot_software_version is not None:
-            software_version = vsd_writer.robot_software_version[
-                "software_version"]
-            config.set_software_version(SOFTWARE_TYPE, software_version)
+        config, vsd_writer = self._get_current_config_and_writer()
+        self._set_config_version(config, vsd_writer)
 
         vsd_writer.set_validate_only(True)
         config.revert(vsd_writer)
@@ -158,38 +171,76 @@ class NuageMetroaeConfig(object):
         config.revert(vsd_writer)
 
     def validate_config(self):
-        config = self._get_current_config()
-        vsd_writer = self._get_current_vsd_writer()
-
-        if vsd_writer.robot_software_version is not None:
-            software_version = vsd_writer.robot_software_version[
-                "software_version"]
-            config.set_software_version(SOFTWARE_TYPE, software_version)
+        config, vsd_writer = self._get_current_config_and_writer()
+        self._set_config_version(config, vsd_writer)
 
         vsd_writer.set_validate_only(True)
         config.apply(vsd_writer)
         vsd_writer.set_validate_only(False)
 
-    def _get_current_config(self):
-        if (self.current_config is None):
-            raise Exception("No configuration has been created")
+    def perform_query(self, query, **query_variables):
+        reader = self.current_reader
+        if reader is None:
+            raise Exception("No VSD or ES connection has been made")
 
-        if self.current_config not in self.configs:
-            raise Exception("No config of alias: " + self.current_config)
+        query = Query()
+        query.set_reader(reader)
+        self._register_query_readers(query)
 
-        config = self.configs[self.current_config]
-        return config
+        results = query.execute(query, **query_variables)
+        return results
 
-    def _get_current_vsd_writer(self):
-        if (self.current_vsd_writer is None):
-            raise Exception("No VSD connection has been made")
+    def perform_query_from_file(self, query_file, **query_variables):
+        reader = self.current_reader
+        if reader is None:
+            raise Exception("No VSD or ES connection has been made")
 
-        if self.current_vsd_writer not in self.configs:
-            raise Exception("No VSD connection of alias: " +
-                            self.current_vsd_writer)
+        query = Query()
+        query.set_reader(reader)
+        self._register_query_readers(query)
 
-        vsd_writer = self.vsd_writers[self.current_vsd_writer]
-        return vsd_writer
+        query.add_query_file(query_file)
+        results = query.execute(None, **query_variables)
+        return results
+
+    def get_template_names(self, software_version=None):
+        if self.template_store is None:
+            raise Exception("'Load Config Templates' keyword must be called "
+                            " before making template operations")
+        template_names = self.template_store.get_template_names(
+            SOFTWARE_TYPE, software_version)
+
+        return template_names
+
+    def get_template_documentation(self, template_name, software_version=None):
+        if self.template_store is None:
+            raise Exception("'Load Config Templates' keyword must be called "
+                            " before making template operations")
+        template = self._get_template(template_name,
+                                      SOFTWARE_TYPE,
+                                      software_version)
+
+        return template.get_documentation()
+
+    def get_template_example(self, template_name, software_version=None):
+        if self.template_store is None:
+            raise Exception("'Load Config Templates' keyword must be called "
+                            " before making template operations")
+        template = self._get_template(template_name,
+                                      SOFTWARE_TYPE,
+                                      software_version)
+
+        return template.get_example()
+
+    def get_template_schema(self, template_name, software_version=None):
+        if self.template_store is None:
+            raise Exception("'Load Config Templates' keyword must be called "
+                            " before making template operations")
+        template = self._get_template(template_name,
+                                      SOFTWARE_TYPE,
+                                      software_version)
+
+        return template.get_schema()
 
     def _add_object_with_alias(self, store_dict, obj, alias=None):
         if alias is None:
@@ -202,3 +253,61 @@ class NuageMetroaeConfig(object):
         else:
             store_dict[alias] = obj
             return alias
+
+    def _get_config(self, alias):
+        if self.current_config is None:
+            raise Exception("No configuration has been created")
+
+        if alias not in self.configs:
+            raise Exception("No config of alias: " + alias)
+
+        config = self.configs[alias]
+        return config
+
+    def _get_vsd_writer(self, alias):
+        if self.current_vsd_writer not in self.vsd_writers:
+            raise Exception("No VSD connection of alias: " + alias)
+
+        vsd_writer = self.vsd_writers[alias]
+        return vsd_writer
+
+    def _get_current_config_and_writer(self):
+        config = self.current_config
+        if config is None:
+            raise Exception("No configuration has been created")
+        vsd_writer = self.current_vsd_writer
+        if vsd_writer is None:
+            raise Exception("No VSD connection has been made")
+
+        return (config, vsd_writer)
+
+    def _set_config_version(self, config, vsd_writer):
+        if vsd_writer.robot_software_version is not None:
+            software_version = vsd_writer.robot_software_version[
+                "software_version"]
+            config.set_software_version(SOFTWARE_TYPE, software_version)
+
+    def _get_es_reader(self, alias):
+        if alias not in self.es_readers:
+            raise Exception("No ES connection of alias: " + alias)
+
+        es_reader = self.es_readers[alias]
+        return es_reader
+
+    def _register_query_readers(self, query):
+        if self.spec_path is not None:
+            vsd_writer = VsdWriter()
+            vsd_writer.add_api_specification_path(self.spec_path)
+            query.register_reader("vsd", vsd_writer)
+
+        es_reader = EsReader()
+        query.register_reader("es", es_reader)
+
+    def _get_template(self, template_name, software_version=None):
+        if self.template_store is None:
+            raise Exception("'Load Config Templates' keyword must be called "
+                            " before making template operations")
+        template = self.template_store.get_template(template_name,
+                                                    SOFTWARE_TYPE,
+                                                    software_version)
+        return template
