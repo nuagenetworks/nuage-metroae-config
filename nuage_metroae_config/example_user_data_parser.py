@@ -4,8 +4,8 @@ import argparse
 import os
 import yaml
 import re
-from .template import TemplateStore
-from .user_data_parser import UserDataParser
+from nuage_metroae_config.template import TemplateStore
+from nuage_metroae_config.user_data_parser import UserDataParser
 
 
 class TypeToObjectName():
