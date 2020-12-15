@@ -20,7 +20,7 @@ def log_output(msg):
 logger.output = log_output
 
 
-class NuageMetroaeConfigKeywords(object):
+class NuageMetroaeConfig(object):
     """Library for Nuage MetroAE Config in Robot Framework
 
     This library allows for the configuration of Nuage Networks VSDs through
@@ -30,6 +30,7 @@ class NuageMetroaeConfigKeywords(object):
     See the documentation for nuage_metroae_config for more information
     [https://github.com/nuagenetworks/nuage-metroae-config|Nuage MetroAE Config]
     """
+    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     ENGINE_VERSION = "1.0"
 
     def __init__(self):
@@ -101,7 +102,7 @@ class NuageMetroaeConfigKeywords(object):
         """
         if self.template_store is None:
             self.template_store = TemplateStore(
-                NuageMetroaeConfigKeywords.ENGINE_VERSION)
+                NuageMetroaeConfig.ENGINE_VERSION)
 
         self.template_store.read_templates(path_or_file)
 
