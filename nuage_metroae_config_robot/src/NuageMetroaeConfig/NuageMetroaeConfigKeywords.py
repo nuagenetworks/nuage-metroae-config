@@ -31,7 +31,6 @@ class NuageMetroaeConfigKeywords(object):
     [https://github.com/nuagenetworks/nuage-metroae-config|Nuage MetroAE Config]
     """
     ENGINE_VERSION = "1.0"
-    ROBOT_LIBRARY_SCOPE = 'Global'
 
     def __init__(self):
         self.template_store = None
