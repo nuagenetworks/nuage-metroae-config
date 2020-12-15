@@ -5,6 +5,8 @@ from nuage_metroae_config.query import Query
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.user_data_parser import UserDataParser
 from nuage_metroae_config.vsd_writer import SOFTWARE_TYPE, VsdWriter
+from robot.api import logger
+
 import urllib3
 
 urllib3.disable_warnings()
@@ -147,6 +149,7 @@ class NuageMetroaeConfig(object):
                             " making a VSD connection")
 
         vsd_writer = VsdWriter()
+        vsd_writer.set_logger(logger)
         vsd_writer.read_api_specifications(self.spec_path)
         cert_pair = None
         if certificate is not None or certificate_key is not None:
@@ -207,6 +210,7 @@ class NuageMetroaeConfig(object):
         """
 
         es_reader = EsReader()
+        es_reader.set_logger(logger)
         es_reader.set_session_params(address, port)
 
         name = self._add_object_with_alias(self.es_readers, es_reader, alias)
@@ -240,6 +244,7 @@ class NuageMetroaeConfig(object):
                             " before making a configuration")
 
         config = Configuration(self.template_store)
+        config.set_logger(logger)
         if software_version is not None:
             config.set_software_version(SOFTWARE_TYPE, software_version)
 
@@ -272,10 +277,12 @@ class NuageMetroaeConfig(object):
                           current config.
         """
         if self.current_config is None:
-            self.new_config()
+            alias = self.new_config()
 
         config = self.current_config
         config.add_template_data(template_name, **variable_dict)
+
+        return alias
 
     def add_to_config_from_file(self, user_data_file_or_path):
         """ Add To Config From File: Adds template instances into the current
@@ -287,7 +294,7 @@ class NuageMetroaeConfig(object):
                                    or path containing multiple of these files.
         """
         if self.current_config is None:
-            self.new_config()
+            alias = self.new_config()
 
         config = self.current_config
         parser = UserDataParser()
@@ -297,6 +304,8 @@ class NuageMetroaeConfig(object):
             template_name = pair[0]
             template_data = pair[1]
             config.add_template_data(template_name, **template_data)
+
+        return alias
 
     def apply_config(self):
         """ Apply Config: Applies the current configuration to a VSD via the
@@ -365,6 +374,7 @@ class NuageMetroaeConfig(object):
             raise Exception("No VSD or ES connection has been made")
 
         query = Query()
+        query.set_logger(logger)
         query.set_reader(reader)
         self._register_query_readers(query)
 
@@ -390,6 +400,7 @@ class NuageMetroaeConfig(object):
             raise Exception("No VSD or ES connection has been made")
 
         query = Query()
+        query.set_logger(logger)
         query.set_reader(reader)
         self._register_query_readers(query)
 
