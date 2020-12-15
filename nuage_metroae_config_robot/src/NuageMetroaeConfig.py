@@ -149,8 +149,8 @@ class NuageMetroaeConfig(object):
                             " making a VSD connection")
 
         vsd_writer = VsdWriter()
-        vsd_writer.set_logger(logger)
         vsd_writer.read_api_specifications(self.spec_path)
+        vsd_writer.set_logger(logger)
         cert_pair = None
         if certificate is not None or certificate_key is not None:
             if certificate is None or certificate_key is None:
@@ -277,12 +277,10 @@ class NuageMetroaeConfig(object):
                           current config.
         """
         if self.current_config is None:
-            alias = self.new_config()
+            self.new_config()
 
         config = self.current_config
         config.add_template_data(template_name, **variable_dict)
-
-        return alias
 
     def add_to_config_from_file(self, user_data_file_or_path):
         """ Add To Config From File: Adds template instances into the current
@@ -294,7 +292,7 @@ class NuageMetroaeConfig(object):
                                    or path containing multiple of these files.
         """
         if self.current_config is None:
-            alias = self.new_config()
+            self.new_config()
 
         config = self.current_config
         parser = UserDataParser()
@@ -304,8 +302,6 @@ class NuageMetroaeConfig(object):
             template_name = pair[0]
             template_data = pair[1]
             config.add_template_data(template_name, **template_data)
-
-        return alias
 
     def apply_config(self):
         """ Apply Config: Applies the current configuration to a VSD via the
