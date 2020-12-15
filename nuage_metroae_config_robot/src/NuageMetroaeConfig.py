@@ -7,10 +7,22 @@ from nuage_metroae_config.user_data_parser import UserDataParser
 from nuage_metroae_config.vsd_writer import SOFTWARE_TYPE, VsdWriter
 from robot.api import logger
 
+import logging
 import urllib3
 
 urllib3.disable_warnings()
-logger.output = logger.info
+# logger.output = logger.info
+bambou_logger = logging.getLogger("bambou")
+bambou_logger.setLevel(logging.INFO)
+OUTPUT_LEVEL_NUM = logging.ERROR + 5
+logging.addLevelName(OUTPUT_LEVEL_NUM, "OUTPUT")
+
+
+def output(self, msg, *args, **kwargs):
+    if self.isEnabledFor(OUTPUT_LEVEL_NUM):
+        self._log(OUTPUT_LEVEL_NUM, msg, args, **kwargs)
+
+logging.Logger.output = output
 
 
 class NuageMetroaeConfig(object):
