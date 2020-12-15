@@ -326,7 +326,6 @@ class NuageMetroaeConfig(object):
         except MetroConfigError as e:
             error_output = e.get_display_string()
             logger.error(error_output)
-            logger.exception("Stack trace")
             raise e
 
     def update_config(self):
