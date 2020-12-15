@@ -102,7 +102,7 @@ class NuageMetroaeConfigKeywords(object):
         """
         if self.template_store is None:
             self.template_store = TemplateStore(
-                NuageMetroaeConfig.ENGINE_VERSION)
+                NuageMetroaeConfigKeywords.ENGINE_VERSION)
 
         self.template_store.read_templates(path_or_file)
 
