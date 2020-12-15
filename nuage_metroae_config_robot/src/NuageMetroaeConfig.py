@@ -10,6 +10,7 @@ from robot.api import logger
 import urllib3
 
 urllib3.disable_warnings()
+logger.output = logger.info
 
 
 class NuageMetroaeConfig(object):
