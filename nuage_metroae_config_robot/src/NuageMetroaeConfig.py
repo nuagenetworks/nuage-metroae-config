@@ -124,9 +124,7 @@ class NuageMetroaeConfig(object):
                              password="csproot", enterprise="csp",
                              certificate=None, certificate_key=None,
                              software_version=None, alias=None):
-        """ Setup VSD Connection: Sets up a connection to a VSD.  Requires
-                                  the VSD API specifications to be provided
-                                  beforehand.
+        """ Setup VSD Connection: Sets up a connection to a VSD.  Requires the VSD API specifications to be provided beforehand.
 
         ``vsd_url`` URL to the VSD to be configured.  E.g. https://vsd.example.com:8443
 
@@ -191,9 +189,7 @@ class NuageMetroaeConfig(object):
         return name
 
     def switch_vsd_connection(self, alias):
-        """ Switch VSD Connection: Switches the current VSD connection to
-                                   a different alias.  This can be used when
-                                   managing multiple VSD connections.
+        """ Switch VSD Connection: Switches the current VSD connection to a different alias.  This can be used when managing multiple VSD connections.
 
             ``alias`` The alias of the VSD connection to switch to.  This is
                       returned from `Setup VSD Connection`
@@ -203,9 +199,7 @@ class NuageMetroaeConfig(object):
         self.current_reader = vsd_writer
 
     def setup_es_connection(self, address, port=9200, alias=None):
-        """ Setup ES Connection: Sets up a connection to an ElasticSearch.
-                                 This connection supports only queries and
-                                 not configuration.
+        """ Setup ES Connection: Sets up a connection to an ElasticSearch. This connection supports only queries and not configuration.
 
         ``address`` Address of the ElasticSearch to query
 
@@ -226,9 +220,7 @@ class NuageMetroaeConfig(object):
         return name
 
     def switch_es_connection(self, alias):
-        """ Switch ES Connection: Switches the current ES connection to
-                                  a different alias.  This can be used when
-                                  managing multiple ES connections.
+        """ Switch ES Connection: Switches the current ES connection to a different alias.  This can be used when managing multiple ES connections.
 
             ``alias`` The alias of the ES connection to switch to.  This is
                       returned from `Setup ES Connection`
@@ -238,8 +230,7 @@ class NuageMetroaeConfig(object):
         self.current_reader = es_reader
 
     def new_config(self, alias=None, software_version=None):
-        """ New Config: Creates a new configuration where template data
-                        can be added.
+        """ New Config: Creates a new configuration where template data can be added.
 
             ``alias`` Provide a handle name for this config which can be used
                       to switch configurations.  This is useful if managing
@@ -261,9 +252,7 @@ class NuageMetroaeConfig(object):
         return name
 
     def switch_config(self, alias):
-        """ Switch Config: Switches the current configuration to a different
-                           alias.  This can be used when managing multiple
-                           configurations.
+        """ Switch Config: Switches the current configuration to a different alias.  This can be used when managing multiple configurations.
 
             ``alias`` The alias of the config to switch to.  This is
                       returned from `New Config`
@@ -291,9 +280,8 @@ class NuageMetroaeConfig(object):
         config.add_template_data(template_name, **variable_dict)
 
     def add_to_config_from_file(self, user_data_file_or_path):
-        """ Add To Config From File: Adds template instances into the current
-                                     config from YAML user-data files.  For
-                                     format details see:
+        """ Add To Config From File: Adds template instances into the current config from YAML user-data files.
+                                     For format details see:
                                      [https://github.com/nuagenetworks/nuage-metroae-config|Nuage MetroAE Config]
 
         ``user_data_file_or_path`` File name containing YAML template user-data
@@ -312,8 +300,7 @@ class NuageMetroaeConfig(object):
             config.add_template_data(template_name, **template_data)
 
     def apply_config(self):
-        """ Apply Config: Applies the current configuration to a VSD via the
-                          current VSD connection.
+        """ Apply Config: Applies the current configuration to a VSD via the current VSD connection.
         """
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
@@ -329,10 +316,7 @@ class NuageMetroaeConfig(object):
             raise e
 
     def update_config(self):
-        """ Update Config: Applies the current configuration to a VSD via the
-                           current VSD connection.  Update differs from apply
-                           where update will not error if some of the config
-                           already exists.
+        """ Update Config: Applies the current configuration to a VSD via the current VSD connection.  Update differs from apply where update will not error if some of the config already exists.
         """
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
@@ -348,8 +332,7 @@ class NuageMetroaeConfig(object):
             raise e
 
     def revert_config(self):
-        """ Revert Config: Reverts (removes/deletes) the current configuration
-                           from a VSD via the current VSD connection.
+        """ Revert Config: Reverts (removes/deletes) the current configuration from a VSD via the current VSD connection.
         """
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
@@ -365,10 +348,7 @@ class NuageMetroaeConfig(object):
             raise e
 
     def validate_config(self):
-        """ Validate Config: Validates that the current configuration is
-                             free from any syntatic errors without performing
-                             any actual operations on the VSD.  Still requires
-                             a VSD connection, however.
+        """ Validate Config: Validates that the current configuration is free from any syntatic errors without performing any actual operations on the VSD.  Still requires a VSD connection, however.
         """
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
@@ -383,10 +363,8 @@ class NuageMetroaeConfig(object):
             raise e
 
     def perform_query(self, query_text, **query_variables):
-        """ Perform Query: Gathers data from the current VSD or ES connection
-                           using the query language syntax.  Result data will be
-                           returned.  More information about `query` can be
-                           found at:
+        """ Perform Query: Gathers data from the current VSD or ES connection using the query language syntax.  Result data will be returned.
+                           More information about `query` can be found at:
                            [https://github.com/nuagenetworks/nuage-metroae-config|Nuage MetroAE Config]
 
         ``query_text`` The query language string to perform on the VSD or ES.
@@ -406,11 +384,8 @@ class NuageMetroaeConfig(object):
         return results
 
     def perform_query_from_file(self, query_file, **query_variables):
-        """ Perform Query From File: Gathers data from the current VSD or ES
-                                     connection using a file in the query
-                                     language syntax.  Result data will be
-                                     returned.  More information about `query`
-                                     can be found at:
+        """ Perform Query From File: Gathers data from the current VSD or ES connection using a file in the query language syntax.  Result data will be returned.
+                                     More information about `query` can be found at:
                                      [https://github.com/nuagenetworks/nuage-metroae-config|Nuage MetroAE Config]
 
         ``query_file`` A file containing query language to perform on the VSD
@@ -433,9 +408,7 @@ class NuageMetroaeConfig(object):
         return results
 
     def get_template_names(self, software_version=None):
-        """ Get Template Names: Returns a list of all of the template names
-                                loaded in.  This requires the template store
-                                to have been loaded beforehand.
+        """ Get Template Names: Returns a list of all of the template names loaded in.  This requires the template store to have been loaded beforehand.
 
         ``software_version`` Restrict the templates to the VSD software version
                              specified.  If not specified, the latest versions
@@ -450,10 +423,7 @@ class NuageMetroaeConfig(object):
         return template_names
 
     def get_template_documentation(self, template_name, software_version=None):
-        """ Get Template Documentation: Returns the documentation for the
-                                        specified template name.  This requires
-                                        the template store to have been loaded
-                                        beforehand.
+        """ Get Template Documentation: Returns the documentation for the specified template name.  This requires the template store to have been loaded beforehand.
 
         ``software_version`` Restrict the template to the VSD software version
                              specified.  If not specified, the latest version
@@ -468,9 +438,7 @@ class NuageMetroaeConfig(object):
         return template.get_documentation()
 
     def get_template_example(self, template_name, software_version=None):
-        """ Get Template Example: Returns example user data for the specified
-                                  template name.  This requires the template
-                                  store to have been loaded beforehand.
+        """ Get Template Example: Returns example user data for the specified template name.  This requires the template store to have been loaded beforehand.
 
         ``software_version`` Restrict the template to the VSD software version
                              specified.  If not specified, the latest version
@@ -485,9 +453,7 @@ class NuageMetroaeConfig(object):
         return template.get_example()
 
     def get_template_schema(self, template_name, software_version=None):
-        """ Get Template Schema: Returns a JSON schema for the specified
-                                 template name.  This requires the template
-                                 store to have been loaded beforehand.
+        """ Get Template Schema: Returns a JSON schema for the specified template name.  This requires the template store to have been loaded beforehand.
 
         ``software_version`` Restrict the template to the VSD software version
                              specified.  If not specified, the latest version
