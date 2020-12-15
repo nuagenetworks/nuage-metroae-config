@@ -349,14 +349,14 @@ class NuageMetroaeConfig(object):
         config.apply(vsd_writer)
         vsd_writer.set_validate_only(False)
 
-    def perform_query(self, query, **query_variables):
+    def perform_query(self, query_text, **query_variables):
         """ Perform Query: Gathers data from the current VSD or ES connection
                            using the query language syntax.  Result data will be
                            returned.  More information about `query` can be
                            found at:
                            [https://github.com/nuagenetworks/nuage-metroae-config|Nuage MetroAE Config]
 
-        ``query`` The query language string to perform on the VSD or ES.
+        ``query_text`` The query language string to perform on the VSD or ES.
         ``query_variables`` A dictionary of variable values to provide or
                             override during the query.
         """
@@ -368,7 +368,7 @@ class NuageMetroaeConfig(object):
         query.set_reader(reader)
         self._register_query_readers(query)
 
-        results = query.execute(query, **query_variables)
+        results = query.execute(query_text, **query_variables)
         return results
 
     def perform_query_from_file(self, query_file, **query_variables):
