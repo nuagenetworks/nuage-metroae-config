@@ -1,5 +1,6 @@
 
 from nuage_metroae_config.configuration import Configuration
+from nuage_metroae_config.errors import MetroConfigError
 from nuage_metroae_config.es_reader import EsReader
 from nuage_metroae_config.query import Query
 from nuage_metroae_config.template import TemplateStore
@@ -7,19 +8,16 @@ from nuage_metroae_config.user_data_parser import UserDataParser
 from nuage_metroae_config.vsd_writer import SOFTWARE_TYPE, VsdWriter
 from robot.api import logger
 
-import logging
 import urllib3
 
 urllib3.disable_warnings()
-bambou_logger = logging.getLogger("requests")
-bambou_logger.setLevel(logging.INFO)
 
 
-def output(msg):
+def log_output(msg):
     print(msg)
 
 
-logger.output = output
+logger.output = log_output
 
 
 class NuageMetroaeConfig(object):
@@ -320,10 +318,16 @@ class NuageMetroaeConfig(object):
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
 
-        vsd_writer.set_validate_only(True)
-        config.apply(vsd_writer)
-        vsd_writer.set_validate_only(False)
-        config.apply(vsd_writer)
+        try:
+            vsd_writer.set_validate_only(True)
+            config.apply(vsd_writer)
+            vsd_writer.set_validate_only(False)
+            config.apply(vsd_writer)
+        except MetroConfigError as e:
+            error_output = e.get_display_string()
+            logger.error(error_output)
+            logger.exception("Stack trace")
+            raise e
 
     def update_config(self):
         """ Update Config: Applies the current configuration to a VSD via the
