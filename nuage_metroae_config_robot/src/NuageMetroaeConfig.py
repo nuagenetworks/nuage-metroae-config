@@ -20,7 +20,7 @@ def log_output(msg):
 logger.output = log_output
 
 
-class NuageMetroaeConfigKeywords(object):
+class NuageMetroaeConfig(object):
     """Library for Nuage MetroAE Config in Robot Framework
 
     This library allows for the configuration of Nuage Networks VSDs through
