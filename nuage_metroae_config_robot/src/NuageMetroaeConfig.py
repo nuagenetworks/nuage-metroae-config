@@ -337,10 +337,15 @@ class NuageMetroaeConfig(object):
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
 
-        vsd_writer.set_validate_only(True)
-        config.update(vsd_writer)
-        vsd_writer.set_validate_only(False)
-        config.update(vsd_writer)
+        try:
+            vsd_writer.set_validate_only(True)
+            config.update(vsd_writer)
+            vsd_writer.set_validate_only(False)
+            config.update(vsd_writer)
+        except MetroConfigError as e:
+            error_output = e.get_display_string()
+            logger.error(error_output)
+            raise e
 
     def revert_config(self):
         """ Revert Config: Reverts (removes/deletes) the current configuration
@@ -349,10 +354,15 @@ class NuageMetroaeConfig(object):
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
 
-        vsd_writer.set_validate_only(True)
-        config.revert(vsd_writer)
-        vsd_writer.set_validate_only(False)
-        config.revert(vsd_writer)
+        try:
+            vsd_writer.set_validate_only(True)
+            config.revert(vsd_writer)
+            vsd_writer.set_validate_only(False)
+            config.revert(vsd_writer)
+        except MetroConfigError as e:
+            error_output = e.get_display_string()
+            logger.error(error_output)
+            raise e
 
     def validate_config(self):
         """ Validate Config: Validates that the current configuration is
@@ -363,9 +373,14 @@ class NuageMetroaeConfig(object):
         config, vsd_writer = self._get_current_config_and_writer()
         self._set_config_version(config, vsd_writer)
 
-        vsd_writer.set_validate_only(True)
-        config.apply(vsd_writer)
-        vsd_writer.set_validate_only(False)
+        try:
+            vsd_writer.set_validate_only(True)
+            config.apply(vsd_writer)
+            vsd_writer.set_validate_only(False)
+        except MetroConfigError as e:
+            error_output = e.get_display_string()
+            logger.error(error_output)
+            raise e
 
     def perform_query(self, query_text, **query_variables):
         """ Perform Query: Gathers data from the current VSD or ES connection
