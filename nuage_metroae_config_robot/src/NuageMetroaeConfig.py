@@ -42,6 +42,7 @@ class NuageMetroaeConfig(object):
         self.current_reader = None
         self.configs = dict()
         self.current_config = None
+        self.last_query = None
 
     def setup_config(self, template_path_or_file, vsd_spec_path,
                      vsd_url, username="csproot",
@@ -376,6 +377,7 @@ class NuageMetroaeConfig(object):
             raise Exception("No VSD or ES connection has been made")
 
         query = Query()
+        self.last_query = query
         query.set_logger(logger)
         query.set_reader(reader)
         self._register_query_readers(query)
@@ -399,6 +401,7 @@ class NuageMetroaeConfig(object):
             raise Exception("No VSD or ES connection has been made")
 
         query = Query()
+        self.last_query = query
         query.set_logger(logger)
         query.set_reader(reader)
         self._register_query_readers(query)
@@ -406,6 +409,14 @@ class NuageMetroaeConfig(object):
         query.add_query_file(query_file)
         results = query.execute(None, **query_variables)
         return results
+
+    def get_query_variables(self):
+        """ Get Query Variable: Gets a variable value dict from the last query
+        """
+        if self.last_query is None:
+            raise Exception("No previous query has been performed")
+
+        return self.last_query.get_variables()
 
     def get_template_names(self, software_version=None):
         """ Get Template Names: Returns a list of all of the template names loaded in.  This requires the template store to have been loaded beforehand.
