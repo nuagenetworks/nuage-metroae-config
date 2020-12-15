@@ -428,7 +428,6 @@ class NuageMetroaeConfig(object):
             raise Exception("'Load Config Templates' keyword must be called "
                             " before making template operations")
         template = self._get_template(template_name,
-                                      SOFTWARE_TYPE,
                                       software_version)
 
         return template.get_documentation()
@@ -446,7 +445,6 @@ class NuageMetroaeConfig(object):
             raise Exception("'Load Config Templates' keyword must be called "
                             " before making template operations")
         template = self._get_template(template_name,
-                                      SOFTWARE_TYPE,
                                       software_version)
 
         return template.get_example()
@@ -464,7 +462,6 @@ class NuageMetroaeConfig(object):
             raise Exception("'Load Config Templates' keyword must be called "
                             " before making template operations")
         template = self._get_template(template_name,
-                                      SOFTWARE_TYPE,
                                       software_version)
 
         return template.get_schema()
