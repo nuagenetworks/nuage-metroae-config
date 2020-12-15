@@ -11,16 +11,12 @@ import logging
 import urllib3
 
 urllib3.disable_warnings()
-# logger.output = logger.info
 bambou_logger = logging.getLogger("requests")
 bambou_logger.setLevel(logging.INFO)
-OUTPUT_LEVEL_NUM = logging.ERROR + 5
-logging.addLevelName(OUTPUT_LEVEL_NUM, "OUTPUT")
 
 
-def output(self, msg, *args, **kwargs):
-    if self.isEnabledFor(OUTPUT_LEVEL_NUM):
-        self._log(OUTPUT_LEVEL_NUM, msg, args, **kwargs)
+def output(msg):
+    print(msg)
 
 
 logger.output = output
