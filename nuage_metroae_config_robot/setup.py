@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nuage-metroae-config-robot",
-    version="0.0.1",
+    version="0.0.2",
     author="Nuage Devops",
     author_email="devops@nuagenetworks.net",
     description="Library for Nuage MetroAE Config in Robot Framework",
