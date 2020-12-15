@@ -411,7 +411,7 @@ class NuageMetroaeConfig(object):
         return results
 
     def get_query_variables(self):
-        """ Get Query Variable: Gets a variable value dict from the last query
+        """ Get Query Variables: Gets a variable value dict from the last query.
         """
         if self.last_query is None:
             raise Exception("No previous query has been performed")
