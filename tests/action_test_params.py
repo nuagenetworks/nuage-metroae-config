@@ -1625,6 +1625,30 @@ actions:
           Write-to-console: False
 """)
 
+SAVE_TO_FILE_DECODE = yaml.safe_load("""
+actions:
+- Create-object:
+    Type: Job
+    Actions:
+      - set-values:
+          command: GET_ZFB_INFO
+          parameters:
+              mediaType: ISO
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Prefix-string: "no:"
+          Suffix-string: ":value"
+      - Save-to-file:
+          File-path: /tmp/pytest_save_to_file.txt
+          Append-to-file: true
+          Prefix-string: "prefix:"
+          From-field: result
+          Suffix-string: ":suffix"
+          Write-to-console: False
+          decode: base64
+
+""")
+
 UPDATE_ROOT_OBJECT = yaml.safe_load("""
 actions:
 - Create-object:

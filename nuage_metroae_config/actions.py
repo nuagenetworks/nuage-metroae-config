@@ -6,6 +6,7 @@ from .errors import (ConflictError,
                      TemplateParseError)
 from .logger import Logger
 from .util import get_dict_field_no_case
+import base64
 
 DEFAULT_SELECTION_FIELD = "name"
 FIRST_SELECTOR = "$first"
@@ -1029,6 +1030,7 @@ class SaveToFileAction(Action):
         self.append_to_file = True
         self.prefix_string = None
         self.suffix_string = None
+        self.decode = None
         self.write_to_console = False
 
     def read(self, save_to_file_dict):
@@ -1052,6 +1054,8 @@ class SaveToFileAction(Action):
         self.suffix_string = Action.get_dict_field(save_to_file_dict,
                                                    'suffix-string')
 
+        self.decode = Action.get_dict_field(save_to_file_dict, 'decode')
+
         self.write_to_console = Action.get_dict_field(save_to_file_dict,
                                                       'write-to-console')
 
@@ -1072,6 +1076,8 @@ class SaveToFileAction(Action):
                     console_text += self.prefix_string
                     f.write(self.prefix_string)
                 if self.from_field is not None:
+                    if self.decode == 'base64':
+                        field_value = base64.b64decode(field_value)
                     console_text += field_value
                     f.write(field_value)
                 if self.suffix_string is not None:

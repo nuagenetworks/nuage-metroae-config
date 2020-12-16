@@ -1,3 +1,6 @@
+import base64
+
+
 class MockWriter(object):
     """
     Class for unit testing to record all actions taken to the writer and
@@ -10,6 +13,7 @@ class MockWriter(object):
         self.raise_exception_on = None
         self.mock_exception = None
         self.return_empty_select_list = False
+        self.encode = False
 
     def get_recorded_actions(self):
         return self.recorded_actions
@@ -43,6 +47,9 @@ class MockWriter(object):
 
     def set_return_empty_select_list(self, return_empty_select_list=True):
         self.return_empty_select_list = return_empty_select_list
+
+    def encode_data(self, encode=False):
+        self.encode = encode
 
     #
     # Implement all required Abstract Base Class prototype functions.
@@ -136,6 +143,8 @@ class MockWriter(object):
         Gets a value from the object selected in the current context
         """
         self._record_action("get-value %s [%s]" % (field, str(context)))
+        if self.encode:
+            return base64.b64encode(self._new_get_value())
         return self._new_get_value()
 
     def get_object_list(self, object_name, context=None):
