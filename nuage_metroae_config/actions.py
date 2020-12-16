@@ -6,8 +6,6 @@ from errors import (ConflictError,
                     TemplateParseError)
 from logger import Logger
 from util import get_dict_field_no_case
-from os import remove
-import zipfile
 import base64
 
 DEFAULT_SELECTION_FIELD = "name"
@@ -1067,11 +1065,6 @@ class SaveToFileAction(Action):
 
             file_mode = "w" if self.append_to_file is False else "a"
             console_text = ""
-            isZip = False
-            if self.file_path.endswith('.zip'):
-                zip_path = self.file_path
-                self.file_path = self.file_path.replace('.zip', '.iso.gz')
-                isZip = True
             with open(self.file_path, file_mode) as f:
                 if self.prefix_string is not None:
                     console_text += self.prefix_string
@@ -1087,9 +1080,6 @@ class SaveToFileAction(Action):
 
                 if self.write_to_console:
                     self.log.output(console_text)
-            if isZip:
-                zipfile.ZipFile(zip_path, mode='w').write(self.file_path)
-                remove(self.file_path)
 
     def _to_string(self, indent_level):
         indent = Action._indent(indent_level)
