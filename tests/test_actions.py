@@ -1,86 +1,86 @@
 import os
 import pytest
 
-from action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
-                                CREATE_OBJECTS_DICT,
-                                CREATE_OBJECTS_NO_TYPE,
-                                CREATE_OBJECTS_SELECT_FIRST,
-                                CREATE_OBJECTS_SELECT_LAST,
-                                FIND_NO_SELECT,
-                                FIND_SINGLE_LEVEL,
-                                FIND_TREE,
-                                INVALID_ACTION_1,
-                                INVALID_ACTION_2,
-                                INVALID_ACTION_3,
-                                ORDER_CREATE,
-                                ORDER_DISABLE_COMBINE_1,
-                                ORDER_DISABLE_COMBINE_2,
-                                ORDER_OVERRIDE_1,
-                                ORDER_OVERRIDE_2,
-                                ORDER_OVERRIDE_3,
-                                ORDER_MULTI_CREATE,
-                                ORDER_MULTI_SELECT_1,
-                                ORDER_MULTI_SELECT_2,
-                                ORDER_SELECT_1,
-                                ORDER_SELECT_2,
-                                ORDER_SELECT_CONFLICT1,
-                                ORDER_STORE_1,
-                                ORDER_STORE_2,
-                                ORDER_STORE_3,
-                                ORDER_STORE_4,
-                                ORDER_STORE_5,
-                                RETRIEVE_AS_LIST,
-                                RETRIEVE_BEFORE_STORE,
-                                RETRIEVE_CONFLICT_1,
-                                RETRIEVE_CONFLICT_2,
-                                RETRIEVE_DEPENDENCY_ONLY,
-                                RETRIEVE_NO_FIELD,
-                                RETRIEVE_NO_OBJECT,
-                                RETRIEVE_NO_NAME,
-                                SAVE_TO_FILE,
-                                SAVE_TO_FILE_AND_CONSOLE,
-                                SAVE_TO_FILE_APPEND,
-                                SAVE_TO_FILE_NO_FILE,
-                                SAVE_TO_FILE_DECODE,
-                                SELECT_MULTIPLE_MISSING,
-                                SELECT_MULTIPLE_SUCCESS_1,
-                                SELECT_MULTIPLE_SUCCESS_2,
-                                SELECT_MULTIPLE_REVERT_SUCCESS_1,
-                                SELECT_MULTIPLE_REVERT_SUCCESS_2,
-                                SELECT_OBJECTS_BY_POSITION_FIRST,
-                                SELECT_OBJECTS_BY_POSITION_LAST,
-                                SELECT_OBJECTS_BY_POSITION_OOB,
-                                SELECT_OBJECTS_DICT,
-                                SELECT_OBJECTS_MULTIPLE,
-                                SELECT_OBJECTS_MULTIPLE_BAD_TYPE,
-                                SELECT_OBJECTS_MULTIPLE_WITH_SINGLE,
-                                SELECT_OBJECTS_MULTIPLE_MISMATCH,
-                                SELECT_OBJECTS_NO_FIELD,
-                                SELECT_OBJECTS_NO_TYPE,
-                                SELECT_OBJECTS_NO_VALUE,
-                                SELECT_RETRIEVE_MISSING_RETRIEVE,
-                                SELECT_RETRIEVE_NOT_RETRIEVE,
-                                SELECT_RETRIEVE_VALUE,
-                                SET_VALUES_DICT,
-                                SET_VALUES_CONFLICT,
-                                SET_VALUES_NO_OBJECT,
-                                STORE_NO_FIELD,
-                                STORE_NO_OBJECT,
-                                STORE_NO_NAME,
-                                STORE_RETRIEVE_DICT,
-                                STORE_RETRIEVE_TO_OBJECT,
-                                STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
-                                SET_VALUES_FIELD_SAME_VALUE,
-                                SET_VALUES_FIELD_DIFFERENT_VALUE,
-                                STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
-                                STORE_RETRIEVE_TO_OBJECT_NOT_SET,
-                                STORE_SAME_TWICE,
-                                UPDATE_CREATE_CHILD_OBJECT,
-                                UPDATE_CHILD_OBJECT_WITH_FIRST_SELECTOR,
-                                UPDATE_CHILD_OBJECT_WITH_LAST_SELECTOR,
-                                UPDATE_ROOT_OBJECT,
-                                UPDATE_ROOT_UPDATE_NOT_SUPPORTED_OBJECT,
-                                UPDATE_SELECT_ROOT_OBJECT)
+from .action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
+                                 CREATE_OBJECTS_DICT,
+                                 CREATE_OBJECTS_NO_TYPE,
+                                 CREATE_OBJECTS_SELECT_FIRST,
+                                 CREATE_OBJECTS_SELECT_LAST,
+                                 FIND_NO_SELECT,
+                                 FIND_SINGLE_LEVEL,
+                                 FIND_TREE,
+                                 INVALID_ACTION_1,
+                                 INVALID_ACTION_2,
+                                 INVALID_ACTION_3,
+                                 ORDER_CREATE,
+                                 ORDER_DISABLE_COMBINE_1,
+                                 ORDER_DISABLE_COMBINE_2,
+                                 ORDER_OVERRIDE_1,
+                                 ORDER_OVERRIDE_2,
+                                 ORDER_OVERRIDE_3,
+                                 ORDER_MULTI_CREATE,
+                                 ORDER_MULTI_SELECT_1,
+                                 ORDER_MULTI_SELECT_2,
+                                 ORDER_SELECT_1,
+                                 ORDER_SELECT_2,
+                                 ORDER_SELECT_CONFLICT1,
+                                 ORDER_STORE_1,
+                                 ORDER_STORE_2,
+                                 ORDER_STORE_3,
+                                 ORDER_STORE_4,
+                                 ORDER_STORE_5,
+                                 RETRIEVE_AS_LIST,
+                                 RETRIEVE_BEFORE_STORE,
+                                 RETRIEVE_CONFLICT_1,
+                                 RETRIEVE_CONFLICT_2,
+                                 RETRIEVE_DEPENDENCY_ONLY,
+                                 RETRIEVE_NO_FIELD,
+                                 RETRIEVE_NO_OBJECT,
+                                 RETRIEVE_NO_NAME,
+                                 SAVE_TO_FILE,
+                                 SAVE_TO_FILE_AND_CONSOLE,
+                                 SAVE_TO_FILE_APPEND,
+                                 SAVE_TO_FILE_NO_FILE,
+                                 SAVE_TO_FILE_DECODE,
+                                 SELECT_MULTIPLE_MISSING,
+                                 SELECT_MULTIPLE_SUCCESS_1,
+                                 SELECT_MULTIPLE_SUCCESS_2,
+                                 SELECT_MULTIPLE_REVERT_SUCCESS_1,
+                                 SELECT_MULTIPLE_REVERT_SUCCESS_2,
+                                 SELECT_OBJECTS_BY_POSITION_FIRST,
+                                 SELECT_OBJECTS_BY_POSITION_LAST,
+                                 SELECT_OBJECTS_BY_POSITION_OOB,
+                                 SELECT_OBJECTS_DICT,
+                                 SELECT_OBJECTS_MULTIPLE,
+                                 SELECT_OBJECTS_MULTIPLE_BAD_TYPE,
+                                 SELECT_OBJECTS_MULTIPLE_WITH_SINGLE,
+                                 SELECT_OBJECTS_MULTIPLE_MISMATCH,
+                                 SELECT_OBJECTS_NO_FIELD,
+                                 SELECT_OBJECTS_NO_TYPE,
+                                 SELECT_OBJECTS_NO_VALUE,
+                                 SELECT_RETRIEVE_MISSING_RETRIEVE,
+                                 SELECT_RETRIEVE_NOT_RETRIEVE,
+                                 SELECT_RETRIEVE_VALUE,
+                                 SET_VALUES_DICT,
+                                 SET_VALUES_CONFLICT,
+                                 SET_VALUES_NO_OBJECT,
+                                 STORE_NO_FIELD,
+                                 STORE_NO_OBJECT,
+                                 STORE_NO_NAME,
+                                 STORE_RETRIEVE_DICT,
+                                 STORE_RETRIEVE_TO_OBJECT,
+                                 STORE_RETRIEVE_TO_OBJECT_ALREADY_SET,
+                                 SET_VALUES_FIELD_SAME_VALUE,
+                                 SET_VALUES_FIELD_DIFFERENT_VALUE,
+                                 STORE_RETRIEVE_TO_OBJECT_NOT_DICT,
+                                 STORE_RETRIEVE_TO_OBJECT_NOT_SET,
+                                 STORE_SAME_TWICE,
+                                 UPDATE_CREATE_CHILD_OBJECT,
+                                 UPDATE_CHILD_OBJECT_WITH_FIRST_SELECTOR,
+                                 UPDATE_CHILD_OBJECT_WITH_LAST_SELECTOR,
+                                 UPDATE_ROOT_OBJECT,
+                                 UPDATE_ROOT_UPDATE_NOT_SUPPORTED_OBJECT,
+                                 UPDATE_SELECT_ROOT_OBJECT)
 from nuage_metroae_config.actions import Action
 from nuage_metroae_config.errors import (ConflictError,
                                          InvalidAttributeError,
@@ -88,10 +88,10 @@ from nuage_metroae_config.errors import (ConflictError,
                                          MissingSelectionError,
                                          TemplateActionError,
                                          TemplateParseError)
-from mock_writer import MockWriter
-from template_test_params import (EXPECTED_ACL_TEMPLATE,
-                                  EXPECTED_DOMAIN_TEMPLATE,
-                                  EXPECTED_ENTERPRISE_TEMPLATE)
+from .mock_writer import MockWriter
+from .template_test_params import (EXPECTED_ACL_TEMPLATE,
+                                   EXPECTED_DOMAIN_TEMPLATE,
+                                   EXPECTED_ENTERPRISE_TEMPLATE)
 
 CREATE_SELECT_ORDERING_CASES = [
     (ORDER_CREATE, ORDER_SELECT_1, ORDER_SELECT_2),
@@ -995,14 +995,13 @@ class TestActionsExecute(object):
         root_action.execute(writer)
         writer.stop_session()
 
-        expected_actions_formatted = filter(
-            None, [x.strip() for x in expected_actions.split("\n")])
+        expected_actions_formatted = [_f for _f in [x.strip() for x in expected_actions.split("\n")] if _f]
 
-        print "\nExpected actions:"
-        print "\n".join(expected_actions_formatted)
+        print("\nExpected actions:")
+        print("\n".join(expected_actions_formatted))
 
-        print "\nRecorded actions:"
-        print "\n".join(writer.get_recorded_actions())
+        print("\nRecorded actions:")
+        print("\n".join(writer.get_recorded_actions()))
 
         assert writer.get_recorded_actions() == expected_actions_formatted
 
@@ -1026,14 +1025,13 @@ class TestActionsExecute(object):
             root_action.execute(writer)
         writer.stop_session()
 
-        expected_actions_formatted = filter(
-            None, [x.strip() for x in expected_actions.split("\n")])
+        expected_actions_formatted = [_f for _f in [x.strip() for x in expected_actions.split("\n")] if _f]
 
-        print "\nExpected actions:"
-        print "\n".join(expected_actions_formatted)
+        print("\nExpected actions:")
+        print("\n".join(expected_actions_formatted))
 
-        print "\nRecorded actions:"
-        print "\n".join(writer.get_recorded_actions())
+        print("\nRecorded actions:")
+        print("\n".join(writer.get_recorded_actions()))
 
         assert writer.get_recorded_actions() == expected_actions_formatted
         if expect_error:

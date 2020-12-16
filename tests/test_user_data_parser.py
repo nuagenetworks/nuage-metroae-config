@@ -3,9 +3,9 @@ import pytest
 
 from nuage_metroae_config.user_data_parser import (UserDataParseError,
                                                    UserDataParser)
-from user_data_test_params import (EXPECTED_ACLS_DATA,
-                                   EXPECTED_ACLS_GROUPS_DATA,
-                                   EXPECTED_DOMAINS_DATA)
+from .user_data_test_params import (EXPECTED_ACLS_DATA,
+                                    EXPECTED_ACLS_GROUPS_DATA,
+                                    EXPECTED_DOMAINS_DATA)
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
 VALID_USER_DATA_DIRECTORY = os.path.join(FIXTURE_DIRECTORY,
@@ -46,8 +46,10 @@ class TestUserDataParser(object):
         expected.extend(EXPECTED_ACLS_DATA)
         expected.extend(EXPECTED_DOMAINS_DATA)
         expected.extend(EXPECTED_ACLS_GROUPS_DATA)
-
-        assert sorted(data_pairs) == sorted(expected)
+        for i in data_pairs:
+            assert i in expected
+            expected.remove(i)
+        assert len(expected) == 0
 
     def test_read_dir__success(self):
         parser = UserDataParser()
@@ -83,8 +85,8 @@ class TestUserDataParser(object):
             parser.read_data(os.path.join(INVALID_USER_DATA_DIRECTORY,
                              filename))
 
-        assert message in str(e)
-        assert filename in str(e)
+        assert message in str(e.value)
+        assert filename in str(e.value)
 
     def test_group__override(self):
         parser = UserDataParser()

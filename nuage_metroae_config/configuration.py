@@ -1,7 +1,7 @@
 import collections
 
-from actions import Action
-from logger import Logger
+from .actions import Action
+from .logger import Logger
 
 
 class Configuration(object):
@@ -185,7 +185,7 @@ class Configuration(object):
         writer.stop_session()
 
     def _walk_data(self, callback_func):
-        for template_name, data_list in self.data.iteritems():
+        for template_name, data_list in self.data.items():
             template = self.get_template(template_name)
             for data in data_list:
                 if data is not None:

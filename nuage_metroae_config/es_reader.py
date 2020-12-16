@@ -1,8 +1,8 @@
 import requests
 
-from device_reader_base import DeviceReaderBase
-from errors import (DeviceWriterError,
-                    SessionError)
+from .device_reader_base import DeviceReaderBase
+from .errors import (DeviceWriterError,
+                     SessionError)
 
 PAGE_SIZE = 100
 MAX_RESULTS = 10000

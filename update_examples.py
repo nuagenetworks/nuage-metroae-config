@@ -42,7 +42,7 @@ def parse_args():
 def update_templates(args):
     for file_name in os.listdir(args.template_path):
         if file_name.endswith(".yml") or file_name.endswith(".yaml"):
-            print "Processing " + file_name
+            print("Processing " + file_name)
             full_path = os.path.join(args.template_path, file_name)
             with open(full_path, "r") as f:
                 lines = update_template(f.read(), args)

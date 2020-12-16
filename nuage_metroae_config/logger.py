@@ -13,7 +13,7 @@ class Logger(object):
             self.log_entries.append((log_type, line))
             if (log_type in self.log_type_to_stdout and
                     self.log_type_to_stdout[log_type] is True):
-                print line
+                print(line)
 
     def error(self, message):
         self.log(message, 'ERROR')

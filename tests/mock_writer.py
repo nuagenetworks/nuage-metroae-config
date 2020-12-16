@@ -115,7 +115,12 @@ class MockWriter(object):
         """
         values = []
         for key in sorted(kwargs.keys()):
-            values.append("%s=%s" % (key, str(kwargs[key])))
+            val = kwargs[key]
+            if type(val) is dict:
+                sorted_dict = {k: val[k] for k in sorted(val)}
+                values.append("%s=%s" % (key, str(sorted_dict)))
+            else:
+                values.append("%s=%s" % (key, str(val)))
 
         self._record_action("set-values %s [%s]" % (','.join(values),
                                                     str(context)))

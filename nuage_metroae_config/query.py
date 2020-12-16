@@ -1,9 +1,10 @@
 import jinja2
 from lark import Lark, Transformer
-from logger import Logger
+from .logger import Logger
 import os
 import time
 import yaml
+from six import string_types
 
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
 from nuage_metroae_config.variable_reader import VariableReader
@@ -110,7 +111,7 @@ class QueryExecutor(Transformer):
         if self.redirect_file is not None:
             self.redirect_file.close()
 
-        return filter(lambda x: x is not None, qs)
+        return [x for x in qs if x is not None]
 
     def query(self, q):
         (result,) = q
@@ -222,11 +223,11 @@ class QueryExecutor(Transformer):
         (op1, op2) = t
         if type(op1) == list and type(op2) == list:
             op1.extend(op2)
-        elif isinstance(op1, basestring) and isinstance(op2, basestring):
+        elif isinstance(op1, string_types) and isinstance(op2, string_types):
             op1 = op1 + op2
-        elif type(op1) == int and isinstance(op2, basestring):
+        elif type(op1) == int and isinstance(op2, string_types):
             op1 = str(op1) + op2
-        elif isinstance(op1, basestring) and type(op2) == int:
+        elif isinstance(op1, string_types) and type(op2) == int:
             op1 = op1 + str(op2)
         elif type(op1) == int and type(op2) == int:
             op1 = op1 + op2
@@ -393,8 +394,9 @@ class QueryExecutor(Transformer):
         if result is None:
             return "null"
         elif type(result) == dict or type(result) == list:
-            return yaml.dump(result, Dumper=NoAliasDumper).strip("\n")
-        elif isinstance(result, basestring):
+            return yaml.dump(result, Dumper=NoAliasDumper,
+                             default_flow_style=False).strip("\n")
+        elif isinstance(result, str):
             return result
         else:
             return str(result)

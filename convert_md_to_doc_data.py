@@ -23,7 +23,7 @@ def parse_args():
 def parse_md_files(doc_data, path):
     for file_name in os.listdir(path):
         if file_name.endswith(".md"):
-            print "Processing " + file_name
+            print("Processing " + file_name)
             full_path = os.path.join(path, file_name)
             with open(full_path, "r") as f:
                 parse_md_file(doc_data, file_name, f.read())
@@ -201,7 +201,7 @@ def main():
     doc_data = dict()
 
     parse_md_files(doc_data, args.md_file_dir)
-    print "Writing " + args.doc_data_file
+    print("Writing " + args.doc_data_file)
     with open(args.doc_data_file, "w") as f:
         f.write(yaml.safe_dump(doc_data,
                                default_flow_style=False,

@@ -78,11 +78,11 @@ def main():
     args = parser.parse_args()
 
     if args.action == HELP_ACTION:
-        print parser.print_help()
+        print(parser.print_help())
         exit(0)
     elif args.action == VERSION_ACTION or (hasattr(args, "version") and
                                            args.version):
-        print VERSION_OUTPUT
+        print(VERSION_OUTPUT)
         exit(0)
     elif args.action == QUERY_ACTION:
         if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
@@ -93,7 +93,7 @@ def main():
             args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
 
         if args.spec_path is None:
-            print REQUIRED_FIELDS_ERROR
+            print(REQUIRED_FIELDS_ERROR)
             exit(1)
 
     elif (args.action in [VALIDATE_ACTION, CREATE_ACTION, UPDATE_ACTION,
@@ -111,7 +111,7 @@ def main():
         # Check to make sure we have template path and data path set
         if (args.template_path is None or
                 args.spec_path is None):
-            print REQUIRED_FIELDS_ERROR
+            print(REQUIRED_FIELDS_ERROR)
             exit(1)
 
     elif args.action == TEMPLATE_ACTION and args.templateAction == LIST_ACTION:
@@ -119,7 +119,7 @@ def main():
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
         if args.template_path is None:
-            print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
+            print("Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE))
             exit(1)
 
     elif args.action in [SCHEMA_ACTION, EXAMPLE_ACTION, DOCUMENT_ACTION,
@@ -128,11 +128,11 @@ def main():
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
         if args.action != DOCUMENT_ACTION and len(args.template_names) == 0:
-            print "Please specify template names on command line"
+            print("Please specify template names on command line")
             exit(1)
 
         if args.template_path is None:
-            print "Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE)
+            print("Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE))
             exit(1)
 
     metro_config = MetroConfig(args, args.action)
@@ -314,7 +314,7 @@ class MetroConfig(object):
 
         log_level = self.args.log_level.upper()
         if log_level not in LOG_LEVEL_STRS:
-            print "Invalid log level: " + str(log_level)
+            print("Invalid log level: " + str(log_level))
             exit(1)
 
         if log_level == "API":
@@ -395,16 +395,16 @@ class MetroConfig(object):
             had_error = True
 
         if had_error:
-            print ""
-            print "Error"
-            print "-----"
-            print error_output
+            print("")
+            print("Error")
+            print("-----")
+            print(error_output)
             exit(1)
         else:
             if self.action == VALIDATE_ACTION:
-                print ">>> All actions valid"
+                print(">>> All actions valid")
             else:
-                print ">>> All actions successfully applied"
+                print(">>> All actions successfully applied")
 
     def parse_extra_vars(self):
         if self.args.data is not None:
@@ -445,7 +445,7 @@ class MetroConfig(object):
             template_names = self.store.get_template_names(
                 self.get_software_type(),
                 self.get_software_version())
-            print "\n".join(template_names)
+            print("\n".join(template_names))
             return True
 
         if self.action == SCHEMA_ACTION:
@@ -453,7 +453,7 @@ class MetroConfig(object):
                 template = self.store.get_template(template_name,
                                                    self.get_software_type(),
                                                    self.get_software_version())
-                print template.get_schema()
+                print(template.get_schema())
             return True
 
         if self.action == EXAMPLE_ACTION:
@@ -461,7 +461,7 @@ class MetroConfig(object):
                 template = self.store.get_template(template_name,
                                                    self.get_software_type(),
                                                    self.get_software_version())
-                print template.get_example()
+                print(template.get_example())
             return True
 
         if self.action == DOCUMENT_ACTION:
@@ -473,7 +473,7 @@ class MetroConfig(object):
                         template_name,
                         self.get_software_type(),
                         self.get_software_version())
-                    print template.get_documentation()
+                    print(template.get_documentation())
             return True
 
         if self.action == EXCEL_ACTION:
@@ -483,7 +483,7 @@ class MetroConfig(object):
         return False
 
     def write_template_documentation(self):
-        print "Generating documentation"
+        print("Generating documentation")
         if not os.path.exists(DOCUMENTATION_DIR):
             os.makedirs(DOCUMENTATION_DIR)
         template_names = self.store.get_template_names(
@@ -505,8 +505,8 @@ class MetroConfig(object):
                     "file": doc_file})
 
                 full_path = os.path.join(DOCUMENTATION_DIR, doc_file)
-                print "Writing %s documentation to %s" % (template_name,
-                                                          full_path)
+                print("Writing %s documentation to %s" % (template_name,
+                                                          full_path))
                 doc_text = template.get_documentation()
                 with open(full_path, "w") as f:
                     f.write(doc_text)
@@ -686,10 +686,10 @@ class MetroConfig(object):
                             datafile = os.path.join(self.args.data_path[0],
                                                     datafile)
                         if not os.path.exists(datafile):
-                            print("Could not find user data file %s if "
-                                  "using the docker container please make "
-                                  "sure it is accessible to the docker" %
-                                  (datafile))
+                            print(("Could not find user data file %s if "
+                                   "using the docker container please make "
+                                   "sure it is accessible to the docker" %
+                                   (datafile)))
                             exit(1)
                     if self.action == QUERY_ACTION:
                         self.query_files.append(datafile)
@@ -737,7 +737,7 @@ class MetroConfig(object):
             self.writer.set_validate_only(False)
 
             if self.action == VALIDATE_ACTION:
-                print str(config.root_action)
+                print(str(config.root_action))
 
     def perform_query(self):
         query = Query()

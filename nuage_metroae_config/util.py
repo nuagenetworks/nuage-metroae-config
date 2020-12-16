@@ -5,7 +5,7 @@ def get_dict_field_no_case(data_dict, field):
     if type(data_dict) != dict:
         raise TypeError("Not a dictionary")
 
-    for key, value in data_dict.iteritems():
+    for key, value in data_dict.items():
         if str(key).lower() == field:
             return value
 

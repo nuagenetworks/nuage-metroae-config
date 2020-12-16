@@ -76,9 +76,9 @@ class ChildError(Exception):
 
 
 def print_object(obj):
-    print obj.get_name()
+    print(obj.get_name())
     for attr_name, attr in obj._attributes.items():
-        print "    %s: %s" % (attr_name, str(getattr(obj, attr_name)))
+        print("    %s: %s" % (attr_name, str(getattr(obj, attr_name))))
 
 
 def build_object_dict(obj, children):
@@ -101,14 +101,14 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
     children = list()
     for object_name in children_names:
         if DEBUG:
-            print object_name
+            print(object_name)
         try:
             contexts = vsd_writer.get_object_list(object_name.lower(),
                                                   parent_context)
             for context in contexts:
                 if DEBUG:
-                    print "%s vs %s" % (context.current_object.parent_id,
-                                        parent_id)
+                    print("%s vs %s" % (context.current_object.parent_id,
+                                        parent_id))
                 if (context.current_object.parent_id == parent_id or
                         context.current_object.parent_id is None):
                     if DEBUG:
@@ -122,7 +122,7 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
         except ChildError as e:
             raise e
         except Exception as e:
-            print "# ERROR in %s: %s" % (object_name, str(e))
+            print("# ERROR in %s: %s" % (object_name, str(e)))
             if not args.ignore_errors:
                 raise ChildError()
 
@@ -436,7 +436,7 @@ def main():
     args = parse_args()
 
     if args.spec_path is None:
-        print "Specifications path -sp is required"
+        print("Specifications path -sp is required")
         exit(1)
 
     vsd_writer = VsdWriter()
@@ -459,9 +459,9 @@ def main():
         with open(args.output_file, 'w') as f:
             yaml.safe_dump(config, f)
     else:
-        print yaml.safe_dump(config,
+        print(yaml.safe_dump(config,
                              default_flow_style=False,
-                             default_style='')
+                             default_style=''))
 
     if args.compare_file is not None:
         subset_config = read_configuration(args.compare_file)

@@ -31,7 +31,7 @@ def read_template_info(template_file_dir):
     template_info = dict()
     for file_name in os.listdir(template_file_dir):
         if file_name.endswith(".yml") or file_name.endswith(".yaml"):
-            print "Reading " + file_name
+            print("Reading " + file_name)
             full_path = os.path.join(template_file_dir, file_name)
             with open(full_path, "r") as f:
                 template_yaml = f.read()
@@ -43,8 +43,8 @@ def read_template_info(template_file_dir):
 
 
 def add_doc_data_to_all_templates(doc_data, template_info):
-    for template_name, data in doc_data.iteritems():
-        print "Processing " + template_name
+    for template_name, data in doc_data.items():
+        print("Processing " + template_name)
         template_path = template_info[template_name.lower()]
         add_doc_data_to_template(data, template_path)
 
@@ -67,7 +67,7 @@ def add_doc_data_to_template(data, template_path):
 
 
 def insert_parameters(lines, data):
-    for name, descr in data["parameters"].iteritems():
+    for name, descr in data["parameters"].items():
         i = find_line(lines, "  - name: " + name.lower())
         if i >= 0:
             insert_lines = yaml.safe_dump({"description": descr.strip()},

@@ -4,17 +4,17 @@ import re
 import requests
 
 from bambou.exceptions import BambouHTTPError
-from bambou_adapter import ConfigObject, Fetcher, Root, Session
-from device_reader_base import DeviceReaderBase
-from device_writer_base import DeviceWriterBase
-from errors import (DeviceWriterError,
-                    InvalidAttributeError,
-                    InvalidObjectError,
-                    InvalidValueError,
-                    MissingSelectionError,
-                    MultipleSelectionError,
-                    SessionError,
-                    SessionNotStartedError)
+from .bambou_adapter import ConfigObject, Fetcher, Root, Session
+from .device_reader_base import DeviceReaderBase
+from .device_writer_base import DeviceWriterBase
+from .errors import (DeviceWriterError,
+                     InvalidAttributeError,
+                     InvalidObjectError,
+                     InvalidValueError,
+                     MissingSelectionError,
+                     MultipleSelectionError,
+                     SessionError,
+                     SessionNotStartedError)
 
 SPEC_EXTENSION = ".spec"
 SOFTWARE_TYPE = "Nuage Networks VSD"
@@ -724,7 +724,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
     def _set_attributes(self, obj, **kwargs):
         is_changed = False
-        for field, value in kwargs.iteritems():
+        for field, value in kwargs.items():
             local_name = field.lower()
             if not self._is_assign_attribute(local_name):
                 self._get_attribute_name(obj.spec, field)
@@ -752,7 +752,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
                                (field, obj.get_name()))
 
     def _assign_attributes(self, obj, **kwargs):
-        for field, value in kwargs.iteritems():
+        for field, value in kwargs.items():
             local_name = field.lower()
             if self._is_assign_attribute(local_name):
                 self._assign_attribute(obj, local_name, value)
@@ -798,7 +798,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         return False
 
     def _unassign_attributes(self, obj, **kwargs):
-        for field, value in kwargs.iteritems():
+        for field, value in kwargs.items():
             local_name = field.lower()
             if self._is_assign_attribute(local_name):
                 self._unassign_attribute(obj, local_name, value)
@@ -864,7 +864,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
     def _validate_values(self, obj, skip_required_check):
         if not obj.validate(skip_required_check):
             messages = []
-            for attr_name, message in obj.errors.iteritems():
+            for attr_name, message in obj.errors.items():
                 messages.append("%s: %s" % (attr_name, message))
             raise InvalidValueError("Invalid values: " + ', '.join(messages))
 
@@ -921,7 +921,7 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
         if type(attributes) == list:
             attribute_dict = dict()
             if attributes[0] == "*":
-                for attr_name, attr in parent_object._attributes.items():
+                for attr_name, attr in list(parent_object._attributes.items()):
                     if hasattr(parent_object, attr_name):
                         attribute_dict[attr_name] = getattr(parent_object,
                                                             attr_name)
