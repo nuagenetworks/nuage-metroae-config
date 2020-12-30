@@ -2,7 +2,7 @@
 
 Nuage MetroAE configuration template engine.
 
-Version 1.0.0
+Version 1.0.1
 
 This tool reads JSON or Yaml files of templates and user-data to
 write a configuration to a VSD or to revert (remove) said configuration.
