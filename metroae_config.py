@@ -782,15 +782,33 @@ class MetroConfig(object):
 
         filename = os.path.basename(url)
 
-        r = requests.get(url, stream=True)
+        try:
+            r = requests.get(url, stream=True)
+        except requests.exceptions.ConnectionError as ce:
+            print("Error while trying to download templates. Please check your internet connection.")
+            print("Full error: %s" % ce)
+            print("You can download the tarball of the MetroAE Config templates and VSD API specifications using 'metroae container download templates' on a machine that has internet access. ")
+            print("The tarball can be copied to the air-gapped machine and then extracted using 'metroae container load templates'.")
+            print("Downloading the templates does not require the MetroAE container or a Docker installation. You only need the metroae script.")
+            print("To extract the templates, the MetroAE container must have already been set up on the machine that the templates have been copied to.")
+            print("You can continue with setting up the MetroAE container and follow the above steps afterward.")
+            try:
+                input = raw_input
+            except NameError:
+                pass
+            continue_with_setup = input("Would you like to continue with container setup? y/n ")
+            if continue_with_setup == 'y':
+                exit(0)
+            else:
+                exit(1)
+        else:
+            with open(filename, 'wb') as f:
+                for chunk in r:
+                    f.write(chunk)
 
-        with open(filename, 'wb') as f:
-            for chunk in r:
-                f.write(chunk)
-
-        tfile = tarfile.TarFile(filename)
-        tfile.extractall()
-        os.remove(tfile.name)
+            tfile = tarfile.TarFile(filename)
+            tfile.extractall()
+            os.remove(tfile.name)
 
     def upgrade_templates(self):
         if (self.action == TEMPLATE_ACTION and
