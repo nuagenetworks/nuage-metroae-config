@@ -792,15 +792,7 @@ class MetroConfig(object):
             print("Downloading the templates does not require the MetroAE container or a Docker installation. You only need the metroae script.")
             print("To extract the templates, the MetroAE container must have already been set up on the machine that the templates have been copied to.")
             print("You can continue with setting up the MetroAE container and follow the above steps afterward.")
-            try:
-                input = raw_input
-            except NameError:
-                pass
-            continue_with_setup = input("Would you like to continue with container setup? y/n ")
-            if continue_with_setup == 'y':
-                exit(0)
-            else:
-                exit(1)
+            exit(1)
         else:
             with open(filename, 'wb') as f:
                 for chunk in r:
