@@ -788,7 +788,7 @@ class MetroConfig(object):
             print("Error while trying to download templates. Please check your internet connection.")
             print("Full error: %s" % ce)
             print("You can download the tarball of the MetroAE Config templates and VSD API specifications using 'metroae container download templates' on a machine that has internet access. ")
-            print("The tarball can be copied to the air-gapped machine and then extracted using 'metroae container load templates'.")
+            print("The tarball can be copied to the air-gapped machine and then extracted using 'metroae container load templates <path_to_tarball>'.")
             print("Downloading the templates does not require the MetroAE container or a Docker installation. You only need the metroae script.")
             print("To extract the templates, the MetroAE container must have already been set up on the machine that the templates have been copied to.")
             print("You can continue with setting up the MetroAE container and follow the above steps afterward.")
