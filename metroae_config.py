@@ -782,15 +782,24 @@ class MetroConfig(object):
 
         filename = os.path.basename(url)
 
-        r = requests.get(url, stream=True)
+        try:
+            r = requests.get(url, stream=True)
+        except requests.exceptions.ConnectionError:
+            print("Error while trying to access %s. Please check your internet connection." % url)
+            print("You can download the tarball of the MetroAE Config templates and VSD API specifications using 'metroae container download templates' on a machine that has internet access. ")
+            print("The tarball should be copied manually to the machine without internet access and then can be extracted using 'metroae container load templates <path_to_tarball>'.")
+            print("Downloading the templates does not require the MetroAE container or a Docker installation. You only need the metroae script.")
+            print("To extract the templates, the MetroAE container must have already been set up on the machine that the templates have been copied to.")
+            print("You can continue with setting up the MetroAE container and follow the above steps afterward.")
+            exit(9)
+        else:
+            with open(filename, 'wb') as f:
+                for chunk in r:
+                    f.write(chunk)
 
-        with open(filename, 'wb') as f:
-            for chunk in r:
-                f.write(chunk)
-
-        tfile = tarfile.TarFile(filename)
-        tfile.extractall()
-        os.remove(tfile.name)
+            tfile = tarfile.TarFile(filename)
+            tfile.extractall()
+            os.remove(tfile.name)
 
     def upgrade_templates(self):
         if (self.action == TEMPLATE_ACTION and
@@ -801,6 +810,7 @@ class MetroConfig(object):
             url = TEMPLATE_TAR_LOCATION
             self.download_and_extract(url, dirName)
 
+            print("Updating VSD API specifications...")
             dirName = SPECIFICATION_DIR
             url = VSD_SPECIFICAIONS_LOCATION
             self.download_and_extract(url, dirName)
