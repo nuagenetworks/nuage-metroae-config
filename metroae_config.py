@@ -784,7 +784,7 @@ class MetroConfig(object):
 
         try:
             r = requests.get(url, stream=True)
-        except requests.exceptions.ConnectionError as ce:
+        except requests.exceptions.ConnectionError:
             print("Error while trying to access %s. Please check your internet connection." % url)
             print("You can download the tarball of the MetroAE Config templates and VSD API specifications using 'metroae container download templates' on a machine that has internet access. ")
             print("The tarball should be copied manually to the machine without internet access and then can be extracted using 'metroae container load templates <path_to_tarball>'.")
