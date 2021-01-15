@@ -1,0 +1,29 @@
+echo("off")
+
+domains = Enterprise[%group=name].Domain.{*}
+domain_template_ids = Enterprise.DomainTemplate.id
+domain_templates = Enterprise.DomainTemplate[id=$domain_template_ids].{*}
+
+user_data = """
+- template: L3 Domain
+  values:
+{%- for enterprise in domains %}
+    {%- for domain in enterprise[1] %}
+    - enterprise_name: {{ enterprise[0] }}
+      domain_name: {{ domain["name"] }}
+      underlay_enabled: {{ domain["underlayenabled"] }}
+      address_translation: {{ domain["patenabled"] }}
+      aggregate_flows_enabled: {{ domain["aggregateflowsenabled"] }}
+      flow_collection_enabled: {{ domain["flowcollectionenabled"] }}
+      description: {{ domain["description"] }}
+        {%- for domain_template in domain_templates -%}
+            {%- if domain["templateid"] == domain_template["id"] %}
+      dom_template_name: {{ domain_template["name"] }}
+            {%- endif -%}
+        {%- endfor %}
+{% endfor -%}
+{% endfor %}
+"""
+
+echo("on")
+render_template($user_data)

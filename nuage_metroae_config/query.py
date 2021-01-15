@@ -7,6 +7,8 @@ import yaml
 from six import string_types
 
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
+from nuage_metroae_config.template import (JSONEscapingExtension,
+                                           RegularExpressionExtension)
 from nuage_metroae_config.variable_reader import VariableReader
 
 query_grammer = Lark(r"""
@@ -260,6 +262,8 @@ class QueryExecutor(Transformer):
         args = list(t)
         self.log.debug("Rendering template")
         template = jinja2.Template(args[0],
+                                   extensions=(JSONEscapingExtension,
+                                               RegularExpressionExtension),
                                    autoescape=False,
                                    undefined=jinja2.StrictUndefined)
 
