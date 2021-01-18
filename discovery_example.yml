@@ -1,5 +1,6 @@
 template: Enterprise
 software-version: 20.10.1
+type: Enterprise
 values:
   forwarding_classes: null
   load_balancing_classes: null
