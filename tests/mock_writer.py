@@ -144,7 +144,7 @@ class MockWriter(object):
         """
         self._record_action("get-value %s [%s]" % (field, str(context)))
         if self.encode:
-            return base64.b64encode(self._new_get_value())
+            return base64.b64encode(self._new_get_value().encode("ascii"))
         return self._new_get_value()
 
     def get_object_list(self, object_name, context=None):

@@ -1069,23 +1069,25 @@ class SaveToFileAction(Action):
             if self.from_field is not None:
                 field_value = writer.get_value(self.from_field, context)
 
-            file_mode = "w" if self.append_to_file is False else "a"
-            console_text = ""
+            file_mode = "wb" if self.append_to_file is False else "ab"
+            console_text = "".encode("utf-8")
             with open(self.file_path, file_mode) as f:
                 if self.prefix_string is not None:
-                    console_text += self.prefix_string
-                    f.write(self.prefix_string)
+                    console_text += self.prefix_string.encode("utf-8")
+                    f.write(self.prefix_string.encode("utf-8"))
                 if self.from_field is not None:
                     if self.decode == 'base64':
                         field_value = base64.b64decode(field_value)
+                    else:
+                        field_value = field_value.encode("utf-8")
                     console_text += field_value
                     f.write(field_value)
                 if self.suffix_string is not None:
-                    console_text += self.suffix_string
-                    f.write(self.suffix_string)
+                    console_text += self.suffix_string.encode("utf-8")
+                    f.write(self.suffix_string.encode("utf-8"))
 
                 if self.write_to_console:
-                    self.log.output(console_text)
+                    self.log.output(console_text.decode("utf-8"))
 
     def _to_string(self, indent_level):
         indent = Action._indent(indent_level)
