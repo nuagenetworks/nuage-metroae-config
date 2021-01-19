@@ -2,7 +2,7 @@ echo("off")
 
 domains = Enterprise[%group=name].Domain.{*}
 domain_template_ids = Enterprise.DomainTemplate.id
-domain_templates = Enterprise.DomainTemplate[id=$domain_template_ids].{*}
+domain_templates = Enterprise[%group=name].DomainTemplate[id=$domain_template_ids].{*}
 
 user_data = """
 - template: L3 Domain
@@ -16,14 +16,17 @@ user_data = """
       aggregate_flows_enabled: {{ domain["aggregateflowsenabled"] }}
       flow_collection_enabled: {{ domain["flowcollectionenabled"] }}
       description: {{ domain["description"] }}
-        {%- for domain_template in domain_templates -%}
-            {%- if domain["templateid"] == domain_template["id"] %}
-      dom_template_name: {{ domain_template["name"] }}
+        {%- for inner_enterprise in domain_templates -%}
+        {%- for inner_domain_template in inner_enterprise[1] -%}
+            {%- if domain["templateid"] == inner_domain_template["id"] %}
+      dom_template_name: {{ inner_domain_template["name"] }}
+      inner_ent_name: {{ inner_enterprise[0] }}
             {%- endif -%}
+        {%- endfor %}
         {%- endfor %}
 {% endfor -%}
 {% endfor %}
 """
 
 echo("on")
-render_template($user_data)
+render_yaml_template($user_data)

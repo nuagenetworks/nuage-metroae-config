@@ -60,6 +60,7 @@ def build_query(template, obj_type, pinned_values):
     actions = get_dict_field_no_case(parsed_template, "actions")
     query_data = {"template": template.get_name(),
                   "pinned_values": pinned_values,
+                  "variables": variables.keys(),
                   "type": obj_type,
                   "var_map": dict(),
                   "store_map": dict()}
@@ -177,16 +178,6 @@ def map_field_to_variable(parents, field, value, query_data):
 
     query_data["var_map"][parent_object][field] = variable_name
 
-    # object_name = camel_to_snake_case(parent_object)
-    # if variable_name is not None:
-
-    #     output("".join([INDENT_STR * 2, "  ",
-    #                    variable_name, ': {{ ',
-    #                    object_name, '["', field.lower(), '"] }}']))
-    # else:
-    #     output("".join([INDENT_STR * 2, "  # No variable for ",
-    #                    parent_object, ".", field]))
-
 
 def find_variable_mapping(value):
     value_str = str(value).lower()
@@ -252,8 +243,13 @@ def write_store_query(store_name, store_info, object_name):
         store_objects = [x["object_name"] for x in store_info["store_parents"]]
         store_path = ".".join(store_objects)
         output("%ss = %s.id", store_name, store_path)
+        groups = list()
+        for x in store_info["store_parents"][:-1]:
+            groups.append("%s[%%group=%s]" % (x["object_name"], x["by_field"]))
+        groups.append(store_info["store_parents"][-1]["object_name"])
+
         output("%ss = %s[id=$%ss].{*}", camel_to_snake_case(store_objects[-1]),
-               store_path, store_name)
+               ".".join(groups), store_name)
     else:
         output("# WARNING: Store variable %s does not map to %s object",
                store_name, object_name)
@@ -297,6 +293,8 @@ def write_user_data_vars(query_data):
 
     output("{%% endfor %%}")
 
+    write_missing_vars_warnings(query_data, written_vars)
+
 
 def write_parent_fields(query_data, written_vars):
 
@@ -324,32 +322,60 @@ def write_var_fields(query_data, written_vars):
         output("%s# WARNING: main object %s has no values set",
                INDENT_STR * 2, object_name)
 
+    write_store_fields(query_data, written_vars)
+
+
+def write_store_fields(query_data, written_vars):
+    parents = query_data["parents"]
+    object_name = parents[-1]["object_name"]
+    var_map = query_data["var_map"]
+
     store_map = query_data["store_map"]
-    for parent_object_name, object_var_map in var_map.items():
-        if parent_object_name != object_name:
-            store_map_entry = find_store_map_entry_by_type(store_map,
-                                                           parent_object_name)
-            if store_map_entry is not None:
+    for store_var_id, store_map_entry in store_map.items():
+        retrieve_object_name = (
+            store_map_entry["retrieve_parents"][-1]["object_name"])
+        if retrieve_object_name.lower() == object_name.lower():
+            inner_parents = store_map_entry["store_parents"]
+            parent_object_name = inner_parents[-1]["object_name"]
 
-                snake_case = camel_to_snake_case(parent_object_name)
-                output("{%%- for %s in %ss -%%}", snake_case, snake_case)
-                output('{%%- if %s["%s"] == %s["id"] %%}',
-                       camel_to_snake_case(object_name),
-                       store_map_entry["retrieve_field"].lower(),
-                       snake_case)
+            snake_parent = camel_to_snake_case(parent_object_name)
+            snake_inner = camel_to_snake_case(inner_parents[0]["object_name"])
+            output("{%%- for inner_%s in %ss -%%}", snake_inner, snake_parent)
 
+            for inner_parent in inner_parents[1:]:
+                snake_parent = camel_to_snake_case(inner_parent["object_name"])
+                output("{%%- for inner_%s in inner_%s[1] -%%}", snake_parent,
+                       snake_inner)
+                snake_inner = snake_parent
+
+            output('{%%- if %s["%s"] == inner_%s["id"] %%}',
+                   camel_to_snake_case(object_name),
+                   store_map_entry["retrieve_field"].lower(),
+                   camel_to_snake_case(parent_object_name))
+
+            write_store_parent_fields(inner_parents, written_vars)
+
+            object_var_map = None
+            if store_map_entry["type"] in var_map:
+                object_var_map = var_map[store_map_entry["type"]]
+
+            if object_var_map is not None:
                 write_var_field_set(parent_object_name, object_var_map,
-                                    written_vars)
+                                    written_vars, is_inner=True)
 
-                output('{%%- endif -%%}')
+            output('{%%- endif -%%}')
+            for inner_parent in inner_parents:
                 output('{%%- endfor -%%}')
-            else:
-                output("%s# WARNING: cannot find store/retrieve for %s object",
-                       INDENT_STR * 2, parent_object_name)
+        else:
+            output("%s# WARNING: retrieve for id %s not in %s object",
+                   INDENT_STR * 2, store_var_id, object_name)
 
 
-def write_var_field_set(parent_object_name, object_var_map, written_vars):
+def write_var_field_set(parent_object_name, object_var_map, written_vars,
+                        is_inner=False):
     object_name = camel_to_snake_case(parent_object_name)
+    if is_inner:
+        object_name = "inner_" + object_name
 
     for field, variable_name in object_var_map.items():
         if variable_name not in written_vars:
@@ -367,17 +393,25 @@ def write_var_field_set(parent_object_name, object_var_map, written_vars):
                                 parent_object_name, ".", field]))
 
 
-def find_store_map_entry_by_type(store_map, object_type):
-    for store_var, store_map_entry in store_map.items():
-        if store_map_entry["type"].lower() == object_type.lower():
-            return store_map_entry
+def write_store_parent_fields(store_parents, written_vars):
+    for parent in store_parents:
+        if "variable" in parent:
+            variable = parent["variable"]
+            if variable not in written_vars:
+                written_vars.append(variable)
+                output("%s  %s: {{ inner_%s[0] }}", INDENT_STR * 2, variable,
+                       camel_to_snake_case(parent["object_name"]))
 
-    return None
+
+def write_missing_vars_warnings(query_data, written_vars):
+    for variable in query_data["variables"]:
+        if variable not in written_vars:
+            output('# WARNING: variable %s not found' % variable)
 
 
 def write_query_footers(query_data):
     output('\necho("on")')
-    output("render_template($user_data)")
+    output("render_yaml_template($user_data)")
 
 
 def camel_to_snake_case(camel):
