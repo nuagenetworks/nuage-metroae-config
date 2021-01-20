@@ -4,7 +4,8 @@ import re
 import requests
 
 from bambou.exceptions import BambouHTTPError
-from .bambou_adapter import ConfigObject, Fetcher, Root, Session
+from .bambou_adapter import (ConfigObject, EnterpriseFetcher, Fetcher, Root,
+                             Session)
 from .device_reader_base import DeviceReaderBase
 from .device_writer_base import DeviceWriterBase
 from .errors import (DeviceWriterError,
@@ -676,7 +677,10 @@ class VsdWriter(DeviceWriterBase, DeviceReaderBase):
 
         self._check_child_object(parent_object.spec, spec)
 
-        return Fetcher(parent_object, spec)
+        if spec["model"]["rest_name"] == "enterprise":
+            return EnterpriseFetcher(parent_object, spec)
+        else:
+            return Fetcher(parent_object, spec)
 
     def _add_object(self, obj, parent_object=None):
         if parent_object is None:

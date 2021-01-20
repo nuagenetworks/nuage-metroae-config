@@ -3,6 +3,9 @@ import sys
 from bambou import NURESTFetcher, NURESTSession, NURESTObject, NURESTRootObject
 from bambou.exceptions import InternalConsitencyError
 
+CSP_ENTERPRISE_ID = "76046673-d0ea-4a67-b6af-2829952f0812"
+CSP_ENTERPRISE_NAME = "CSP"
+
 
 class Session(NURESTSession):
     """
@@ -248,6 +251,36 @@ class Fetcher(NURESTFetcher):
     def _prepare_url(self):
         return self.parent_object.get_resource_url_for_child_name(
             self.resource_name)
+
+
+class EnterpriseFetcher(Fetcher):
+    """
+    Specific fetcher for the Enterprise object.  This is needed because there
+    is a hidden "CSP" enterprise on the VSD which is needed as the parent of
+    other objects but cannot actually be retrieved from the VSD.  This class
+    injects the hidden enterprise into the fetch results.
+    """
+    def __init__(self, parent_object, spec):
+        super(EnterpriseFetcher, self).__init__(parent_object, spec)
+
+    def get(self, filter=None):
+        if filter is None:
+            results = super(EnterpriseFetcher, self).get()
+            results.append(self._new_csp_enterprise())
+        else:
+            if filter in ['name is "%s"' % CSP_ENTERPRISE_NAME,
+                          'id is "%s"' % CSP_ENTERPRISE_ID]:
+                results = [self._new_csp_enterprise()]
+            else:
+                results = super(EnterpriseFetcher, self).get(filter=filter)
+
+        return results
+
+    def _new_csp_enterprise(self):
+        csp_enterprise = self.new()
+        csp_enterprise.name = CSP_ENTERPRISE_NAME
+        csp_enterprise.id = CSP_ENTERPRISE_ID
+        return csp_enterprise
 
 
 class Root(NURESTRootObject):
