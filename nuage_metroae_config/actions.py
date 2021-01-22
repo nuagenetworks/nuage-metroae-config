@@ -823,6 +823,11 @@ class SetValuesAction(Action):
                             not writer.does_object_exist(context)):
                         writer.set_values(context, **resolved_attributes)
                 else:
+                    if (self.parent.is_select() and
+                            not writer.is_validate_only()):
+                        self.log.output(self._get_location(
+                            "Unset %s " %
+                            str(self.parent.object_type)))
                     writer.unset_values(context, **resolved_attributes)
 
     def resolve_attributes(self):
