@@ -1155,6 +1155,10 @@ other filters.  See the [Python Jinja](https://jinja.palletsprojects.com/en/2.11
 documentation for more. Using Jinja templates, many file formats can be output
 including nice text reports, HTML pages, CSV or JSON.
 
+The `render_yaml_template` action is exactly the same as `render_template`
+except that substituted variables are formatted properly for YAML/JSON output.
+For example strings are quoted, booleans are converted to true/false, etc.
+
 Example query file:
 
     output("off")

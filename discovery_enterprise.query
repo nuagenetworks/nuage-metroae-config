@@ -1,0 +1,35 @@
+echo("off")
+
+enterprises = Enterprise.{*}
+enterprise_profile_ids = Enterprise.enterpriseProfileID
+profiles = EnterpriseProfile[id=$enterprise_profile_ids].{*}
+
+user_data = """
+- template: Enterprise
+  values:
+{%- for enterprise in enterprises %}
+{% if enterprise["name"] not in ["Audit Enterprise", "Shared Infrastructure"] %}
+    - enterprise_name: {{ enterprise["name"] }}
+      local_as: {{ enterprise["localas"] }}
+      description: {{ enterprise["description"] }}
+    {%- for inner_enterprise_profile in profiles -%}
+        {%- if enterprise["enterpriseprofileid"] == inner_enterprise_profile["id"] %}
+      profile_name: {{ inner_enterprise_profile["name"] }}
+      allow_gateway_management: {{ inner_enterprise_profile["allowgatewaymanagement"] }}
+      enable_application_performance_management: {{ inner_enterprise_profile["enableapplicationperformancemanagement"] }}
+      dhcp_lease_interval: {{ inner_enterprise_profile["dhcpleaseinterval"] }}
+      description: {{ inner_enterprise_profile["description"] }}
+      floating_ips_quota: {{ inner_enterprise_profile["floatingipsquota"] }}
+      encryption_management_mode: {{ inner_enterprise_profile["encryptionmanagementmode"] }}
+      # No variable for EnterpriseProfile.forwardingClass
+      allow_advanced_qos_configuration: {{ inner_enterprise_profile["allowadvancedqosconfiguration"] }}
+      routing_protocols_enabled: {{ inner_enterprise_profile["bgpenabled"] }}
+      vnf_management_enabled: {{ inner_enterprise_profile["vnfmanagementenabled"] }}
+        {%- endif -%}
+    {%- endfor %}
+{%- endif -%}
+{% endfor %}
+"""
+
+echo("on")
+render_yaml_template($user_data)

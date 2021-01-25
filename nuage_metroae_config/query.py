@@ -7,6 +7,8 @@ import yaml
 from six import string_types
 
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
+from nuage_metroae_config.template import (JSONEscapingExtension,
+                                           RegularExpressionExtension)
 from nuage_metroae_config.variable_reader import VariableReader
 
 query_grammer = Lark(r"""
@@ -47,15 +49,16 @@ query_grammer = Lark(r"""
     count              : "count(" _expression ")"
     reverse            : "reverse(" _expression ")"
 
-    _action          : connect_action | redirect_action | render_action | echo_action | output_action
-    _argument_list   : argument _comma_arg*
-    _comma_arg       : "," argument
-    argument         : variable | string | integer
-    connect_action   : "connect(" _argument_list ")"
-    redirect_action  : "redirect_to_file(" argument ")"
-    render_action    : "render_template(" argument ")"
-    echo_action      : "echo(" argument ")"
-    output_action    : "output(" argument ")"
+    _action            : connect_action | redirect_action | render_action | render_yaml_action | echo_action | output_action
+    _argument_list     : argument _comma_arg*
+    _comma_arg         : "," argument
+    argument           : variable | string | integer
+    connect_action     : "connect(" _argument_list ")"
+    redirect_action    : "redirect_to_file(" argument ")"
+    render_action      : "render_template(" argument ")"
+    render_yaml_action : "render_yaml_template(" argument ")"
+    echo_action        : "echo(" argument ")"
+    output_action      : "output(" argument ")"
 
     list              : "[" _list_item_comma* _list_item? "]"
     _list_item        : variable | string | integer | boolean | null
@@ -257,9 +260,22 @@ class QueryExecutor(Transformer):
         return None
 
     def render_action(self, t):
+        return self.render_common(t, is_yaml=False)
+
+    def render_yaml_action(self, t):
+        return self.render_common(t, is_yaml=True)
+
+    def render_common(self, t, is_yaml=False):
         args = list(t)
         self.log.debug("Rendering template")
+        if is_yaml:
+            extensions = (JSONEscapingExtension,
+                          RegularExpressionExtension)
+        else:
+            extensions = (RegularExpressionExtension,)
+
         template = jinja2.Template(args[0],
+                                   extensions=extensions,
                                    autoescape=False,
                                    undefined=jinja2.StrictUndefined)
 
