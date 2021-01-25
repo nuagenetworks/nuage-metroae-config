@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nuage-metroae-config",
-    version="1.0.1",
+    version="1.1.0",
     author="Nuage Devops",
     author_email="devops@nuagenetworks.net",
     description="Template-based configuration tool for Nuage Networks VSD",

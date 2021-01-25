@@ -11,7 +11,13 @@ from .bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
                                          SESSION_CREDS_REAL,
                                          SESSION_CREDS_TEST)
 from bambou.exceptions import BambouHTTPError
-from nuage_metroae_config.bambou_adapter import ConfigObject, Fetcher, Session
+from nuage_metroae_config.bambou_adapter import (ConfigObject,
+                                                 EnterpriseFetcher,
+                                                 Fetcher,
+                                                 Session)
+
+CSP_ENTERPRISE_ID = "76046673-d0ea-4a67-b6af-2829952f0812"
+CSP_ENTERPRISE_NAME = "CSP"
 
 VALIDATION_ERROR_CASES = [
     ('name', None, "value is mandatory"),
@@ -926,6 +932,154 @@ class TestFetcher(object):
         assert '404' in str(e)
         assert 'enterprise not found' in str(e)
         assert parent_test_id in str(e)
+
+
+class TestEnterpriseFetcher(object):
+
+    @requests_mock.mock(kw="mock")
+    def test_find_normal__success(self, **kwargs):
+        mock = kwargs['mock']
+        session = start_session(mock)
+        fetcher = EnterpriseFetcher(session.root_object, ENTERPRISE_SPEC_TEST)
+
+        test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
+
+        resource_name = ENTERPRISE_SPEC_TEST["model"]["resource_name"]
+
+        mock.get(build_standard_mock_url(resource_name),
+                 status_code=200,
+                 json=[{"name": "test_enterprise",
+                        "ID": test_id}])
+
+        objects = fetcher.get(filter='name is "test_enterprise"')
+
+        last_request = mock.last_request
+        request_headers = last_request.headers
+        assert "X-Nuage-Filter" in request_headers
+        assert request_headers["X-Nuage-Filter"] == 'name is "test_enterprise"'
+
+        assert len(objects) == 1
+        obj = objects[0]
+        assert obj.get_name() == "Enterprise"
+        assert hasattr(obj, 'name') is True
+        assert obj.name == "test_enterprise"
+        assert hasattr(obj, 'id') is True
+        assert obj.id == test_id
+
+    @requests_mock.mock(kw="mock")
+    def test_find_csp__by_name(self, **kwargs):
+        mock = kwargs['mock']
+        session = start_session(mock)
+        fetcher = EnterpriseFetcher(session.root_object, ENTERPRISE_SPEC_TEST)
+
+        resource_name = ENTERPRISE_SPEC_TEST["model"]["resource_name"]
+
+        mock.get(build_standard_mock_url(resource_name),
+                 status_code=404,
+                 json=[])
+
+        objects = fetcher.get(filter='name is "%s"' % CSP_ENTERPRISE_NAME)
+
+        assert len(objects) == 1
+        obj = objects[0]
+        assert obj.get_name() == "Enterprise"
+        assert hasattr(obj, 'name') is True
+        assert obj.name == CSP_ENTERPRISE_NAME
+        assert hasattr(obj, 'id') is True
+        assert obj.id == CSP_ENTERPRISE_ID
+
+    @requests_mock.mock(kw="mock")
+    def test_find_csp__by_id(self, **kwargs):
+        mock = kwargs['mock']
+        session = start_session(mock)
+        fetcher = EnterpriseFetcher(session.root_object, ENTERPRISE_SPEC_TEST)
+
+        resource_name = ENTERPRISE_SPEC_TEST["model"]["resource_name"]
+
+        mock.get(build_standard_mock_url(resource_name),
+                 status_code=404,
+                 json=[])
+
+        objects = fetcher.get(filter='id is "%s"' % CSP_ENTERPRISE_ID)
+
+        assert len(objects) == 1
+        obj = objects[0]
+        assert obj.get_name() == "Enterprise"
+        assert hasattr(obj, 'name') is True
+        assert obj.name == CSP_ENTERPRISE_NAME
+        assert hasattr(obj, 'id') is True
+        assert obj.id == CSP_ENTERPRISE_ID
+
+    @requests_mock.mock(kw="mock")
+    def test_find_parent__not_found(self, **kwargs):
+        mock = kwargs['mock']
+        session = start_session(mock)
+        fetcher = EnterpriseFetcher(session.root_object, ENTERPRISE_SPEC_TEST)
+
+        # test_id = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
+
+        resource_name = ENTERPRISE_SPEC_TEST["model"]["resource_name"]
+
+        mock.get(build_standard_mock_url(resource_name),
+                 status_code=200)
+
+        objects = fetcher.get(filter='name is "test_enterprise"')
+
+        last_request = mock.last_request
+        request_headers = last_request.headers
+        assert "X-Nuage-Filter" in request_headers
+        assert request_headers["X-Nuage-Filter"] == 'name is "test_enterprise"'
+
+        assert len(objects) == 0
+
+    @requests_mock.mock(kw="mock")
+    def test_find__multiple(self, **kwargs):
+        mock = kwargs['mock']
+        session = start_session(mock)
+        fetcher = EnterpriseFetcher(session.root_object, ENTERPRISE_SPEC_TEST)
+
+        test_id_1 = "741fc5d9-fce7-4f98-9172-e962be6ee3e2"
+        test_id_2 = "741fc5d9-fce7-4f98-9172-e962be6ee3e3"
+
+        resource_name = ENTERPRISE_SPEC_TEST["model"]["resource_name"]
+
+        mock.get(build_standard_mock_url(resource_name),
+                 status_code=200,
+                 json=[{"name": "test_enterprise",
+                        "ID": test_id_1},
+                       {"name": "test_enterprise",
+                        "ID": test_id_2}])
+
+        objects = fetcher.get()
+
+        assert len(objects) == 3
+        obj_1 = objects[0]
+        obj_2 = objects[1]
+        obj_3 = objects[2]
+
+        assert obj_1.get_name() == "Enterprise"
+        assert hasattr(obj_1, 'name') is True
+        assert obj_1.name == "test_enterprise"
+        assert hasattr(obj_1, 'id') is True
+        assert obj_1.id == test_id_1
+
+        assert obj_2.get_name() == "Enterprise"
+        assert hasattr(obj_2, 'name') is True
+        assert obj_2.name == "test_enterprise"
+        assert hasattr(obj_2, 'id') is True
+        assert obj_2.id == test_id_2
+
+        assert obj_2.get_name() == "Enterprise"
+        assert hasattr(obj_2, 'name') is True
+        assert obj_2.name == "test_enterprise"
+        assert hasattr(obj_2, 'id') is True
+        assert obj_2.id == test_id_2
+
+        assert obj_3.get_name() == "Enterprise"
+        assert hasattr(obj_3, 'name') is True
+        assert obj_3.name == CSP_ENTERPRISE_NAME
+        assert hasattr(obj_3, 'id') is True
+        assert obj_3.id == CSP_ENTERPRISE_ID
 
 
 class TestValidate(object):
