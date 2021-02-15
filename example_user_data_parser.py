@@ -86,7 +86,8 @@ PRE_DEFINED_OBJECTS = {("enterprise_profile_name", "Default Profile"),
                        ("import_routing_policy_name", "RejectAll"),
                        ('export_routing_policy_name', 'DefaultOnly'),
                        ('saas_application_name', 'WebEx'),
-                       ('network_name', 'ANY')}
+                       ('network_name', 'ANY'),
+                       ('group_name', 'Administrators')}
 
 LIST_DEPENDENCY_KEYS = {"monitor scope": {"destination_nsgs": "nsg_name",
                                           "source_nsgs": "nsg_name",
