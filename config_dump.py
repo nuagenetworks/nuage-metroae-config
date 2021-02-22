@@ -306,6 +306,7 @@ def compare_tree(superset, subset):
             e.score = best_score
             raise e
 
+
 def compare_objects_list(superset_value, subset_value):
     score = 0
     for subset_obj_value in subset_value:
