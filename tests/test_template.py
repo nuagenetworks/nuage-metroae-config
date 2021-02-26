@@ -479,6 +479,25 @@ class TestTemplateVariableValidation(object):
 
         assert template.validate_template_data(**all_vars) is True
 
+    def test_all_vars_unicode__success(self):
+        template = self.get_variables_template()
+
+        all_vars = {"name": u"test_name",
+                    "select_name": u"test_select",
+                    "int_as_string": 10,
+                    "number": 10,
+                    "floating_point": 0.2,
+                    "true_or_false": True,
+                    "ipv4_address": u"192.168.0.1",
+                    "ipv6_address": u"8000::0001",
+                    "any_ip_address": u"10.0.0.0",
+                    "fruit": u"Apple",
+                    "string_list": [u"a", u"b", u"c"],
+                    "int_list": [1, 2, 10],
+                    "soda_list": [u"coke", u"Pepsi", u"SPRITE"]}
+
+        assert template.validate_template_data(**all_vars) is True
+
     @pytest.mark.parametrize("data, message", INVALID_VALUES_CASES)
     def test__invalid(self, data, message):
         template = self.get_variables_template()
