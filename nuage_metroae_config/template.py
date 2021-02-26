@@ -3,6 +3,7 @@ import jinja2.ext
 import json
 import os
 import re
+import six
 import sys
 import yaml
 
@@ -498,8 +499,7 @@ class Template(object):
 
     def _validate_variable_value(self, var_schema, var_name, value, var_type):
         if var_type in JSON_SCHEMA_STRING_TYPES:
-            if isinstance(value, str) or (
-                    sys.version_info < (3,) and isinstance(value, unicode)):
+            if isinstance(value, six.string_types):
                 return True
             else:
                 allow_int = get_dict_field_no_case(var_schema, "allow-integer")
@@ -525,7 +525,7 @@ class Template(object):
             else:
                 self._raise_value_error(var_name, "is not a boolean")
         elif var_type == "choice":
-            if not isinstance(value, str):
+            if not isinstance(value, six.string_types):
                 self._raise_value_error(var_name, "is not a string")
             choices = self._get_required_field(var_schema, "choices")
             upper_choices = [x.upper() for x in choices]
