@@ -4,7 +4,6 @@ import json
 import os
 import re
 import six
-import sys
 import yaml
 
 from .document_template_md import DOCUMENT_TEMPLATE_MD
