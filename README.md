@@ -2,7 +2,7 @@
 
 Nuage MetroAE configuration template engine.
 
-Version 1.0.1
+Version 1.1.0
 
 This tool reads JSON or Yaml files of templates and user-data to
 write a configuration to a VSD or to revert (remove) said configuration.
@@ -1459,7 +1459,7 @@ from nuage_metroae_config.es_reader import EsReader
     from nuage_metroae_config.user_data_parser import UserDataParser
     from nuage_metroae_config.vsd_writer import VsdWriter
 
-    ENGINE_VERSION = "1.0"
+    ENGINE_VERSION = "1.1.0"
     VSD_API_SPEC_PATH = "./vsd-api-specifications"
     TEMPLATE_PATH = "./templates"
     USER_DATA_PATH = "./user_data"
