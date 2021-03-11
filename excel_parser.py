@@ -180,6 +180,10 @@ class ExcelParser(object):
         for label in labels:
             cell = worksheet.cell(row=row, column=col)
             value = cell.value
+
+            if sys.version_info[0] < 3 and type(value) == long:
+                value = int(value)
+
             if value is not None:
                 if label is not None:
                     if label.startswith("list:"):
