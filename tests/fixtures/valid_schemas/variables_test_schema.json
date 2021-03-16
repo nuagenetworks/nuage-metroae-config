@@ -58,7 +58,7 @@
       },
       "floating_point": {
         "propertyOrder": 50,
-        "type": "float",
+        "type": "number",
         "title": "Floating point"
       },
       "ipv4_address": {

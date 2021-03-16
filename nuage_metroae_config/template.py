@@ -329,6 +329,8 @@ class Template(object):
                     "In template %s, variable %s: choices must be a list" %
                     (self.filename, var_name))
             info['enum'] = choices
+        elif lower_type == "float":
+            info['type'] = "number"
         else:
             info['type'] = lower_type
 
