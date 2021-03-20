@@ -1,5 +1,5 @@
 bambou
-Jinja2==2.10.1
+Jinja2==2.11.3
 lark-parser==0.8.9
 PyYAML
 six==1.9.0
