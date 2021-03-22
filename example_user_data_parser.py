@@ -6,7 +6,6 @@ import yaml
 import re
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.user_data_parser import UserDataParser
-from metroae_config import MetroConfig
 
 
 class TypeToObjectName():
