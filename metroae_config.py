@@ -477,7 +477,8 @@ class MetroConfig(object):
             return True
 
         if self.action == EXCEL_ACTION:
-            self.write_excel_input_form(self.args.template_names)
+            excel_file_name = self.find_new_excel_file_name()
+            self.write_excel_input_form(self.args.template_names, excel_file_name)
             return True
 
         return False
@@ -526,10 +527,8 @@ class MetroConfig(object):
         with open(full_path, "w") as f:
             f.write(readme)
 
-    def write_excel_input_form(self, template_names, example_dir=None):
+    def write_excel_input_form(self, template_names, excel_file_name, example_dir=None):
         excel = self.create_excel_generator(template_names)
-
-        excel_file_name = self.find_new_excel_file_name()
 
         excel.write_workbook(excel_file_name, example_dir)
 

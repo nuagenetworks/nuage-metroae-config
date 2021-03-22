@@ -1,3 +1,4 @@
+#!/usr/bin/python
 
 import argparse
 from metroae_config import MetroConfig
@@ -14,15 +15,18 @@ def main():
 
 def add_parser_arguments(parser):
     parser.add_argument('-tp', '--template_path', dest='template_path',
-                        action='append', required=False,
+                        action='append', required=True,
                         default=None,
                         help='Path containing template files.')
     parser.add_argument('-d', '--data_path', dest='data_path',
-                        action='append', required=False,
+                        action='append', required=True,
                         help="Path contain the example user data")
     parser.add_argument('template_names',
                         nargs="*",
                         help='Template names')
+    parser.add_argument('-o', '--output', dest='output',
+                        action='store', required=True,
+                        help="Path to the output excel file")
 
 
 class YamlToExcel(object):
@@ -35,7 +39,7 @@ class YamlToExcel(object):
 
     def run(self):
 
-        self.metroConfig.write_excel_input_form(self.args.template_names, self.args.data_path[0])
+        self.metroConfig.write_excel_input_form(self.args.template_names, self.args.output, self.args.data_path[0])
 
 
 if __name__ == "__main__":
