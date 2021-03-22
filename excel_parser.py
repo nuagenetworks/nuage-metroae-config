@@ -7,10 +7,10 @@ import os
 import sys
 
 TYPE_CAST_MAP = {
-      "integer": int,
-      "string": str,
-      "boolean": bool,
-      "number": float
+    "integer": int,
+    "string": str,
+    "boolean": bool,
+    "number": float
 }
 
 
