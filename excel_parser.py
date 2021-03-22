@@ -13,6 +13,7 @@ TYPE_CAST_MAP = {
       "number": float
 }
 
+
 def usage():
     print("Reads data from a XLSX file (Excel spreadsheet)")
     print("")
@@ -272,7 +273,7 @@ class ExcelParser(object):
             else:
                 title_field_map[field["title"]] = name
                 if "type" in field:
-                    title_cast_map[name] =  TYPE_CAST_MAP[field["type"]]
+                    title_cast_map[name] = TYPE_CAST_MAP[field["type"]]
 
         return title_field_map, title_cast_map
 
