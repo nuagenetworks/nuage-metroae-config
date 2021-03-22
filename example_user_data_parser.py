@@ -6,6 +6,7 @@ import yaml
 import re
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.user_data_parser import UserDataParser
+from metroae_config import MetroConfig
 
 
 class TypeToObjectName():
@@ -218,6 +219,10 @@ def main():
                         action='store_true', required=False,
                         default=None,
                         help='Dumps minimum templates required for a group')
+    parser.add_argument('-ex', '--excel', dest='excel',
+                        action='store', required=False,
+                        default=None,
+                        help='Dumps a yaml file for each template type to be consumed by excel generator')
 
     args = parser.parse_args()
 
@@ -351,6 +356,19 @@ def parse(args):
     else:
         for key, value in group_user_data.items():
             print(yaml.dump(value, Dumper=NoAliasDumper))
+
+    if args.excel:
+        template_values_dict = dict()
+        for val in file_data:
+            if "template" in val:
+                template_name = val["template"]
+                template_values = template_values_dict.get(template_name, [])
+                template_values.append(val["values"])
+                template_values_dict[template_name] = template_values
+
+        for key, value in template_values_dict.items():
+            with open(os.path.join(args.excel, key + ".yml"), 'w') as f:
+                yaml.dump(value, f, Dumper=NoAliasDumper)
 
 
 def calculate_template_dependencies(template_dict, group_user_data):

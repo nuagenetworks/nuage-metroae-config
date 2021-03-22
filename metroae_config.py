@@ -526,12 +526,12 @@ class MetroConfig(object):
         with open(full_path, "w") as f:
             f.write(readme)
 
-    def write_excel_input_form(self, template_names):
+    def write_excel_input_form(self, template_names, example_dir=None):
         excel = self.create_excel_generator(template_names)
 
         excel_file_name = self.find_new_excel_file_name()
 
-        excel.write_workbook(excel_file_name)
+        excel.write_workbook(excel_file_name, example_dir)
 
         print(">>> Successfully created Excel form for %d templates: %s" % (
             len(template_names), excel_file_name))
