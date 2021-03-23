@@ -38,8 +38,11 @@ class YamlToExcel(object):
         self.metroConfig.setup_template_store()
 
     def run(self):
+        templates = []
+        for template in self.args.template_names:
+            templates.append(template.rstrip('\n'))
 
-        self.metroConfig.write_excel_input_form(self.args.template_names, self.args.output, self.args.data_path[0])
+        self.metroConfig.write_excel_input_form(templates, self.args.output, self.args.data_path[0])
 
 
 if __name__ == "__main__":
