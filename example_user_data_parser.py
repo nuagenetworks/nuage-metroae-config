@@ -4,6 +4,7 @@ import argparse
 import os
 import yaml
 import re
+import shutil
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.user_data_parser import UserDataParser
 from metroae_config import MetroConfig
@@ -373,7 +374,7 @@ def parse(args):
         metroConfig.setup_template_store()
 
         metroConfig.write_excel_input_form(template_values_dict.keys(), args.excel, temp_template_files)
-        os.rmdir(temp_template_files)
+        shutil.rmtree(temp_template_files)
 
     else:
         for key, value in group_user_data.items():
