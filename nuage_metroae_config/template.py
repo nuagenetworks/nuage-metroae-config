@@ -344,12 +344,15 @@ class Template(object):
 
     def _generate_schema_required(self, new_schema):
         required = list()
-        new_schema['required'] = required
+
 
         for variable in self.variables:
             if 'optional' not in variable or variable['optional'] is False:
                 name = self._get_required_field(variable, "name")
                 required.append(name)
+
+        if len(required) > 0:
+            new_schema['required'] = required
 
     def _convert_variables_to_example(self, indent=2):
         lines = []
