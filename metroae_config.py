@@ -705,7 +705,10 @@ class MetroConfig(object):
                 if self.action == QUERY_ACTION:
                     self.query_files.append(path)
                 else:
-                    parser.read_data(path)
+                    if path.endswith(".xlsx"):
+                        self.read_and_parse_excel(path)
+                    else:
+                        parser.read_data(path)
         if self.action != QUERY_ACTION:
             self.template_data.extend(parser.get_template_name_data_pairs())
 

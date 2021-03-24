@@ -23,6 +23,10 @@ def usage():
     print("")
 
 
+def upper_case_string(value):
+    return value.upper()
+
+
 class ExcelParseError(Exception):
     pass
 
@@ -200,8 +204,10 @@ class ExcelParser(object):
                         if type(value) == int:
                             entry[list_name] = [value]
                         else:
+                            print title_cast_map[list_name]
                             entry[list_name] = [
                                 title_cast_map[list_name](x.strip()) for x in value.split(",")]
+                            print entry[list_name]
 
                         self.cell_positions[list_name] = cell.coordinate
                     else:
@@ -269,11 +275,16 @@ class ExcelParser(object):
         for name, field in iter(properties.items()):
             if "type" in field and field["type"] == "array":
                 title_field_map[field["title"]] = "list:" + name
-                title_cast_map[name] = TYPE_CAST_MAP[field["items"]["type"]]
+                if "type" in field["items"]:
+                    title_cast_map[name] = TYPE_CAST_MAP[field["items"]["type"]]
+                elif "enum" in field["items"]:
+                    title_cast_map[name] = upper_case_string  # special case of array with elements that are of enum type
             else:
                 title_field_map[field["title"]] = name
                 if "type" in field:
                     title_cast_map[name] = TYPE_CAST_MAP[field["type"]]
+                elif "enum" in field:
+                    title_cast_map[name] = upper_case_string  # special case of array with elements that are of enum type
 
         return title_field_map, title_cast_map
 
