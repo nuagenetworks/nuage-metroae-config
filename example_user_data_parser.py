@@ -374,6 +374,7 @@ def parse(args):
         metroConfig.setup_template_store()
 
         metroConfig.write_excel_input_form(template_values_dict.keys(), args.excel, temp_template_files)
+        os.rmdir(temp_template_files)
 
     else:
         for key, value in group_user_data.items():
