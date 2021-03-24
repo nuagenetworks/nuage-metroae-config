@@ -354,7 +354,11 @@ def parse(args):
         with open(args.output_file, 'w') as f:
             yaml.dump(file_data, f, Dumper=NoAliasDumper)
             f.write('\n')
-    elif args.excel:
+    else:
+        for key, value in group_user_data.items():
+            print(yaml.dump(value, Dumper=NoAliasDumper))
+
+    if args.excel:
         template_values_dict = dict()
         for val in file_data:
             if "template" in val:
@@ -375,10 +379,6 @@ def parse(args):
 
         metroConfig.write_excel_input_form(template_values_dict.keys(), args.excel, temp_template_files)
         shutil.rmtree(temp_template_files)
-
-    else:
-        for key, value in group_user_data.items():
-            print(yaml.dump(value, Dumper=NoAliasDumper))
 
 
 def calculate_template_dependencies(template_dict, group_user_data):
