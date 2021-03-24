@@ -6,6 +6,7 @@ import yaml
 import re
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.user_data_parser import UserDataParser
+from metroae_config import MetroConfig
 
 
 class TypeToObjectName():
@@ -200,7 +201,7 @@ def main():
                         default=None,
                         help='Path containing user data.')
     parser.add_argument('-tp', '--template_path', dest='template_path',
-                        action='store', required=True,
+                        action='append', required=True,
                         default=None,
                         help='Path containing template information.')
     parser.add_argument('-g', '--group', dest='group', action='store',
@@ -316,7 +317,7 @@ def load_data(args, jinja2_template_data):
 
 def parse(args):
     template_store = TemplateStore(None)
-    template_store.read_templates(args.template_path)
+    template_store.read_templates(args.template_path[0])
 
     group_user_data, remaining_user_data, extra_keys_dict, groups_dict = load_data(args, template_store.templates)
     dependencies_not_found = resolve_dependencies(group_user_data,
@@ -352,11 +353,7 @@ def parse(args):
         with open(args.output_file, 'w') as f:
             yaml.dump(file_data, f, Dumper=NoAliasDumper)
             f.write('\n')
-    else:
-        for key, value in group_user_data.items():
-            print(yaml.dump(value, Dumper=NoAliasDumper))
-
-    if args.excel:
+    elif args.excel:
         template_values_dict = dict()
         for val in file_data:
             if "template" in val:
@@ -365,9 +362,23 @@ def parse(args):
                 template_values.append(val["values"])
                 template_values_dict[template_name] = template_values
 
+        temp_template_files = "/tmp/excel_data/"
+        os.mkdir(temp_template_files)
         for key, value in template_values_dict.items():
-            with open(os.path.join(args.excel, key + ".yml"), 'w') as f:
+            with open(os.path.join(temp_template_files, key + ".yml"), 'w') as f:
                 yaml.dump(value, f, Dumper=NoAliasDumper)
+
+
+        args.software_version = None
+        metroConfig = MetroConfig(args, None)
+        metroConfig.setup_template_store()
+
+        metroConfig.write_excel_input_form(template_values_dict.keys(), args.excel, temp_template_files)
+
+    else:
+        for key, value in group_user_data.items():
+            print(yaml.dump(value, Dumper=NoAliasDumper))
+
 
 
 def calculate_template_dependencies(template_dict, group_user_data):
