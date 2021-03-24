@@ -303,7 +303,9 @@ class ExcelTemplateGenerator(object):
         cell = worksheet.cell(row=row, column=col)
         if value is not None:
             if type(value) == list:
-                cell.value = ", ".join(str(value))
+                if "type" in field["items"] and (field["items"]["type"] == "number" or field["items"]["type"] == "integer"):
+                    value = str(value)
+                cell.value = ", ".join(value)
             else:
                 cell.value = value
         thin = Side(border_style="thin", color=self.settings["border_color"])
