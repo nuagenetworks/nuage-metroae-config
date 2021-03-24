@@ -204,10 +204,8 @@ class ExcelParser(object):
                         if type(value) == int:
                             entry[list_name] = [value]
                         else:
-                            print title_cast_map[list_name]
                             entry[list_name] = [
                                 title_cast_map[list_name](x.strip()) for x in value.split(",")]
-                            print entry[list_name]
 
                         self.cell_positions[list_name] = cell.coordinate
                     else:
