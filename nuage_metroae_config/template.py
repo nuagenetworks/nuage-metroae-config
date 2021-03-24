@@ -345,7 +345,6 @@ class Template(object):
     def _generate_schema_required(self, new_schema):
         required = list()
 
-
         for variable in self.variables:
             if 'optional' not in variable or variable['optional'] is False:
                 name = self._get_required_field(variable, "name")

@@ -304,7 +304,7 @@ class ExcelTemplateGenerator(object):
         if value is not None:
             if type(value) == list:
                 if "type" in field["items"] and (field["items"]["type"] == "number" or field["items"]["type"] == "integer"):
-                    value = str(value)
+                    value = [ str(_) for _ in value]
                 cell.value = ", ".join(value)
             else:
                 cell.value = value
