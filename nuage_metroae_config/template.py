@@ -329,13 +329,7 @@ class Template(object):
                     "In template %s, variable %s: choices must be a list" %
                     (self.filename, var_name))
             # add all combinations of choice value
-            temp_choices = []
-            for choice in choices:
-                temp_choices.append(choice.lower())
-                temp_choices.append(choice)
-                temp_choices.append(choice.upper())
-
-            info['enum'] = temp_choices
+            info['enum'] = choices
         elif lower_type == "float":
             info['type'] = "number"
         else:
