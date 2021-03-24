@@ -368,7 +368,6 @@ def parse(args):
             with open(os.path.join(temp_template_files, key + ".yml"), 'w') as f:
                 yaml.dump(value, f, Dumper=NoAliasDumper)
 
-
         args.software_version = None
         metroConfig = MetroConfig(args, None)
         metroConfig.setup_template_store()
@@ -379,7 +378,6 @@ def parse(args):
     else:
         for key, value in group_user_data.items():
             print(yaml.dump(value, Dumper=NoAliasDumper))
-
 
 
 def calculate_template_dependencies(template_dict, group_user_data):
