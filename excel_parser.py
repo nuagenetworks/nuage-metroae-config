@@ -6,6 +6,9 @@ from openpyxl import load_workbook
 import os
 import sys
 
+from nuage_metroae_config.util import get_expanded_template_name
+
+
 TYPE_CAST_MAP = {
     "integer": int,
     "string": str,
@@ -263,7 +266,7 @@ class ExcelParser(object):
 
     def get_schema_name(self, title):
         if self.settings["use_schema_titles"]:
-            return title
+            return get_expanded_template_name(title)
         else:
             return title.replace(" ", "_").lower()
 
