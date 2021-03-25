@@ -2,14 +2,16 @@
 TEMPLATE_ABREVIATION_MAP = {
     "Application": "App",
     "Management": "Mgmt",
-    "Performance": "Perf"
+    "Performance": "Perf",
+    "Security": "Sec"
 }
 
 
 TEMPLATE_EXPANTION_MAP = {
     "App": "Application",
     "Mgmt": "Management",
-    "Perf": "Performance"
+    "Perf": "Performance",
+    "Sec": "Security"
 }
 
 
