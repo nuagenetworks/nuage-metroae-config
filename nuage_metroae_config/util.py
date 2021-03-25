@@ -33,9 +33,9 @@ def get_abreviated_template_name(template_name):
     """
     abreviated_template_name = ""
     for n in template_name.split(" "):
-        abreviated_template_name += " " + TEMPLATE_ABREVIATION_MAP[n] if n in TEMPLATE_ABREVIATION_MAP else n
+        abreviated_template_name += " " + (TEMPLATE_ABREVIATION_MAP[n] if n in TEMPLATE_ABREVIATION_MAP else n)
 
-    return abreviated_template_name
+    return abreviated_template_name.strip()
 
 
 def get_expanded_template_name(template_name):
@@ -44,6 +44,6 @@ def get_expanded_template_name(template_name):
     """
     expanded_template_name = ""
     for n in template_name.split(" "):
-        expanded_template_name += " " + TEMPLATE_EXPANTION_MAP[n] if n in TEMPLATE_EXPANTION_MAP else n
+        expanded_template_name += " " + (TEMPLATE_EXPANTION_MAP[n] if n in TEMPLATE_EXPANTION_MAP else n)
 
-    return expanded_template_name
+    return expanded_template_name.strip()
