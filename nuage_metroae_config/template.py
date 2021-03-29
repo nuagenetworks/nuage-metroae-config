@@ -328,7 +328,6 @@ class Template(object):
                 raise TemplateParseError(
                     "In template %s, variable %s: choices must be a list" %
                     (self.filename, var_name))
-            # add all combinations of choice value
             info['enum'] = choices
         elif lower_type == "float":
             info['type'] = "number"
