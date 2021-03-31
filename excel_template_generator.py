@@ -9,6 +9,8 @@ import os
 import sys
 import yaml
 
+from nuage_metroae_config.util import get_abreviated_template_name
+
 
 def usage():
     print("Converts a directory of schemas to an excel spreadsheet template.")
@@ -303,6 +305,8 @@ class ExcelTemplateGenerator(object):
         cell = worksheet.cell(row=row, column=col)
         if value is not None:
             if type(value) == list:
+                if "type" in field["items"] and (field["items"]["type"] == "number" or field["items"]["type"] == "integer"):
+                    value = [str(_) for _ in value]
                 cell.value = ", ".join(value)
             else:
                 cell.value = value
@@ -389,7 +393,7 @@ class ExcelTemplateGenerator(object):
                 file_name, str(e)))
 
     def name_to_title(self, name):
-        return name[0].upper() + name[1:].replace("_", " ")
+        return get_abreviated_template_name(name[0].upper() + name[1:].replace("_", " "))
 
     def read_example(self, example_dir, schema_name):
         file_name = os.path.join(example_dir, schema_name + ".yml")
