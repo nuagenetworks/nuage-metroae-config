@@ -231,6 +231,13 @@ class Template(object):
             "In template %s, Required field %s missing" % (self.filename,
                                                            field))
 
+    def _get_optional_field(self, template_dict, field):
+        try:
+            value = get_dict_field_no_case(template_dict, field)
+            return value
+        except TypeError:
+            pass
+
     def _version_compare(self, version_l, version_r):
         version_l_list = version_l.split(".")
         version_r_list = version_r.split(".")
@@ -329,6 +336,8 @@ class Template(object):
                     "In template %s, variable %s: choices must be a list" %
                     (self.filename, var_name))
             info['enum'] = choices
+            if self._get_optional_field(variable, "case_sensitive"):
+                info['case-sensitive'] = "True"
         elif lower_type == "float":
             info['type'] = "number"
         else:

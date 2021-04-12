@@ -285,7 +285,8 @@ class ExcelParser(object):
                 if "type" in field:
                     title_cast_map[name] = TYPE_CAST_MAP[field["type"]]
                 elif "enum" in field:
-                    title_cast_map[name] = upper_case_string  # special case of array with elements that are of enum type
+                    if "case-sensitive" not in field:
+                        title_cast_map[name] = upper_case_string  # special case of array with elements that are of enum type
 
         return title_field_map, title_cast_map
 
