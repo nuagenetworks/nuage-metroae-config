@@ -795,7 +795,7 @@ multiline
 
         assert "undefined" in str(e.value)
 
-     def test_render_yaml__success(self):
+    def test_render_yaml__success(self):
 
         query_text = """
             template = 'output: [{{ integer }}, {{ string }}, {{ boolean }}]'
@@ -846,7 +846,7 @@ multiline
             query.execute(query_text)
 
         assert "Undefined" in str(e.value)
-        
+
     def test_echo_output__success(self, capsys):
 
         query_text = """
