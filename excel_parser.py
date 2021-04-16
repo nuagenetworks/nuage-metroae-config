@@ -60,8 +60,8 @@ class ExcelParser(object):
         for worksheet in workbook:
             self.read_version(worksheet, self.data)
             schema_name = self.get_schema_name(worksheet.title)
-            schema = self.schemas[schema_name]
-            self.data[schema_name] = self.read_worksheet(schema, worksheet)
+            schema = self.schemas[schema_name.lower()]
+            self.data[schema_name.lower()] = self.read_worksheet(schema, worksheet)
 
         if len(self.errors) > 0:
             exc = ExcelParseError("There were errors while parsing "
@@ -231,7 +231,7 @@ class ExcelParser(object):
 
     def validate_entry_against_schema(self, schema_title, data):
         schema_name = self.get_schema_name(schema_title)
-        schema = self.schemas[schema_name]
+        schema = self.schemas[schema_name.lower()]
 
         try:
             validate(data, schema)
