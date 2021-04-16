@@ -75,7 +75,7 @@ class ExcelParser(object):
         if self.settings["schemas"] is not None:
             for name, schema_str in iter(self.settings["schemas"].items()):
                 try:
-                    self.schemas[name] = json.loads(schema_str)
+                    self.schemas[name.lower()] = json.loads(schema_str)
                 except Exception as e:
                     raise Exception("Could not parse schema: %s\n%s" % (
                         name, str(e)))
