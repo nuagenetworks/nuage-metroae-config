@@ -2,7 +2,7 @@ import os
 import pytest
 
 from mock import patch
-from .mock_reader import MockReader
+from tests.mock_reader import MockReader
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
 from nuage_metroae_config.query import Query
 
@@ -794,58 +794,6 @@ multiline
             query.execute(query_text)
 
         assert "undefined" in str(e.value)
-
-    def test_render_yaml__success(self):
-
-        query_text = """
-            template = 'output: [{{ integer }}, {{ string }}, {{ boolean }}]'
-            integer = 99
-            string = 'test'
-            boolean = true
-            redirect_to_file("%s")
-            render_yaml_template($template)
-        """ % TEST_FILE
-
-        mock_results = []
-        expected_results = [
-            {"template":
-                'output: [{{ integer }}, {{ string }}, {{ boolean }}]'},
-            {"integer": 99},
-            {"string": 'test'},
-            {"boolean": True},
-            'output: [99, "test", true]']
-
-        expected_actions = """
-            start-session
-            stop-session
-        """
-
-        if os.path.isfile(TEST_FILE):
-            os.remove(TEST_FILE)
-
-        self.run_execute_test(query_text, expected_actions, mock_results,
-                              expected_results)
-
-        with open(TEST_FILE, "r") as f:
-            file_contents = f.read()
-
-        if os.path.isfile(TEST_FILE):
-            os.remove(TEST_FILE)
-
-        assert 'output: [99, "test", true]\n' == file_contents
-
-    def test_render_yaml__missing_var(self):
-
-        query_text = """
-            template = '### {{ variable }} ###'
-            render_yaml_template($template)
-        """
-
-        query = Query()
-        with pytest.raises(QueryExecutionError) as e:
-            query.execute(query_text)
-
-        assert "Undefined" in str(e.value)
 
     def test_echo_output__success(self, capsys):
 

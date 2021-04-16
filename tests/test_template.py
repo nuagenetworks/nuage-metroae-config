@@ -8,7 +8,7 @@ from nuage_metroae_config.template import (MissingTemplateError,
                                            TemplateStore,
                                            UndefinedVariableError,
                                            VariableValueError)
-from .template_test_params import (ACL_TEMPLATE_VARS,
+from tests.template_test_params import (ACL_TEMPLATE_VARS,
                                    DOMAIN_TEMPLATE_VARS,
                                    ENTERPRISE_TEMPLATE_VARS,
                                    EXPECTED_ACL_TEMPLATE,
