@@ -88,7 +88,7 @@ class ExcelParser(object):
                         schema_str = f.read().decode("utf-8")
 
                     try:
-                        self.schemas[file_name[0:-5]] = json.loads(schema_str)
+                        self.schemas[file_name[0:-5].lower()] = json.loads(schema_str)
                     except Exception as e:
                         raise Exception("Could not parse schema: %s\n%s" % (
                             file_name, str(e)))
