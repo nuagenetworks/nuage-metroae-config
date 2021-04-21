@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from .action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
+from tests.action_test_params import (CREATE_FIELD_RETRIEVE_VALUE,
                                  CREATE_OBJECTS_DICT,
                                  CREATE_OBJECTS_NO_TYPE,
                                  CREATE_OBJECTS_SELECT_FIRST,

@@ -2,7 +2,7 @@ import os
 import pytest
 
 from mock import patch
-from .mock_reader import MockReader
+from tests.mock_reader import MockReader
 from nuage_metroae_config.errors import QueryExecutionError, QueryParseError
 from nuage_metroae_config.query import Query
 

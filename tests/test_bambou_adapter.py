@@ -2,7 +2,7 @@ import pytest
 import requests
 import requests_mock
 
-from .bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
+from tests.bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
                                          ENTERPRISE_SPEC_TEST,
                                          ENTERPRISE_SPEC_VALIDATE,
                                          ENTERPRISENET_SPEC_TEST,
