@@ -48,4 +48,4 @@ def get_expanded_template_name(template_name):
     for n in template_name.split(" "):
         expanded_template_name += " " + (TEMPLATE_EXPANTION_MAP[n] if n in TEMPLATE_EXPANTION_MAP else n)
 
-    return expanded_template_name.strip()
+    return expanded_template_name.strip().lower()
