@@ -3,13 +3,13 @@ import requests
 import requests_mock
 
 from tests.bambou_adapter_test_params import (DOMAINTMPL_SPEC_TEST,
-                                         ENTERPRISE_SPEC_TEST,
-                                         ENTERPRISE_SPEC_VALIDATE,
-                                         ENTERPRISENET_SPEC_TEST,
-                                         NETMACGRP_SPEC_TEST,
-                                         ROOT_SPEC_TEST,
-                                         SESSION_CREDS_REAL,
-                                         SESSION_CREDS_TEST)
+                                              ENTERPRISE_SPEC_TEST,
+                                              ENTERPRISE_SPEC_VALIDATE,
+                                              ENTERPRISENET_SPEC_TEST,
+                                              NETMACGRP_SPEC_TEST,
+                                              ROOT_SPEC_TEST,
+                                              SESSION_CREDS_REAL,
+                                              SESSION_CREDS_TEST)
 from bambou.exceptions import BambouHTTPError
 from nuage_metroae_config.bambou_adapter import (ConfigObject,
                                                  EnterpriseFetcher,
