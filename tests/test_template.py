@@ -9,12 +9,12 @@ from nuage_metroae_config.template import (MissingTemplateError,
                                            UndefinedVariableError,
                                            VariableValueError)
 from tests.template_test_params import (ACL_TEMPLATE_VARS,
-                                   DOMAIN_TEMPLATE_VARS,
-                                   ENTERPRISE_TEMPLATE_VARS,
-                                   EXPECTED_ACL_TEMPLATE,
-                                   EXPECTED_DOMAIN_TEMPLATE,
-                                   EXPECTED_ENTERPRISE_TEMPLATE,
-                                   EXPECTED_VERSION)
+                                        DOMAIN_TEMPLATE_VARS,
+                                        ENTERPRISE_TEMPLATE_VARS,
+                                        EXPECTED_ACL_TEMPLATE,
+                                        EXPECTED_DOMAIN_TEMPLATE,
+                                        EXPECTED_ENTERPRISE_TEMPLATE,
+                                        EXPECTED_VERSION)
 
 FIXTURE_DIRECTORY = os.path.join(os.path.dirname(__file__), 'fixtures')
 
