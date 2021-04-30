@@ -1,7 +1,15 @@
+import cProfile
+import pstats
+import io
+from io import BytesIO as StringIO
+import sys
+
 '''
-Useful information:
-column output: https://docs.python.org/3/library/profile.html#instant-user-s-manual
-sorting output: https://docs.python.org/3/library/profile.html#pstats.Stats.sort_stats
+Useful References:
+column output:
+https://docs.python.org/3/library/profile.html#instant-user-s-manual
+sorting output:
+https://docs.python.org/3/library/profile.html#pstats.Stats.sort_stats
 '''
 
 '''
@@ -14,12 +22,25 @@ def func(params):
     print('hello world')
 '''
 
-import cProfile, pstats
-import io
-from io import BytesIO as StringIO
-import sys
+'''
+Important Note:
+
+Use the decorator once at the highest level function.
+This is because the profiler profiles all called functions
+from the initially called function.
+
+Example:
+
+def func():
+    print('hello world')
+
+@profiler(run_profiler=True)
+def main():
+    func()
+'''
 
 python_major_version = sys.version_info[0]
+
 
 def profiler(run_profiler):
 
