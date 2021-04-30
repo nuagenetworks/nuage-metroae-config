@@ -4,6 +4,16 @@ column output: https://docs.python.org/3/library/profile.html#instant-user-s-man
 sorting output: https://docs.python.org/3/library/profile.html#pstats.Stats.sort_stats
 '''
 
+'''
+Example Usage:
+
+from profiler import profiler
+
+@profiler(run_profiler=True)
+def func(params):
+    print('hello world')
+'''
+
 import cProfile, pstats
 import io
 from io import BytesIO as StringIO
@@ -11,35 +21,44 @@ import sys
 
 python_major_version = sys.version_info[0]
 
-def profile(func):
-    '''decorator that uses cProfile to profile a function'''
+def profiler(run_profiler):
 
-    def profile_information(*args, **kwargs):
-        '''give runtime information about the function'''
-        prof = cProfile.Profile()# start the profiler
-        prof.enable()
-        info = func(*args, **kwargs) # execute our function
-        prof.disable() # stop the profiler after running the function
+    def profile_decorator(func):
+        ''' decorator that uses cProfile module to profile a given function '''
 
-        # get the results of profiler and print results to standard output
-        if python_major_version == 2:
-            s = StringIO()
-        elif python_major_version == 3:
-            s = io.StringIO()
-        sortkey = 'cumulative'
-        # create an instance of a statistics object from a profile instance
-        # then, sort the profile instance by cumulative runtime
-        ps = pstats.Stats(prof, stream=s).sort_stats(sortkey)
+        def profile_information(*args, **kwargs):
+            ''' output run time info about a function to a specified file'''
 
-        # prints out all the statistics to the stringIO object
-        ps.print_stats()
+            profile = cProfile.Profile()
+            profile.enable()
+            func_output = func(*args, **kwargs)
+            profile.disable()
 
-        # print out the stored value from stringIO
-        # print(s.getvalue())
+            # initialize text buffer for profile info
+            if python_major_version == 2:
+                s = StringIO()
+            elif python_major_version == 3:
+                s = io.StringIO()
 
-        # write profiler output to a specified file
-        with open('profile_tool_output.txt', 'w+') as profile_tool_output:
-            profile_tool_output.write(s.getvalue())
-        return info
-    
-    return profile_information
+            sortkey = 'cumulative'
+
+            # create an instance of a statistics object from a profile instance
+            # sort the rows of the profile instance by the sortkey
+            ps = pstats.Stats(profile, stream=s).sort_stats(sortkey)
+
+            # prints out all the statistics to the stringIO text buffer
+            ps.print_stats()
+
+            # write profiler output to a specified file
+            with open('profile_tool_output.txt', 'w+') as profile_tool_output:
+                profile_tool_output.write(s.getvalue())
+            # discard text buffer
+            s.close()
+            return func_output
+
+        if run_profiler:
+            return profile_information
+
+        return func
+
+    return profile_decorator
