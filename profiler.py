@@ -17,8 +17,12 @@ Example Usage:
 
 from profiler import profiler
 
-@profiler(run_profiler=True)
-def func(params):
+@profiler(run_profiler=True, output_file="func_profile_info.txt")
+def func(param):
+    print('hello world')
+
+@profiler(run_profiler=False, output_file="func1_profile_info.txt")
+def func1(param1, param2):
     print('hello world')
 '''
 
@@ -26,7 +30,7 @@ def func(params):
 Important Note:
 
 Use the decorator once at the highest level function.
-This is because the profiler profiles all called functions
+This is because the profiler profiles all called subfunctions
 from the initially called function.
 
 Example:
@@ -34,7 +38,7 @@ Example:
 def func():
     print('hello world')
 
-@profiler(run_profiler=True)
+@profiler(run_profiler=True, output_file="function_profile_info.txt")
 def main():
     func()
 '''
@@ -42,7 +46,7 @@ def main():
 python_major_version = sys.version_info[0]
 
 
-def profiler(run_profiler):
+def profiler(run_profiler, output_file):
 
     def profile_decorator(func):
         ''' decorator that uses cProfile module to profile a given function '''
@@ -71,7 +75,7 @@ def profiler(run_profiler):
             ps.print_stats()
 
             # write profiler output to a specified file
-            with open('profile_tool_output.txt', 'w+') as profile_tool_output:
+            with open(output_file, 'w+') as profile_tool_output:
                 profile_tool_output.write(s.getvalue())
             # discard text buffer
             s.close()
