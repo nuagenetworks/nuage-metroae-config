@@ -71,9 +71,10 @@ The primary requirements for running MetroAE config are:
 #### Installation of Python and required packages.
 
 Most linux distributions come with python bundled into the operating system.
-Python 2.7 is required. Currently Python 3.0 is not supported.
+Python 2.7 is required. Additionally, Python 3 is also supported.
 
 To verify that python is available we can do the following:
+(Note: All examples provided below are in Python 2.7 syntax)
 
 *Ubuntu*
 
