@@ -30,6 +30,7 @@ DEFAULT_VSD_ENTERPRISE = 'csp'
 DEFAULT_URL = 'https://127.0.0.1:8443'
 DEFAULT_LOG_LEVEL = 'DEBUG'
 ENV_TEMPLATE = 'TEMPLATE_PATH'
+ENV_COMMUNITY_TEMPLATE = 'COMMUNITY_TEMPLATE_PATH'
 ENV_USER_DATA = 'USER_DATA_PATH'
 ENV_VSD_USERNAME = 'VSD_USERNAME'
 ENV_VSD_PASSWORD = 'VSD_PASSWORD'
@@ -101,6 +102,9 @@ def main():
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
+        if args.community_template_path is None and os.getenv(ENV_COMMUNITY_TEMPLATE) is not None:
+            args.community_template_path = os.getenv(ENV_COMMUNITY_TEMPLATE).split()
+
         if args.data_path is None and os.getenv(ENV_USER_DATA) is not None:
             args.data_path = os.getenv(ENV_USER_DATA).split()
 
@@ -109,7 +113,7 @@ def main():
             args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
 
         # Check to make sure we have template path and data path set
-        if (args.template_path is None or
+        if ((args.template_path is None or args.community_template_path is None) or
                 args.spec_path is None):
             print(REQUIRED_FIELDS_ERROR)
             exit(1)
@@ -118,8 +122,11 @@ def main():
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
-        if args.template_path is None:
-            print("Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE))
+        if args.community_template_path is None and os.getenv(ENV_COMMUNITY_TEMPLATE) is not None:
+            args.community_template_path = os.getenv(ENV_COMMUNITY_TEMPLATE).split()
+
+        if args.template_path is None or args.community_template_path is None:
+            print("Please specify template path using -tp or -ctp on command line, or set an environment variable %s for certified template or %s for community template" % (ENV_TEMPLATE) % (ENV_COMMUNITY_TEMPLATE))
             exit(1)
 
     elif args.action in [SCHEMA_ACTION, EXAMPLE_ACTION, DOCUMENT_ACTION,
@@ -127,12 +134,15 @@ def main():
         if args.template_path is None and os.getenv(ENV_TEMPLATE) is not None:
             args.template_path = os.getenv(ENV_TEMPLATE).split()
 
+        if args.community_template_path is None and os.getenv(ENV_COMMUNITY_TEMPLATE) is not None:
+            args.community_template_path = os.getenv(ENV_COMMUNITY_TEMPLATE).split()
+
         if args.action != DOCUMENT_ACTION and len(args.template_names) == 0:
             print("Please specify template names on command line")
             exit(1)
 
-        if args.template_path is None:
-            print("Please specify template path using -tp on command line or set an environment variable %s" % (ENV_TEMPLATE))
+        if args.template_path is None or args.community_template_path is None:
+            print("Please specify template path using -tp or -ctp on command line, or set an environment variable %s for certified template or %s for community template" % (ENV_TEMPLATE) % (ENV_COMMUNITY_TEMPLATE))
             exit(1)
 
     metro_config = MetroConfig(args, args.action)
@@ -190,6 +200,10 @@ def add_template_path_parser_argument(parser):
                         action='append', required=False,
                         default=None,
                         help='Path containing template files. Can also set using environment variable %s' % (ENV_TEMPLATE))
+    parser.add_argument('-ctp', '--community_template_path', dest='community_template_path',
+                        action='append', required=False,
+                        default=None,
+                        help='Path containing template files. Can also set using environment variable %s' % (ENV_COMMUNITY_TEMPLATE))
     parser.add_argument('--version', dest='version',
                         action='store_true', required=False,
                         help='Displays version information')
