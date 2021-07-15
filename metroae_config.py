@@ -113,7 +113,7 @@ def main():
             args.spec_path = os.getenv(ENV_VSD_SPECIFICATIONS).split()
 
         # Check to make sure we have template path and data path set
-        if ((args.template_path is None or args.community_template_path is None) or
+        if ((args.template_path is None and args.community_template_path is None) or
                 args.spec_path is None):
             print(REQUIRED_FIELDS_ERROR)
             exit(1)
@@ -125,8 +125,8 @@ def main():
         if args.community_template_path is None and os.getenv(ENV_COMMUNITY_TEMPLATE) is not None:
             args.community_template_path = os.getenv(ENV_COMMUNITY_TEMPLATE).split()
 
-        if args.template_path is None or args.community_template_path is None:
-            print("Please specify template path using -tp or -ctp on command line, or set an environment variable %s for certified template or %s for community template" % (ENV_TEMPLATE) % (ENV_COMMUNITY_TEMPLATE))
+        if args.template_path is None and args.community_template_path is None:
+            print("Please specify template path using -tp or -ctp on command line, or set an environment variable %s for certified template or %s for community template" % (ENV_TEMPLATE,ENV_COMMUNITY_TEMPLATE))
             exit(1)
 
     elif args.action in [SCHEMA_ACTION, EXAMPLE_ACTION, DOCUMENT_ACTION,
@@ -141,8 +141,8 @@ def main():
             print("Please specify template names on command line")
             exit(1)
 
-        if args.template_path is None or args.community_template_path is None:
-            print("Please specify template path using -tp or -ctp on command line, or set an environment variable %s for certified template or %s for community template" % (ENV_TEMPLATE) % (ENV_COMMUNITY_TEMPLATE))
+        if args.template_path is None and args.community_template_path is None:
+            print("Please specify template path using -tp or -ctp on command line, or set an environment variable %s for certified template or %s for community template" % (ENV_TEMPLATE,ENV_COMMUNITY_TEMPLATE))
             exit(1)
 
     metro_config = MetroConfig(args, args.action)
