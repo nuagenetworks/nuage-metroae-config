@@ -333,6 +333,9 @@ Revert (remove) objects configured during application, use -r option
 
 ### Custom Templates
 Users can also use their own custom templates but the user should make sure the custom template name does not coincide with the existing standard template name.
+  #### Example Usage of custom template
+
+    $ metroae config create -tp sample/custom-templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
 
 -tp option can be used to pass multiple template path at the same time.
 
