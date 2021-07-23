@@ -332,14 +332,19 @@ Revert (remove) objects configured during application, use -r option
     $ metroae config revert -tp sample/templates -sp ~/vsd-api-specifications sample/user_data/acls.yaml
 
 ### Custom Templates
-Users can also use their own custom templates but the user should make sure the custom template name does not coincide with the existing standard template name.
-  #### Example Usage of custom template
+You can also use your own custom templates with MetroAE Config. You can put your custom templates in the same directory as our standard templates or you can put them in one or more custom directories.
+
+Note: Your custom templates must have unique template names (not file names... The template name inside the template file...) to avoid name collisions with standard templates. If two templates have the same name, MetroAE Config will use the template and VSD versions to determine which template to apply when run. This may result in unexpected behavior when your template names are the same as standard template names. We recommend that you use a prefix for your template names to guarantee uniqueness. For example, if you create a custom template with the name "Enterprise" there will be a collision. But if you use the name "my_enterprise" there will not be a collision.
+
+#### Example commands for specifying custom template directories
+
+The following command tells MetroAE Config to look for templates in the custom location, `sample/custom-templates`:
 
     $ metroae config create -tp sample/custom-templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
 
--tp option can be used to pass multiple template path at the same time.
+Note that you can specify more than one template path so that you can utilize templates in more than one directory, for example if your solution needs to use some standard templates and some custom templates. The -tp option can be used to pass multiple template path at the same time:
 
-    $ metroae config create -tp sample/templates -tp sample/custom-templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
+    $ metroae config create -tp standard-templates/templates -tp sample/custom-templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
 
 ## User Data
 
