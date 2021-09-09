@@ -299,15 +299,6 @@ class MetroConfig(object):
         self.device_version = None
         self.excel_parser = None
 
-    try:
-        dict.iteritems
-    except AttributeError:
-        def iteritems(self, d):
-            return iter(d.items())
-    else:
-        def iteritems(self, d):
-            return d.iteritems()
-
     def setup_logging(self):
         if "log_level" not in self.args:
             return
@@ -607,7 +598,7 @@ class MetroConfig(object):
                                       error["message"]))
             exit(1)
 
-        for template_name, var_set_entries in self.iteritems(data):
+        for template_name, var_set_entries in data.items():
             for var_set in var_set_entries:
                 self.template_data.append((template_name, var_set))
 
