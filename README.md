@@ -4,7 +4,7 @@ Nuage MetroAE configuration template engine.
 
 Version 1.1.0
 
-This tool reads Excel spreadsheets (.xlsx files) or Yaml files of templates and user-data to
+This tool reads Excel spreadsheet (.xlsx file) or Yaml files of templates and user-data to
 write a configuration to a VSD or to revert (remove) said configuration.
 
 ## Overview
@@ -12,7 +12,7 @@ write a configuration to a VSD or to revert (remove) said configuration.
 MetroAE config is a Python-based engine which can apply configuration to VSDs
 via templates.  The templates provide an abstraction around the VSD
 configuration model simplifying and validating the required data.  Data is
-provided by the user in the form of Yaml or Excel spreadsheets (.xlsx files) files and is transformed and
+provided by the user in the form of Yaml or Excel spreadsheet (.xlsx file) files and is transformed and
 applied to the VSD through the tool's templates.  The required data and proper
 format for each template is defined by standardized JSON schema specifications.
 
