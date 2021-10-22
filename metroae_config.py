@@ -21,7 +21,7 @@ from nuage_metroae_config.vsd_writer import VsdWriter, SOFTWARE_TYPE
 # Disables annoying SSL certificate validation warnings
 urllib3.disable_warnings()
 
-ENGINE_VERSION = "1.1.0"
+ENGINE_VERSION = "1.1.1"
 
 PROG_NAME = "metroae config"
 DEFAULT_VSD_USERNAME = 'csproot'

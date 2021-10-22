@@ -8,7 +8,7 @@ import yaml
 from nuage_metroae_config.template import TemplateStore
 from nuage_metroae_config.util import get_dict_field_no_case
 
-ENGINE_VERSION = "1.1.0"
+ENGINE_VERSION = "1.1.1"
 SOFTWARE_TYPE = "Nuage Networks VSD"
 
 DESCRIPTION = """This tool helps build starter discovery queries."""

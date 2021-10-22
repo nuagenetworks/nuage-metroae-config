@@ -2,7 +2,7 @@
 
 ## Release info
 
-* MetroAE Version 1.1.0
+* MetroAE Version 1.1.1
 * Nuage Release Alignment TBD
 * Date of Release TBD
 
