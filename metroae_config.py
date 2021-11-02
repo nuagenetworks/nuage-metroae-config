@@ -598,7 +598,7 @@ class MetroConfig(object):
                                       error["message"]))
             exit(1)
 
-        for template_name, var_set_entries in data.iteritems():
+        for template_name, var_set_entries in data.items():
             for var_set in var_set_entries:
                 self.template_data.append((template_name, var_set))
 
