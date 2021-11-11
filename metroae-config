@@ -9,7 +9,6 @@ TI=""
 [ -t 0 ] && TI="-ti"
 
 
-
 function download_container_templates {
     if ! command -v curl &> /dev/null; then
         echo "The command 'curl' was not found in PATH"
@@ -52,19 +51,7 @@ function download_container_templates {
 
 
 
-
-docker image inspect metroaeconfig:$TAG > /dev/null 2>&1
-if [[ "$?" != "0" ]]
-then
-    if [[ -n "$TI" ]]
-    then
-        echo "The docker image for this repo head does not exist. We will build it. Press any key to continue"
-        read -n 1
-    fi
-    set -e
-    ./docker/build-container raw
-    set +e
-fi
+sh ./metroae-config.in
 
 # Run the command inside docker
 args=( "$@" )
