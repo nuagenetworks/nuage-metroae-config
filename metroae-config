@@ -1,8 +1,57 @@
 #!/bin/sh
 
+TEMPLATE_TAR_LOCATION="https://metroae-config-templates.s3.amazonaws.com/metroae_config.tar"                                  
+VSD_SPECIFICATIONS_LOCATION="https://vsd-api-specifications.s3.us-east-2.amazonaws.com/specifications.tar"
+SPEC_FOLDER=./vsd-api-specifications
+TEMPLATE_FOLDER=./levistate-templates/templates
 TAG=$(git rev-parse --short HEAD)
 TI=""
 [ -t 0 ] && TI="-ti"
+
+
+
+function download_container_templates {
+    if ! command -v curl &> /dev/null; then
+        echo "The command 'curl' was not found in PATH"
+        echo "This is a small utility for downloading files from the Internet"
+        echo "It is needed for downloading templates from Amazon S3"
+        echo "Please install this utility with:"
+        echo ""
+        echo "sudo yum install curl"
+        echo ""
+        exit 1
+    fi    
+    {     
+        curl -O $TEMPLATE_TAR_LOCATION &> /dev/null &&
+        curl -O $VSD_SPECIFICATIONS_LOCATION &> /dev/null
+    } || {
+        echo "Warning: Internet connection not detected from the container."
+        echo "MetroAE Config Templates and VSD Specification files were not downloaded."
+        echo "Please exit the container first and download the tar files from the provided URLs below."
+        echo "Download the MetroAE Config Template files from the following URL:"
+        echo "$TEMPLATE_TAR_LOCATION"
+        echo ""
+        echo "Download the VSD Specification files from the following URL:"
+        echo "$VSD_SPECIFICATIONS_LOCATION"
+        echo "Upon successful download of the two tar files"
+        echo "untar the files to the current directory"
+        echo ""
+        exit 0
+    }  
+    template_tar_file=$(basename $TEMPLATE_TAR_LOCATION)
+    specs_tar_file=$(basename $VSD_SPECIFICATIONS_LOCATION)
+
+    mkdir -p $TEMPLATE_FOLDER         
+    mkdir -p $SPEC_FOLDER
+    tar -xf $specs_tar_file -C $SPEC_FOLDER
+    tar -xf $template_tar_file -C $TEMPLATE_FOLDER
+          
+    rm -f $template_tar_file
+    rm -f $specs_tar_file
+} 
+
+
+
 
 docker image inspect metroaeconfig:$TAG > /dev/null 2>&1
 if [[ "$?" != "0" ]]
@@ -20,5 +69,9 @@ fi
 # Run the command inside docker
 args=( "$@" )
 
-docker run --rm $TI -v "`pwd`:/metroaeconfig" metroaeconfig:$TAG python3 metroae_config.py "${args[@]}"
+
+[[ ! -d "$SPEC_FOLDER" || ! -d "$TEMPLATE_FOLDER" ]] && download_container_templates
+
+
+docker run --rm $TI -v "`pwd`:/metroaeconfig" metroaeconfig:$TAG python3 metroae_config.py "${args[@]}" -tp "$TEMPLATE_FOLDER/templates" -sp "$SPEC_FOLDER"
 
