@@ -3,7 +3,7 @@
 TEMPLATE_TAR_LOCATION="https://metroae-config-templates.s3.amazonaws.com/metroae_config.tar"                                  
 VSD_SPECIFICATIONS_LOCATION="https://vsd-api-specifications.s3.us-east-2.amazonaws.com/specifications.tar"
 SPEC_FOLDER=./vsd-api-specifications
-TEMPLATE_FOLDER=./levistate-templates/templates
+TEMPLATE_FOLDER=./levistate-templates
 TAG=$(git rev-parse --short HEAD)
 TI=""
 [ -t 0 ] && TI="-ti"
