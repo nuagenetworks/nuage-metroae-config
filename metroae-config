@@ -1,4 +1,5 @@
 #!/bin/sh
+cd $(dirname $0)
 
 TEMPLATE_TAR_LOCATION="https://metroae-config-templates.s3.amazonaws.com/metroae_config.tar"                                  
 VSD_SPECIFICATIONS_LOCATION="https://vsd-api-specifications.s3.us-east-2.amazonaws.com/specifications.tar"
@@ -51,8 +52,7 @@ function download_container_templates {
 
 
 
-DIR=$(dirname $0)
-. "$DIR/metroae-config.in"
+. ./metroae-config.in
 
 # Run the command inside docker
 args=( "$@" )

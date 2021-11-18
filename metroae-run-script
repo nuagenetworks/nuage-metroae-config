@@ -1,11 +1,11 @@
 #!/bin/sh
+cd $(dirname $0)
 TAG=$(git rev-parse --short HEAD)
 TI=""
 [ -t 0 ] && TI="-ti"
 
 
-DIR=$(dirname $0)
-. "$DIR/metroae-config.in"
+. ./metroae-config.in
 
 # Run the command inside docker
 args=( "$@" )
