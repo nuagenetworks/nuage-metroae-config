@@ -51,7 +51,8 @@ function download_container_templates {
 
 
 
-sh ./metroae-config.in
+DIR=$(dirname $0)
+. "$DIR/metroae-config.in"
 
 # Run the command inside docker
 args=( "$@" )

@@ -3,7 +3,9 @@ TAG=$(git rev-parse --short HEAD)
 TI=""
 [ -t 0 ] && TI="-ti"
 
-sh ./metroae-config.in
+
+DIR=$(dirname $0)
+. "$DIR/metroae-config.in"
 
 # Run the command inside docker
 args=( "$@" )
