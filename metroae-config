@@ -61,5 +61,5 @@ args=( "$@" )
 [[ ! -d "$SPEC_FOLDER" || ! -d "$TEMPLATE_FOLDER" ]] && download_container_templates
 
 
-docker run --rm $TI -v "`pwd`:/metroaeconfig" metroaeconfig:$TAG python3 metroae_config.py "${args[@]}" -tp "$TEMPLATE_FOLDER/templates" -sp "$SPEC_FOLDER"
+docker run --network=host --rm $TI -v "`pwd`:/metroaeconfig" metroaeconfig:$TAG python3 metroae_config.py "${args[@]}" -tp "$TEMPLATE_FOLDER/templates" -sp "$SPEC_FOLDER"
 

@@ -9,5 +9,5 @@ TI=""
 
 # Run the command inside docker
 args=( "$@" )
-docker run --rm $TI -v "`pwd`:/metroaeconfig" metroaeconfig:$TAG python3 "${args[@]}"
+docker run --network=host --rm $TI -v "`pwd`:/metroaeconfig" metroaeconfig:$TAG python3 "${args[@]}"
 
