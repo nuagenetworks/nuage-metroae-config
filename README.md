@@ -22,11 +22,10 @@ format for each template is defined by standardized JSON schema specifications.
 
 There are several modes of operation for MetroAE config.  For most users, the
 tool should be consumed via the MetroAE Docker container.  Using this method
-ensures that all of the libraries are properly installed and the `metroae`
-command-line tool can be utilized for config (as well as deploy).  Instructions
-for the Docker container installation are available at:
+ensures that all of the libraries are properly installed.
 
-https://github.com/nuagenetworks/nuage-metroae/blob/master/Documentation/DOCKER.md
+The Docker container gets built on the fly when running `metroae-config`. The script
+will build and then invoke the container. 
 
 If using the Docker container, all remaining installation instructions can be
 skipped.
@@ -202,12 +201,12 @@ Resolving deltas: 100% (18163/18163), done.
 ## Command-line Tool
 
 When using the MetroAE Docker container, all commands are accessed through the
-`metroae` command-line tool as:
+`metroae-config` command-line tool as:
 
-    metroae config ...
+    ./metroae-config ...
 
 If you are using the Python source obtained through Github, then any reference
-to `metroae config` should substitute the equivalent Python source tool:
+to `metroae-config` should substitute the equivalent Python source tool:
 
     python metroae_config.py ...
 
@@ -216,7 +215,7 @@ to `metroae config` should substitute the equivalent Python source tool:
 
 MetroAE Config command-line tool usage:
 
-    usage: metroae config [-h]
+    usage: ./metroae-config [-h]
                           {create,revert,validate,list,schema,example,upgrade-templates,version,help}
                           ...
 
@@ -231,7 +230,7 @@ MetroAE Config command-line tool usage:
       -h, --help            show this help message and exit
 
 
-    usage: metroae config create [-h] [-tp TEMPLATE_PATH] [--version]
+    usage: ./metroae-config create [-h] [-tp TEMPLATE_PATH] [--version]
                                  [-sp SPEC_PATH] [-dp DATA_PATH] [-d DATA]
                                  [-v VSD_URL] [-u USERNAME] [-p PASSWORD]
                                  [-e ENTERPRISE] [-lg]
@@ -272,7 +271,7 @@ MetroAE Config command-line tool usage:
 
 Apply enterprise, domain and ACLs to VSD.
 
-    $ metroae config create -tp sample/templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
+    $ ./metroae-config create -tp ./sample/templates -sp ./vsd-api-specifications -v https://localhost:8443 ./sample/user_data/acls.yaml
 
     Configuration
         Enterprise
@@ -330,7 +329,7 @@ Apply enterprise, domain and ACLs to VSD.
 
 Revert (remove) objects configured during application, use -r option
 
-    $ metroae config revert -tp sample/templates -sp ~/vsd-api-specifications sample/user_data/acls.yaml
+    $ ./metroae-config revert -tp ./sample/templates -sp ./vsd-api-specifications ./sample/user_data/acls.yaml
 
 ### Custom Templates
 You can also use your own custom templates with MetroAE Config. You can put your custom templates in the same directory as our standard templates or you can put them in one or more custom directories.
@@ -341,11 +340,11 @@ Note: Your custom templates must have unique template names (not file names... T
 
 The following command tells MetroAE Config to look for templates in the custom location, `sample/custom-templates`:
 
-    $ metroae config create -tp sample/custom-templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
+    $ ./metroae-config create -tp ./sample/custom-templates -sp ./vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
 
 Note that you can specify more than one template path so that you can utilize templates in more than one directory, for example if your solution needs to use some standard templates and some custom templates. The -tp option can be used to pass multiple template path at the same time:
 
-    $ metroae config create -tp standard-templates/templates -tp sample/custom-templates -sp ~/vsd-api-specifications -v https://localhost:8443 sample/user_data/acls.yaml
+    $ ./metroae-config create -tp ./standard-templates/templates -tp ./sample/custom-templates -sp ./vsd-api-specifications -v https://localhost:8443 ./sample/user_data/acls.yaml
 
 ## User Data
 
@@ -509,7 +508,7 @@ length as the fields list.
 The templates that have been loaded into the MetroAE config tool can be listed
 with the following:
 
-    $ metroae config -tp sample/templates --list
+    $ ./metroae-config -tp ./sample/templates --list
 
     Domain
     Enterprise
@@ -520,7 +519,7 @@ with the following:
 
 An example of user data for any template can be provided using the following:
 
-    metroae config example -tp sample/templates Domain
+    ./metroae-config example -tp sample/templates Domain
 
     # First template set - Create a L3 Domain
     - template: Domain
@@ -536,7 +535,7 @@ An example of user data for any template can be provided using the following:
 A JSON schema can be generated for the user data required for any template.
 These schemas conform to the json-schema.org standard specification:
 
-    metroae config schema -tp sample/templates Domain
+    ./metroae-config schema -tp ./sample/templates Domain
 
     {
       "title": "Schema validator for Nuage Metro config template Domain",
@@ -606,7 +605,7 @@ new `-es` parameter has been added to specify the address of the ES to query.
 The `query language` can be specified to the tool directly on the command-line
 for easy manual use using the `-q` query parameter.  An example follows:
 
-    metroae config query -v https://localhost:8443 -q 'enterprise.name'
+    ./metroae-config query -v https://localhost:8443 -q 'enterprise.name'
 
     Device: Nuage Networks VSD 20.5.1
     - Shared Infrastructure
@@ -616,7 +615,7 @@ for easy manual use using the `-q` query parameter.  An example follows:
 
 Multiple queries can be specified on a single line using semicolon `;`:
 
-    metroae config query -v https://localhost:8443 -q 'apps = SAASApplicationType.name; ents = enterprise.name'
+    ./metroae-config query -v https://localhost:8443 -q 'apps = SAASApplicationType.name; ents = enterprise.name'
 
     Device: Nuage Networks VSD 20.5.1
     apps:
@@ -640,7 +639,7 @@ supported in files as well.
     apps = SAASApplicationType.name
     ents = enterprise.name
 
-    metroae config query -v https://localhost:8443 example.query
+    ./metroae-config query -v https://localhost:8443 example.query
 
     Device: Nuage Networks VSD 20.5.1
     apps:
