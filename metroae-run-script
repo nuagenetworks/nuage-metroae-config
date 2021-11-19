@@ -1,0 +1,13 @@
+#!/bin/sh
+cd $(dirname $0)
+TAG=$(git rev-parse --short HEAD)
+TI=""
+[ -t 0 ] && TI="-ti"
+
+
+. ./metroae-config.in
+
+# Run the command inside docker
+args=( "$@" )
+docker run --network=host --rm $TI -v "`pwd`:/metroaeconfig" metroaeconfig:$TAG python3 "${args[@]}"
+

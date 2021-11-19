@@ -126,7 +126,7 @@ def walk_object_children(vsd_writer, object_name, parent_id=None,
             if not args.ignore_errors:
                 raise ChildError()
 
-    children.sort()
+    children = sorted(children, key=lambda d: next(iter(d.keys())))
     if parent_context is None:
         return children
     else:
@@ -204,7 +204,7 @@ def trim_dynamic_attributes_sub_object_list(obj, subobject):
 
 
 def trim_dynamic_attributes(attributes, obj):
-    for attr_name, attr_value in attributes.items():
+    for attr_name, attr_value in list(attributes.items()):
         if attr_name in DYNAMIC_ATTRIBUTES:
             del obj['attributes'][attr_name]
 

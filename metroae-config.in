@@ -1,0 +1,17 @@
+#!/bin/sh
+TAG=$(git rev-parse --short HEAD)
+
+docker image inspect metroaeconfig:$TAG > /dev/null 2>&1
+if [[ "$?" != "0" ]]
+then
+    if [[ -n "$TI" ]]
+    then
+        echo "The docker image for this repo head does not exist. We will build it. Press any key to continue"
+        read -n 1
+    fi
+    set -e
+    ./docker/build-container raw
+    set +e
+fi
+
+
