@@ -225,7 +225,7 @@ def main():
                         default=None,
                         help='Dumps a yaml file for each template type to be consumed by excel generator')
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
     parse(args)
 

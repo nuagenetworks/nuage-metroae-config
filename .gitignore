@@ -92,3 +92,8 @@ ENV/
 docker
 levistate-templates
 vsd-api-specifications
+
+# metro config container
+docker
+levistate-templates
+vsd-api-specifications
